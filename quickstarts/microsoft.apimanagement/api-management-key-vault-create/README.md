@@ -41,22 +41,22 @@ It deploys the following components
 If you're new to Azure API Management, see:
 
 - [Azure API Management service](https://azure.microsoft.com/services/api-management/)
-- [Azure API Management documentation](https://docs.microsoft.com/azure/api-management/)
-- [Azure API Management Configure custom domain](https://docs.microsoft.com/azure/api-management/configure-custom-domain)
-- [Azure API Management Configure protocols and ciphers](https://docs.microsoft.com/azure/api-management/api-management-howto-manage-protocols-ciphers)
-- [Azure Key Vault template reference](https://docs.microsoft.com/azure/templates/microsoft.apimanagement/allversions)
+- [Azure API Management documentation](https://learn.microsoft.com/azure/api-management/)
+- [Azure API Management Configure custom domain](https://learn.microsoft.com/azure/api-management/configure-custom-domain)
+- [Azure API Management Configure protocols and ciphers](https://learn.microsoft.com/azure/api-management/api-management-howto-manage-protocols-ciphers)
+- [Azure Key Vault template reference](https://learn.microsoft.com/azure/templates/microsoft.apimanagement/allversions)
 - [Quickstart templates](https://azure.microsoft.com/resources/templates/?resourceType=Microsoft.Apimanagement)
 
 If you're new to Azure Key Vault, see:
 
 - [Azure Key Vault service](https://azure.microsoft.com/services/key-vault/)
-- [Azure Key Vault documentation](https://docs.microsoft.com/azure/key-vault/)
-- [Azure Key Vault RBAC permission model](https://docs.microsoft.com/azure/key-vault/general/rbac-guide)
-- [Azure Key Vault template reference](https://docs.microsoft.com/azure/templates/microsoft.keyvault/allversions)
+- [Azure Key Vault documentation](https://learn.microsoft.com/azure/key-vault/)
+- [Azure Key Vault RBAC permission model](https://learn.microsoft.com/azure/key-vault/general/rbac-guide)
+- [Azure Key Vault template reference](https://learn.microsoft.com/azure/templates/microsoft.keyvault/allversions)
 - [Quickstart templates](https://azure.microsoft.com/resources/templates/?resourceType=Microsoft.Keyvault)
 
 If you're new to the template development, see:
 
-- [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
+- [Azure Resource Manager documentation](https://learn.microsoft.com/azure/azure-resource-manager/)
 
 `Tags: API, API Management, Azure API Management, Azure Key Vault, Key Vault, Secret, Certificate, Managed Identity, Microsoft.ManagedIdentity/userAssignedIdentities, Microsoft.KeyVault/vaults, Microsoft.KeyVault/vaults/secrets, Microsoft.Authorization/roleAssignments, Microsoft.ApiManagement/service, UserAssigned, Proxy`

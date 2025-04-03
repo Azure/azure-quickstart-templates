@@ -181,7 +181,7 @@ if ($ServicePrincipalObjectId) {
 
 }
 
-# These perms are for Azure ML Encryption via Cosmos https://docs.microsoft.com/en-us/azure/cosmos-db/how-to-setup-cmk
+# These perms are for Azure ML Encryption via Cosmos https://learn.microsoft.com/en-us/azure/cosmos-db/how-to-setup-cmk
 # Assign the Azure ML SP perms to the subscription - this needs contributor at the moment, hopefully the fix that later
 # Display Name = "Azure Machine Learning" (this substring is not unique)
 # Service Principal Name = 0736f41a-0425-4b46-bdb5-1563eff02385
@@ -204,7 +204,7 @@ $cdn = New-AzureRmADServicePrincipal -ApplicationId 205478c0-bd83-4e1b-a9d6-db63
 Set-AzureRMKeyVaultAccessPolicy -VaultName $KeyVaultName -ObjectId $cdn.id -PermissionsToSecrets get 
 
 # Assign Front Door access to the vault to work with custom domain certificates.
-# See https://docs.microsoft.com/azure/frontdoor/front-door-custom-domain-https#option-2-use-your-own-certificate
+# See https://learn.microsoft.com/azure/frontdoor/front-door-custom-domain-https#option-2-use-your-own-certificate
 $frontDoor = New-AzureRmADServicePrincipal -ApplicationId 'ad0e1c7e-6d38-4ba4-9efd-0bc77ba9f037'
 # $frontDoor = Get-AzureRmADServicePrincipal -ServicePrincipalName "ad0e1c7e-6d38-4ba4-9efd-0bc77ba9f037"
 Set-AzureRMKeyVaultAccessPolicy -VaultName $KeyVaultName -ObjectId $frontDoor.id -PermissionsToSecrets get -PermissionsToCertificates get
@@ -307,7 +307,7 @@ $json.Add("KEYVAULT-SSH-PUBLIC-KEY-REFERENCE", (ConvertFrom-Json $refParam))
 
 
 #5 ) SSL Cert (TODO not sure if this is making the correct cert, need to test it) 
-#https://docs.microsoft.com/en-us/azure/virtual-machines/windows/tutorial-secure-web-server#generate-a-certificate-and-store-in-key-vault
+#https://learn.microsoft.com/en-us/azure/virtual-machines/windows/tutorial-secure-web-server#generate-a-certificate-and-store-in-key-vault
 #$policy = New-AzureKeyVaultCertificatePolicy -SubjectName "CN=www.contoso.com" -SecretContentType "application/x-pkcs12" -IssuerName Self -ValidityInMonths 120
 #Add-AzureKeyVaultCertificate -VaultName $keyvaultName -Name "mycert" -CertificatePolicy $policy
 

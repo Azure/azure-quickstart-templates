@@ -39,6 +39,6 @@ You can also enter a specific Gateway SKU as a parameter; choose from the follow
 * Standard (legacy)
 * HighPerformance (legacy)
 
-More info on the Gateway SKUs can be found here: https://docs.microsoft.com/azure/vpn-gateway/vpn-gateway-about-vpngateways#a-namegwskuagateway-skus
+More info on the Gateway SKUs can be found here: https://learn.microsoft.com/azure/vpn-gateway/vpn-gateway-about-vpngateways#a-namegwskuagateway-skus
 
 `Tags: Microsoft.Network/virtualNetworks, Microsoft.Network/publicIPAddresses, Microsoft.Network/virtualNetworkGateways, Microsoft.Network/connections`

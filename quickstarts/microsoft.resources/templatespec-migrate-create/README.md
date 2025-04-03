@@ -29,7 +29,7 @@ The azuredeploy.json file in the repo simply creates a templateSpec from a linke
 
 ## TemplateSpecs
 
-See the [templateSpec documentation](https://docs.microsoft.com/azure/azure-resource-manager/templates/template-specs) for more information on how to use templateSpecs in Azure.
+See the [templateSpec documentation](https://learn.microsoft.com/azure/azure-resource-manager/templates/template-specs) for more information on how to use templateSpecs in Azure.
 
 ## azuredeploy.json
 

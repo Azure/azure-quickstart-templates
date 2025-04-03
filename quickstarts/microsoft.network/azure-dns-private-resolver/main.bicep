@@ -7,7 +7,7 @@ param resolverVNETAddressSpace string = '10.7.0.0/24'
 @description('name of the dns private resolver')
 param dnsResolverName string = 'dnsResolver'
 
-@description('the location for resolver VNET and dns private resolver - Azure DNS Private Resolver available in specific region, refer the documenation to select the supported region for this deployment. For more information https://docs.microsoft.com/azure/dns/dns-private-resolver-overview#regional-availability')
+@description('the location for resolver VNET and dns private resolver - Azure DNS Private Resolver available in specific region, refer the documenation to select the supported region for this deployment. For more information https://learn.microsoft.com/azure/dns/dns-private-resolver-overview#regional-availability')
 @allowed([
   'australiaeast'
   'uksouth'

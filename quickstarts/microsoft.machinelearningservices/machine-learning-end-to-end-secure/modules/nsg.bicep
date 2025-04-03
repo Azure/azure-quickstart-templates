@@ -1,5 +1,5 @@
 // Creates a network security group preconfigured for use with Azure ML
-// To learn more, see https://docs.microsoft.com/en-us/azure/machine-learning/how-to-access-azureml-behind-firewall
+// To learn more, see https://learn.microsoft.com/en-us/azure/machine-learning/how-to-access-azureml-behind-firewall
 @description('Azure region of the deployment')
 param location string
 

@@ -25,6 +25,6 @@ languages:
 
 This template enables encryption on a running VM Scale Set of Windows VMs.
 
-For more information about Azure Disk Encryption, see https://docs.microsoft.com/azure/security/azure-security-disk-encryption-windows
+For more information about Azure Disk Encryption, see https://learn.microsoft.comm/azure/security/azure-security-disk-encryption-windows
 
 `Tags: Microsoft.KeyVault/vaults, Microsoft.Compute/virtualMachineScaleSets/extensions, AzureDiskEncryption, Microsoft.Network/virtualNetworks, Microsoft.Network/publicIPAddresses, Microsoft.Network/loadBalancers, Microsoft.Compute/virtualMachineScaleSets, SystemAssigned`

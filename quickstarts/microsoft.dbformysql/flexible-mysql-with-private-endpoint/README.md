@@ -25,7 +25,7 @@ languages:
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.dbformysql%2Fflexible-mysql-with-private-endpoint%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.dbformysql%2Fflexible-mysql-with-private-endpoint%2Fazuredeploy.json)
 
-This template creates a private endpoint, Private DNS Zone and a virtual machine to test the private connection to an Azure Database for MySQL Flexible Server. To learn more about how to deploy the template, see the [quickstart](https://docs.microsoft.com/azure/mysql/flexible-server/quickstart-create-arm-template) article.
+This template creates a private endpoint, Private DNS Zone and a virtual machine to test the private connection to an Azure Database for MySQL Flexible Server. To learn more about how to deploy the template, see the [quickstart](https://learn.microsoft.com/azure/mysql/flexible-server/quickstart-create-arm-template) article.
 
 For more information about Private Link for Azure Database for MySQL - Flexible Server, see the [docs](https://learn.microsoft.com/en-us/azure/mysql/flexible-server/concepts-networking-private-link)
 

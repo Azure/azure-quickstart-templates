@@ -26,6 +26,6 @@ languages:
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.containerinstance%2Faci-linuxcontainer-public-ip%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.containerinstance%2Faci-linuxcontainer-public-ip%2Fazuredeploy.json)
 
-This template demonstrates a use case for [Azure Container Instances](https://docs.microsoft.com/azure/container-instances/). To learn more about how to deploy the template, see the [quickstart](https://docs.microsoft.com/azure/container-instances/container-instances-quickstart-template) article.
+This template demonstrates a use case for [Azure Container Instances](https://learn.microsoft.com/azure/container-instances/). To learn more about how to deploy the template, see the [quickstart](https://learn.microsoft.com/azure/container-instances/container-instances-quickstart-template) article.
 
 `Tags: Microsoft.ContainerInstance/containerGroups, Public`

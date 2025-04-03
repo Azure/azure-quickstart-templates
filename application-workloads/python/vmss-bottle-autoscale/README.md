@@ -35,6 +35,6 @@ Self-contained Ubuntu autoscale example which includes a Python Bottle server to
 - After a few minutes the VM Scale Set capacity will increase. Note that the first scale out takes longer than subsequent scale outs while the autoscale pipeline gets initialized. For example, wait up to 30 minutes before you conclude there's a problem.
 - You can stop doing work by browsing to `dns:9000/stop_work`.
 
-To learn more about how to deploy the template, see the [quickstart](https://docs.microsoft.com/azure/virtual-machine-scale-sets/quick-create-template-linux) article.
+To learn more about how to deploy the template, see the [quickstart](https://learn.microsoft.com/azure/virtual-machine-scale-sets/quick-create-template-linux) article.
 
 `Tags: Microsoft.Network/virtualNetworks, Microsoft.Network/publicIPAddresses, Microsoft.Network/loadBalancers, Microsoft.Compute/virtualMachineScaleSets, CustomScript, Microsoft.Insights/autoscaleSettings, ChangeCount`

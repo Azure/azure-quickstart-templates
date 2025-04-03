@@ -35,8 +35,8 @@ In order to run this template you need to create a storage account and file shar
 
 ## Step1: To create an Azure Storage Account
 
-* [How to create a Storage Account](https://docs.microsoft.com/azure/storage/storage-create-storage-account#create-a-storage-account)
-* [How to create Azure File Share](https://docs.microsoft.com/azure/storage/storage-dotnet-how-to-use-files#use-the-azure-portal-to-manage-a-file-share)
+* [How to create a Storage Account](https://learn.microsoft.com/azure/storage/storage-create-storage-account#create-a-storage-account)
+* [How to create Azure File Share](https://learn.microsoft.com/azure/storage/storage-dotnet-how-to-use-files#use-the-azure-portal-to-manage-a-file-share)
 
 ## Step 2: Run this template with parameters
 

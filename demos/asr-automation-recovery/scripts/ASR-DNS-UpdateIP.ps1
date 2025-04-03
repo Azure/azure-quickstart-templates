@@ -27,7 +27,7 @@
 
         Replace all strings starting with a '#' with appropriate value
 
-        1. VMIdAsAvailableINASRVMProperties : VM Id as shown in virtual machine properties inside Recovery services vault (https://docs.microsoft.com/en-in/azure/site-recovery/site-recovery-runbook-automation#using-complex-variable-to-store-more-information)
+        1. VMIdAsAvailableINASRVMProperties : VM Id as shown in virtual machine properties inside Recovery services vault (https://learn.microsoft.com/en-in/azure/site-recovery/site-recovery-runbook-automation#using-complex-variable-to-store-more-information)
         2. ZoneFortheVirtualMachine : Zone of the virtual machine
         3. HostNameofTheVirtualMachine : Host name of the virtual machine. For example for a virtual machine with FQDN myvm.contoso.com HostNameofTheVirtualMachine is myvm and Zone is contoso.com. You can add more such blocks if there are more virtual machines being failed over as part of the recovery plan. 
         4. RecoveryPlanName : Name of the RecoveryPlanName where this script will be added.

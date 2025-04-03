@@ -34,7 +34,7 @@ This template creates an AS2 Send Receive workflow by using Azure Logic Apps to 
 
 - Logic apps between Fabrikam Finance and Contoso, which demonstrate ASync AS2 Send Receive.
 
-**Important**: This template creates and deploys two Standard-tier integration accounts, which incur costs. For more information, see [Azure Logic Apps pricing](https://azure.microsoft.com/pricing/details/logic-apps/) and [Pricing and billing models for Azure Logic Apps](https://docs.microsoft.com/azure/logic-apps/logic-apps-pricing).
+**Important**: This template creates and deploys two Standard-tier integration accounts, which incur costs. For more information, see [Azure Logic Apps pricing](https://azure.microsoft.com/pricing/details/logic-apps/) and [Pricing and billing models for Azure Logic Apps](https://learn.microsoft.com/azure/logic-apps/logic-apps-pricing).
 
 `Tags: AS2, Logic Apps, Integration Account, Enterprise Integration, Microsoft.Logic/integrationAccounts, Microsoft.Logic/integrationAccounts/partners, Microsoft.Logic/integrationAccounts/agreements, Microsoft.Logic/workflows, If, Response, Http, ApiConnection, Request, Recurrence, Microsoft.Web/connections`
 
@@ -76,5 +76,5 @@ To test your logic apps after deployment completes, you can perform these steps:
 
 Learn more about Azure Logic Apps:
 
-* [Azure Logic Apps](https://docs.microsoft.com/azure/logic-apps/logic-apps-overview)
-* [B2B Processing capabilities in Logic Apps](https://docs.microsoft.com/azure/logic-apps/logic-apps-enterprise-integration-overview)
+* [Azure Logic Apps](https://learn.microsoft.com/azure/logic-apps/logic-apps-overview)
+* [B2B Processing capabilities in Logic Apps](https://learn.microsoft.com/azure/logic-apps/logic-apps-enterprise-integration-overview)

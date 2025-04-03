@@ -7,7 +7,7 @@ param location string = resourceGroup().location
 @description('Disable the routes learned by BGP on the route table')
 param disableBgpRoutePropagation bool = false
 
-@description('Array containing routes. For properties format refer to https://docs.microsoft.com/en-us/azure/templates/microsoft.network/routetables?tabs=bicep#routepropertiesformat')
+@description('Array containing routes. For properties format refer to https://learn.microsoft.com/en-us/azure/templates/microsoft.network/routetables?tabs=bicep#routepropertiesformat')
 param routes array = []
 
 @description('Enable delete lock')

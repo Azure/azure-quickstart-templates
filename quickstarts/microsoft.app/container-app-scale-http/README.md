@@ -30,13 +30,13 @@ This template provides a way to deploy a **Container App** that scales based on 
 
 If you're new to **Container App**, see:
 
-- [Microsoft Container Apps Documentation](https://docs.microsoft.com/azure/container-apps/)
-- [Quickstarts: Microsoft Container Apps](https://docs.microsoft.com/azure/container-apps/get-started)
+- [Microsoft Container Apps Documentation](https://learn.microsoft.com/azure/container-apps/)
+- [Quickstarts: Microsoft Container Apps](https://learn.microsoft.com/azure/container-apps/get-started)
 - [Set scaling rules in Azure Container Apps](https://learn.microsoft.com/azure/container-apps/scale-app)
 - [Container Apps Pricing](https://azure.microsoft.com/pricing/details/container-apps/)
 
 If you're new to template deployment, see:
 
-- [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
+- [Azure Resource Manager documentation](https://learn.microsoft.com/azure/azure-resource-manager/)
 
 `Tags: ContainerApp, Container App, Container, Web, ARM Template, Microsoft.OperationalInsights/workspaces, Microsoft.App/managedEnvironments, Microsoft.App/containerApps`

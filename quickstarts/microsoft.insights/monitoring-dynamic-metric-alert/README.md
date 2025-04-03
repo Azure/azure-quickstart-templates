@@ -28,7 +28,7 @@ This template creates a metric alert rule that monitors the CPU Percentage metri
 
 For more information on **metric alert rules** see:
 
-- [Metric alert rules overview](https://docs.microsoft.com/azure/azure-monitor/platform/alerts-metric-overview)
-- [Create a metric alert with a resource manager template](https://docs.microsoft.com/azure/azure-monitor/platform/alerts-metric-create-templates)
+- [Metric alert rules overview](https://learn.microsoft.com/azure/azure-monitor/platform/alerts-metric-overview)
+- [Create a metric alert with a resource manager template](https://learn.microsoft.com/azure/azure-monitor/platform/alerts-metric-create-templates)
 
 `Tags: Microsoft.Insights/metricAlerts, Microsoft.Storage/storageAccounts, Microsoft.Network/publicIPAddresses, Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines`

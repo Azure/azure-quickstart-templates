@@ -30,6 +30,6 @@ Create a Storage Account with Storage Service Encryption -
 
 This template creates a Storage account with Storage Service Encryption for Data at Rest. For more information, see here:
 
-https://docs.microsoft.com/azure/storage/storage-service-encryption
+https://learn.microsoft.com/azure/storage/storage-service-encryption
 
 `Tags: Microsoft.Storage/storageAccounts`

@@ -31,7 +31,7 @@ if (-not (Test-Path -Path $ShortcutDestinationPath))
     New-Item -ItemType 'directory' -Path $ShortcutDestinationPath
 }
 
-# wscript.shell CreateShortcut documentation: https://docs.microsoft.com/en-us/troubleshoot/windows-client/admin-development/create-desktop-shortcut-with-wsh
+# wscript.shell CreateShortcut documentation: https://learn.microsoft.com/en-us/troubleshoot/windows-client/admin-development/create-desktop-shortcut-with-wsh
 
 # create the shortcut only if one doesn't already exist.
 if (-not (Test-Path -Path $newShortcutPath))

@@ -72,4 +72,4 @@ else
     }
 }
 
-# https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-install-script
+# https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-install-script

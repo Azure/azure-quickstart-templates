@@ -73,7 +73,7 @@ Considerations
 
 ##### Manual post-checks
 
-The template uses the process described in ‘Custom data and cloud-init on Azure Virtual Machines’ to automate the installation and configuration of the Darktrace vSensor on top of the base OS. This can be found for reference at https://docs.microsoft.com/azure/virtual-machines/custom-data.
+The template uses the process described in ‘Custom data and cloud-init on Azure Virtual Machines’ to automate the installation and configuration of the Darktrace vSensor on top of the base OS. This can be found for reference at https://learn.microsoft.com/azure/virtual-machines/custom-data.
 
 The documentation states the following limitation:
 _‘if errors happen during execution of the configuration processing or scripts when cloud-init is processing the custom data, that's not a fatal provisioning failure’_

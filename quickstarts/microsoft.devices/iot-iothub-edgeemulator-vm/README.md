@@ -35,12 +35,12 @@ Look at the our GettingStarted Tutorial for a step by step demo.
 
 If you are new to Azure IoT Edge, see:
 
-- [Azure IoT Edge](https://docs.microsoft.com/azure/iot-edge/about-iot-edge)
-- [Azure IoT Edge template reference](https://docs.microsoft.com/azure/templates/microsoft.devices/2019-03-22/iothubs)
+- [Azure IoT Edge](https://learn.microsoft.com/azure/iot-edge/about-iot-edge)
+- [Azure IoT Edge template reference](https://learn.microsoft.com/azure/templates/microsoft.devices/2019-03-22/iothubs)
 
 If you are new to template development, see:
 
-- [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
+- [Azure Resource Manager documentation](https://learn.microsoft.com/azure/azure-resource-manager/)
 
 `Tags: Azure4Student, IoT, Azure IoT Edge, Azure IoT Hub, Intermediate, Microsoft.Devices/IotHubs, Microsoft.Devices/provisioningServices, Microsoft.Network/networkInterfaces, Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Network/publicIpAddresses, Microsoft.Compute/virtualMachines`
 

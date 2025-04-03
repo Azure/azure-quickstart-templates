@@ -22,7 +22,7 @@ languages:
 
 ![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/function-app-storage-private-endpoints/BicepVersion.svg)
 
-This sample Azure Resource Manager template deploys an Azure Function App that communicates with the Azure Storage account referenced by the AzureWebJobsStorage and WEBSITE_CONTENTAZUREFILECONNECTIONSTRING app settings, [via private endpoints](https://docs.microsoft.com/en-us/azure/azure-functions/functions-networking-options#private-endpoint-connections).
+This sample Azure Resource Manager template deploys an Azure Function App that communicates with the Azure Storage account referenced by the AzureWebJobsStorage and WEBSITE_CONTENTAZUREFILECONNECTIONSTRING app settings, [via private endpoints](https://learn.microsoft.com/en-us/azure/azure-functions/functions-networking-options#private-endpoint-connections).
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.web%2Ffunction-app-storage-private-endpoints%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.web%2Ffunction-app-storage-private-endpoints%2Fazuredeploy.json)
@@ -35,13 +35,13 @@ This template has a parameter `functionPlanOS` to choose Windows or Linux OS. Wi
 
 ### Elastic Premium Plan
 
-The Azure Function app provisioned in this sample uses an [Azure Functions Elastic Premium plan](https://docs.microsoft.com/azure/azure-functions/functions-premium-plan#features).
+The Azure Function app provisioned in this sample uses an [Azure Functions Elastic Premium plan](https://learn.microsoft.com/azure/azure-functions/functions-premium-plan#features).
 
 + **Microsoft.Web/serverfarms**: The Azure Functions Premium plan (a.k.a. Elastic Premium plan)
 
 ### Azure Function App
 
-The Function App uses the [AzureWebJobsStorage](https://docs.microsoft.com/azure/azure-functions/functions-app-settings#azurewebjobsstorage) and [WEBSITE_CONTENTAZUREFILECONNECTIONSTRING](https://docs.microsoft.com/azure/azure-functions/functions-app-settings#website_contentazurefileconnectionstring) app settings to connect to a private endpoint-secured Storage Account.
+The Function App uses the [AzureWebJobsStorage](https://learn.microsoft.com/azure/azure-functions/functions-app-settings#azurewebjobsstorage) and [WEBSITE_CONTENTAZUREFILECONNECTIONSTRING](https://learn.microsoft.com/azure/azure-functions/functions-app-settings#website_contentazurefileconnectionstring) app settings to connect to a private endpoint-secured Storage Account.
 
 + **Microsoft.Web/sites**: The function app instance.
 
@@ -49,7 +49,7 @@ The Function App uses the [AzureWebJobsStorage](https://docs.microsoft.com/azure
 
 The Storage account that the Function uses for operation and for file contents.
 
-+ **Microsoft.Storage/storageAccounts**: [Azure Functions requires a storage account](https://docs.microsoft.com/azure/azure-functions/storage-considerations) for the function app instance.
++ **Microsoft.Storage/storageAccounts**: [Azure Functions requires a storage account](https://learn.microsoft.com/azure/azure-functions/storage-considerations) for the function app instance.
 
 ### Virtual Network
 
@@ -62,9 +62,9 @@ The sample uses two subnets:
 
 ### Private Endpoints
 
-[Azure Private Endpoints](https://docs.microsoft.com/azure/private-link/private-endpoint-overview) are used to connect to specific Azure resources using a private IP address  This ensures that network traffic remains within the designated virtual network, and access is available only for specific resources.  This sample configures private endpoints for the following Azure resources:
+[Azure Private Endpoints](https://learn.microsoft.com/azure/private-link/private-endpoint-overview) are used to connect to specific Azure resources using a private IP address  This ensures that network traffic remains within the designated virtual network, and access is available only for specific resources.  This sample configures private endpoints for the following Azure resources:
 
-- [Azure Storage](https://docs.microsoft.com/azure/storage/common/storage-private-endpoints)
+- [Azure Storage](https://learn.microsoft.com/azure/storage/common/storage-private-endpoints)
   - Azure File storage
   - Azure Blob storage
   - Azure Queue storage
@@ -85,19 +85,19 @@ The following DNS zones are created in this sample:
 
 ### Application Insights
 
-[Application Insights](https://docs.microsoft.com/azure/azure-monitor/app/app-insights-overview) is used to provide [monitor the Azure Function](https://docs.microsoft.com/azure/azure-functions/functions-monitoring).
+[Application Insights](https://learn.microsoft.com/azure/azure-monitor/app/app-insights-overview) is used to provide [monitor the Azure Function](https://learn.microsoft.com/azure/azure-functions/functions-monitoring).
 
 + **Microsoft.Insights/components**: The Application Insights instance used by the Azure Function for monitoring.
 
 ### NOTE:
 
 + This ARM template will allow access to the storage account through the private endpoints only. So, you will not be able to access the data storage in the storage account through the portal or otherwise.
-+ You can give access to your secured IP address or virtual network for the data storage in the storage account, by [Managing the default network access rule](https://docs.microsoft.com/en-us/azure/storage/common/storage-network-security?tabs=azure-portal#change-the-default-network-access-rule)
++ You can give access to your secured IP address or virtual network for the data storage in the storage account, by [Managing the default network access rule](https://learn.microsoft.com/en-us/azure/storage/common/storage-network-security?tabs=azure-portal#change-the-default-network-access-rule)
 
 <br/>
 
-For more information on configuring Azure Storage firewalls and virtual networks, please refer: [Configure Azure Storage firewalls and virtual networks](https://docs.microsoft.com/en-us/azure/storage/common/storage-network-security?tabs=azure-portal)
+For more information on configuring Azure Storage firewalls and virtual networks, please refer: [Configure Azure Storage firewalls and virtual networks](https://learn.microsoft.com/en-us/azure/storage/common/storage-network-security?tabs=azure-portal)
 
-For more information on Azure Functions networking options and VNET integration, please refer: [Azure Functions Networking Options](https://docs.microsoft.com/en-us/azure/azure-functions/functions-networking-options#restrict-your-storage-account-to-a-virtual-network)
+For more information on Azure Functions networking options and VNET integration, please refer: [Azure Functions Networking Options](https://learn.microsoft.com/en-us/azure/azure-functions/functions-networking-options#restrict-your-storage-account-to-a-virtual-network)
 
 `Tags: Microsoft.Network/privateDnsZones/virtualNetworkLinks, Microsoft.Network/privateEndpoints/privateDnsZoneGroups, Microsoft.Network/virtualNetworks, Microsoft.Network/privateDnsZones, Microsoft.Network/privateEndpoints, Microsoft.Storage/storageAccounts, Microsoft.Storage/storageAccounts/fileServices/shares, Microsoft.Insights/components, Microsoft.Web/serverfarms, Microsoft.Web/sites`

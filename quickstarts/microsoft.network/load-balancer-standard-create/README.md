@@ -39,7 +39,7 @@ The template creates and configures the following Azure resources:
 
 For more information about this template, see the quickstart articles:
 
-- [Quickstart: Create a public load balancer to load balance VMs using the Azure portal](https://docs.microsoft.com/azure/load-balancer/quickstart-load-balancer-standard-public-portal)
-- [Quickstart: Create a public load balancer to load balance VMs by using an ARM template](https://docs.microsoft.com/azure/load-balancer/quickstart-load-balancer-standard-public-template)
+- [Quickstart: Create a public load balancer to load balance VMs using the Azure portal](https://learn.microsoft.com/azure/load-balancer/quickstart-load-balancer-standard-public-portal)
+- [Quickstart: Create a public load balancer to load balance VMs by using an ARM template](https://learn.microsoft.com/azure/load-balancer/quickstart-load-balancer-standard-public-template)
 
 `Tags: Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines/extensions, CustomScriptExtension, Microsoft.Compute/virtualMachines, Microsoft.Network/virtualNetworks/subnets, Microsoft.Network/bastionHosts, Microsoft.Network/publicIPAddresses, Microsoft.Network/loadBalancers, Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks`

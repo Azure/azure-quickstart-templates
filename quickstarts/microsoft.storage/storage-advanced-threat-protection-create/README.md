@@ -33,6 +33,6 @@ This template allows you to deploy an Azure Storage Account with Advanced Threat
 
 Storage Advanced Threat Protection is a unified package for advanced Storage security capabilities.
 
-For more information on Storage Advanced Threat Protection, see the [official documentation]( https://docs.microsoft.com/azure/storage/common/storage-advanced-threat-protection).
+For more information on Storage Advanced Threat Protection, see the [official documentation]( https://learn.microsoft.com/azure/storage/common/storage-advanced-threat-protection).
 
 `Tags: Microsoft.Storage/storageAccounts, Microsoft.Security/advancedThreatProtectionSettings`

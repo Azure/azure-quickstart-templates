@@ -35,6 +35,6 @@ The template creates the following Azure resources:
 - an IPv4 Public IP address for each VM to facilitate remote connection to the VM (RDP)
 - two virtual machines with both IPv4 and IPv6 endpoints in the VNET/subnet
 
-For a more information about this template, see [What is IPv6 for Azure Virtual Network?](https://docs.microsoft.com/azure/virtual-network/ipv6-overview/)
+For a more information about this template, see [What is IPv6 for Azure Virtual Network?](https://learn.microsoft.com/azure/virtual-network/ipv6-overview/)
 
 `Tags: Microsoft.Network/publicIPAddresses, Microsoft.Compute/availabilitySets, Microsoft.Storage/storageAccounts, Microsoft.Network/loadBalancers, Microsoft.Network/virtualNetworks, Microsoft.Network/networkSecurityGroups, Microsoft.Network/routeTables, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines`

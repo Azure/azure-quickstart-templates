@@ -31,7 +31,7 @@ This template creates an Azure Storage account with multiple file shares.
 If you are new to Azure Storage accounts, see:
 
 - [Azure Storage account documentation](http://azure.microsoft.com/documentation/articles/storage-create-storage-account/)
-- [Azure Storage account template reference](https://docs.microsoft.com/azure/templates/microsoft.storage/allversions)
+- [Azure Storage account template reference](https://learn.microsoft.com/azure/templates/microsoft.storage/allversions)
 - [Quickstart templates](https://azure.microsoft.com/resources/templates/?resourceType=Microsoft.Storage&pageNumber=1&sort=Popular)
 
 Tags: Azure Storage account, Resource Manager, Resource Manager templates, ARM templates

@@ -27,7 +27,7 @@ resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-
   location: location
 }
 
-@description('This is the built-in Key Vault Administrator role. See https://docs.microsoft.com/azure/role-based-access-control/built-in-roles#key-vault-administrator')
+@description('This is the built-in Key Vault Administrator role. See https://learn.microsoft.com/azure/role-based-access-control/built-in-roles#key-vault-administrator')
 resource keyVaultAdministratorRoleDefinition 'Microsoft.Authorization/roleDefinitions@2018-01-01-preview' existing = {
   scope: subscription()
   name: '00482a5a-887f-4fb3-b363-3b7fe8e74483'

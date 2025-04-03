@@ -28,7 +28,7 @@ languages:
 
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.datashare%2Fdata-share-share%2Fazuredeploy.json)
 
-When you deploy this Azure Resource Manager template, a data share provider share is created.  For more details you can refer to this link: https://docs.microsoft.com/azure/data-share/concepts-roles-permissions#roles-and-requirements
+When you deploy this Azure Resource Manager template, a data share provider share is created.  For more details you can refer to this link: https://learn.microsoft.com/azure/data-share/concepts-roles-permissions#roles-and-requirements
 
 `Tags: data share, share, Microsoft.DataShare/accounts, SystemAssigned, Microsoft.DataShare/accounts/shares`
 	```

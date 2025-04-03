@@ -496,7 +496,7 @@
             DependsOn              = "[CertReq]GenerateADFSSiteCertificate", "[CertReq]GenerateADFSSigningCertificate", "[CertReq]GenerateADFSDecryptionCertificate"
         }
 
-        # https://docs.microsoft.com/en-us/windows-server/identity/ad-fs/deployment/configure-corporate-dns-for-the-federation-service-and-drs
+        # https://learn.microsoft.com/en-us/windows-server/identity/ad-fs/deployment/configure-corporate-dns-for-the-federation-service-and-drs
         DnsRecordCname AddADFSDevideRegistrationAlias {
             Name          = "enterpriseregistration"
             ZoneName      = $DomainFQDN

@@ -47,6 +47,6 @@ Users need to have an existing storage account with an existing file share prese
 
 ## Deployment steps
 
-You can click the **Deploy to Azure** button at the beginning of this document. You may alternatively download the template and [deploy it using PowerShell](https://docs.microsoft.com/azure/azure-resource-manager/templates/deploy-powershell#deploy-local-template) or use your preferred method of ARM template deployment.
+You can click the **Deploy to Azure** button at the beginning of this document. You may alternatively download the template and [deploy it using PowerShell](https://learn.microsoft.com/azure/azure-resource-manager/templates/deploy-powershell#deploy-local-template) or use your preferred method of ARM template deployment.
 
 `Tags: file share, backup, recovery services, configure protection, Microsoft.RecoveryServices/vaults, Microsoft.RecoveryServices/vaults/backupPolicies, Microsoft.RecoveryServices/vaults/backupFabrics/protectionContainers, Microsoft.RecoveryServices/vaults/backupFabrics/protectionContainers/protectedItems, Microsoft.Storage/storageAccounts, Microsoft.Storage/storageAccounts/fileServices/shares`

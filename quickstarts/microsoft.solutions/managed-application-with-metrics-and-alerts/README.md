@@ -45,7 +45,7 @@ This view is driven by the [viewDefinition.json](artifacts/ManagedAppZip/viewDef
 The Overview is defined by the "kind" propert when set to "Overview".  Values for the header and description shown as a default overview experience.
 To learn more about View definition please visit:
 
-+ [**View definition artifact in Azure Managed Applications**](https://docs.microsoft.com/azure/managed-applications/concepts-view-definition)
++ [**View definition artifact in Azure Managed Applications**](https://learn.microsoft.com/azure/managed-applications/concepts-view-definition)
 
 Click *managed resource group* in managed application overview.
 
@@ -59,7 +59,7 @@ This sample [mainTemplate.json](artifacts/ManagedAppZip/mainTemplate.json) speci
 
 To learn more about Azure alerts, please visit:
 
-+ [**Overview of alerts in Microsoft Azure**](https://docs.microsoft.com/azure/azure-monitor/platform/alerts-overview).
++ [**Overview of alerts in Microsoft Azure**](https://learn.microsoft.com/azure/azure-monitor/platform/alerts-overview).
 
 To learn more about Azure Resource Manager templates best practices please visit:
 
@@ -81,14 +81,14 @@ Now click on the Metrics menu item. The application is exposing three metrics: T
 ![Portal Metrix](images/app-metrics.png)
 
 The metrics view is driven by the [viewDefinition.json](artifacts/ManagedAppZip/viewDefinition.json) file from the application definition package. Metrics are defined by the "kind" property and the "Metrics" element. You can use any metric supported by your application's Azure resource to expose an application metric. You see different views: bar chart, line chart etc for better visualization.
-You can drill down into each metric that you are interested in and explore more using [**Azure Metrics Explorer**](https://docs.microsoft.com/azure/azure-monitor/platform/metrics-getting-started) capabilities.
+You can drill down into each metric that you are interested in and explore more using [**Azure Metrics Explorer**](https://learn.microsoft.com/azure/azure-monitor/platform/metrics-getting-started) capabilities.
 
 To learn more about supported metrics, please visit:
 
-+ [**Supported metrics with Azure Monitor**](https://docs.microsoft.com/azure/azure-monitor/platform/metrics-supported).
++ [**Supported metrics with Azure Monitor**](https://learn.microsoft.com/azure/azure-monitor/platform/metrics-supported).
 
 To learn more about View definition please visit:
 
-+ [**View definition artifact in Azure Managed Applications**](https://docs.microsoft.com/azure/managed-applications/concepts-view-definition)
++ [**View definition artifact in Azure Managed Applications**](https://learn.microsoft.com/azure/managed-applications/concepts-view-definition)
 
 `Tags: Microsoft.Solutions/applicationDefinitions, Microsoft.Solutions/applications, Microsoft.Storage/storageAccounts, Microsoft.Insights/actionGroups, Microsoft.Insights/metricAlerts, Microsoft.Insights/activityLogAlerts`

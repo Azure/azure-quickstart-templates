@@ -42,7 +42,7 @@ All 3 front-ends are protected by Network Security Groups and only allow access 
 The middle-tier currently serves no purpose other than to demonstrate variable configuration deployment of 0, 1, or 3 VMs as is seen in services that include a high-availability configuration when deployed.
 
 ### Back End
-Each node in the back-end tier currently runs a script to start a simple web server on port 80 (See [examplePostInstall2.sh](scripts/examplepostinstall2.sh)).  The web server will display a static html file that includes the virtual machine name retrieved from the [Azure Instance Metadata Service](https://docs.microsoft.com/azure/virtual-machines/windows/instance-metadata-service).
+Each node in the back-end tier currently runs a script to start a simple web server on port 80 (See [examplePostInstall2.sh](scripts/examplepostinstall2.sh)).  The web server will display a static html file that includes the virtual machine name retrieved from the [Azure Instance Metadata Service](https://learn.microsoft.com/azure/virtual-machines/windows/instance-metadata-service).
 
 ## Topics Covered:
 

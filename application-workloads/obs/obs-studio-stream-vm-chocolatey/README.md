@@ -34,7 +34,7 @@ Following resources will be created
 - Virtual Machine
 
 Notes
-- GPU drivers installed via NVIDIA extension for Virtual Machine, more details - https://docs.microsoft.com/azure/virtual-machines/windows/n-series-driver-setup
+- GPU drivers installed via NVIDIA extension for Virtual Machine, more details - https://learn.microsoft.com/azure/virtual-machines/windows/n-series-driver-setup
 - Software installation based on custom script extension via chocolatey package manager
 
 *OBS-NDI is isntalling via choco sources, as OBS-NDI official package not yet validated by chocolatey moderators Team - https://chocolatey.org/packages/obs-ndi/4.9.0*

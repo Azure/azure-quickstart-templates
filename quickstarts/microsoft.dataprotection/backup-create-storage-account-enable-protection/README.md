@@ -33,7 +33,7 @@ A disaster recovery and data protection strategy keeps your business running whe
 The Backup service is Microsoft's born in the cloud backup solution to backup data that's located on-premises and in Azure. It replaces your existing on-premises or offsite backup solution with a reliable, secure and cost competitive cloud backup solution. It also provides the flexibility of protecting your assets running in the cloud. [Learn more](http://aka.ms/backup-learn-more/).
 
 ### Overview of Azure Blob backup
-Azure Backup provides both operational and vaulted backup solution for Azure Blobs. [Learn more](https://docs.microsoft.com/azure/backup/blob-backup-overview)
+Azure Backup provides both operational and vaulted backup solution for Azure Blobs. [Learn more](https://learn.microsoft.com/azure/backup/blob-backup-overview)
 
 #### Operational Backup
 Operational backup uses blob platform capabilities to protect your data and allow recovery when required:
@@ -53,6 +53,6 @@ You can't delete a Backup vault with any of the following dependencies:
 - You can't delete a vault that contains backup data.
 If you try to delete the vault without removing the dependencies, you'll encounter the following error messages:
 Cannot delete the Backup vault as there are existing backup instances or backup policies in the vault. Delete all backup instances and backup policies that are present in the vault and then try deleting the vault.
-Here are the steps for [Delete a Backup Vault](https://docs.microsoft.com/azure/backup/backup-vault-overview#delete-a-backup-vault)
+Here are the steps for [Delete a Backup Vault](https://learn.microsoft.com/azure/backup/backup-vault-overview#delete-a-backup-vault)
 
 `Tags: Microsoft.DataProtection/backupVaults, systemAssigned, [parameters('vaultStorageRedundancy')], Microsoft.DataProtection/backupVaults/backupPolicies, Microsoft.Storage/storageAccounts, Microsoft.Authorization/roleAssignments, Microsoft.DataProtection/backupVaults/backupInstances`

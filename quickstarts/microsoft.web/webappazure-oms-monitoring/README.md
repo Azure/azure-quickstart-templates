@@ -27,7 +27,7 @@ This template deploys **Azure Web App Analytics Solution** on an Azure Log Analy
 
 `Tags: Azure Web App, OMS Log Analytics, Monitoring, Microsoft.OperationalInsights/workspaces, views, Blade, OverviewTile, Microsoft.OperationsManagement/solutions`
 
-The Azure Web Apps Analytics solution provides insights into your [Azure Web Apps](https://docs.microsoft.com/azure/app-service/app-service-web-overview) by collecting different metrics across all your Azure Web App resources. With the solution, you can analyze and search for web app resource metric data.
+The Azure Web Apps Analytics solution provides insights into your [Azure Web Apps](https://learn.microsoft.com/azure/app-service/app-service-web-overview) by collecting different metrics across all your Azure Web App resources. With the solution, you can analyze and search for web app resource metric data.
 
 Using the solution, you can view the:
 
@@ -44,7 +44,7 @@ Perform the following steps to configure the Azure Web Apps Analytics solution f
 1. Enable the Azure Web Apps Analytics solution from<BR> [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.web%2Fwebappazure-oms-monitoring%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.web%2Fwebappazure-oms-monitoring%2Fazuredeploy.json)
 
 <BR>
-2. [Enable Azure resource metrics logging to Log Analytics using PowerShell](https://docs.microsoft.com/azure/log-analytics/log-analytics-collect-azurepass-posh).
+2. [Enable Azure resource metrics logging to Log Analytics using PowerShell](https://learn.microsoft.com/azure/log-analytics/log-analytics-collect-azurepass-posh).
 
 The Azure Web Apps Analytics solution collects two set of metrics from Azure:
 

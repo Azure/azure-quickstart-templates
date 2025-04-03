@@ -53,7 +53,7 @@ This template set deploys the following infrastructure:
 You can click the "deploy to Azure" button at the beginning of this document or alternatively perform a deploy from the command line:
 
 ### *Command line deploys*
-Once you've checked out the templates from git, you'll want to use the [Azure CLI tool](https://docs.microsoft.com/cli/azure/overview?view=azure-cli-latest) to deploy them. First off you'll want to create a group with these:
+Once you've checked out the templates from git, you'll want to use the [Azure CLI tool](https://learn.microsoft.com/cli/azure/overview?view=azure-cli-latest) to deploy them. First off you'll want to create a group with these:
 
 `az group create --name <stackname> --location <location>`
 
@@ -140,7 +140,7 @@ While Azure does not currently back up Postgres/MySQL databases, by dumping it t
 
 ### *Azure Recovery Services*
 
-If you have set azureBackupSwitch to 1 then Azure will provide VM backups of your Gluster node. This is recommended as it contains both your Moodle code and your sitedata. Restoring a backed up VM is outside the scope of this doc, but Azure's documentation on Recovery Services can be found here: https://docs.microsoft.com/azure/backup/backup-azure-vms-first-look-arm
+If you have set azureBackupSwitch to 1 then Azure will provide VM backups of your Gluster node. This is recommended as it contains both your Moodle code and your sitedata. Restoring a backed up VM is outside the scope of this doc, but Azure's documentation on Recovery Services can be found here: https://learn.microsoft.com/azure/backup/backup-azure-vms-first-look-arm
 
 ### *Resizing your Database*
 
@@ -180,7 +180,7 @@ As of the time of this writing, Azure supports "Basic" and "Standard" tiers for 
 - Basic: 50, 100
 - Standard: 100, 200, 400, 800
 
-This value also limits the maximum number of connections, as defined here: https://docs.microsoft.com/azure/mysql/concepts-limits
+This value also limits the maximum number of connections, as defined here: https://learn.microsoft.com/azure/mysql/concepts-limits
 
 As the Moodle database will handle cron processes as well as the website, any public facing website with more than 10 users will likely require upgrading to 100. Once the site reaches 30+ users it will require upgrading to Standard for more compute units. This depends entirely on the individual site. As MySQL databases cannot change (or be restored to a different tier) once deployed it is a good idea to slightly overspec your database.
 

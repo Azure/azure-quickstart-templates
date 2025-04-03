@@ -29,7 +29,7 @@ Direct connection: ssh {username}@{public-ip-address of VM}
 
 Indirect connection via load balancer: ssh -p 50000 {username}@{load balancerpublic-ip-address}
 
-To determine the public IP address of each VM using Azure CLI 2.0 (July 2017 version or later), using the _az vmss list-instance-public-ips_ command. See [Networking for Azure virtual machine scale sets](https://docs.microsoft.com/azure/virtual-machine-scale-sets/virtual-machine-scale-sets-networking) for more details on Azure scale set networking features.
+To determine the public IP address of each VM using Azure CLI 2.0 (July 2017 version or later), using the _az vmss list-instance-public-ips_ command. See [Networking for Azure virtual machine scale sets](https://learn.microsoft.com/azure/virtual-machine-scale-sets/virtual-machine-scale-sets-networking) for more details on Azure scale set networking features.
 
 PARAMETER RESTRICTIONS
 ======================

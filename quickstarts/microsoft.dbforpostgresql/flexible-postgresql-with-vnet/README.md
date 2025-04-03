@@ -25,8 +25,8 @@ languages:
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.dbforpostgresql%2Fflexible-postgresql-with-vnet%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.dbforpostgresql%2Fflexible-postgresql-with-vnet%2Fazuredeploy.json)
 
-This template provides a easy way to deploy the Flexible server Azure database for PostgreSQL with VNet Integration. To learn more about how to deploy the template, see the [quickstart](https://docs.microsoft.com/azure/postgresql/flexible-server/quickstart-create-arm-template) article.
+This template provides a easy way to deploy the Flexible server Azure database for PostgreSQL with VNet Integration. To learn more about how to deploy the template, see the [quickstart](https://learn.microsoft.com/azure/postgresql/flexible-server/quickstart-create-arm-template) article.
 
-For more information about the Flexible Server Sku for Azure database for PostgreSQL, and how it compares to the Single Server Sku see the [docs](https://docs.microsoft.com/azure/postgresql/select-right-deployment-type)
+For more information about the Flexible Server Sku for Azure database for PostgreSQL, and how it compares to the Single Server Sku see the [docs](https://learn.microsoft.com/azure/postgresql/select-right-deployment-type)
 
 `Tags: Microsoft.Network/virtualNetworks/subnets, Microsoft.Network/virtualNetworks, Microsoft.Network/privateDnsZones, Microsoft.Network/privateDnsZones/virtualNetworkLinks, Microsoft.DBforPostgreSQL/flexibleServers`

@@ -68,8 +68,8 @@ Begin your journey with VS Code with these [introductory videos](https://code.vi
 
 ### Microsoft Learn - Learning Modules
 
-[Visual Studio Code](https://docs.microsoft.com/learn/browse/?term=Visual%20Studio%20Code)
-[Linux Virtual Machines on Azure](https://docs.microsoft.com/learn/browse/?term=Linux%20Virtual%20Machine)
-[Azure CLI](https://docs.microsoft.com/learn/browse/?term=Azure%20CLI)
+[Visual Studio Code](https://learn.microsoft.com/learn/browse/?term=Visual%20Studio%20Code)
+[Linux Virtual Machines on Azure](https://learn.microsoft.com/learn/browse/?term=Linux%20Virtual%20Machine)
+[Azure CLI](https://learn.microsoft.com/learn/browse/?term=Azure%20CLI)
 
 `Tags: Microsoft.Network/publicIPAddresses, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Network/networkSecurityGroups, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, CustomScript`

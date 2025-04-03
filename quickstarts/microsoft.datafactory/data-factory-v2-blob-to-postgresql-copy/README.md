@@ -23,8 +23,8 @@ This template creates a data factory of version 2 with a pipeline that copies da
 ## Prerequisites ##
 
 * Azure subscription. If you don't have an Azure subscription, create a [free Azure account](https://azure.microsoft.com/free/) before you begin.
-* Azure storage account. You use Blob storage as a source data store. If you don't have a storage account, see [Create an Azure storage account](https://docs.microsoft.com/azure/storage/common/storage-quickstart-create-account) for steps to create one.
-* Azure Database for PostgreSQL. You use the database as a sink data store. If you don't have a PostgreSQL database, see [Create a PostgreSQL database](https://docs.microsoft.com/azure/postgresql/quickstart-create-server-database-portal) for steps to create one.
+* Azure storage account. You use Blob storage as a source data store. If you don't have a storage account, see [Create an Azure storage account](https://learn.microsoft.com/azure/storage/common/storage-quickstart-create-account) for steps to create one.
+* Azure Database for PostgreSQL. You use the database as a sink data store. If you don't have a PostgreSQL database, see [Create a PostgreSQL database](https://learn.microsoft.com/azure/postgresql/quickstart-create-server-database-portal) for steps to create one.
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.datafactory%2Fdata-factory-v2-blob-to-postgresql-copy%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.datafactory%2Fdata-factory-v2-blob-to-postgresql-copy%2Fazuredeploy.json)
@@ -43,7 +43,7 @@ When you deploy this Azure Resource Manager template, a data factory of version 
 2. Click **Go to resource group**.
 3. Search for *datafactory that's created.
 
-The following sections provide steps for running and monitoring the pipeline. For more information, see [Quickstart: Create a data factory by using Azure PowerShell](https://docs.microsoft.com/azure/data-factory/quickstart-create-data-factory-powershell).
+The following sections provide steps for running and monitoring the pipeline. For more information, see [Quickstart: Create a data factory by using Azure PowerShell](https://learn.microsoft.com/azure/data-factory/quickstart-create-data-factory-powershell).
 
 ## Run and monitor the pipeline
 After you deploy the template, to run and monitor the pipeline, do the following steps:

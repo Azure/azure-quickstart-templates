@@ -30,6 +30,6 @@ Azure Firewall is a managed cloud-based network security service that protects y
 
 The service is fully integrated with Azure Monitor for logging and analytics.
 
-Azure Firewall is currently a managed public preview that you need to explicitly enable using the Register-AzureRmProviderFeature PowerShell command. Learn more at https://docs.microsoft.com/azure/firewall.
+Azure Firewall is currently a managed public preview that you need to explicitly enable using the Register-AzureRmProviderFeature PowerShell command. Learn more at https://learn.microsoft.com/azure/firewall.
 
 `Tags: Microsoft.Storage/storageAccounts, Microsoft.Network/routeTables, Microsoft.Network/virtualNetworks, Microsoft.Network/virtualNetworks/virtualNetworkPeerings, Microsoft.Network/publicIPAddresses, Microsoft.Network/networkSecurityGroups, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Network/azureFirewalls, Allow`

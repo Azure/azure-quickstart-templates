@@ -31,7 +31,7 @@ This template deploys a **blueprint definition**.
 
 This template deploys an Azure Blueprints blueprint definition. The blueprint definition includes a
 single artifact, a policy assignment. The
-[Azure Policy](https://docs.microsoft.com/azure/governance/policy) built-in policy definition **Not
+[Azure Policy](https://learn.microsoft.com/azure/governance/policy) built-in policy definition **Not
 allowed resource types**. View the policy definition in
 [Azure portal](https://portal.azure.com/#blade/Microsoft_Azure_Policy/PolicyDetailBlade/definitionId/%2Fproviders%2FMicrosoft.Authorization%2FpolicyDefinitions%2F6c112d4e-5bc7-47ae-a041-ea2d9dccd749)
 or the source in
@@ -47,7 +47,7 @@ artifacts, versions, and assignments.
   policy assignments, resource groups, and Azure Resource Manager templates.
 - **versions**: The version object reflects a blueprint definition moving from _draft_ to
   _published_. For more information, see
-  [Azure Blueprint lifecycle](https://docs.microsoft.com/azure/governance/blueprints/concepts/lifecycle).
+  [Azure Blueprint lifecycle](https://learn.microsoft.com/azure/governance/blueprints/concepts/lifecycle).
 - **blueprintAssignments**: This is the resource object that assigns a blueprint definition and
   deploys it to a target scope.
 
@@ -81,14 +81,14 @@ following:
 
 If you are new to Azure Blueprints, see:
 
-- [Azure Blueprints documentation](https://docs.microsoft.com/azure/governance/blueprints)
-- [Azure Blueprints - Lifecycle](https://docs.microsoft.com/azure/governance/blueprints/concepts/lifecycle)
-- [Azure Blueprints - Stages of deployment](https://docs.microsoft.com/azure/governance/blueprints/concepts/deployment-stages)
-- [Azure Blueprints - Resource locking](https://docs.microsoft.com/azure/governance/blueprints/concepts/resource-locking)
-- [Azure Blueprints - Dynamic parameters](https://docs.microsoft.com/azure/governance/blueprints/concepts/parameters)
+- [Azure Blueprints documentation](https://learn.microsoft.com/azure/governance/blueprints)
+- [Azure Blueprints - Lifecycle](https://learn.microsoft.com/azure/governance/blueprints/concepts/lifecycle)
+- [Azure Blueprints - Stages of deployment](https://learn.microsoft.com/azure/governance/blueprints/concepts/deployment-stages)
+- [Azure Blueprints - Resource locking](https://learn.microsoft.com/azure/governance/blueprints/concepts/resource-locking)
+- [Azure Blueprints - Dynamic parameters](https://learn.microsoft.com/azure/governance/blueprints/concepts/parameters)
 
 If you are new to template deployment, see:
 
-- [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
+- [Azure Resource Manager documentation](https://learn.microsoft.com/azure/azure-resource-manager/)
 
 `Tags: Blueprints, blueprint definition, artifacts, policy assignment, blueprint-level parameters, Microsoft.Blueprint/blueprints, Microsoft.Blueprint/blueprints/artifacts`

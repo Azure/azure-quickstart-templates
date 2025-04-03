@@ -33,8 +33,8 @@ This template creates an Azure Machine Learning Sweep job for hyperparameter tun
 
 To run this template you need to have an Azure Machine Learning Workspace, an Azure Machine Learning Compute Cluster and an Azure Machine Learning Storage Account. The template expects these as parameters: `workspaceName`, `computeName` and `storageAccountName`. You can use the following samples to create these:
 
-1. [Azure Machine Learning Workspace](https://docs.microsoft.com/en-us/samples/azure/azure-quickstart-templates/modules-machine-learning-workspace-0.9/)
-2. [Azure Machine Learning Compute Cluster](https://docs.microsoft.com/en-us/samples/azure/azure-quickstart-templates/machine-learning-compute-create-amlcompute/)
+1. [Azure Machine Learning Workspace](https://learn.microsoft.com/en-us/samples/azure/azure-quickstart-templates/modules-machine-learning-workspace-0.9/)
+2. [Azure Machine Learning Compute Cluster](https://learn.microsoft.com/en-us/samples/azure/azure-quickstart-templates/machine-learning-compute-create-amlcompute/)
 
 Also, the prereq template in prereq folder can be deployed first to get Azure Machine Learning Workspace, an Azure Machine Learning Compute Cluster and an Azure Machine Learning Storage Account. The prereq template will help to setup the basic Azure Machine Learning resources needed to create Sweep job resource.
 
@@ -45,9 +45,9 @@ Also, the prereq template in prereq folder can be deployed first to get Azure Ma
 If you are new to Azure Machine Learning, see:
 
 - [Azure Machine Learning service](https://azure.microsoft.com/services/machine-learning-service/)
-- [Azure Machine Learning documentation](https://docs.microsoft.com/azure/machine-learning/)
-- [Azure Machine Learning compute instance documentation](https://docs.microsoft.com/azure/machine-learning/concept-compute-instance)
-- [Azure Machine Learning template reference](https://docs.microsoft.com/azure/templates/microsoft.machinelearningservices/allversions)
+- [Azure Machine Learning documentation](https://learn.microsoft.com/azure/machine-learning/)
+- [Azure Machine Learning compute instance documentation](https://learn.microsoft.com/azure/machine-learning/concept-compute-instance)
+- [Azure Machine Learning template reference](https://learn.microsoft.com/azure/templates/microsoft.machinelearningservices/allversions)
 - [Quickstart templates](https://azure.microsoft.com/resources/templates/)
 
 `Tags: Microsoft.MachineLearningServices/workspaces/jobs, Microsoft.MachineLearningServices/workspaces/computes, Microsoft.MachineLearningServices/workspaces, systemAssigned`

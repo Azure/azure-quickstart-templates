@@ -70,8 +70,8 @@ Once the deployment is completed, you should see the following resources in the 
 Learn more about: Azure Logic Apps
 * **Azure Logic Apps** - https://azure.microsoft.com/documentation/articles/app-service-logic-what-are-logic-apps/
 * **Logic Apps Enterprise Integration Pack** - https://blogs.msdn.microsoft.com/logicapps/2016/06/30/public-preview-of-logic-apps-enteprise-integration-pack/
-* **Logic Apps B2B Cross Region Disaster Recovery** - https://docs.microsoft.com/azure/logic-apps/logic-apps-enterprise-integration-b2b-business-continuity
+* **Logic Apps B2B Cross Region Disaster Recovery** - https://learn.microsoft.com/azure/logic-apps/logic-apps-enterprise-integration-b2b-business-continuity
 * **B2B Processing capabilities in Logic Apps** - https://azure.microsoft.com/documentation/articles/app-service-logic-enterprise-integration-b2b/
 * **PowerShell cmdlets for X12 connector disaster recovery** - https://blogs.msdn.microsoft.com/david_burgs_blog/2017/03/09/fresh-of-the-press-new-azure-powershell-cmdlets-for-upcoming-x12-connector-disaster-recovery/
-* **PowerShell cmdlets for Logic App and Integration Account on Microsoft Azure** - https://docs.microsoft.com/powershell/resourcemanager/azurerm.logicapp/v2.7.0/azurerm.logicapp
+* **PowerShell cmdlets for Logic App and Integration Account on Microsoft Azure** - https://learn.microsoft.com/powershell/resourcemanager/azurerm.logicapp/v2.7.0/azurerm.logicapp
 

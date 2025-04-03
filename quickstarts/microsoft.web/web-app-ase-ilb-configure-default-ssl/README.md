@@ -25,6 +25,6 @@ languages:
 
 The syntax for configuring the default SSL certificate for an ASE is the same for both ASE as well as ASE v2.
 
-For more details on App Service Environments, see the [Introduction to App Service Environments](https://docs.microsoft.com/azure/app-service/app-service-environment/app-service-env-intro/).
+For more details on App Service Environments, see the [Introduction to App Service Environments](https://learn.microsoft.com/azure/app-service/app-service-environment/app-service-env-intro/).
 
 `Tags: Microsoft.Web/certificates, Microsoft.Web/hostingEnvironments`

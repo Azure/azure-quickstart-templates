@@ -31,7 +31,7 @@ param existingEncryptionKeyUrl string = ''
 @description('User-assigned identity is an identity in Azure Active Directory that can be used to give access to other Azure resource such as Azure Key Vault. This identity should have Get, Wrap key, and Unwrap key permissions on the key vault.')
 param existingUserAssignedIdentityResourceId string = ''
 
-@description('An array containing properties of the SIM(s) you wish to create. See [Provision proxy SIM(s)](https://docs.microsoft.com/en-gb/azure/private-5g-core/provision-sims-azure-portal) for a full description of the required properties and their format.')
+@description('An array containing properties of the SIM(s) you wish to create. See [Provision proxy SIM(s)](https://learn.microsoft.com/en-gb/azure/private-5g-core/provision-sims-azure-portal) for a full description of the required properties and their format.')
 param simResources array = []
 
 @description('The resource ID of the Azure Stack Edge device to deploy to')
@@ -85,7 +85,7 @@ param naptEnabled string
 @description('A list of DNS servers that UEs on this data network will use')
 param dnsAddresses array
 
-@description('The resource ID of the customLocation representing the ASE device where the packet core will be deployed. If this parameter is not specified then the 5G core will be created but will not be deployed to an ASE. [Collect custom location information](https://docs.microsoft.com/en-gb/azure/private-5g-core/collect-required-information-for-a-site#collect-custom-location-information) explains which value to specify here.')
+@description('The resource ID of the customLocation representing the ASE device where the packet core will be deployed. If this parameter is not specified then the 5G core will be created but will not be deployed to an ASE. [Collect custom location information](https://learn.microsoft.com/en-gb/azure/private-5g-core/collect-required-information-for-a-site#collect-custom-location-information) explains which value to specify here.')
 param customLocation string = ''
 
 #disable-next-line BCP081

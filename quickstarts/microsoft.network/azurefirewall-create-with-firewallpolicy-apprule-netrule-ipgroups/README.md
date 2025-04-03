@@ -32,6 +32,6 @@ IP Groups is a top-level resource that allows you to group and manage IP address
 
 An IP Group can support individual or multiple IP addresses, ranges, or subnets.
 
-Learn more at https://docs.microsoft.com/azure/firewall/ip-groups.
+Learn more at https://learn.microsoft.com/azure/firewall/ip-groups.
 
 `Tags: Microsoft.Network/ipGroups, Microsoft.Network/virtualNetworks, Microsoft.Network/publicIPAddresses, Microsoft.Network/firewallPolicies, Microsoft.Network/firewallPolicies/ruleCollectionGroups, Allow, Microsoft.Network/azureFirewalls`

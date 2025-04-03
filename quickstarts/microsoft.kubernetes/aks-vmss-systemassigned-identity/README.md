@@ -29,7 +29,7 @@ languages:
 This template deploys a managed **Azure hosted Kubernetes cluster** via **Azure Kubernetes Service (AKS)** with **Virtual Machine Scale Sets** Agent Pool and **System-assigned managed identity**.
 
 **VMSS based agent pools** gives **AKS cluster** **auto-scaling** capabilities.
-See [https://docs.microsoft.com/azure/aks/cluster-autoscaler#about-the-cluster-autoscaler](https://docs.microsoft.com/azure/aks/cluster-autoscaler#about-the-cluster-autoscaler) for detailed information about cluster auto-scaler.
+See [https://learn.microsoft.com/azure/aks/cluster-autoscaler#about-the-cluster-autoscaler](https://learn.microsoft.com/azure/aks/cluster-autoscaler#about-the-cluster-autoscaler) for detailed information about cluster auto-scaler.
 
 **System-assigned managed identity**, frees up an operational cost by taking care of the identity component of Kubernetes cluster resource, and allows for a improved seamless CI/CD automation, by removing service principal prerequisite, and the long term secret rotation operations of the credential.
 

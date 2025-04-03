@@ -4,7 +4,7 @@ param nsgName string = uniqueString(resourceGroup().id)
 @description('Network security group location')
 param location string = resourceGroup().location
 
-@description('Array containing security rules. For properties format refer to https://docs.microsoft.com/en-us/azure/templates/microsoft.network/networksecuritygroups?tabs=bicep#securityrulepropertiesformat')
+@description('Array containing security rules. For properties format refer to https://learn.microsoft.com/en-us/azure/templates/microsoft.network/networksecuritygroups?tabs=bicep#securityrulepropertiesformat')
 param securityRules array = []
 
 @description('Enable delete lock')

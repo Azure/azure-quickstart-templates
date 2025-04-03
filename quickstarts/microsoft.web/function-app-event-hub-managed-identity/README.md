@@ -32,9 +32,9 @@ This sample Azure Resource Manager template deploys an Azure Function App on Lin
 
 ### Azure Function App
 
-The Function App uses the [AzureWebJobsStorage](https://docs.microsoft.com/azure/azure-functions/functions-app-settings#azurewebjobsstorage) app settings to connect to a Storage Account.
+The Function App uses the [AzureWebJobsStorage](https://learn.microsoft.com/azure/azure-functions/functions-app-settings#azurewebjobsstorage) app settings to connect to a Storage Account.
 
-The Azure Function app provisioned in this sample uses an [Azure Functions Consumption plan](https://docs.microsoft.com/azure/azure-functions/consumption-plan).
+The Azure Function app provisioned in this sample uses an [Azure Functions Consumption plan](https://learn.microsoft.com/azure/azure-functions/consumption-plan).
 
 + **Microsoft.Web/sites**: The function app instance.
 + **Microsoft.Web/serverfarms**: The Azure Functions Consumption plan (a.k.a. Dynamic plan)
@@ -64,11 +64,11 @@ An Event Hub that can be used by the function.  An identity-based connection is 
 
 The Storage account that the Function uses for operation and for file contents.
 
-+ **Microsoft.Storage/storageAccounts**: [Azure Functions requires a storage account](https://docs.microsoft.com/azure/azure-functions/storage-considerations) for the function app instance.
++ **Microsoft.Storage/storageAccounts**: [Azure Functions requires a storage account](https://learn.microsoft.com/azure/azure-functions/storage-considerations) for the function app instance.
 
 ### Application Insights
 
-[Application Insights](https://docs.microsoft.com/azure/azure-monitor/app/app-insights-overview) is used to provide [monitor the Azure Function](https://docs.microsoft.com/azure/azure-functions/functions-monitoring).
+[Application Insights](https://learn.microsoft.com/azure/azure-monitor/app/app-insights-overview) is used to provide [monitor the Azure Function](https://learn.microsoft.com/azure/azure-functions/functions-monitoring).
 
 + **Microsoft.Insights/components**: The Application Insights instance used by the Azure Function for monitoring.
 

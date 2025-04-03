@@ -53,7 +53,7 @@ Within the Azure Template Deployment panel, set the following properties:
 
 * Set _Moesif Application Id_ to the one displayed after logging into your Moesif account. You can create a free one on [Moesif's website](https://www.moesif.com/?language=azure-api-management)
 
-* Set _Existing Api Mgmt Name_ to the name of your Azure APIM instance. If blank, you will need to manually create the [APIM logger](https://docs.microsoft.com/azure/api-management/api-management-log-to-eventhub-sample#policy-declaration).
+* Set _Existing Api Mgmt Name_ to the name of your Azure APIM instance. If blank, you will need to manually create the [APIM logger](https://learn.microsoft.com/azure/api-management/api-management-log-to-eventhub-sample#policy-declaration).
 
 Once done, click the _Review+create_ button at the bottom and finish the template creation wizard.
 
@@ -70,7 +70,7 @@ Under the _Inbound Processing_ section, click the _Add Policy_ button.
 Select _Other Policies_ which will open the XML editor.
 Paste in the XML code you see below.
 
-More info on editing APIM policies is available on the [Azure docs](https://docs.microsoft.com/azure/api-management/set-edit-policies)
+More info on editing APIM policies is available on the [Azure docs](https://learn.microsoft.com/azure/api-management/set-edit-policies)
 
 ```xml
 <policies>
@@ -173,7 +173,7 @@ That's it. Once the XML is added to your APIs, the logs should start showing up 
 
 ## Configuration Options
 
-The below fields in the XML policy can be modified by you to meet your requirements. XML Policies support a number of [context variables](https://docs.microsoft.com/azure/api-management/api-management-policy-expressions#ContextVariables) which you can also leverage.
+The below fields in the XML policy can be modified by you to meet your requirements. XML Policies support a number of [context variables](https://learn.microsoft.com/azure/api-management/api-management-policy-expressions#ContextVariables) which you can also leverage.
 
 ### User Id
 _String_, The field `user_id` identifies who the user is making the API and enables Moesif to associate API calls to user profiles. The default XML policy extracts the user id from the `context.User.Id` or the Subject of the JWT. If you are a B2B company, this can be used simultaneously with company id to track API Usage both at the individual user-level and also account-level. See [identifying customers in Moesif](https://www.moesif.com/docs/getting-started/identify-customers/) for more info.
@@ -185,7 +185,7 @@ _String_, The field `contextRequestUser` allows you to store additional user met
 _String_, The field `company_id` identifies which company is making the API and enables Moesif to associate API calls to company profiles. The default XML policy does not set this field. See [identifying customers in Moesif](https://www.moesif.com/docs/getting-started/identify-customers/) for more info.
 
 ### Event Metadata
-_String_, A JSON string that allows you to add custom metadata that will be associated with the API call. For example, you may want to store the `context.Api.Name` or `context.Api.Version` with the API calls by reading from the [context variables](https://docs.microsoft.com/azure/api-management/api-management-policy-expressions#ContextVariables). The `metadata` field must be a JSON encoded string.
+_String_, A JSON string that allows you to add custom metadata that will be associated with the API call. For example, you may want to store the `context.Api.Name` or `context.Api.Version` with the API calls by reading from the [context variables](https://learn.microsoft.com/azure/api-management/api-management-policy-expressions#ContextVariables). The `metadata` field must be a JSON encoded string.
 
 ## Manual deployment
 
@@ -204,9 +204,9 @@ Once created, the script will clone the [ApimEventProcessor repo 'v1' branch](ht
 
 ### APIM Logger
 
-If the name of an existing Azure API Management is not specified during deployment, you will need to add the `log-to-eventhub` logger to your Azure API Management service manually. To do so, utilize the [`nested/microsoft.apimanagement/service/loggers.bicep` ARM template](nested/microsoft.apimanagement/service/loggers.bicep) or view [Microsoft docs](https://docs.microsoft.com/azure/api-management/api-management-howto-log-event-hubs)
+If the name of an existing Azure API Management is not specified during deployment, you will need to add the `log-to-eventhub` logger to your Azure API Management service manually. To do so, utilize the [`nested/microsoft.apimanagement/service/loggers.bicep` ARM template](nested/microsoft.apimanagement/service/loggers.bicep) or view [Microsoft docs](https://learn.microsoft.com/azure/api-management/api-management-howto-log-event-hubs)
 
-More info on configuring Moesif is available on [Microsoft's documentation](https://docs.microsoft.com/azure/api-management/api-management-log-to-eventhub-sample).
+More info on configuring Moesif is available on [Microsoft's documentation](https://learn.microsoft.com/azure/api-management/api-management-log-to-eventhub-sample).
 
 ## Updating the integration
 
@@ -216,7 +216,7 @@ To run the latest version of webjob, simply stop, and then restart the WebJob (W
 This template performs the following tasks
 
 - Create Azure Eventhub and policies for Send and Listen.
-- If the name of an existing Azure API Management instance is provided, the template creates a new [log-to-eventhub](https://docs.microsoft.com/azure/api-management/api-management-howto-log-event-hubs) with the name `moesif-log-to-event-hub`.
+- If the name of an existing Azure API Management instance is provided, the template creates a new [log-to-eventhub](https://learn.microsoft.com/azure/api-management/api-management-howto-log-event-hubs) with the name `moesif-log-to-event-hub`.
 - Create an Azure Storage Account to periodically checkpoint the EventHub read location.
 - Create an Azure WebApp and configures the environment variables required by [ApimEventProcessor](https://github.com/Moesif/Apimeventprocessor/tree/v1).
 - Deploys [ApimEventProcessor](https://github.com/Moesif/Apimeventprocessor/tree/v1) as a Webjob on the WebApp.

@@ -35,7 +35,7 @@ sudo waagent -deprovision+user
 
 inside your Linux machine.
 
-Once it is generalized, you must run this commands at client side from a [CLI](https://docs.microsoft.com/azure/xplat-cli-install) command line:
+Once it is generalized, you must run this commands at client side from a [CLI](https://learn.microsoft.com/azure/xplat-cli-install) command line:
 
 ```bash
 azure login

@@ -29,13 +29,13 @@ This template deploys a Front Door Standard/Premium with an App Service origin, 
 
 ## Sample overview and deployed resources
 
-This sample template creates an App Service app and a Front Door profile, and uses the App Service's public IP address with [access restrictions](https://docs.microsoft.com/azure/app-service/app-service-ip-restrictions) to enforce that incoming connections must come through your Front Door instance.
+This sample template creates an App Service app and a Front Door profile, and uses the App Service's public IP address with [access restrictions](https://learn.microsoft.com/azure/app-service/app-service-ip-restrictions) to enforce that incoming connections must come through your Front Door instance.
 
 The following resources are deployed as part of the solution:
 
 ### App Service
 - App Service plan and application. This sample uses the public endpoint for the App Service application and does not use a private endpoint.
-- [App Service access restrictions](https://docs.microsoft.com/azure/app-service/app-service-ip-restrictions) to block access to the application unless they have come through Front Door. The traffic is checked to ensure it has come from the `AzureFrontDoor.Backend` service tag, and also that the `X-Azure-FDID` header is configured with your specific Front Door instance's ID.
+- [App Service access restrictions](https://learn.microsoft.com/azure/app-service/app-service-ip-restrictions) to block access to the application unless they have come through Front Door. The traffic is checked to ensure it has come from the `AzureFrontDoor.Backend` service tag, and also that the `X-Azure-FDID` header is configured with your specific Front Door instance's ID.
 
 ### Front Door Standard/Premium
 - Front Door profile, endpoint, origin group, origin, and route to direct traffic to the App Service application.

@@ -30,7 +30,7 @@ This template creates a data factory of version 2 with a pipeline that copies da
 
 Here are a few important points about the template:
 
-- The prerequisites for this template are mentioned in the [Quickstart: Create a data factory by using Azure PowerShell](https://docs.microsoft.com/azure/data-factory/quickstart-create-data-factory-powershell#prerequisites) article.
+- The prerequisites for this template are mentioned in the [Quickstart: Create a data factory by using Azure PowerShell](https://learn.microsoft.com/azure/data-factory/quickstart-create-data-factory-powershell#prerequisites) article.
 
 When you deploy this Azure Resource Manager template, a data factory of version 2 is created with the following entities:
 
@@ -44,7 +44,7 @@ When you deploy this Azure Resource Manager template, a data factory of version 
 2. Select **Go to resource group**.
 3. Search for **ADFTutorialResourceGroup0927&lt;unique string&gt;**
 
-The following sections provide steps for running and monitoring the pipeline. For more information, see [Quickstart: Create a data factory by using Azure PowerShell](https://docs.microsoft.com/azure/data-factory/quickstart-create-data-factory-powershell).
+The following sections provide steps for running and monitoring the pipeline. For more information, see [Quickstart: Create a data factory by using Azure PowerShell](https://learn.microsoft.com/azure/data-factory/quickstart-create-data-factory-powershell).
 
 ## Run and monitor the pipeline
 
@@ -68,6 +68,6 @@ After you deploy the template, to run and monitor the pipeline, do the following
 
 ## Learn more
 
-For more information about how to deploy an Azure Data Factory, see [Quickstart: Create an Azure Data Factory using ARM template](https://docs.microsoft.com/azure/data-factory/quickstart-create-data-factory-resource-manager-template).
+For more information about how to deploy an Azure Data Factory, see [Quickstart: Create an Azure Data Factory using ARM template](https://learn.microsoft.com/azure/data-factory/quickstart-create-data-factory-resource-manager-template).
 
 `Tags: Microsoft.Storage/storageAccounts, Microsoft.Storage/storageAccounts/blobServices/containers, Microsoft.DataFactory/factories, SystemAssigned, Microsoft.DataFactory/factories/linkedservices, AzureBlobStorage, Microsoft.DataFactory/factories/datasets, Binary, LinkedServiceReference, AzureBlobStorageLocation, Microsoft.DataFactory/factories/pipelines, Copy, BinarySource, AzureBlobStorageReadSettings, BinarySink, AzureBlobStorageWriterSettings, DatasetReference`

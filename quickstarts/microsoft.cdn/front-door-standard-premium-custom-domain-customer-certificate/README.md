@@ -29,7 +29,7 @@ This template deploys a Front Door Standard/Premium with a custom domain and cus
 
 ## Sample overview and deployed resources
 
-This sample template creates a Front Door profile with a custom domain and a customer-managed TLS certificate. To keep the sample simple, Front Door is configured to direct traffic to a static website configured as an origin, but this could be [any origin supported by Front Door](https://docs.microsoft.com/azure/frontdoor/standard-premium/concept-origin).
+This sample template creates a Front Door profile with a custom domain and a customer-managed TLS certificate. To keep the sample simple, Front Door is configured to direct traffic to a static website configured as an origin, but this could be [any origin supported by Front Door](https://learn.microsoft.comm/azure/frontdoor/standard-premium/concept-origin).
 
 The following resources are deployed as part of the solution:
 
@@ -57,6 +57,6 @@ You can then access the Front Door endpoint by using your custom domain name. If
 
 ## Notes
 
-- You must grant Front Door access to your key vault before it can access your certificate. [Follow the guidance here](https://docs.microsoft.com/azure/frontdoor/standard-premium/how-to-configure-https-custom-domain#using-your-own-certificate) to register the Azure Front Door application with your Azure Active Directory tenant, and grant Azure Front Door access to your key vault.
+- You must grant Front Door access to your key vault before it can access your certificate. [Follow the guidance here](https://learn.microsoft.comm/azure/frontdoor/standard-premium/how-to-configure-https-custom-domain#using-your-own-certificate) to register the Azure Front Door application with your Azure Active Directory tenant, and grant Azure Front Door access to your key vault.
 
 `Tags: Microsoft.Cdn/profiles, Microsoft.Cdn/profiles/afdEndpoints, Microsoft.Cdn/profiles/originGroups, Microsoft.Cdn/profiles/secrets, Microsoft.Cdn/profiles/customDomains, Microsoft.Cdn/profiles/originGroups/origins, Microsoft.Cdn/profiles/afdEndpoints/routes`

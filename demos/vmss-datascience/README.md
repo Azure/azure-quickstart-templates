@@ -39,6 +39,6 @@ etc..
 
 ## Additional information
 
-[Introduction to the Azure Data Science VM](https://docs.microsoft.com/azure/machine-learning/machine-learning-data-science-virtual-machine-overview)
+[Introduction to the Azure Data Science VM](https://learn.microsoft.com/azure/machine-learning/machine-learning-data-science-virtual-machine-overview)
 
 `Tags: Microsoft.Network/virtualNetworks, Microsoft.Network/publicIPAddresses, Microsoft.Network/loadBalancers, Microsoft.Compute/virtualMachineScaleSets`

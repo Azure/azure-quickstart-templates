@@ -26,7 +26,7 @@ languages:
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fprivate-aks-cluster%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fprivate-aks-cluster%2Fazuredeploy.json)
 
-This ARM template includes all the latest features like [private AKS clusters](https://docs.microsoft.com/azure/aks/private-clusters), new simplified [AKS-managed AAD integration](https://docs.microsoft.com/azure/aks/managed-aad), the brand new [Azure RBAC for Kubernetes Authorization](https://docs.microsoft.com/azure/aks/manage-azure-rbac), actually in preview, and the use of [managed identity in place of a service principal](https://docs.microsoft.com/azure/aks/use-managed-identity), and more.
+This ARM template includes all the latest features like [private AKS clusters](https://learn.microsoft.com/azure/aks/private-clusters), new simplified [AKS-managed AAD integration](https://learn.microsoft.com/azure/aks/managed-aad), the brand new [Azure RBAC for Kubernetes Authorization](https://learn.microsoft.com/azure/aks/manage-azure-rbac), actually in preview, and the use of [managed identity in place of a service principal](https://learn.microsoft.com/azure/aks/use-managed-identity), and more.
 
 The API server endpoint has no public IP address. To manage the API server, you will need to use a VM that has access to the AKS cluster's Azure Virtual Network (VNet). Therefore, the ARM template deploys a Jumpbox in the same virtual network that hosts the AKS private cluster. There are several options for establishing network connectivity to the private cluster.
 
@@ -34,7 +34,7 @@ The API server endpoint has no public IP address. To manage the API server, you 
 - Use a VM in a separate network and set up Virtual network peering. See the section below for more information on this option.
 - Use an Express Route or VPN connection.
 
-Creating a VM in the same VNET as the AKS cluster is the easiest option. Express Route and VPNs add costs and require additional networking complexity. Virtual network peering requires you to plan your network CIDR ranges to ensure there are no overlapping ranges. For more information, see [Create a private Azure Kubernetes Service cluster](https://docs.microsoft.com/azure/aks/private-clusters). For more information on Azure Private Links, see [What is Azure Private Link?](https://docs.microsoft.com/azure/private-link/private-link-overview).
+Creating a VM in the same VNET as the AKS cluster is the easiest option. Express Route and VPNs add costs and require additional networking complexity. Virtual network peering requires you to plan your network CIDR ranges to ensure there are no overlapping ranges. For more information, see [Create a private Azure Kubernetes Service cluster](https://learn.microsoft.com/azure/aks/private-clusters). For more information on Azure Private Links, see [What is Azure Private Link?](https://learn.microsoft.com/azure/private-link/private-link-overview).
 
 ## Architecture ##
 

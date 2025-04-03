@@ -24,7 +24,7 @@ languages:
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.cdn%2Ffront-door-standard-premium-storage-static-website%2Fazuredeploy.json) [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.cdn%2Ffront-door-standard-premium-storage-static-website%2Fazuredeploy.json)
 
-This template deploys a Front Door Standard/Premium with an [Azure Storage static website](https://docs.microsoft.com/azure/storage/blobs/storage-blob-static-website) origin, using the public endpoint for the Azure Storage static website.
+This template deploys a Front Door Standard/Premium with an [Azure Storage static website](https://learn.microsoft.comm/azure/storage/blobs/storage-blob-static-website) origin, using the public endpoint for the Azure Storage static website.
 
 ## Sample overview and deployed resources
 
@@ -38,7 +38,7 @@ The following resources are deployed as part of the solution:
 - Azure Storage account.
 
 ### Deployment script
-- A deployment script enables [static website hosting](https://docs.microsoft.com/azure/storage/blobs/storage-blob-static-website) on the storage account account. This script only executes on the initial deployment of the template.
+- A deployment script enables [static website hosting](https://learn.microsoft.comm/azure/storage/blobs/storage-blob-static-website) on the storage account account. This script only executes on the initial deployment of the template.
 
 ### Front Door Standard/Premium
 - Front Door profile, endpoint, origin group, origin, and route to direct traffic to the static website.

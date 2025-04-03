@@ -29,7 +29,7 @@ This template deploys a Front Door Standard/Premium with custom domain managed t
 
 ## Sample overview and deployed resources
 
-This sample template creates a Front Door profile with a custom domain, managed through an Azure DNS zone, and a Microsoft-managed TLS certificate. To keep the sample simple, Front Door is configured to direct traffic to a static website configured as an origin, but this could be [any origin supported by Front Door](https://docs.microsoft.com/azure/frontdoor/standard-premium/concept-origin).
+This sample template creates a Front Door profile with a custom domain, managed through an Azure DNS zone, and a Microsoft-managed TLS certificate. To keep the sample simple, Front Door is configured to direct traffic to a static website configured as an origin, but this could be [any origin supported by Front Door](https://learn.microsoft.com/azure/frontdoor/standard-premium/concept-origin).
 
 The following resources are deployed as part of the solution:
 

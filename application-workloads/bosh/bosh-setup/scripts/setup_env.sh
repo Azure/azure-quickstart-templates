@@ -35,7 +35,7 @@ wget $bosh_cli_url
 chmod +x ./bosh-cli-*
 mv ./bosh-cli-* /usr/local/bin/bosh
 
-# https://docs.microsoft.com/en-us/cli/azure/install-azure-cli-apt?view=azure-cli-latest#install
+# https://learn.microsoft.com/en-us/cli/azure/install-azure-cli-apt?view=azure-cli-latest#install
 echo "Installing Azure CLI"
 AZ_REPO=$(lsb_release -cs)
 echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $AZ_REPO main" | tee /etc/apt/sources.list.d/azure-cli.list

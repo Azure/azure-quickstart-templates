@@ -97,13 +97,13 @@ In order to use BYOS for RHEL OS Licensing, you need to have a valid Red Hat sub
 
     2.5 Wait for Red Hat Gold Images to be available in your Azure subscription. These are typically available within 3 hours.
 
-3. Accept the Marketplace Terms and Conditions in Azure for the RHEL BYOS Images. You can complete this by running Azure CLI commands, as instructed below. Refer to [RHEL BYOS Gold Images in Azure documentation](https://docs.microsoft.com/azure/virtual-machines/workloads/redhat/byos) for more details.
+3. Accept the Marketplace Terms and Conditions in Azure for the RHEL BYOS Images. You can complete this by running Azure CLI commands, as instructed below. Refer to [RHEL BYOS Gold Images in Azure documentation](https://learn.microsoft.com/azure/virtual-machines/workloads/redhat/byos) for more details.
 
-    3.1 Launch an Azure CLI session and make sure your CLI version is updated to version 2.8 or newer before running these commands. Check the CLI version by running the following command and if your [CLI version](https://docs.microsoft.com/cli/azure/install-azure-cli-windows?view=azure-cli-latest&tabs=azure-cli) requires updating.
+    3.1 Launch an Azure CLI session and make sure your CLI version is updated to version 2.8 or newer before running these commands. Check the CLI version by running the following command and if your [CLI version](https://learn.microsoft.com/cli/azure/install-azure-cli-windows?view=azure-cli-latest&tabs=azure-cli) requires updating.
 
     `az version`
 
-    3.2 Once your CLI session is ready, authenticate with your Azure account. Refer to [Signing in with Azure CLI](https://docs.microsoft.com/cli/azure/authenticate-azure-cli?view=azure-cli-latest) for assistance.
+    3.2 Once your CLI session is ready, authenticate with your Azure account. Refer to [Signing in with Azure CLI](https://learn.microsoft.com/cli/azure/authenticate-azure-cli?view=azure-cli-latest) for assistance.
 
     3.3 Verify the RHEL BYOS images are available in your subscription by running the following CLI command. If your RHEL BYOS is not listed, please refer to #2 and ensure that your Azure subscription is activated for RHEL BYOS image.
 
@@ -167,7 +167,7 @@ Build your environment with JBoss EAP 7.4 cluster setup on 'n' number of RHEL 8.
 
     - **JAVA VERSION** - Select the Java version to be installed.
 
-    - **Storage Replication** - Select the [Replication Strategy](https://docs.microsoft.com/azure/storage/common/storage-redundancy) for the Storage account.
+    - **Storage Replication** - Select the [Replication Strategy](https://learn.microsoft.com/azure/storage/common/storage-redundancy) for the Storage account.
 
     - **VM Size** - Select the appropriate VM size option from the dropdown menu.
 
@@ -191,9 +191,9 @@ Once the deployment is successful, go to the outputs section of the deployment t
 
 **Option 1 of 3**. Create a Jump VM in a different Virtual Network and access the Load Balancer and RHEL VM using Virtual Network Peering.
 
-   - [Create a Windows Virtual Machine](https://docs.microsoft.com/azure/virtual-machines/windows/quick-create-portal#create-virtual-machine) - in a new Azure Resource Group, create a Windows VM. This should be in the same location as the Resource Group you deployed the template. Provide the required details and leave other configurations as default. This will create the Jump VM in a new Virtual Network.
+   - [Create a Windows Virtual Machine](https://learn.microsoft.com/azure/virtual-machines/windows/quick-create-portal#create-virtual-machine) - in a new Azure Resource Group, create a Windows VM. This should be in the same location as the Resource Group you deployed the template. Provide the required details and leave other configurations as default. This will create the Jump VM in a new Virtual Network.
 
-   - [Peer the Virtual Networks](https://docs.microsoft.com/azure/virtual-network/tutorial-connect-virtual-networks-portal#peer-virtual-networks) - this is how you associate the Load Balancer with the Jump VM. Once the Virtual Network peering is successful, they can communicate with each other.
+   - [Peer the Virtual Networks](https://learn.microsoft.com/azure/virtual-network/tutorial-connect-virtual-networks-portal#peer-virtual-networks) - this is how you associate the Load Balancer with the Jump VM. Once the Virtual Network peering is successful, they can communicate with each other.
 
    - Go to the Jump VM details page and copy the Public IP. Log into the Jump VM using this Public IP.
 
@@ -219,9 +219,9 @@ Once the deployment is successful, go to the outputs section of the deployment t
 
 **Option 2 of 3**. Create a Jump VM in a different subnet (new subnet) in the same Virtual Network and access the Load Balancer and RHEL VM via Jump VM.
 
-   - [Add a new subnet](https://docs.microsoft.com/azure/virtual-network/virtual-network-manage-subnet#add-a-subnet) in the existing Virtual Network which contains the RHEL VMs.
+   - [Add a new subnet](https://learn.microsoft.com/azure/virtual-network/virtual-network-manage-subnet#add-a-subnet) in the existing Virtual Network which contains the RHEL VMs.
 
-   - [Create a Windows Virtual Machine](https://docs.microsoft.com/azure/virtual-machines/windows/quick-create-portal#create-virtual-machine) in Azure in the same Resource Group you deployed the template. Provide the required details and leave other configurations as default except for the Virtual Network and subnet. Make sure you select the existing Virtual Network in the Resource Group and select the subnet you just created in the step above. This will be your Jump VM.
+   - [Create a Windows Virtual Machine](https://learn.microsoft.com/azure/virtual-machines/windows/quick-create-portal#create-virtual-machine) in Azure in the same Resource Group you deployed the template. Provide the required details and leave other configurations as default except for the Virtual Network and subnet. Make sure you select the existing Virtual Network in the Resource Group and select the subnet you just created in the step above. This will be your Jump VM.
 
    - Access Jump VM Public IP - once the Jump VM is successfully deployed, go to the VM details page and copy the Public IP. Log into the Jump VM using this Public IP.
 
@@ -247,7 +247,7 @@ Once the deployment is successful, go to the outputs section of the deployment t
 
 **Option 3 of 3**. Using an Application Gateway
 
-   - [Create an Application Gateway](https://docs.microsoft.com/azure/application-gateway/quick-create-portal#create-an-application-gateway) - to access the ports of the Load Balancer and the RHEL VMs, create an Application Gateway in a different subnet. This subnet must only contain Application Gateway.
+   - [Create an Application Gateway](https://learn.microsoft.com/azure/application-gateway/quick-create-portal#create-an-application-gateway) - to access the ports of the Load Balancer and the RHEL VMs, create an Application Gateway in a different subnet. This subnet must only contain Application Gateway.
 
    - Set *Frontends* parameters - make sure you select Public IP or both and provide the required details. Under *Backends* section, select **Add a backend pool** option and add your Load Balancer and RHEL VMs to the backend pool (ideally in different pools) of the Application Gateway.
 
@@ -316,7 +316,7 @@ Your Private Offer will be tagged with *Private* as seen below.
 
 ![alt text](images/rhel-byos.png)
 
-Please refer to [Using the Azure Custom Script Extension Version 2 with Linux VMs](https://docs.microsoft.com/azure/virtual-machines/extensions/custom-script-linux) for more details on troubleshooting VM custom script extensions.
+Please refer to [Using the Azure Custom Script Extension Version 2 with Linux VMs](https://learn.microsoft.com/azure/virtual-machines/extensions/custom-script-linux) for more details on troubleshooting VM custom script extensions.
 
 #### Cleanup
 

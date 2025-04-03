@@ -35,6 +35,6 @@ If you're new to **Dev Box**, see:
 
 If you're new to template deployment, see:
 
-- [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
+- [Azure Resource Manager documentation](https://learn.microsoft.com/azure/azure-resource-manager/)
 
 `Tags: Devcenter, Dev Box, ARM Template, Microsoft.DevCenter/devcenters`

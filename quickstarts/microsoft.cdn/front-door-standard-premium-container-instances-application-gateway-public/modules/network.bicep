@@ -82,7 +82,7 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@2020-05-01' = {
         }
       }
 
-      // Rules for Application Gateway as documented here: https://docs.microsoft.com/en-us/azure/application-gateway/application-gateway-faq
+      // Rules for Application Gateway as documented here: https://learn.microsoft.com/en-us/azure/application-gateway/application-gateway-faq
       {
         name: 'Allow_GWM'
         properties: {

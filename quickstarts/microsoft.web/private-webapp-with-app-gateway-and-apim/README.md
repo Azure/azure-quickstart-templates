@@ -36,7 +36,7 @@ This template deploys an **Application Gateway with an internal (virtual network
 
 ## Overview and deployed resources
 
-The Bicep, and generated ARM template, presented in this sample complements the Microsoft documentation showing how to ["Integrate Application Gateway in an internal virtual network"](https://docs.microsoft.com/azure/api-management/api-management-howto-integrate-internal-vnet-appgateway).
+The Bicep, and generated ARM template, presented in this sample complements the Microsoft documentation showing how to ["Integrate Application Gateway in an internal virtual network"](https://learn.microsoft.com/azure/api-management/api-management-howto-integrate-internal-vnet-appgateway).
 
 ![High-level architecture diagram](./images/apim-appgw.png)
 
@@ -54,7 +54,7 @@ The provided Application Gateway instance uses custom domain names and self-sign
 
 ### API Management
 
-The template provisions an API Management instance configured in a [virtual network internal mode](https://docs.microsoft.com/azure/api-management/api-management-using-with-internal-vnet).
+The template provisions an API Management instance configured in a [virtual network internal mode](https://learn.microsoft.com/azure/api-management/api-management-using-with-internal-vnet).
 
 The provided API Management instance uses custom domain names for the Developer Portal (e.g., portal.contoso.com), Proxy (e.g., api.contoso.com), and Management (e.g., management.contoso.com) endpoints.
 
@@ -68,7 +68,7 @@ The template provisions an Azure App Service Plan and related Web App.  The may 
 
 The web application is configured to integrate with the provided virtual network and to route all traffic into the virtual network.
 
-The web application is configured with a System Assigned [managed identity](https://docs.microsoft.com/azure/active-directory/managed-identities-azure-resources/overview).
+The web application is configured with a System Assigned [managed identity](https://learn.microsoft.com/azure/active-directory/managed-identities-azure-resources/overview).
 
 - **Microsoft.Web/serverfarms**: Defines the Azure App Service Plan.
 - **Microsoft.Web/sites**: Defines the Azure Web Application.
@@ -120,7 +120,7 @@ The template provisions two Network Security Groups (NSGs), one configured for u
 
 ### Private Endpoint
 
-The template provisions [private endpoints](https://docs.microsoft.com/azure/private-link/private-endpoint-overview) for the Azure Web App and Key Vault resources.
+The template provisions [private endpoints](https://learn.microsoft.com/azure/private-link/private-endpoint-overview) for the Azure Web App and Key Vault resources.
 
 - **Microsoft.Network/privateEndpoints**: The private endpoints and related DNS Zone Group resources for the Azure Web App and Key Vault resources.
 

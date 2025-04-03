@@ -23,20 +23,20 @@ languages:
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)]("https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.web%2Fwebapp-managed-postgresql%2Fazuredeploy.json")
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)]("http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.web%2Fwebapp-managed-postgresql%2Fazuredeploy.json")
 
-This template provides a easy way to deploy web app on Azure Web Apps on Windows with [Azure database for PostgreSQL](https://docs.microsoft.com/azure/postgresql/overview#azure-database-for-postgresql---single-server)
+This template provides a easy way to deploy web app on Azure Web Apps on Windows with [Azure database for PostgreSQL](https://learn.microsoft.com/azure/postgresql/overview#azure-database-for-postgresql---single-server)
 
-This template deploys a web app with a managed PostgreSQL managed database of [different pricing tiers: Basic, General Purpose, and Memory Optimized](https://docs.microsoft.com/azure/postgresql/concepts-pricing-tiers). The web app with PostgreSQL is an app service that allows you to deploy and managed PostgreSQL data and a website. This will deploy a free tier Linux App Service Plan where you will host your app service.
+This template deploys a web app with a managed PostgreSQL managed database of [different pricing tiers: Basic, General Purpose, and Memory Optimized](https://learn.microsoft.com/azure/postgresql/concepts-pricing-tiers). The web app with PostgreSQL is an app service that allows you to deploy and managed PostgreSQL data and a website. This will deploy a free tier Linux App Service Plan where you will host your app service.
 
 If you are new to Azure App Service, see:
 
 - [Azure App Service](https://azure.microsoft.com/services/app-service/web/)
-- [Template reference](https://docs.microsoft.com/es-es/azure/templates/microsoft.web/allversions)
+- [Template reference](https://learn.microsoft.com/es-es/azure/templates/microsoft.web/allversions)
 - [Quickstart templates](https://azure.microsoft.com/es-es/resources/templates/?resourceType=Microsoft.Compute&pageNumber=1&sort=Popular&term=web+apps)
-- [PostgreSQL Web App Tutorial](https://docs.microsoft.com/azure/app-service/containers/tutorial-python-postgresql-app)
-- [Microsoft Learn PostgreSQL modules](https://docs.microsoft.com/learn/browse/?term=Postgres)
+- [PostgreSQL Web App Tutorial](https://learn.microsoft.com/azure/app-service/containers/tutorial-python-postgresql-app)
+- [Microsoft Learn PostgreSQL modules](https://learn.microsoft.com/learn/browse/?term=Postgres)
 
 If you are new to template deployment, see:
-[Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
+[Azure Resource Manager documentation](https://learn.microsoft.com/azure/azure-resource-manager/)
 
 ## Prerequisites
 

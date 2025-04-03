@@ -40,7 +40,7 @@ By setting up a continuous build to produce your container images and orchestrat
 
 ### Create an Azure service principal
 
-1. Install [Azure CLI](https://docs.microsoft.com/cli/azure/install-azure-cli?view=azure-cli-latest) if you have not.
+1. Install [Azure CLI](https://learn.microsoft.com/cli/azure/install-azure-cli?view=azure-cli-latest) if you have not.
 
    > Note: Alternatively, you can also use Azure Cloud Shell from the Azure Portal.
 
@@ -75,7 +75,7 @@ By setting up a continuous build to produce your container images and orchestrat
 
    Copy the values **appId** and **password**, they will be used later.
 
-   > Note: for more details about creating an Azure service principal, please refer to [Create an Azure service principal with Azure CLI 2.0](https://docs.microsoft.com/cli/azure/create-an-azure-service-principal-azure-cli?view=azure-cli-latest)
+   > Note: for more details about creating an Azure service principal, please refer to [Create an Azure service principal with Azure CLI 2.0](https://learn.microsoft.com/cli/azure/create-an-azure-service-principal-azure-cli?view=azure-cli-latest)
 
 ### Create a SSH Key for Linux VMs
 
@@ -246,7 +246,7 @@ After logged in, you will see the **Hello World Build & Deploy** pipline job. Pl
 
 #### Get Kubenetes service
 
-1. Install [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/) if you have not. Or, you can install `kubectl` locally using the [az aks install-cli](https://docs.microsoft.com/cli/azure/aks#az-aks-install-cli) command:
+1. Install [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/) if you have not. Or, you can install `kubectl` locally using the [az aks install-cli](https://learn.microsoft.com/cli/azure/aks#az-aks-install-cli) command:
 
    ```sh
    az aks install-cli

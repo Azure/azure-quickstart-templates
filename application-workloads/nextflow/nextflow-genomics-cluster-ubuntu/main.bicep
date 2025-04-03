@@ -5,7 +5,7 @@ param location string = resourceGroup().location
 param dnsNameForJumpBox string = 'jumpbox-${uniqueString(resourceGroup().id)}'
 
 @description('The image to use for VMs created. This can be marketplace or custom image')
-@metadata({ link: 'https://docs.microsoft.com/en-us/nodejs/api/azure-arm-compute/imagereference?view=azure-node-2.2.0' })
+@metadata({ link: 'https://learn.microsoft.com/en-us/nodejs/api/azure-arm-compute/imagereference?view=azure-node-2.2.0' })
 param vmImageReference object = {
   publisher: 'Canonical'
   offer: 'UbuntuServer'

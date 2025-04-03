@@ -35,6 +35,6 @@ You can select **Deploy to Azure** at the top of this document or follow the ins
 
 ## Notes
 
-This template is used by the Web Application Firewall documentation [quickstart](https://docs.microsoft.com/azure/web-application-firewall/ag/quick-create-template) article.
+This template is used by the Web Application Firewall documentation [quickstart](https://learn.microsoft.com/azure/web-application-firewall/ag/quick-create-template) article.
 
 `Tags: Web Application Firewall, Microsoft.Network/networkSecurityGroups, Microsoft.Network/publicIPAddresses, Microsoft.Network/virtualNetworks, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, CustomScriptExtension, Microsoft.Network/applicationGateways, Microsoft.Network/ApplicationGatewayWebApplicationFirewallPolicies, Microsoft.Network/networkInterfaces`

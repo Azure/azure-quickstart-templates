@@ -26,7 +26,7 @@ This template shows how to create an Azure Traffic Manager profile using nested 
 
 ## Notes
 
-- [Traffic Manager routing methods](https://docs.microsoft.com/azure/traffic-manager/traffic-manager-routing-methods): Traffic Manager routing methods for details of the different routing methods available
-- [Traffic Manager REST](https://docs.microsoft.com/rest/api/trafficmanager/): Create or update a Traffic Manager profile for details of the JSON elements relating to a Traffic Manager profile.
+- [Traffic Manager routing methods](https://learn.microsoft.com/azure/traffic-manager/traffic-manager-routing-methods): Traffic Manager routing methods for details of the different routing methods available
+- [Traffic Manager REST](https://learn.microsoft.com/rest/api/trafficmanager/): Create or update a Traffic Manager profile for details of the JSON elements relating to a Traffic Manager profile.
 
 `Tags: Microsoft.Network/trafficManagerProfiles, Microsoft.Network/trafficManagerProfiles/nestedEndpoints, Microsoft.Network/TrafficManagerProfiles/ExternalEndpoints`

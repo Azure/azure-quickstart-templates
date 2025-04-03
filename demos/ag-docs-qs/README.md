@@ -36,6 +36,6 @@ You can select **Deploy to Azure** at the top of this document or follow the ins
 
 ## Notes
 
-This template is used by the Azure Application Gateway documentation [quickstart article](https://docs.microsoft.com/azure/application-gateway/quick-create-template).
+This template is used by the Azure Application Gateway documentation [quickstart article](https://learn.microsoft.com/azure/application-gateway/quick-create-template).
 
 `Tags: Application Gateway, Microsoft.Network/networkSecurityGroups, Microsoft.Network/publicIPAddresses, Microsoft.Network/virtualNetworks, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, CustomScriptExtension, Microsoft.Network/applicationGateways, Microsoft.Network/networkInterfaces`

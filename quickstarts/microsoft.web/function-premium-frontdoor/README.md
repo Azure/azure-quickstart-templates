@@ -37,7 +37,7 @@ The Function App is restricted to disallow public network access
 
 ### Elastic Premium Plan
 
-The Azure Function app provisioned in this sample uses an [Azure Functions Elastic Premium plan](https://docs.microsoft.com/azure/azure-functions/functions-premium-plan#features). The Premium Plan is required to use networking features
+The Azure Function app provisioned in this sample uses an [Azure Functions Elastic Premium plan](https://learn.microsoft.com/azure/azure-functions/functions-premium-plan#features). The Premium Plan is required to use networking features
 
 ### Azure Frontdoor Premium
 
@@ -54,9 +54,9 @@ Two Subnets are created:
 
 ### Private Endpoints
 
-[Azure Private Endpoints](https://docs.microsoft.com/azure/private-link/private-endpoint-overview) are used to connect to specific Azure resources using a private IP address. This ensures that network traffic remains within the designated virtual network, and access is available only for specific resources.  This sample configures private endpoints for the following Azure resources:
+[Azure Private Endpoints](https://learn.microsoft.com/azure/private-link/private-endpoint-overview) are used to connect to specific Azure resources using a private IP address. This ensures that network traffic remains within the designated virtual network, and access is available only for specific resources.  This sample configures private endpoints for the following Azure resources:
 
-- [Azure Storage](https://docs.microsoft.com/azure/storage/common/storage-private-endpoints)
+- [Azure Storage](https://learn.microsoft.com/azure/storage/common/storage-private-endpoints)
   - Azure File storage
   - Azure Blob storage
 
@@ -75,7 +75,7 @@ The following DNS zones are created in this sample:
 
 ### Application Insights
 
-[Application Insights](https://docs.microsoft.com/azure/azure-monitor/app/app-insights-overview) is used to [monitor the Azure Function](https://docs.microsoft.com/azure/azure-functions/functions-monitoring).
+[Application Insights](https://learn.microsoft.com/azure/azure-monitor/app/app-insights-overview) is used to [monitor the Azure Function](https://learn.microsoft.com/azure/azure-functions/functions-monitoring).
 
 ## Post deployment steps
 

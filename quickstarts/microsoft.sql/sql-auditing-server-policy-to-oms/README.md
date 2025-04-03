@@ -34,10 +34,10 @@ Also, configure Diagnostic Settings with 'SQLSecurityAuditEvents' diagnostic log
 
 Auditing for Azure SQL Database and Azure Synapse Analytics tracks database events and writes them to an audit log in your Azure storage account, Log Analytics workspace or Event Hubs.
 
-For more information on SQL database auditing, see the [official documentation]( https://docs.microsoft.com/azure/sql-database/sql-database-auditing).
+For more information on SQL database auditing, see the [official documentation]( https://learn.microsoft.com/azure/sql-database/sql-database-auditing).
 
 Enable Auditing of Microsoft support operations (isMSDevOpsAuditEnabled) to tracks Microsoft support engineers'(DevOps) operations on your server and write them to an audit log in your Log Analytics.
 
-For more information on Auditing of Microsoft support operations, see the [official documentation]( https://docs.microsoft.com/azure/azure-sql/database/auditing-overview#auditing-of-microsoft-support-operations).
+For more information on Auditing of Microsoft support operations, see the [official documentation]( https://learn.microsoft.com/azure/azure-sql/database/auditing-overview#auditing-of-microsoft-support-operations).
 
 `Tags: Microsoft.OperationalInsights/workspaces, Microsoft.Sql/servers, Microsoft.Sql/servers/databases, Microsoft.Insights/diagnosticSettings, Microsoft.Sql/servers/auditingSettings, Microsoft.Sql/servers/devOpsAuditingSettings`

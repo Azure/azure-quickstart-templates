@@ -102,7 +102,7 @@ resource cluster 'Microsoft.Kusto/clusters@2022-02-01' = {
 
 //  We need to authorize the cluster to read the event hub by assigning the role
 //  "Azure Event Hubs Data Receiver"
-//  Role list:  https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles
+//  Role list:  https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles
 var dataReceiverId = 'a638d3c7-ab3a-418d-83e6-5f17a39d4fde'
 var fullDataReceiverId = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', dataReceiverId)
 var eventHubRoleAssignmentName = '${resourceGroup().id}${cluster.name}${dataReceiverId}${eventHubNamespace::eventHub.name}'
@@ -110,7 +110,7 @@ var roleAssignmentName = guid(eventHubRoleAssignmentName, eventHubName, dataRece
 
 resource clusterEventHubAuthorization 'Microsoft.Authorization/roleAssignments@2021-04-01-preview' = {
   name: roleAssignmentName
-  //  See https://docs.microsoft.com/en-us/azure/azure-resource-manager/bicep/scope-extension-resources
+  //  See https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/scope-extension-resources
   //  for scope for extension
   scope: eventHubNamespace::eventHub
   properties: {

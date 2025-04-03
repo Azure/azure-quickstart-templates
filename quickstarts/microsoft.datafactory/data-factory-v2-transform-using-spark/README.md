@@ -22,7 +22,7 @@ This template creates a data factory of version 2 with a pipeline that copies da
 
 Here are a few important points about the template:
 
-- The prerequisites for this template are mentioned in the [Quickstart: Create a data factory by using Azure PowerShell](https://docs.microsoft.com/azure/data-factory/quickstart-create-data-factory-powershell#prerequisites) article.
+- The prerequisites for this template are mentioned in the [Quickstart: Create a data factory by using Azure PowerShell](https://learn.microsoft.com/azure/data-factory/quickstart-create-data-factory-powershell#prerequisites) article.
 - Note that currently data factories of version 2 can only be created in **East US** and **East US 2** regions.
 
 [![Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.datafactory%2Fdata-factory-v2-transform-using-spark%2Fazuredeploy.json)
@@ -40,7 +40,7 @@ When you deploy this Azure Resource Manager template, a data factory of version 
 2. Click **Go to resource group**.
 3. Search for **ADFTutorialResourceGroup0927&lt;unique string&gt;**
 
-The following sections provide steps for running and monitoring the pipeline. For more information, see [Quickstart: Create a data factory by using Azure PowerShell](https://docs.microsoft.com/azure/data-factory/quickstart-create-data-factory-powershell).
+The following sections provide steps for running and monitoring the pipeline. For more information, see [Quickstart: Create a data factory by using Azure PowerShell](https://learn.microsoft.com/azure/data-factory/quickstart-create-data-factory-powershell).
 
 ## Run and monitor the pipeline
 After you deploy the template, to run and monitor the pipeline, do the following steps:

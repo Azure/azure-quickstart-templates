@@ -33,7 +33,7 @@ This configuration describes the set of resources required to:
 1. (prerequisite) Create and configure an Azure Key vault resource to host an encryption key for Azure Machine Learning.
 1. Create an Azure Machine Learning workspace and dependent resources, and configure it for encryption with the above encryption key.
 
-When using a customer-managed key, Azure Machine Learning creates a secondary resource group in your subscription which contains a Cosmos DB resource, an Azure Storage resource, and Azure Search resource. For more information, see [encryption at rest - Cosmos DB](https://docs.microsoft.com/azure/machine-learning/concept-enterprise-security#encryption-at-rest).
+When using a customer-managed key, Azure Machine Learning creates a secondary resource group in your subscription which contains a Cosmos DB resource, an Azure Storage resource, and Azure Search resource. For more information, see [encryption at rest - Cosmos DB](https://learn.microsoft.com/azure/machine-learning/concept-enterprise-security#encryption-at-rest).
 
 ## Resources
 
@@ -70,7 +70,7 @@ To add the Azure Machine Learning service principal as a contributor to your sub
 
 ### Add Azure Machine Learning as a contributor
 
-1. Use the [Azure CLI](https://docs.microsoft.com/cli/azure/install-azure-cli) or [Azure PowerShell](https://docs.microsoft.com/powershell/azure/install-az-ps) to authenticate to get your subscription ID:
+1. Use the [Azure CLI](https://learn.microsoft.com/cli/azure/install-azure-cli) or [Azure PowerShell](https://learn.microsoft.com/powershell/azure/install-az-ps) to authenticate to get your subscription ID:
 
 Azure CLI:
 
@@ -120,7 +120,7 @@ To generate a key in an existing Azure Key Vault, you can use the [prereq templa
 
 ### Enable customer-managed keys for Azure Cosmos DB
 
-See data encryption section of [Enterprise Security for Azure Machine Learning](https://docs.microsoft.com/azure/machine-learning/concept-enterprise-security#data-encryption) and [Configure customer-managed keys for your AzureCosmos account](https://docs.microsoft.com/azure/cosmos-db/how-to-setup-cmk).
+See data encryption section of [Enterprise Security for Azure Machine Learning](https://learn.microsoft.com/azure/machine-learning/concept-enterprise-security#data-encryption) and [Configure customer-managed keys for your AzureCosmos account](https://learn.microsoft.com/azure/cosmos-db/how-to-setup-cmk).
 
 ### Add an access policy to the key vault
 
@@ -189,19 +189,19 @@ Use these parameters as input to the workspace deployment template.
 If you are new to Azure Machine Learning, see:
 
 - [Azure Machine Learning service](https://azure.microsoft.com/services/machine-learning-service/)
-- [Azure Machine Learning documentation](https://docs.microsoft.com/azure/machine-learning/)
-- [Enterprise security and governance for Azure Machine Learning](https://docs.microsoft.com/azure/machine-learning/concept-enterprise-security).
-- [Azure Machine Learning template reference](https://docs.microsoft.com/azure/templates/microsoft.machinelearningservices/allversions)
+- [Azure Machine Learning documentation](https://learn.microsoft.com/azure/machine-learning/)
+- [Enterprise security and governance for Azure Machine Learning](https://learn.microsoft.com/azure/machine-learning/concept-enterprise-security).
+- [Azure Machine Learning template reference](https://learn.microsoft.com/azure/templates/microsoft.machinelearningservices/allversions)
 
 To learn about encryption with Azure Machine Learning, see:
 
-* [Encryption at rest](https://docs.microsoft.com/azure/machine-learning/concept-enterprise-security#data-encryption)
-* [Configure customer-managed keys for Azure Cosmos](https://docs.microsoft.com/azure/cosmos-db/how-to-setup-cmk).
+* [Encryption at rest](https://learn.microsoft.com/azure/machine-learning/concept-enterprise-security#data-encryption)
+* [Configure customer-managed keys for Azure Cosmos](https://learn.microsoft.com/azure/cosmos-db/how-to-setup-cmk).
 
 If you are new to template development, see:
 
-- [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
-- [Use an Azure Resource Manager template to create a workspace for Azure Machine Learning](https://docs.microsoft.com/azure/machine-learning/service/how-to-create-workspace-template)
+- [Azure Resource Manager documentation](https://learn.microsoft.com/azure/azure-resource-manager/)
+- [Use an Azure Resource Manager template to create a workspace for Azure Machine Learning](https://learn.microsoft.com/azure/machine-learning/service/how-to-create-workspace-template)
 - [Quickstart templates](https://azure.microsoft.com/resources/templates/)
 
 `Tags: Microsoft.Storage/storageAccounts, Microsoft.KeyVault/vaults, Microsoft.Insights/components, Microsoft.ContainerRegistry/registries, Microsoft.MachineLearningServices/workspaces, systemAssigned, Microsoft.KeyVault/vaults/keys`

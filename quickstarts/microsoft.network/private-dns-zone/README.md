@@ -29,8 +29,8 @@ languages:
 This is a starter template that shows how to create a private Azure DNS zone and link it to a Virtual Network.
 
 ## Notes
-[Private DNS Overview](https://docs.microsoft.com/azure/dns/private-dns-overview)
-[Private DNS FAQ](https://docs.microsoft.com/azure/dns/dns-faq-private)
-[PrivateDnsZones template format](https://docs.microsoft.com/azure/templates/microsoft.network/privatednszones)
+[Private DNS Overview](https://learn.microsoft.com/azure/dns/private-dns-overview)
+[Private DNS FAQ](https://learn.microsoft.com/azure/dns/dns-faq-private)
+[PrivateDnsZones template format](https://learn.microsoft.com/azure/templates/microsoft.network/privatednszones)
 
 `Tags: Microsoft.Network/virtualNetworks, Microsoft.Network/privateDnsZones, Microsoft.Network/privateDnsZones/virtualNetworkLinks`

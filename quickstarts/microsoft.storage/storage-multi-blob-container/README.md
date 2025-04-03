@@ -31,14 +31,14 @@ This template creates an Azure Storage account with multiple blob containers.
 If you are new to Azure Storage accounts, see:
 
 - [Azure Storage account documentation](http://azure.microsoft.com/documentation/articles/storage-create-storage-account/)
-- [Azure Storage account template reference](https://docs.microsoft.com/azure/templates/microsoft.storage/allversions)
+- [Azure Storage account template reference](https://learn.microsoft.com/azure/templates/microsoft.storage/allversions)
 - [Quickstart templates](https://azure.microsoft.com/resources/templates/?resourceType=Microsoft.Storage&pageNumber=1&sort=Popular)
 
 If you are new to template development, see:
 
-- [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
-- [Tutorial: Create multiple resource instances with Resource Manager templates](https://docs.microsoft.com/azure/azure-resource-manager/resource-manager-tutorial-create-multiple-instances)
-- [Deploy more than one instance of a resource or property in Azure Resource Manager Templates](https://docs.microsoft.com/azure/azure-resource-manager/resource-group-create-multiple)
+- [Azure Resource Manager documentation](https://learn.microsoft.com/azure/azure-resource-manager/)
+- [Tutorial: Create multiple resource instances with Resource Manager templates](https://learn.microsoft.com/azure/azure-resource-manager/resource-manager-tutorial-create-multiple-instances)
+- [Deploy more than one instance of a resource or property in Azure Resource Manager Templates](https://learn.microsoft.com/azure/azure-resource-manager/resource-group-create-multiple)
 
 Tags: Azure Storage account, Resource Manager, Resource Manager templates, ARM templates
 

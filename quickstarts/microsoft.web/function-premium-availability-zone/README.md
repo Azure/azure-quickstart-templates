@@ -26,7 +26,7 @@ languages:
 
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.web%2Ffunction-premium-availability-zone%2Fazuredeploy.json)
 
-This template deploys an Azure Function Premium plan with [availability zones support](https://docs.microsoft.com/azure/azure-functions/azure-functions-az-redundancy).
+This template deploys an Azure Function Premium plan with [availability zones support](https://learn.microsoft.com/azure/azure-functions/azure-functions-az-redundancy).
 
 ## Overview and deployed resources
 
@@ -36,7 +36,7 @@ The following resources are deployed as part of the solution:
 
 ### Azure Function Premium Plan
 
-The [Azure Functions Premium plan](https://docs.microsoft.com/azure/azure-functions/functions-premium-plan) with availability zones support.
+The [Azure Functions Premium plan](https://learn.microsoft.com/azure/azure-functions/functions-premium-plan) with availability zones support.
 
 + **Microsoft.Web/serverfarms**: The Azure Functions Premium plan (a.k.a. Elastic Premium plan)
 
@@ -48,13 +48,13 @@ The function app to be deployed as part of the Azure Functions Premium plan.
 
 ### Application Insights
 
-Application Insights is used to provide [monitoring for the Azure Function](https://docs.microsoft.com/azure/azure-functions/functions-monitoring).
+Application Insights is used to provide [monitoring for the Azure Function](https://learn.microsoft.com/azure/azure-functions/functions-monitoring).
 
 + **Microsoft.Insights/components**: The Application Insights instance used by the Azure Function for monitoring.
 
 ### Log Analytics Workspace
 
-The Log Analytics workspace used by Application Insights is used to provide [a workspace for the Application Insights telemetry](https://docs.microsoft.com/azure/azure-monitor/app/create-workspace-resource).
+The Log Analytics workspace used by Application Insights is used to provide [a workspace for the Application Insights telemetry](https://learn.microsoft.com/azure/azure-monitor/app/create-workspace-resource).
 
 + **Microsoft.OperationalInsights/workspaces**: The Log Analytics workspace instance used by Application Insights for telemetry.
 
@@ -62,7 +62,7 @@ The Log Analytics workspace used by Application Insights is used to provide [a w
 
 The Azure Storage account used by the Azure Function with availability zones enabled.
 
-+ **Microsoft.Storage/storageAccounts**: [Azure Functions requires a storage account](https://docs.microsoft.com/azure/azure-functions/storage-considerations) for the function app instance.
++ **Microsoft.Storage/storageAccounts**: [Azure Functions requires a storage account](https://learn.microsoft.com/azure/azure-functions/storage-considerations) for the function app instance.
 
 ## Deployment steps
 

@@ -39,6 +39,6 @@ This template deploys a complete testing environment for Azure Firewall Premium 
 
 Azure Firewall is a managed cloud-based network security service that protects your Azure Virtual Network resources. It is a fully stateful firewall as a service with built-in high availability and unrestricted cloud scalability. You can centrally create, enforce, and log application and network connectivity policies across subscriptions and virtual network. Azure Firewall uses a static public IP address for your virtual network resources allowing outside firewalls to identify traffic originating from your virtual network.
 
-Learn more at https://docs.microsoft.com/azure/firewall.
+Learn more at https://learn.microsoft.com/azure/firewall.
 
 `Tags: Microsoft.Resources/deploymentScripts, Microsoft.ManagedIdentity/userAssignedIdentities, Microsoft.KeyVault/vaults, Microsoft.KeyVault/vaults/secrets, Microsoft.Network/routeTables, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, CustomScriptExtension, Microsoft.Network/publicIpAddresses, Microsoft.Network/bastionHosts, Microsoft.Network/firewallPolicies, UserAssigned, Microsoft.Network/firewallPolicies/ruleCollectionGroups, Allow, Deny, Microsoft.Network/azureFirewalls`

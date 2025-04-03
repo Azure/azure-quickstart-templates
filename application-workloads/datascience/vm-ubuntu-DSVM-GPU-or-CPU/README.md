@@ -31,16 +31,16 @@ This template deploys a **Linux VM Ubuntu with data science tools**. This will d
 If you are new to Azure virtual machines, see:
 
 - [Azure Virtual Machines](https://azure.microsoft.com/services/virtual-machines/).
-- [Azure Linux Virtual Machines documentation](https://docs.microsoft.com/azure/virtual-machines/linux/)
-- [Azure Windows Virtual Machines documentation](https://docs.microsoft.com/azure/virtual-machines/windows/)
-- [Template reference](https://docs.microsoft.com/azure/templates/microsoft.compute/allversions)
+- [Azure Linux Virtual Machines documentation](https://learn.microsoft.com/azure/virtual-machines/linux/)
+- [Azure Windows Virtual Machines documentation](https://learn.microsoft.com/azure/virtual-machines/windows/)
+- [Template reference](https://learn.microsoft.com/azure/templates/microsoft.compute/allversions)
 - [Quickstart templates](https://azure.microsoft.com/resources/templates/?resourceType=Microsoft.Compute&pageNumber=1&sort=Popular)
-- [Microsoft learn](https://docs.microsoft.com/learn/browse/?term=Data%20Science%20Virtual%20Machine)
+- [Microsoft learn](https://learn.microsoft.com/learn/browse/?term=Data%20Science%20Virtual%20Machine)
 
 If you are new to template deployment, see:
 
-- [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
-- [Data Science VM quickstart article](https://docs.microsoft.com/azure/machine-learning/data-science-virtual-machine/dsvm-tutorial-resource-manager)
+- [Azure Resource Manager documentation](https://learn.microsoft.com/azure/azure-resource-manager/)
+- [Data Science VM quickstart article](https://learn.microsoft.com/azure/machine-learning/data-science-virtual-machine/dsvm-tutorial-resource-manager)
 
 ## Usage
 

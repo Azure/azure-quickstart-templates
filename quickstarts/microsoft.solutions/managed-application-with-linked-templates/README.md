@@ -51,7 +51,7 @@ Azure resource manager templates allow you to call other templates from within a
 }
 ```
 
-[To learn more about linked templates click here](https://docs.microsoft.com/azure/azure-resource-manager/templates/linked-templates)
+[To learn more about linked templates click here](https://learn.microsoft.com/azure/azure-resource-manager/templates/linked-templates)
 
 ## Including additional files in your managed application package
 
@@ -61,7 +61,7 @@ When you create your managed application package, you can choose to add files ot
 deployment().properties.templateLink.uri
 ```
 
-[To learn more about the deployment function click here](https://docs.microsoft.com/azure/azure-resource-manager/templates/template-functions-deployment)
+[To learn more about the deployment function click here](https://learn.microsoft.com/azure/azure-resource-manager/templates/template-functions-deployment)
 
 ## Putting it all together
 

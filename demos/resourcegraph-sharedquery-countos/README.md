@@ -77,15 +77,15 @@ instructions for command line deployment using the scripts in the root of this r
 
 If you are new to Azure Resource Graph, see:
 
-- [Azure Resource Graph documentation](https://docs.microsoft.com/azure/governance/resource-graph/)
-- [Azure Resource Graph - Understand the query language](https://docs.microsoft.com/azure/governance/resource-graph/concepts/query-language)
-- [Azure Resource Graph - Starter queries](https://docs.microsoft.com/azure/governance/resource-graph/samples/starter?tabs=azure-portal)
-- [Azure Resource Graph - Advanced queries](https://docs.microsoft.com/azure/governance/resource-graph/samples/advanced?tabs=azure-portal)
-- [Azure Resource Graph - Get resource changes](https://docs.microsoft.com/azure/governance/resource-graph/how-to/get-resource-changes)
+- [Azure Resource Graph documentation](https://learn.microsoft.com/azure/governance/resource-graph/)
+- [Azure Resource Graph - Understand the query language](https://learn.microsoft.com/azure/governance/resource-graph/concepts/query-language)
+- [Azure Resource Graph - Starter queries](https://learn.microsoft.com/azure/governance/resource-graph/samples/starter?tabs=azure-portal)
+- [Azure Resource Graph - Advanced queries](https://learn.microsoft.com/azure/governance/resource-graph/samples/advanced?tabs=azure-portal)
+- [Azure Resource Graph - Get resource changes](https://learn.microsoft.com/azure/governance/resource-graph/how-to/get-resource-changes)
 
 If you are new to template deployment, see:
 
-- [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
-- [Quickstart: Create a shared query by using an ARM template](https://docs.microsoft.com/azure/governance/resource-graph/shared-query-template)
+- [Azure Resource Manager documentation](https://learn.microsoft.com/azure/azure-resource-manager/)
+- [Quickstart: Create a shared query by using an ARM template](https://learn.microsoft.com/azure/governance/resource-graph/shared-query-template)
 
 `Tags: Resource Graph, KQL, query, Microsoft.ResourceGraph/queries`

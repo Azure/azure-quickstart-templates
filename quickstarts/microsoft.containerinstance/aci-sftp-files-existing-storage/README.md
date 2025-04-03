@@ -37,6 +37,6 @@ Once deployed, connect to the public IP of the SFTP ACI and upload files; these 
 
 ## Notes
 
-Azure Container Instance is available in selected [locations](https://docs.microsoft.com/azure/container-instances/container-instances-quotas#region-availability). Please use one of the available location for Azure Container Instance resource.
+Azure Container Instance is available in selected [locations](https://learn.microsoft.com/azure/container-instances/container-instances-quotas#region-availability). Please use one of the available location for Azure Container Instance resource.
 The container image used by this template is hosted on [Docker Hub](https://hub.docker.com/r/atmoz/sftp). It is not affiliated with Microsoft in any way, and usage is at your own risk.
 

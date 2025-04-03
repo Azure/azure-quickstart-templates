@@ -57,7 +57,7 @@ You can click on each tile to get more details about the queries used to create 
 
 ![alt text](images/LogAnalyticsScreen.JPG "LA Monitoring solution for Azure backup Log search")
 
-More information about configuring alerts can be found [here](https://docs.microsoft.com/azure/log-analytics/log-analytics-tutorial-response)
+More information about configuring alerts can be found [here](https://learn.microsoft.com/azure/log-analytics/log-analytics-tutorial-response)
 
 `Tags: Azure Backup, OMS Log Analytics, Monitoring, Microsoft.Resources/deployments, Microsoft.OperationalInsights/workspaces/views, Blade, OverviewTile, Microsoft.OperationalInsights/workspaces`
 

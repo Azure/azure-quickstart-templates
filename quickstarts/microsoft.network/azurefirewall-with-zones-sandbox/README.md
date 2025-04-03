@@ -27,9 +27,9 @@ languages:
 Azure Firewall is a managed cloud-based network security service that protects your Azure Virtual Network resources. It's a fully stateful firewall as a service with built-in high availability and unrestricted cloud scalability. You can centrally create, enforce, and log application and network connectivity policies across subscriptions and virtual network.
 
 Azure Firewall uses one or more static public IP addresses for your virtual network resources allowing outside firewalls to identify traffic originating from your virtual network.
-The service is fully integrated with Azure Monitor for logging and analytics. [Learn more](https://docs.microsoft.com/azure/firewall).
+The service is fully integrated with Azure Monitor for logging and analytics. [Learn more](https://learn.microsoft.com/azure/firewall).
 
-To learn more about how to deploy the template, see the [quickstart](https://docs.microsoft.com/azure/firewall/deploy-template) article.
+To learn more about how to deploy the template, see the [quickstart](https://learn.microsoft.com/azure/firewall/deploy-template) article.
 
 The template creates following resources:
 

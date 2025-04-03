@@ -7,7 +7,7 @@ param vnetName string
 @description('Name of the VM SKU used by the Batch pool')
 param vmSize string = 'Standard_D1_v2'
 
-@description('Location for all resources - Azure Batch simplified node communication pools available in specific region, refer the documenation to select the supported region for this deployment. For more information see https://docs.microsoft.com/en-us/azure/batch/simplified-compute-node-communication#supported-regions')
+@description('Location for all resources - Azure Batch simplified node communication pools available in specific region, refer the documenation to select the supported region for this deployment. For more information see https://learn.microsoft.com/en-us/azure/batch/simplified-compute-node-communication#supported-regions')
 param location string = resourceGroup().location
 
 var nodeManagementPrivateEndpointName = '${accountName}-node-pe'

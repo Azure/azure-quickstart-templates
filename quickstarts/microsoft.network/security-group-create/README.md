@@ -23,6 +23,6 @@ languages:
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.network%2Fsecurity-group-create%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.network%2Fsecurity-group-create%2Fazuredeploy.json)
 
-This template creates a subnet, a Network Security Group and attaches it to the subnet in the VNET. For more information on how to configure the Network Security Group, go here: https://docs.microsoft.com/azure/templates/microsoft.network/2018-11-01/networksecuritygroups
+This template creates a subnet, a Network Security Group and attaches it to the subnet in the VNET. For more information on how to configure the Network Security Group, go here: https://learn.microsoft.com/azure/templates/microsoft.network/2018-11-01/networksecuritygroups
 
 `Tags: Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks`

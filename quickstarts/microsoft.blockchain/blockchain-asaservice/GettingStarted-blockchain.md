@@ -41,7 +41,7 @@ Azure Blockchain Service resources are isolated in a private virtual network. Ea
 
 #### Encryption
 
-User data is stored in Azure storage. User data is encrypted in motion and at rest for security and confidentiality. For more information, see: [Azure Storage security guide.](https://docs.microsoft.com/azure/storage/common/storage-security-guide)
+User data is stored in Azure storage. User data is encrypted in motion and at rest for security and confidentiality. For more information, see: [Azure Storage security guide.](https://learn.microsoft.com/azure/storage/common/storage-security-guide)
 
 #### Authentication
 
@@ -72,7 +72,7 @@ Parameter         | Suggested value     | Description
 ## Deployment
 
 There are a few ways to deploy this template.
-You can use [PowerShell](https://docs.microsoft.com/azure/azure-resource-manager/resource-group-template-deploy), [Azure CLI](https://docs.microsoft.com/azure/azure-resource-manager/resource-group-template-deploy-cli), [Azure Portal](https://docs.microsoft.com/azure/azure-resource-manager/resource-group-template-deploy-portal) or your favorite SDK.
+You can use [PowerShell](https://learn.microsoft.com/azure/azure-resource-manager/resource-group-template-deploy), [Azure CLI](https://learn.microsoft.com/azure/azure-resource-manager/resource-group-template-deploy-cli), [Azure Portal](https://learn.microsoft.com/azure/azure-resource-manager/resource-group-template-deploy-portal) or your favorite SDK.
 
 For Azure CLI I'm using the Visual Code with Azure CLI extensions. If you would like you can find more information [here](https://code.visualstudio.com/docs/azure/extensions). But bare in mind that you don't need to use the Visual Code app, you can stick with the always present **Command Line** on Windows or the Linux **bash terminal**.
 

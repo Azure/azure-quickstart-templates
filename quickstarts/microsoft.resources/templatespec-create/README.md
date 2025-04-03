@@ -32,6 +32,6 @@ When you create the templateSpec (using the prereq template) note the name of th
 
 If you create and deploy the templateSpec in the same resourceGroup clean up will be simple, but in practice templateSpecs (create) and resources created by them (deploy) will be placed in separate resourceGroups.
 
-See the [templateSpec documentation](https://docs.microsoft.com/azure/azure-resource-manager/templates/template-specs) for more information on how to use templateSpecs in Azure.
+See the [templateSpec documentation](https://learn.microsoft.com/azure/azure-resource-manager/templates/template-specs) for more information on how to use templateSpecs in Azure.
 
 `Tags: Microsoft.Resources/deployments, Microsoft.Resources/templateSpecs, versions, Microsoft.Compute/disks`

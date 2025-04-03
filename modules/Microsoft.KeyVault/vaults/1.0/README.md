@@ -42,7 +42,7 @@ This module creates a Key Vault.
 | networkRuleBypassOptions |  string | No | Tells what traffic can bypass network rules. This can be 'AzureServices' or 'None'. If not specified the default is 'AzureServices'. |
 | NetworkRuleAction | string | No | The default action when no rule from ipRules and from virtualNetworkRules match. This is only used after the bypass property has been evaluated. allowedValues [ 'Allow', 'Deny' ] |
 | ipRules |  array | No | An array of IPv4 addresses or rangea in CIDR notation, e.g. '124.56.78.91' (simple IP address) or '124.56.78.0/24' (all addresses that start with 124.56.78). |
-| accessPolicies |  array | No | An complex object array that contains the complete definition of the access policy.  See the [accessPolicy](https://docs.microsoft.com/azure/templates/microsoft.keyvault/2019-09-01/vaults#accesspolicyentry-object) documentation for details. |
+| accessPolicies |  array | No | An complex object array that contains the complete definition of the access policy.  See the [accessPolicy](https://learn.microsoft.com/azure/templates/microsoft.keyvault/2019-09-01/vaults#accesspolicyentry-object) documentation for details. |
 | virtualNetworkRules |  array | No | An array for resourceIds for the virtualNetworks allowed to access the vault. |
 | skuName | string | No | Standard | Specifies whether the key vault is a standard vault or a premium vault.  allowedValues [ Standard, Premium ] |
 | tags | object | No | Tags to be assigned to the KeyVault. |

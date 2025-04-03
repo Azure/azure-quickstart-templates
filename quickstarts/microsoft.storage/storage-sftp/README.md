@@ -31,13 +31,13 @@ If using password authentication, you will need to access to the storage account
 If you are new to Azure Storage account, see:
 
 - [Azure Storage account documentation](http://azure.microsoft.com/documentation/articles/storage-create-storage-account/)
-- [Azure Storage account template reference](https://docs.microsoft.com/azure/templates/microsoft.storage/allversions)
-- [SSH File Transfer Protocol (SFTP) support for Azure Blob Storage](https://docs.microsoft.com/azure/storage/blobs/secure-file-transfer-protocol-support)
+- [Azure Storage account template reference](https://learn.microsoft.com/azure/templates/microsoft.storage/allversions)
+- [SSH File Transfer Protocol (SFTP) support for Azure Blob Storage](https://learn.microsoft.com/azure/storage/blobs/secure-file-transfer-protocol-support)
 - [Quickstart templates](https://azure.microsoft.com/resources/templates/?resourceType=Microsoft.Storage&pageNumber=1&sort=Popular)
 
 If you are new to the template development, see:
 
-- [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
+- [Azure Resource Manager documentation](https://learn.microsoft.com/azure/azure-resource-manager/)
 
 Tags: Azure Storage account, Resource Manager, Resource Manager templates, ARM templates, SFTP
 

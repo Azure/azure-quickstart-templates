@@ -147,9 +147,9 @@ Verification steps -
 
 **References**
 
-https://docs.microsoft.com/azure/application-gateway/application-gateway-introduction
+https://learn.microsoft.com/azure/application-gateway/application-gateway-introduction
 
-https://docs.microsoft.com/azure/application-gateway/application-gateway-web-application-firewall-overview
+https://learn.microsoft.com/azure/application-gateway/application-gateway-web-application-firewall-overview
 
 ## Disclaimer & Acknowledgements
 

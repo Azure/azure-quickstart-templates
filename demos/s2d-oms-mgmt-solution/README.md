@@ -28,7 +28,7 @@ Check [Updates](#updates) section if you have applied previous version.
 
 Do not forget to check [Known issues](#known-issues) section.
 
->**Note**: This version of the solution works only with upgraded Log Analytics workspace to the new query language. More info [here](https://docs.microsoft.com/azure/log-analytics/log-analytics-log-search-upgrade).
+>**Note**: This version of the solution works only with upgraded Log Analytics workspace to the new query language. More info [here](https://learn.microsoft.com/azure/log-analytics/log-analytics-log-search-upgrade).
 
 The purpose of this management solution is to provide monitoring for Storage Spaces Direct clusters.
 The solution relies on [Failover Cluster Health Service API](https://technet.microsoft.com/windows-server-docs/failover-clustering/health-service-overview?f=255&MSPPError=-2147217396) for data.
@@ -297,7 +297,7 @@ the S2D is opened because the Fault related custom fields will not be created.
 ### Update 3
 
 - You will need to update both the service and the views.
-- Updated the view for the solution to use the new query language of Log Analytics. You can use this new version only with upgraded Log Analytics workspace. More info [here](https://docs.microsoft.com/azure/log-analytics/log-analytics-log-search-upgrade).
+- Updated the view for the solution to use the new query language of Log Analytics. You can use this new version only with upgraded Log Analytics workspace. More info [here](https://learn.microsoft.com/azure/log-analytics/log-analytics-log-search-upgrade).
 - Fixed bug in s2dmon.ps1 where incorrect value was pushed for field RecommendedActions_s.
 - Implemented some more logic in s2dmon.ps1 for error handling.
 - All metric values are now placed in MetricValue_d field instead of creating separate field for every different metric.

@@ -27,7 +27,7 @@ This module creates a Key in a Key Vault.  The Key Vault must already exist and 
 
 ## Parameters
 
-For more details about the key parameters see the [API reference documentation](https://docs.microsoft.com/rest/api/keyvault/CreateKey/CreateKey).
+For more details about the key parameters see the [API reference documentation](https://learn.microsoft.com/rest/api/keyvault/CreateKey/CreateKey).
 
 | Name | Type | Required | Description |
 | :------------- | :----------: | :----------: | :------------- |

@@ -38,9 +38,9 @@ The following scenarios are examples of when you can use Azure Stream Analytics:
 
 For more information, see the following articles:
 
-- [Introduction to Stream Analytics](https://docs.microsoft.com/azure/stream-analytics/stream-analytics-introduction)
-- [Microsoft Learn Stream Analytics Modules](https://docs.microsoft.com/learn/browse/?term=Stream%20Analytics)
-- [Quickstart: Create a Stream Analytics job by using the Azure portal](https://docs.microsoft.com/azure/stream-analytics/stream-analytics-create-a-job)
-- [Quickstart: Create an Azure Stream Analytics job by using an ARM template](https://docs.microsoft.com/azure/stream-analytics/quick-create-azure-resource-manager)
+- [Introduction to Stream Analytics](https://learn.microsoft.com/azure/stream-analytics/stream-analytics-introduction)
+- [Microsoft Learn Stream Analytics Modules](https://learn.microsoft.com/learn/browse/?term=Stream%20Analytics)
+- [Quickstart: Create a Stream Analytics job by using the Azure portal](https://learn.microsoft.com/azure/stream-analytics/stream-analytics-create-a-job)
+- [Quickstart: Create an Azure Stream Analytics job by using an ARM template](https://learn.microsoft.com/azure/stream-analytics/quick-create-azure-resource-manager)
 
 `Tags: Microsoft.StreamAnalytics/streamingjobs`

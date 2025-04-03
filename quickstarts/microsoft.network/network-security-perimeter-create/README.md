@@ -30,8 +30,8 @@ languages:
 
 ## Notes
 
-[Azure Private Link FAQ](https://docs.microsoft.com/azure/private-link/private-link-faq)
+[Azure Private Link FAQ](https://learn.microsoft.com/azure/private-link/private-link-faq)
 
-[Network security perimeter service template format](https://docs.microsoft.com/azure/templates/microsoft.network/networksecurityperimeters)
+[Network security perimeter service template format](https://learn.microsoft.com/azure/templates/microsoft.network/networksecurityperimeters)
 
 `Tags: Microsoft.Network/networkSecurityPerimeters, Microsoft.Network/networkSecurityPerimeters/profiles, Microsoft.Network/networkSecurityPerimeters/profiles/accessRules, Microsoft.Network/networkSecurityPerimeters/resourceAssociations, Microsoft.KeyVault/vaults`

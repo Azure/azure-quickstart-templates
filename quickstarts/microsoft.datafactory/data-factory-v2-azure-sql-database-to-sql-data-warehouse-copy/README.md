@@ -34,7 +34,7 @@ When you deploy this Azure Resource Manager template, a data factory of version 
 - Pipeline with a copy activity
 
 ## Prerequisites
-The prerequisites for this template are mentioned in the [Tutorial: Copy multiple tables in bulk by using Azure Data Factory](https://docs.microsoft.com/azure/data-factory/tutorial-bulk-copy-portal) article.
+The prerequisites for this template are mentioned in the [Tutorial: Copy multiple tables in bulk by using Azure Data Factory](https://learn.microsoft.com/azure/data-factory/tutorial-bulk-copy-portal) article.
 
 The template creates the Azure SQL database that's based on the Adventure Works LT sample template. It also creates a SQL data warehouse. You need to use the Migration Utility to migrate schema from the SQL database to the SQL data warehouse.
 
@@ -43,6 +43,6 @@ The template creates the Azure SQL database that's based on the Adventure Works 
 2. Click **Go to resource group**.
 3. Search for *datafactory that's created. Click the data factory in the list to launch the home page for the data factory.
 5. Click **Author & Monitor** tile to launch the Data Factory UI in a separate tab.
-6. Follow instructions in the [tutorial](https://docs.microsoft.com/azure/data-factory/tutorial-bulk-copy-portal#trigger-a-pipeline-run) article to run and monitor the pipeline.
+6. Follow instructions in the [tutorial](https://learn.microsoft.com/azure/data-factory/tutorial-bulk-copy-portal#trigger-a-pipeline-run) article to run and monitor the pipeline.
 
 `Tags: Microsoft.DataFactory/factories, linkedservices, AzureStorage, SecureString, AzureSqlDatabase, AzureSqlDW, datasets, AzureSqlTable, LinkedServiceReference, AzureSqlDWTable, Expression, pipelines, ForEach, Copy, SqlSource, SqlDWSink, DatasetReference, Lookup, ExecutePipeline, PipelineReference, Microsoft.Storage/storageAccounts, Microsoft.Sql/servers, firewallrules, databases`

@@ -23,6 +23,6 @@ languages:
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fmanagementgroup-deployments%2Fcreate-subscription%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fmanagementgroup-deployments%2Fcreate-subscription%2Fazuredeploy.json)
 
-This template is a management group scope template that creates a subscription via an alias under an EA account.  See the [documentation](https://docs.microsoft.com/azure/cost-management-billing/manage/programmatically-create-subscription) for how to create subscriptions programmatically under other types of billing accounts.
+This template is a management group scope template that creates a subscription via an alias under an EA account.  See the [documentation](https://learn.microsoft.com/azure/cost-management-billing/manage/programmatically-create-subscription) for how to create subscriptions programmatically under other types of billing accounts.
 
 `Tags: Microsoft.Subscription/aliases`

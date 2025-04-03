@@ -70,7 +70,7 @@ To add the Azure Machine Learning service principal as a contributor to your sub
 
 ### Add Azure Machine Learning as a contributor
 
-1. Use the [Azure CLI](https://docs.microsoft.com/cli/azure/install-azure-cli) or [Azure PowerShell](https://docs.microsoft.com/powershell/azure/install-az-ps) to authenticate to get your subscription ID:
+1. Use the [Azure CLI](https://learn.microsoft.com/cli/azure/install-azure-cli) or [Azure PowerShell](https://learn.microsoft.com/powershell/azure/install-az-ps) to authenticate to get your subscription ID:
 
 Azure CLI:
 
@@ -153,18 +153,18 @@ Use these parameters as input to the workspace deployment template.
 If you are new to Azure Machine Learning, see:
 
 - [Azure Machine Learning service](https://azure.microsoft.com/services/machine-learning-service/)
-- [Azure Machine Learning documentation](https://docs.microsoft.com/azure/machine-learning/)
-- [Enterprise security and governance for Azure Machine Learning](https://docs.microsoft.com/azure/machine-learning/concept-enterprise-security).
-- [Azure Machine Learning template reference](https://docs.microsoft.com/azure/templates/microsoft.machinelearningservices/allversions)
+- [Azure Machine Learning documentation](https://learn.microsoft.com/azure/machine-learning/)
+- [Enterprise security and governance for Azure Machine Learning](https://learn.microsoft.com/azure/machine-learning/concept-enterprise-security).
+- [Azure Machine Learning template reference](https://learn.microsoft.com/azure/templates/microsoft.machinelearningservices/allversions)
 
 To learn about encryption with Azure Machine Learning, see:
 
-* [Encryption at rest](https://docs.microsoft.com/azure/machine-learning/concept-enterprise-security#data-encryption)
+* [Encryption at rest](https://learn.microsoft.com/azure/machine-learning/concept-enterprise-security#data-encryption)
 
 If you are new to template development, see:
 
-- [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
-- [Use an Azure Resource Manager template to create a workspace for Azure Machine Learning](https://docs.microsoft.com/azure/machine-learning/service/how-to-create-workspace-template)
+- [Azure Resource Manager documentation](https://learn.microsoft.com/azure/azure-resource-manager/)
+- [Use an Azure Resource Manager template to create a workspace for Azure Machine Learning](https://learn.microsoft.com/azure/machine-learning/service/how-to-create-workspace-template)
 - [Quickstart templates](https://azure.microsoft.com/resources/templates/)
 
 `Tags: Microsoft.Storage/storageAccounts, Microsoft.KeyVault/vaults, Microsoft.Insights/components, Microsoft.ContainerRegistry/registries, Microsoft.MachineLearningServices/workspaces, systemAssigned, Microsoft.KeyVault/vaults/keys`

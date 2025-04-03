@@ -23,6 +23,6 @@ languages:
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.eventhub%2Feventhub-namespace-vnet%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.eventhub%2Feventhub-namespace-vnet%2Fazuredeploy.json)
 
-For information about using this template, see [Create a Event Hubs Virtual Network rule for a Namespace](https://docs.microsoft.com/azure/event-hubs/event-hubs-service-endpoints)
+For information about using this template, see [Create a Event Hubs Virtual Network rule for a Namespace](https://learn.microsoft.com/azure/event-hubs/event-hubs-service-endpoints)
 
 `Tags: Microsoft.EventHub/namespaces, Microsoft.Network/virtualNetworks, Microsoft.EventHub/namespaces/VirtualNetworkRules`

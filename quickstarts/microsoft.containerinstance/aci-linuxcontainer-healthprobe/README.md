@@ -23,6 +23,6 @@ languages:
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.containerinstance%2Faci-linuxcontainer-healthprobe%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.containerinstance%2Faci-linuxcontainer-healthprobe%2Fazuredeploy.json)
 
-This template demonstrates a simple use case for health probe of [Azure Container Instances](https://docs.microsoft.com/azure/container-instances/). The container will be restarted after it runs for 30 seconds, because the file /tmp/healthy is deleted.
+This template demonstrates a simple use case for health probe of [Azure Container Instances](https://learn.microsoft.com/azure/container-instances/). The container will be restarted after it runs for 30 seconds, because the file /tmp/healthy is deleted.
 
 `Tags: Microsoft.ContainerInstance/containerGroups, Public`

@@ -34,7 +34,7 @@ When you deploy this Azure Resource Manager template, a data factory of version 
 - Pipeline with a copy activity
 
 ## Prerequisites
-The prerequisites for this template are mentioned in the [Tutorial: copy data from on-premises SQL Server database to Azure Blob Storage](https://docs.microsoft.com/azure/data-factory/tutorial-hybrid-copy-portal#prerequisites) article.
+The prerequisites for this template are mentioned in the [Tutorial: copy data from on-premises SQL Server database to Azure Blob Storage](https://learn.microsoft.com/azure/data-factory/tutorial-hybrid-copy-portal#prerequisites) article.
 
 ## Next steps
 1. Click the **Deployment succeeded** message.
@@ -46,7 +46,7 @@ The prerequisites for this template are mentioned in the [Tutorial: copy data fr
 7. Switch to the **Integration Runtimes** window.
 8. Click the **Edit** (Pencil icon) for your self-hosted IR.
 9. Click the **Copy** button for **Key1** to copy the key to the clipboard.
-10. Install  the self-hosted integration runtime by following instructions in this article: [Install and register self-hosted IR from download center](https://docs.microsoft.com/azure/data-factory/create-self-hosted-integration-runtime#install-and-register-self-hosted-ir-from-download-center). Use the key you copied in the previous step to register the integration runtime.
-11. Now, run and monitor the pipeline by using the steps in the [tutorial article](https://docs.microsoft.com/azure/data-factory/tutorial-hybrid-copy-portal#trigger-a-pipeline-run).
+10. Install  the self-hosted integration runtime by following instructions in this article: [Install and register self-hosted IR from download center](https://learn.microsoft.com/azure/data-factory/create-self-hosted-integration-runtime#install-and-register-self-hosted-ir-from-download-center). Use the key you copied in the previous step to register the integration runtime.
+11. Now, run and monitor the pipeline by using the steps in the [tutorial article](https://learn.microsoft.com/azure/data-factory/tutorial-hybrid-copy-portal#trigger-a-pipeline-run).
 
 `Tags: Microsoft.DataFactory/factories, linkedservices, AzureStorage, SecureString, integrationRuntimes, SelfHosted, SqlServer, IntegrationRuntimeReference, datasets, SqlServerTable, LinkedServiceReference, AzureBlob, pipelines, Copy, BlobSource, SqlSink, DatasetReference, Microsoft.Storage/storageAccounts`

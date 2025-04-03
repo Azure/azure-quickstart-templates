@@ -77,7 +77,7 @@ param addNameToPublicIpAddresses string = 'SharePointVMsOnly'
 @description('Specify if Azure Bastion should be provisioned. See https://azure.microsoft.com/en-us/services/azure-bastion for more information.')
 param enableAzureBastion bool = false
 
-@description('Enable the Azure Hybrid Benefit on virtual machines, to use your on-premises Windows Server licenses and reduce cost. See https://docs.microsoft.com/en-us/azure/virtual-machines/windows/hybrid-use-benefit-licensing for more information.')
+@description('Enable the Azure Hybrid Benefit on virtual machines, to use your on-premises Windows Server licenses and reduce cost. See https://learn.microsoft.com/en-us/azure/virtual-machines/windows/hybrid-use-benefit-licensing for more information.')
 param enableHybridBenefitServerLicenses bool = false
 
 @description('Time zone of the virtual machines. Type "[TimeZoneInfo]::GetSystemTimeZones().Id" in PowerShell to get the list.')
@@ -233,7 +233,7 @@ param autoShutdownTime string = '1900'
 @description('Size of the DC virtual machine.')
 param vmDcSize string = 'Standard_B2als_v2'
 
-@description('Type of storage for the managed disk. Visit https://docs.microsoft.com/en-us/rest/api/compute/disks/list#diskstorageaccounttypes for more information.')
+@description('Type of storage for the managed disk. Visit https://learn.microsoft.com/en-us/rest/api/compute/disks/list#diskstorageaccounttypes for more information.')
 @allowed([
   'Standard_LRS'
   'StandardSSD_LRS'
@@ -248,7 +248,7 @@ param vmDcStorage string = 'StandardSSD_LRS'
 @description('Size of the SQL virtual machine.')
 param vmSqlSize string = 'Standard_B2as_v2'
 
-@description('Type of storage for the managed disk. Visit https://docs.microsoft.com/en-us/rest/api/compute/disks/list#diskstorageaccounttypes for more information.')
+@description('Type of storage for the managed disk. Visit https://learn.microsoft.com/en-us/rest/api/compute/disks/list#diskstorageaccounttypes for more information.')
 @allowed([
   'Standard_LRS'
   'StandardSSD_LRS'
@@ -263,7 +263,7 @@ param vmSqlStorage string = 'StandardSSD_LRS'
 @description('Size of the SharePoint virtual machine(s).')
 param vmSharePointSize string = 'Standard_B4as_v2'
 
-@description('Type of storage for the managed disk. Visit https://docs.microsoft.com/en-us/rest/api/compute/disks/list#diskstorageaccounttypes for more information.')
+@description('Type of storage for the managed disk. Visit https://learn.microsoft.com/en-us/rest/api/compute/disks/list#diskstorageaccounttypes for more information.')
 @allowed([
   'Standard_LRS'
   'StandardSSD_LRS'

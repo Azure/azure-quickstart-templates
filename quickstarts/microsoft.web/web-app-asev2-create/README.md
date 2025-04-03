@@ -26,6 +26,6 @@ languages:
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.web%2Fweb-app-asev2-create%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.web%2Fweb-app-asev2-create%2Fazuredeploy.json)
 
-For more details on App Service Environments, see the [Introduction to App Service Environments](https://docs.microsoft.com/azure/app-service/app-service-environment/intro).
+For more details on App Service Environments, see the [Introduction to App Service Environments](https://learn.microsoft.com/azure/app-service/app-service-environment/intro).
 
 `Tags: Microsoft.Web/hostingEnvironments, Microsoft.Network/virtualNetworks`

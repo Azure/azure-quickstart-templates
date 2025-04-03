@@ -27,7 +27,7 @@ This template creates a function application on a consumption plan on Windows. I
 
 ## Managed identities in Azure Functions
 
-You can learn more about [managed identities](https://docs.microsoft.com/azure/app-service/overview-managed-identity) and common scenarios in the [documentation](https://docs.microsoft.com/azure/app-service/overview-managed-identity#obtaining-tokens-for-azure-resources).
+You can learn more about [managed identities](https://learn.microsoft.com/azure/app-service/overview-managed-identity) and common scenarios in the [documentation](https://learn.microsoft.com/azure/app-service/overview-managed-identity#obtaining-tokens-for-azure-resources).
 
 Another common scenario is to grant the managed identity access to either resource groups or subscriptions so that the function has permissions to take action on Azure resources. This is useful when using functions to automate Azure operational tasks.
 

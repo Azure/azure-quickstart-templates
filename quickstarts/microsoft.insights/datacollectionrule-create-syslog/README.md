@@ -49,9 +49,9 @@ You can click the "deploy to Azure" button at the beginning of this document or 
 
 For more information on **data collection rules**, please visit:
 
-- [Data Collection Rules overview](https://docs.microsoft.com/azure/azure-monitor/agents/data-collection-rule-overview)
-- [Data Collection Rule Associations](https://docs.microsoft.com/azure/azure-monitor/agents/data-collection-rule-azure-monitor-agent)
-- [Azure Monitor agent overview](https://docs.microsoft.com/azure/azure-monitor/agents/azure-monitor-agent-overview)
-- [Install Azure Monitor agent](https://docs.microsoft.com/azure/azure-monitor/agents/azure-monitor-agent-install)
+- [Data Collection Rules overview](https://learn.microsoft.com/azure/azure-monitor/agents/data-collection-rule-overview)
+- [Data Collection Rule Associations](https://learn.microsoft.com/azure/azure-monitor/agents/data-collection-rule-azure-monitor-agent)
+- [Azure Monitor agent overview](https://learn.microsoft.com/azure/azure-monitor/agents/azure-monitor-agent-overview)
+- [Install Azure Monitor agent](https://learn.microsoft.com/azure/azure-monitor/agents/azure-monitor-agent-install)
 
 `Tags: DCR, DCRA, Monitor, data collection, data collection rule, azure monitor, Microsoft.Insights/dataCollectionRules, microsoft.operationalinsights/workspaces`

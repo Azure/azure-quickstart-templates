@@ -33,7 +33,7 @@ This module creates a user-assigned managed identity. It also optionally assigns
 | Name | Type | Required | Description |
 | :------------- | :----------: | :----------: | :------------- |
 | managedIdentityName | string | Yes | The name of the managed identity resource. |
-| roleDefinitionIds | string | No | The IDs of the role definitions to assign to the managed identity. Each role assignment is created at the resource group scope. Role definition IDs are GUIDs. To find the GUID for built-in Azure role definitions, see https://docs.microsoft.com/azure/role-based-access-control/built-in-roles. You can also use IDs of custom role definitions. |
+| roleDefinitionIds | string | No | The IDs of the role definitions to assign to the managed identity. Each role assignment is created at the resource group scope. Role definition IDs are GUIDs. To find the GUID for built-in Azure role definitions, see https://learn.microsoft.com/azure/role-based-access-control/built-in-roles. You can also use IDs of custom role definitions. |
 | roleAssignmentDescription | string | No | An optional description to apply to each role assignment, such as the reason this managed identity needs to be granted the role. |
 | location | string | No | The Azure location where the managed identity should be created. |
 

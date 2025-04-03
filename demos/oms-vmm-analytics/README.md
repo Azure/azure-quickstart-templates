@@ -46,7 +46,7 @@ Use the following procedure:
 
 4. Provide the details for the following parameters:
 
-   - **Subscription** - Select the resource group. More information about resource groups, see [Resource groups](https://docs.microsoft.com/azure/azure-resource-manager/resource-group-overview#resource-groups). You can select and existing group or create a new one.
+   - **Subscription** - Select the resource group. More information about resource groups, see [Resource groups](https://learn.microsoft.com/azure/azure-resource-manager/resource-group-overview#resource-groups). You can select and existing group or create a new one.
   - **Location** - Select the location of your resource group
   - **Workspace name** - Specify the name of the OMS workspace where you want to deploy this solution.
   - **Workspace region** - Select the region for the selected workspace.
@@ -73,7 +73,7 @@ in UTC string format "yyyy-MM-ddTHH:mm:ss.fffffffZ".
     The solution syncs the jobs completed after the set time. Default value is Null.
 ![lastRunTime](images/vmm-analytics-last-run-time.png)
 
-8. Create a runbook worker with **appropriate credentials**, which can read jobs data from your VMM instances. [Learn more](https://docs.microsoft.com/azure/automation/automation-hybrid-runbook-worker
+8. Create a runbook worker with **appropriate credentials**, which can read jobs data from your VMM instances. [Learn more](https://learn.microsoft.com/azure/automation/automation-hybrid-runbook-worker
 ).
 
 ![VMM Analytics Credentials](images/vmm-analytics-credential.png)

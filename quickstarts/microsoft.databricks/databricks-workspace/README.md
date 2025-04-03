@@ -29,7 +29,7 @@ languages:
 
 This template allows you to create a Azure Databricks workspace. For more information, see the following articles:
 
-- [Azure Databricks Documentation](https://docs.microsoft.com/azure/azure-databricks/)
-- [Quickstart: Create an Azure Databricks workspace by using an ARM template](https://docs.microsoft.com/azure/databricks/scenarios/quickstart-create-databricks-workspace-resource-manager-template)
+- [Azure Databricks Documentation](https://learn.microsoft.com/azure/azure-databricks/)
+- [Quickstart: Create an Azure Databricks workspace by using an ARM template](https://learn.microsoft.com/azure/databricks/scenarios/quickstart-create-databricks-workspace-resource-manager-template)
 
 `Tags: Microsoft.Databricks/workspaces`

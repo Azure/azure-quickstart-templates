@@ -27,7 +27,7 @@ languages:
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.databricks%2Fdatabricks-all-in-one-template-for-vnet-injection-with-nat-gateway%2Fazuredeploy.json)
 
 This template allows you to create a nat gateway, network security group, a virtual network and an Azure Databricks workspace with the virtual network.
-For more information, see the [Azure Databricks Documentation](https://docs.microsoft.com/azure/azure-databricks/).
+For more information, see the [Azure Databricks Documentation](https://learn.microsoft.com/azure/azure-databricks/).
 
 ### What is Azure Databricks?
 
@@ -43,12 +43,12 @@ This template allows you to install the following options
 
 ### DataBricks Resources
 
-[Getting Started with DataBricks](https://docs.microsoft.com/azure/databricks/getting-started/index)
+[Getting Started with DataBricks](https://learn.microsoft.com/azure/databricks/getting-started/index)
 [Data Bricks Admin Guide](https://docs.azuredatabricks.net/administration-guide/index.html)
 
 ### Microsoft Learn Modules
 
-[Data Bricks Microsoft Learn Modules](https://docs.microsoft.com/learn/browse/?term=Databricks)
+[Data Bricks Microsoft Learn Modules](https://learn.microsoft.com/learn/browse/?term=Databricks)
 
 ## The Template
 

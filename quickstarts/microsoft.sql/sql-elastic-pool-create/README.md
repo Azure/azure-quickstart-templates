@@ -25,8 +25,8 @@ languages:
 
 This template allows you to deploy a new SQL Elastic Pool with its new associated SQL Server and new SQL Databases to assign to it.
 
-For more information about Azure SQL Elastic Pools, see [What is an Azure Elastic Pool?](https://docs.microsoft.com/azure/sql-database/sql-database-elastic-pool).
+For more information about Azure SQL Elastic Pools, see [What is an Azure Elastic Pool?](https://learn.microsoft.com/azure/sql-database/sql-database-elastic-pool).
 
-To know more about eDTU and storage limits for SQL Elastic Pools, please check out this [link](https://docs.microsoft.com/azure/sql-database/sql-database-elastic-pool#edtu-and-storage-limits-for-elastic-pools).
+To know more about eDTU and storage limits for SQL Elastic Pools, please check out this [link](https://learn.microsoft.com/azure/sql-database/sql-database-elastic-pool#edtu-and-storage-limits-for-elastic-pools).
 
 `Tags: Microsoft.Sql/servers, Microsoft.Sql/servers/elasticPools, Microsoft.Sql/servers/databases, Microsoft.Sql/servers/firewallrules`

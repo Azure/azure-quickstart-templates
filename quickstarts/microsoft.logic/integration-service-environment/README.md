@@ -35,27 +35,27 @@ This template deploys the following resources:
 
 ## Managed Connectors
 
-All native connectors will be available by default in ISE. Refer to [documentation](https://docs.microsoft.com/azure/logic-apps/connect-virtual-network-vnet-isolated-environment-overview#isolated-versus-global) to learn more about ISE specific Managed Connectors. These need to be specifically deployed into the ISE to be available (with the ISE label) in the Logic Apps editor. At the time of creation of this template, the possible list of values for the `managedConnectors` template parameter are:
+All native connectors will be available by default in ISE. Refer to [documentation](https://learn.microsoft.com/azure/logic-apps/connect-virtual-network-vnet-isolated-environment-overview#isolated-versus-global) to learn more about ISE specific Managed Connectors. These need to be specifically deployed into the ISE to be available (with the ISE label) in the Logic Apps editor. At the time of creation of this template, the possible list of values for the `managedConnectors` template parameter are:
 
 | Value       | Connector         |
 |:---------------------------------------- |:----------------------------------------------------- |
-| sql | [SQL Server](https://docs.microsoft.com/connectors/sql/) |
-| ftp | [FTP](https://docs.microsoft.com/connectors/ftp/) |
-| azureblob | [Azure Blob Storage](https://docs.microsoft.com/connectors/azureblob/) |
-| azurefile | [Azure File Storage](https://docs.microsoft.com/connectors/azurefile/) |
-| azurequeues | [Azure Queues](https://docs.microsoft.com/connectors/azurequeues/) |
-| azuretables | [Azure Table Storage](https://docs.microsoft.com/connectors/azuretables/) |
-| sftpwithssh | [SFTP - SSH](https://docs.microsoft.com/connectors/sftpwithssh/) |
-| edifact | [EDIFACT](https://docs.microsoft.com/connectors/edifact/) |
-| x12 | [X12](https://docs.microsoft.com/connectors/x12/) |
-| servicebus | [Service Bus](https://docs.microsoft.com/connectors/servicebus/) |
-| documentdb | [Cosmos DB](https://docs.microsoft.com/connectors/documentdb/) |
-| eventhubs | [Event Hubs](https://docs.microsoft.com/connectors/eventhubs/) |
-| mq | [IBM WebSphere MQ](https://docs.microsoft.com/connectors/mq/) |
-| sqldw | [SQL Data Warehouse](https://docs.microsoft.com/connectors/sqldw/) |
-| db2 | [DB2](https://docs.microsoft.com/connectors/db2/) |
-| smtp | [SMTP](https://docs.microsoft.com/connectors/smtp/) |
-| si3270 | [IBM 3270](https://docs.microsoft.com/connectors/si3270/) |
+| sql | [SQL Server](https://learn.microsoft.com/connectors/sql/) |
+| ftp | [FTP](https://learn.microsoft.com/connectors/ftp/) |
+| azureblob | [Azure Blob Storage](https://learn.microsoft.com/connectors/azureblob/) |
+| azurefile | [Azure File Storage](https://learn.microsoft.com/connectors/azurefile/) |
+| azurequeues | [Azure Queues](https://learn.microsoft.com/connectors/azurequeues/) |
+| azuretables | [Azure Table Storage](https://learn.microsoft.com/connectors/azuretables/) |
+| sftpwithssh | [SFTP - SSH](https://learn.microsoft.com/connectors/sftpwithssh/) |
+| edifact | [EDIFACT](https://learn.microsoft.com/connectors/edifact/) |
+| x12 | [X12](https://learn.microsoft.com/connectors/x12/) |
+| servicebus | [Service Bus](https://learn.microsoft.com/connectors/servicebus/) |
+| documentdb | [Cosmos DB](https://learn.microsoft.com/connectors/documentdb/) |
+| eventhubs | [Event Hubs](https://learn.microsoft.com/connectors/eventhubs/) |
+| mq | [IBM WebSphere MQ](https://learn.microsoft.com/connectors/mq/) |
+| sqldw | [SQL Data Warehouse](https://learn.microsoft.com/connectors/sqldw/) |
+| db2 | [DB2](https://learn.microsoft.com/connectors/db2/) |
+| smtp | [SMTP](https://learn.microsoft.com/connectors/smtp/) |
+| si3270 | [IBM 3270](https://learn.microsoft.com/connectors/si3270/) |
 
 Specify the values in the template (CLI or Portal UX) as a JSON array:
 ```json
@@ -75,7 +75,7 @@ As the Integration Service Environment puts a subnet service delegation on the f
 
 ## Miscellaneous
 
-* This template does not deploy a Network Security Group and NSG rules. Review [the documentation](https://docs.microsoft.com/azure/logic-apps/connect-virtual-network-vnet-isolated-environment#check-network-ports) on recommendations for filtering traffic in your virtual network.
+* This template does not deploy a Network Security Group and NSG rules. Review [the documentation](https://learn.microsoft.com/azure/logic-apps/connect-virtual-network-vnet-isolated-environment#check-network-ports) on recommendations for filtering traffic in your virtual network.
 
 * There is a `rebuildVNET` parameter in the template. If the VNET has already been deployed, this should be changed to false so it doesn't try deleting and recreating the VNET (it will attempt it even if the deployment mode is set to Incremental).
 

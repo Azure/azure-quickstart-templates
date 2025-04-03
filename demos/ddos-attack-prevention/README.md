@@ -43,7 +43,7 @@ Perform DDoS attack on resources in a virtual network having public IP addresses
 
 # Important Notes
 DDoS Protection Standard protects resources in a virtual network including public IP addresses associated with virtual machines, load balancers, and application gateways. When coupled with the Application Gateway web application firewall, DDoS Protection Standard can provide full layer 3 to layer 7 mitigation capability.
-Refer [Azure DDoS Protection Standard](https://docs.microsoft.com/azure/virtual-network/ddos-protection-overview) for more details.
+Refer [Azure DDoS Protection Standard](https://learn.microsoft.com/azure/virtual-network/ddos-protection-overview) for more details.
 
 <a name="prerequisites">
 

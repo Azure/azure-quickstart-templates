@@ -23,7 +23,7 @@ languages:
 [![Deploy to Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Foms-automation-solution%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Foms-automation-solution%2Fazuredeploy.json)
 
-This solution (currently in private preview) will allow you to visualize your Azure Automation jobs in Operations Management Suite (Log Analytics). This solution use the job status and job stream information provided by Microsoft (https://docs.microsoft.com/azure/automation/automation-manage-send-joblogs-log-analytics) to present data about your Azure Automation jobs in Log Analytics.
+This solution (currently in private preview) will allow you to visualize your Azure Automation jobs in Operations Management Suite (Log Analytics). This solution use the job status and job stream information provided by Microsoft (https://learn.microsoft.com/azure/automation/automation-manage-send-joblogs-log-analytics) to present data about your Azure Automation jobs in Log Analytics.
 
 ![alt text](images/AutomationJobs.PNG "Azure Automation Job Monitoring")
 
@@ -31,7 +31,7 @@ This solution (currently in private preview) will allow you to visualize your Az
 
 - **OMS Workspace**
 
-To add this solution you need to have an existing OMS workspace. To create one, go to www.microsoft.com/oms and sign up. For details on this process see: https://docs.microsoft.com/azure/log-analytics/log-analytics-get-started
+To add this solution you need to have an existing OMS workspace. To create one, go to www.microsoft.com/oms and sign up. For details on this process see: https://learn.microsoft.com/azure/log-analytics/log-analytics-get-started
 
 - **Automation Account with runbooks**
 
@@ -39,7 +39,7 @@ Before you deploy this template, you will need an Automation Account in the Azur
 
 - **Automation job information sent to OMS**
 
-Automation job information needs to be sent from Azure Automation to Microsoft OMS. To acccomplish this, perform the steps documented by Microsoft at: https://docs.microsoft.com/azure/automation/automation-manage-send-joblogs-log-analytics
+Automation job information needs to be sent from Azure Automation to Microsoft OMS. To acccomplish this, perform the steps documented by Microsoft at: https://learn.microsoft.com/azure/automation/automation-manage-send-joblogs-log-analytics
 
 **How to use the application**
 

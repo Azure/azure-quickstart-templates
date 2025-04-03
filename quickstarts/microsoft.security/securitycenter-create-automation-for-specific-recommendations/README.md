@@ -46,7 +46,7 @@ This recommendation is for "Install endpoint protection solution on Linux virtua
 
 We found this Guid by using Azure Security Center assessment meta data API.
 The API is listed in:
-https://docs.microsoft.com/rest/api/securitycenter/assessmentsmetadata
+https://learn.microsoft.com/rest/api/securitycenter/assessmentsmetadata
 
 ## Prerequisites
 

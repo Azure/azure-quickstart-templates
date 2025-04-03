@@ -15,7 +15,7 @@ var appInsightsName = 'AppInsights'
 var storageAccountName = 'fnstor${uniqueString(resourceGroup().id, appName)}'
 var functionPlanKind = (functionPlanSkuName == 'Y1') ? 'functionapp' : 'elastic'
 var functionName = 'MyHttpTriggeredFunction'
-var contributorRoleDefinitionId = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c') // as per https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#:~:text=b24988ac-6180-42a0-ab88-20f7382dd24c
+var contributorRoleDefinitionId = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c') // as per https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#:~:text=b24988ac-6180-42a0-ab88-20f7382dd24c
 var managedIdentityName = 'EventGridFunctionEnabler'
 var deploymentScriptName = 'GetFunctionAppEventGridKey'
 

@@ -52,7 +52,7 @@ Users need to be registered to both Microsoft.Logic and Microsoft.Security resou
 
 ## Deployment steps
 
-You can select the **Deploy to Azure** button at the beginning of this document. To learn more about how to deploy the template, see the [quickstart](https://docs.microsoft.com/azure/security-center/quickstart-automation-alert) article.
+You can select the **Deploy to Azure** button at the beginning of this document. To learn more about how to deploy the template, see the [quickstart](https://learn.microsoft.com/azure/security-center/quickstart-automation-alert) article.
 
 ## Notes
 

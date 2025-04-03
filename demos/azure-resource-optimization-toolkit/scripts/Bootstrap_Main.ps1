@@ -151,7 +151,7 @@ try
             $AzureRMProfileVersion= (Get-Module AzureRM.Profile).Version
             if (!(($AzureRMProfileVersion.Major -ge 2 -and $AzureRMProfileVersion.Minor -ge 1) -or ($AzureRMProfileVersion.Major -gt 2)))
             {
-                Write-Error -Message "Please install the latest Azure PowerShell and retry. Relevant doc url : https://docs.microsoft.com/en-us/powershell/azureps-cmdlets-docs/ "
+                Write-Error -Message "Please install the latest Azure PowerShell and retry. Relevant doc url : https://learn.microsoft.com/en-us/powershell/azureps-cmdlets-docs/ "
                 return
             }
      

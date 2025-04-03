@@ -25,6 +25,6 @@ languages:
 
 This template allows you to create an HDInsight cluster running Linux (with Azure Storage) with an SSH public key.
 
-If you are new to template deployment, see: [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
+If you are new to template deployment, see: [Azure Resource Manager documentation](https://learn.microsoft.com/azure/azure-resource-manager/)
 
 `Tags: Microsoft.Storage/storageAccounts, Microsoft.HDInsight/clusters`

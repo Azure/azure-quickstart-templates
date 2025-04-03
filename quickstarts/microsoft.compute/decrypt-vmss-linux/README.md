@@ -25,6 +25,6 @@ languages:
 
 This template disables encryption on a running VM scale set of Linux VMs.
 
-For more information about Azure Disk Encryption, see https://docs.microsoft.com/azure/security/azure-security-disk-encryption-linux
+For more information about Azure Disk Encryption, see https://learn.microsoft.comm/azure/security/azure-security-disk-encryption-linux
 
 `Tags: Microsoft.Compute/virtualMachineScaleSets, [variables('extensionName')]`
