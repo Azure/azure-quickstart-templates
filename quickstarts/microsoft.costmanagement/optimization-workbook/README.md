@@ -46,7 +46,7 @@ This template creates a new Azure Monitor workbook for **cost optimization**.
 
 The objective of this workbook is to provide an overview of the cost posture of your Azure environment. The workbook is to be used as guidance only and does not represent a guarantee of any cost reduction.
 
-To learn more about the cost optimization workbook, the roadmap, or how to contribute, see [FinOps toolkit documentation](https://aka.ms/finops/toolkit).
+To learn more about the cost optimization workbook, the roadmap, or how to contribute, see [FinOps toolkit documentation](https://aka.ms/ftk/docs).
 
 <br>
 
