@@ -32,8 +32,8 @@ This template creates a standard internal Azure Load Balancer with backend pool 
 
 As part of the deployment, Azure Bastion is deployed for virtual machine management, and NAT Gateway is deployed for outbound connectivity. This template also deploys a Storage Account, Virtual Network & subnets, and network interfaces.
 
-To learn more about how to deploy the template, see the [quickstart](https://docs.microsoft.com/azure/load-balancer/quickstart-load-balancer-standard-internal-bicep.md) article.
+To learn more about how to deploy the template, see the [quickstart](https://learn.microsoft.com/azure/load-balancer/quickstart-load-balancer-standard-internal-bicep.md) article.
 
-Outbound rules are not created as part of this template.  For more information on providing outbound connectivity to the backend pool see, [What is Virtual Network NAT?](https://docs.microsoft.com/azure/virtual-network/nat-overview).
+Outbound rules are not created as part of this template.  For more information on providing outbound connectivity to the backend pool see, [What is Virtual Network NAT?](https://learn.microsoft.com/azure/virtual-network/nat-overview).
 
 `Tags: Microsoft.Network/virtualNetworks, Microsoft.Network/virtualNetworks/subnets, Microsoft.Network/networkInterfaces, Microsoft.Network/loadBalancers`

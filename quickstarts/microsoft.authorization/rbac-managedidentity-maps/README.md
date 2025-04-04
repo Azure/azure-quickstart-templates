@@ -35,6 +35,6 @@ These values should be unique per element as they represent the id of the role a
 
 ## For Automation on role assignments you must assign 'User Access Administrator'
 
-For automation scenarios without a user's principal, the built in role you must assign your automation is "User Access Adminstrator". This role with grant access to add and remove role assignments. The other option can be to create a [custom role definition](https://docs.microsoft.com/azure/role-based-access-control/custom-roles) with the permissions `Microsoft.Authorization/roleAssignments/write` and `Microsoft.Authorization/roleAssignments/delete`.
+For automation scenarios without a user's principal, the built in role you must assign your automation is "User Access Adminstrator". This role with grant access to add and remove role assignments. The other option can be to create a [custom role definition](https://learn.microsoft.com/azure/role-based-access-control/custom-roles) with the permissions `Microsoft.Authorization/roleAssignments/write` and `Microsoft.Authorization/roleAssignments/delete`.
 
 `Tags: Microsoft.ManagedIdentity/userAssignedIdentities, Microsoft.Maps/accounts, Microsoft.Maps/accounts/providers/roleAssignments`

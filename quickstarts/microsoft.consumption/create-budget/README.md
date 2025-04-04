@@ -24,11 +24,11 @@ languages:
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.consumption%2Fcreate-budget%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.consumption%2Fcreate-budget%2Fazuredeploy.json)
 
-This template shows how to create a budget to track cost or usage and get notified whenever a specified threshold is met. To learn more about how to deploy the template, see the [quickstart](https://docs.microsoft.com/azure/cost-management-billing/costs/quick-create-budget-template) article.
+This template shows how to create a budget to track cost or usage and get notified whenever a specified threshold is met. To learn more about how to deploy the template, see the [quickstart](https://learn.microsoft.com/azure/cost-management-billing/costs/quick-create-budget-template) article.
 
 **Note** This feature is only available to enterprise customers. An enterprise subscription is required to create a budget.
 
-For more information, see [Budgets - Create Or Update](https://docs.microsoft.com/rest/api/consumption/budgets/createorupdate).
+For more information, see [Budgets - Create Or Update](https://learn.microsoft.com/rest/api/consumption/budgets/createorupdate).
 
 ## Important note about parameters
 

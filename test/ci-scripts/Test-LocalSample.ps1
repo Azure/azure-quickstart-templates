@@ -7,7 +7,7 @@ Prerequesites:
 
 1) Install bicep
     - Make sure it's on the path, or set environment variable BICEP_PATH to point to the executable
-2) Install the Azure TTK (https://docs.microsoft.com/en-us/azure/azure-resource-manager/templates/test-toolkit)
+2) Install the Azure TTK (https://learn.microsoft.com/en-us/azure/azure-resource-manager/templates/test-toolkit)
     - Set environment variable TTK_FOLDER to the installation folder location
 
 Usage:
@@ -123,7 +123,7 @@ if (!$TtkFolder) {
     }
     else {
         $ErrorActionPreference = $PreviousErrorPreference
-        Write-Error "Could not find the ARM TTK. Please install from https://docs.microsoft.com/en-us/azure/azure-resource-manager/templates/test-toolkit and set environment variable TTK_FOLDER to the installation folder location."
+        Write-Error "Could not find the ARM TTK. Please install from https://learn.microsoft.com/en-us/azure/azure-resource-manager/templates/test-toolkit and set environment variable TTK_FOLDER to the installation folder location."
         Return
     }
 }

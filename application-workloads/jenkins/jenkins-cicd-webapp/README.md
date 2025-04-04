@@ -27,7 +27,7 @@ Azure App Service is a fast and simple way to create web apps using Java, Node, 
 
 ## Deployment steps
 
-1. Create service principal with the `Contributor` role with [Azure CLI](https://docs.microsoft.com/cli/azure/get-started-with-azure-cli?view=azure-cli-latest) if you don't have one in your subscription.
+1. Create service principal with the `Contributor` role with [Azure CLI](https://learn.microsoft.com/cli/azure/get-started-with-azure-cli?view=azure-cli-latest) if you don't have one in your subscription.
    ```shell
    az ad sp create-for-rbac --role="Contributor" --scopes="/subscriptions/${SUBSCRIPTION_ID}"
    ```

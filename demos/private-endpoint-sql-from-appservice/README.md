@@ -31,8 +31,8 @@ This is a starter template that shows how to consume an Azure SQL private endpoi
 
 ## Notes
 
-[Azure Private Link FAQ](https://docs.microsoft.com/azure/private-link/private-link-faq)
+[Azure Private Link FAQ](https://learn.microsoft.com/azure/private-link/private-link-faq)
 
-[Private link endpoints template format](https://docs.microsoft.com/azure/templates/microsoft.network/2020-04-01/privateendpoints)
+[Private link endpoints template format](https://learn.microsoft.com/azure/templates/microsoft.network/2020-04-01/privateendpoints)
 
 `Tags: Microsoft.Sql/servers, Microsoft.Sql/servers/databases, Microsoft.Network/virtualNetworks, Microsoft.Network/privateEndpoints, Microsoft.Network/privateDnsZones, Microsoft.Network/privateDnsZones/virtualNetworkLinks, Microsoft.Network/privateEndpoints/privateDnsZoneGroups, Microsoft.Web/serverfarms, Microsoft.Web/sites, SQLAzure, config, extensions, networkConfig`

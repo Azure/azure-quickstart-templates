@@ -28,7 +28,7 @@ This template allows you to deploy an instance of Telegraf-InfluxDB-Grafana on a
 ## A. Deploy TIG VM
 
 1. Click the "Deploy to Azure" button. If you don't have an Azure subscription, you can follow instructions to signup for a free trial.
-1. Enter a valid name for the VM, as well as a user name and [ssh public key](https://docs.microsoft.com/azure/virtual-machines/virtual-machines-linux-mac-create-ssh-keys) that you will use to login remotely to the VM via SSH.
+1. Enter a valid name for the VM, as well as a user name and [ssh public key](https://learn.microsoft.com/azure/virtual-machines/virtual-machines-linux-mac-create-ssh-keys) that you will use to login remotely to the VM via SSH.
 
 ## B. Login remotely to the VM via SSH
 
@@ -55,7 +55,7 @@ Or follow these manual steps:
 1. Launch Putty and navigate to Change Settings > SSH > Tunnels
 1. In the Options controlling SSH port forwarding window, enter 8083 for Source port. Then enter 127.0.0.1:8083 for the Destination. Click Add.
 1. Repeat this process for port 3000
-1. Navigate to 'Connection > SSH > Auth' and enter your private key file for authentication. For more information on using ssh keys with Putty, see [here](https://docs.microsoft.com/azure/virtual-machines/virtual-machines-linux-ssh-from-windows#create-a-private-key-for-putty).
+1. Navigate to 'Connection > SSH > Auth' and enter your private key file for authentication. For more information on using ssh keys with Putty, see [here](https://learn.microsoft.com/azure/virtual-machines/virtual-machines-linux-ssh-from-windows#create-a-private-key-for-putty).
 1. Click Open to establish the connection.
 
 ### If you are using Linux or Mac

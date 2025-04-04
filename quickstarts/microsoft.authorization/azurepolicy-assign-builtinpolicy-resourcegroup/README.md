@@ -34,6 +34,6 @@ The following PowerShell script shows how to get the policy definition ID and th
 $policyDefinitionId = $(Get-AzPolicyDefinition  | Where-Object { $_.Properties.DisplayName -eq 'Audit resource location matches resource group location' }).PolicyDefinitionId
 ```
 
-To learn more about how to deploy the template, see the [quickstart](https://docs.microsoft.com/azure/governance/policy/assign-policy-template) article.
+To learn more about how to deploy the template, see the [quickstart](https://learn.microsoft.com/azure/governance/policy/assign-policy-template) article.
 
 `Tags: Microsoft.Authorization/policyAssignments`

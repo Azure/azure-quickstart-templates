@@ -27,7 +27,7 @@ languages:
 
 For information about using this template, see [Quickstart: Create an event hub cluster using Azure Resource Manager template](http://azure.microsoft.com/documentation/articles/event-hubs-resource-manager-namespace-event-hub/)
 
-For the template reference, see [Microsoft.EventHub resource types](https://docs.microsoft.com/azure/templates/microsoft.eventhub/allversions).
+For the template reference, see [Microsoft.EventHub resource types](https://learn.microsoft.com/azure/templates/microsoft.eventhub/allversions).
 
 For additional event hub quickstart templates, see [Azure Quickstart templates](https://azure.microsoft.com/resources/templates/?resourceType=Microsoft.Eventhub&pageNumber=1&sort=Popular).
 

@@ -25,6 +25,6 @@ languages:
 
 This template uses ssh-keygen on a deploymentScript resource to create a key pair and then stores the private key in a keyVault.  The keyVault must already exist and can be in a different resourceGroup or subscription.
 
-See the [docs](https://docs.microsoft.com/azure/azure-resource-manager/templates/deployment-script-template?tabs=CLI) for more information on the deployment script resource.
+See the [docs](https://learn.microsoft.com/azure/azure-resource-manager/templates/deployment-script-template?tabs=CLI) for more information on the deployment script resource.
 
 `Tags: Microsoft.ManagedIdentity/userAssignedIdentities, Microsoft.Authorization/roleAssignments, Microsoft.Resources/deploymentScripts, UserAssigned, Microsoft.Resources/deployments, Microsoft.KeyVault/vaults/secrets`

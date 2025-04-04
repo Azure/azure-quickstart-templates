@@ -88,6 +88,6 @@ You can also see that the Approval State is Pending. The owner of the target res
 
 Further information can be found:
 
-[Create a Managed private endpoint to your data source](https://docs.microsoft.com/azure/synapse-analytics/security/how-to-create-managed-private-endpoints)
+[Create a Managed private endpoint to your data source](https://learn.microsoft.com/azure/synapse-analytics/security/how-to-create-managed-private-endpoints)
 
 `Tags: Microsoft.Resources/deployments, Microsoft.Storage/storageAccounts, blobServices/containers, Microsoft.Synapse/workspaces, SystemAssigned, firewallrules, managedIdentitySqlControlSettings, Microsoft.Synapse/workspaces/sqlPools, metadataSync, Microsoft.Synapse/workspaces/bigDataPools, Microsoft.Authorization/roleAssignments, Microsoft.Logic/workflows, InitializeVariable, Object, Integer, Http, ManagedServiceIdentity, ParseJson, , string, If, Until, SetVariable, Wait, Recurrence, `

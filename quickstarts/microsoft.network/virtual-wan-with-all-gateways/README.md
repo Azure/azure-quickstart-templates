@@ -39,7 +39,7 @@ This template creates a fully functional Azure Virtual WAN (vWAN) environment wi
 vWAN resource deployed is of type "Standard" with default full mesh connectivity.
 The scenario implemented is exactly the one referenced in the Azure Virtual WAN documentation article below:
 
-[Azure vWAN Routing Scenario: any-to-Any](https://docs.microsoft.com/azure/virtual-wan/scenario-any-to-any)
+[Azure vWAN Routing Scenario: any-to-Any](https://learn.microsoft.com/azure/virtual-wan/scenario-any-to-any)
 
 ![Figure 1](images/azurevirtualwanarchitecturefigure1.jpg)
 

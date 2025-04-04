@@ -37,12 +37,12 @@ If you're new to **Dapr**, see:
 
 If you're new to **Container App**, see:
 
-- [Microsoft Container Apps Documentation](https://docs.microsoft.com/azure/container-apps/)
-- [Quickstarts: Microsoft Container Apps](https://docs.microsoft.com/azure/container-apps/get-started)
+- [Microsoft Container Apps Documentation](https://learn.microsoft.com/azure/container-apps/)
+- [Quickstarts: Microsoft Container Apps](https://learn.microsoft.com/azure/container-apps/get-started)
 - [Container Apps Pricing](https://azure.microsoft.com/pricing/details/container-apps/)
 
 If you're new to template deployment, see:
 
-- [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
+- [Azure Resource Manager documentation](https://learn.microsoft.com/azure/azure-resource-manager/)
 
 `Tags: Dapr, Pub-sub, Pubsub, ContainerApp, Container App, Container, Service Bus, ServiceBus, ARM Template, Microsoft.OperationalInsights/workspaces, Microsoft.App/managedEnvironments, Microsoft.App/containerApps`

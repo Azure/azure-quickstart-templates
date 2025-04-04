@@ -30,7 +30,7 @@ This template deploys a Front Door Premium with a Web Application Firewall (WAF)
 
 ## Sample overview and deployed resources
 
-This sample template creates a Front Door profile with a WAF. To keep the sample simple, Front Door is configured to direct traffic to an Azure Storage static website configured as an origin, but this could be [any origin supported by Front Door](https://docs.microsoft.com/azure/frontdoor/standard-premium/concept-origin).
+This sample template creates a Front Door profile with a WAF. To keep the sample simple, Front Door is configured to direct traffic to an Azure Storage static website configured as an origin, but this could be [any origin supported by Front Door](https://learn.microsoft.comm/azure/frontdoor/standard-premium/concept-origin).
 
 The following resources are deployed as part of the solution:
 
@@ -41,13 +41,13 @@ The following resources are deployed as part of the solution:
 - Front Door profile, endpoint, origin group, origin, and route to direct traffic to the Azure Storage static website.
   - This sample must be deployed using the premium Front Door SKU, since this is required for managed rule sets in the WAF.
 - Front Door WAF policy with two rule sets:
-  - The [Microsoft default rule set](https://docs.microsoft.com/azure/web-application-firewall/afds/afds-overview#azure-managed-rule-sets), version 1.1.
-  - The [Microsoft bot protection rule set](https://docs.microsoft.com/azure/web-application-firewall/afds/afds-overview#bot-protection-rule-set-preview), version 1.0.
+  - The [Microsoft default rule set](https://learn.microsoft.comm/azure/web-application-firewall/afds/afds-overview#azure-managed-rule-sets), version 1.1.
+  - The [Microsoft bot protection rule set](https://learn.microsoft.comm/azure/web-application-firewall/afds/afds-overview#bot-protection-rule-set-preview), version 1.0.
 - Front Door security policy to attach the WAF policy to the Front Door endpoint.
 
 ### Log Analytics
 - Log Analytics workspace.
-- Diagnostic settings to route the `FrontDoorWebApplicationFirewallLogs` to the Log Analytics workspace. This allows you to [tune the Front Door WAF](https://docs.microsoft.com/azure/web-application-firewall/afds/waf-front-door-tuning) based on your own traffic.
+- Diagnostic settings to route the `FrontDoorWebApplicationFirewallLogs` to the Log Analytics workspace. This allows you to [tune the Front Door WAF](https://learn.microsoft.comm/azure/web-application-firewall/afds/waf-front-door-tuning) based on your own traffic.
 
 ## Deployment steps
 

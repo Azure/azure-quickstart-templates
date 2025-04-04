@@ -29,11 +29,11 @@ It will create a VNet, a subnet where your Private Endpoint will exist, an App S
 If you are new to Azure App Service, see:
 
 - [Azure App Service](https://azure.microsoft.com/services/app-service/web/)
-- [Template reference](https://docs.microsoft.com/azure/templates/microsoft.web/allversions)
+- [Template reference](https://learn.microsoft.com/azure/templates/microsoft.web/allversions)
 - [Quickstart templates](https://azure.microsoft.com/resources/templates/?resourceType=Microsoft.Compute&pageNumber=1&sort=Popular&term=web+apps)
 
 If you are new to template deployment, see:
 
-[Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
+[Azure Resource Manager documentation](https://learn.microsoft.com/azure/azure-resource-manager/)
 
 `Tags: appServices, Microsoft.Network/virtualNetworks, Microsoft.Network/virtualNetworks/subnets, Microsoft.Web/serverfarms, Microsoft.Web/sites, Microsoft.Web/sites/config, Microsoft.Web/sites/hostNameBindings, Microsoft.Network/privateEndpoints, Microsoft.Network/privateDnsZones, Microsoft.Network/privateDnsZones/virtualNetworkLinks, Microsoft.Network/privateEndpoints/privateDnsZoneGroups`

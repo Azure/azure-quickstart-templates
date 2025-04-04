@@ -25,7 +25,7 @@ param principalId string
 @description('The type of the given principal id')
 param principalType string
 
-// Azure RBAC Guid Source: https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles
+// Azure RBAC Guid Source: https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles
 var azureRbacContributor = 'b24988ac-6180-42a0-ab88-20f7382dd24c'
 var azureRbacAzureEventHubsDataOwner = 'f526a384-b230-433a-b45c-95f59c4a2dec'
 var azureRbacAzureDigitalTwinsDataOwner = 'bcd981a7-7f74-457b-83e1-cceb9e632ffe'

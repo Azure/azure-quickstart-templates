@@ -26,7 +26,7 @@ languages:
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.recoveryservices%2Frecovery-services-vault-create%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.recoveryservices%2Frecovery-services-vault-create%2Fazuredeploy.json)
 
-This template creates a Recovery Services Vault which will be used further for Backup and SiteRecovery. To learn more about how to deploy the template, see the [quickstart](https://docs.microsoft.com/azure/site-recovery/quickstart-create-vault-template) article.
+This template creates a Recovery Services Vault which will be used further for Backup and SiteRecovery. To learn more about how to deploy the template, see the [quickstart](https://learn.microsoft.com/azure/site-recovery/quickstart-create-vault-template) article.
 
 A disaster recovery and data protection strategy keeps your business running when unexpected events occur.
 
@@ -36,12 +36,12 @@ The Site Recovery service ensures your servers, virtual machines, and apps are r
 
 ## Storage Type Selection
 
-A Recovery Services vault can only change storage options before any backups have been configured. Once any backup is configured, the storage type cannot be changed. [Learn more](https://docs.microsoft.com/azure/backup/backup-azure-backup-faq#can-i-change-the-storage-redundancy-setting-after-a-backup).
+A Recovery Services vault can only change storage options before any backups have been configured. Once any backup is configured, the storage type cannot be changed. [Learn more](https://learn.microsoft.com/azure/backup/backup-azure-backup-faq#can-i-change-the-storage-redundancy-setting-after-a-backup).
 
 ## Cross Region Restore
-A Recovery Services vault can only change cross region restore before any backups have been configured. Once any backup is configured, cross region support setting cannot be changed. [Learn more](https://docs.microsoft.com/azure/backup/backup-create-rs-vault#set-cross-region-restore).
+A Recovery Services vault can only change cross region restore before any backups have been configured. Once any backup is configured, cross region support setting cannot be changed. [Learn more](https://learn.microsoft.com/azure/backup/backup-create-rs-vault#set-cross-region-restore).
 
 ## Delete an Azure Backup Recovery Services vault
-In order to delete the recovery services vault, you first need to stop protection to any existing backup items. You may refer [Delete Recovery Services Vault](https://docs.microsoft.com/azure/backup/backup-azure-delete-vault#delete-the-recovery-services-vault-by-force)
+In order to delete the recovery services vault, you first need to stop protection to any existing backup items. You may refer [Delete Recovery Services Vault](https://learn.microsoft.com/azure/backup/backup-azure-delete-vault#delete-the-recovery-services-vault-by-force)
 
 `Tags: Microsoft.RecoveryServices/vaults, Microsoft.RecoveryServices/vaults/backupstorageconfig`

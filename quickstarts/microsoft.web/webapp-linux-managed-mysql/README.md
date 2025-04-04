@@ -28,13 +28,13 @@ This template provides a way to deploy **Web App and MySQL app** in Azure App Se
 
 If you're new to **Web App Services**, see:
 
-- [Microsoft MySQL Documentation](https://docs.microsoft.com/azure/mysql/)
-- [Microsoft Learn Resources](https://docs.microsoft.com/learn/browse/?products=azure-app-service )
+- [Microsoft MySQL Documentation](https://learn.microsoft.com/azure/mysql/)
+- [Microsoft Learn Resources](https://learn.microsoft.com/learn/browse/?products=azure-app-service )
 - [Microsoft MySQL Pricing](https://azure.microsoft.com/pricing/details/mysql/)
 
 If you're new to template deployment, see:
 
-- [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
-- [Quickstart: Use an ARM template to deploy a Linux web app to Azure](https://docs.microsoft.com/azure/devops/pipelines/apps/cd/azure/deploy-arm-template)
+- [Azure Resource Manager documentation](https://learn.microsoft.com/azure/azure-resource-manager/)
+- [Quickstart: Use an ARM template to deploy a Linux web app to Azure](https://learn.microsoft.com/azure/devops/pipelines/apps/cd/azure/deploy-arm-template)
 
 `Tags: Azure4Student, WebApp, Linux, mySQL, Beginner, Microsoft.Web/serverfarms, Microsoft.Web/sites, SystemAssigned, Microsoft.DBforMySQL/servers, Microsoft.DBforMySQL/servers/firewallRules, Microsoft.DBforMySQL/servers/databases`

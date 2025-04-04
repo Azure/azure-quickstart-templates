@@ -121,7 +121,7 @@ Once the deployment is successful, go to the outputs section of the deployment t
 
 **Option 1 of 5**. Create Public IP to access the CentOS VM and WildFly Admin Console
 
-   - The CentOS VM you created does not have a Public IP associated with it. You can [create a Public IP](https://docs.microsoft.com/azure/virtual-network/virtual-network-public-ip-address#create-a-public-ip-address) for accessing the VM and [associate the Public IP to the VM](https://docs.microsoft.com/azure/virtual-network/associate-public-ip-address-vm). All this can be done using Azure Portal or PowerShell commands or CLI commands.
+   - The CentOS VM you created does not have a Public IP associated with it. You can [create a Public IP](https://learn.microsoft.com/azure/virtual-network/virtual-network-public-ip-address#create-a-public-ip-address) for accessing the VM and [associate the Public IP to the VM](https://learn.microsoft.com/azure/virtual-network/associate-public-ip-address-vm). All this can be done using Azure Portal or PowerShell commands or CLI commands.
 
    - Obtain the Public IP of a VM - go to the VM details page and copy the Public IP. You can use this Public IP to access the VM and WildFly Admin Console.
 
@@ -137,9 +137,9 @@ Once the deployment is successful, go to the outputs section of the deployment t
 
 **Option 2 of 5**. Create a Jump VM in a different subnet (new subnet) in the same Virtual Network and access the CentOS VM via Jump VM.
 
-   - [Add a new subnet](https://docs.microsoft.com/azure/virtual-network/virtual-network-manage-subnet#add-a-subnet) in the existing Virtual Network which contains the CentOS VM.
+   - [Add a new subnet](https://learn.microsoft.com/azure/virtual-network/virtual-network-manage-subnet#add-a-subnet) in the existing Virtual Network which contains the CentOS VM.
 
-   - [Create a Windows Virtual Machine](https://docs.microsoft.com/azure/virtual-machines/windows/quick-create-portal#create-virtual-machine) in Azure in the same Resource Group as the CentOS VM. Provide the required details and leave other configurations as default except for the Virtual Network and subnet. Make sure you select the existing Virtual Network in the Resource Group and select the subnet you just created in the step above. This will be your Jump VM.
+   - [Create a Windows Virtual Machine](https://learn.microsoft.com/azure/virtual-machines/windows/quick-create-portal#create-virtual-machine) in Azure in the same Resource Group as the CentOS VM. Provide the required details and leave other configurations as default except for the Virtual Network and subnet. Make sure you select the existing Virtual Network in the Resource Group and select the subnet you just created in the step above. This will be your Jump VM.
 
    - Access Jump VM Public IP - once successfully deployed, go to the VM details page and copy the Public IP. Log into the Jump VM using this Public IP.
 
@@ -157,9 +157,9 @@ Once the deployment is successful, go to the outputs section of the deployment t
 
 **Option 3 of 5**. Create a Jump VM in a different Virtual Network and access the CentOS VM using Virtual Network Peering.
 
-   - [Create a Windows Virtual Machine](https://docs.microsoft.com/azure/virtual-machines/windows/quick-create-portal#create-virtual-machine) - in a new Azure Resource Group, create a Windows VM. This should be in the same location as CentOS VM. Provide the required details and leave other configurations as default. This will create the Jump VM in a new Virtual Network.
+   - [Create a Windows Virtual Machine](https://learn.microsoft.com/azure/virtual-machines/windows/quick-create-portal#create-virtual-machine) - in a new Azure Resource Group, create a Windows VM. This should be in the same location as CentOS VM. Provide the required details and leave other configurations as default. This will create the Jump VM in a new Virtual Network.
 
-   - [Peer the Virtual Networks](https://docs.microsoft.com/azure/virtual-network/tutorial-connect-virtual-networks-portal#peer-virtual-networks) - this is how you associate the CentOS VM with the Jump VM. Once the Virtual Network peering is successful, both the VMs can communicate with each other.
+   - [Peer the Virtual Networks](https://learn.microsoft.com/azure/virtual-network/tutorial-connect-virtual-networks-portal#peer-virtual-networks) - this is how you associate the CentOS VM with the Jump VM. Once the Virtual Network peering is successful, both the VMs can communicate with each other.
 
    - Go to the Jump VM details page and copy the Public IP. Log into the Jump VM using this Public IP.
 
@@ -177,7 +177,7 @@ Once the deployment is successful, go to the outputs section of the deployment t
 
 **Option 4 of 5**. Using an Application Gateway
 
-   - [Create an Application Gateway](https://docs.microsoft.com/azure/application-gateway/quick-create-portal#create-an-application-gateway) - to access the ports of the CentOS VM, create an Application Gateway in a different subnet. This subnet must only contain the Application Gateway.
+   - [Create an Application Gateway](https://learn.microsoft.com/azure/application-gateway/quick-create-portal#create-an-application-gateway) - to access the ports of the CentOS VM, create an Application Gateway in a different subnet. This subnet must only contain the Application Gateway.
 
    - Set *Frontends* parameters - make sure you select Public IP or both and provide the required details. Under *Backends* section, select **Add a backend pool** option and add the CentOS VM to the backend pool of the Application Gateway.
 
@@ -197,9 +197,9 @@ Once the deployment is successful, go to the outputs section of the deployment t
 
 **Option 5 of 5**. Using an External Load Balancer.
 
-   - [Create a Load Balancer](https://docs.microsoft.com/azure/load-balancer/tutorial-load-balancer-standard-manage-portal#create-a-standard-load-balancer) to access the ports of the CentOS VM. Provide the required details to deploy the external Load Balancer and leave other configurations as default. Leave the SKU as Basic for this configuration.
+   - [Create a Load Balancer](https://learn.microsoft.com/azure/load-balancer/tutorial-load-balancer-standard-manage-portal#create-a-standard-load-balancer) to access the ports of the CentOS VM. Provide the required details to deploy the external Load Balancer and leave other configurations as default. Leave the SKU as Basic for this configuration.
 
-   - Add Load Balancer rules - once the Load balancer has been created successfully, [create Load Balancer resources](https://docs.microsoft.com/azure/load-balancer/tutorial-load-balancer-standard-manage-portal#create-load-balancer-resources), add Load Balancer rules to access the ports 8080 and 9990 of the CentOS VM.
+   - Add Load Balancer rules - once the Load balancer has been created successfully, [create Load Balancer resources](https://learn.microsoft.com/azure/load-balancer/tutorial-load-balancer-standard-manage-portal#create-load-balancer-resources), add Load Balancer rules to access the ports 8080 and 9990 of the CentOS VM.
 
    - Add the CentOS VM to the backend pool of the Load Balancer - click on *Backend pools* under settings section and then select the backend pool you created in the step above. Select the Virtual Machine corresponding to the option *Associated to* and then add the CentOS VM.
 
@@ -249,7 +249,7 @@ Follow the steps below to troubleshoot VM Custom Script Extension failures furth
 
 This log file will have details that include deployment failure reason and possible solutions.
 
-Please refer to [Using the Azure Custom Script Extension Version 2 with Linux VMs](https://docs.microsoft.com/azure/virtual-machines/extensions/custom-script-linux) for more details on troubleshooting VM custom script extensions.
+Please refer to [Using the Azure Custom Script Extension Version 2 with Linux VMs](https://learn.microsoft.com/azure/virtual-machines/extensions/custom-script-linux) for more details on troubleshooting VM custom script extensions.
 
 ## Support
 

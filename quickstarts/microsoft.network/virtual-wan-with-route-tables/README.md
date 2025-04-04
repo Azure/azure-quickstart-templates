@@ -41,7 +41,7 @@ This template creates a fully functional Azure Virtual WAN (vWAN) environment wi
 vWAN resource deployed is of type "Standard" with default full mesh connectivity.
 The scenario implemented is exactly the one referenced in the Azure Virtual WAN documentation article below:
 
-[Azure vWAN Routing Scenario: Route to Shared Services VNets](https://docs.microsoft.com/azure/virtual-wan/scenario-shared-services-vnet)
+[Azure vWAN Routing Scenario: Route to Shared Services VNets](https://learn.microsoft.com/azure/virtual-wan/scenario-shared-services-vnet)
 
 ![Figure 1](images/route-to-shared-services-vnets-architecture.jpg)
 

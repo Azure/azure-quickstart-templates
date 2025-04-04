@@ -26,7 +26,7 @@ languages:
 
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.apimanagement%2Fapi-management-create-with-external-vnet-publicip%2Fazuredeploy.json)
 
-This template shows an example of how to deploy an Azure API Management service within your own virtual network's subnet in [external mode](https://docs.microsoft.com/azure/api-management/api-management-using-with-vnet).
+This template shows an example of how to deploy an Azure API Management service within your own virtual network's subnet in [external mode](https://learn.microsoft.com/azure/api-management/api-management-using-with-vnet).
 In external mode, clients from the internet can connect to the API Management service gateway, while the gateway can access backends available only in the virtual network.
 
 - The template creates a Premium tier API Management instance that is deployed to two availability zones. You may choose to deploy the API Management instance in the Developer tier; however, availability zones are not supported in that tier.

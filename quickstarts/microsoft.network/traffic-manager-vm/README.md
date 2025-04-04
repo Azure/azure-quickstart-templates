@@ -27,8 +27,8 @@ languages:
 This template shows how to create an Azure Traffic Manager profile to load-balance across a couple of Azure virtual machines.  Each endpoint has an equal weight but different weights can be specified to distribute load non-uniformly.
 
 See also:
-[Traffic Manager documentation](https://docs.microsoft.com/azure/traffic-manager/)
+[Traffic Manager documentation](https://learn.microsoft.com/azure/traffic-manager/)
 [Traffic Manager routing methods for details of the different routing methods available.](https://azure.microsoft.com/documentation/articles/traffic-manager-routing-methods/)
-[Create or update a Traffic Manager profile for details of the JSON elements relating to a Traffic Manager profile.](https://docs.microsoft.com/rest/api/trafficmanager/)
+[Create or update a Traffic Manager profile for details of the JSON elements relating to a Traffic Manager profile.](https://learn.microsoft.com/rest/api/trafficmanager/)
 
 `Tags: Microsoft.Network/publicIPAddresses, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Network/networkSecurityGroups, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, CustomScript, Microsoft.Network/trafficmanagerprofiles, Microsoft.Network/trafficManagerProfiles/azureEndpoints`

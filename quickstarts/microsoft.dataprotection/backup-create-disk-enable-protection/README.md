@@ -34,7 +34,7 @@ The Backup service is Microsoft's born in the cloud backup solution to backup da
 
 ### Overview of Azure Disk Backup
 
-Azure Disk Backup is a native, cloud-based backup solution that protects your data in managed disks. It's a simple, secure, and cost-effective solution that enables you to configure protection for managed disks in a few steps. It assures that you can recover your data in a disaster scenario. [Learn more](https://docs.microsoft.com/azure/backup/disk-backup-overview)
+Azure Disk Backup is a native, cloud-based backup solution that protects your data in managed disks. It's a simple, secure, and cost-effective solution that enables you to configure protection for managed disks in a few steps. It assures that you can recover your data in a disaster scenario. [Learn more](https://learn.microsoft.com/azure/backup/disk-backup-overview)
 
 #### Delete a Backup Vault
 You can't delete a Backup vault with any of the following dependencies:
@@ -42,6 +42,6 @@ You can't delete a Backup vault with any of the following dependencies:
 - You can't delete a vault that contains backup data.
 If you try to delete the vault without removing the dependencies, you'll encounter the following error messages:
 Cannot delete the Backup vault as there are existing backup instances or backup policies in the vault. Delete all backup instances and backup policies that are present in the vault and then try deleting the vault.
-Here are the steps for [Delete a Backup Vault](https://docs.microsoft.com/azure/backup/backup-vault-overview#delete-a-backup-vault)
+Here are the steps for [Delete a Backup Vault](https://learn.microsoft.com/azure/backup/backup-vault-overview#delete-a-backup-vault)
 
 `Tags: Microsoft.DataProtection/backupVaults, systemAssigned, [parameters('vaultStorageRedundancy')], Microsoft.DataProtection/backupVaults/backupPolicies, Microsoft.Compute/disks, Microsoft.Authorization/roleAssignments, Microsoft.DataProtection/backupVaults/backupInstances`

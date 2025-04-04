@@ -140,7 +140,7 @@ The [connect] button at the upper left of the `solacetestvm0`, `solacetestvm1`, 
 
 ![alt text](images/remote_access.png "console with PubSub+ cli")
 
-The simplest way is to [create an Azure Bastion first, then use the specified "Admin Username" and "Admin Password" to log in](https://docs.microsoft.com/azure/bastion/bastion-connect-vm-ssh-linux#username). Once you have access to the base OS command line you can access the PubSub+ CLI with the following command:
+The simplest way is to [create an Azure Bastion first, then use the specified "Admin Username" and "Admin Password" to log in](https://learn.microsoft.com/azure/bastion/bastion-connect-vm-ssh-linux#username). Once you have access to the base OS command line you can access the PubSub+ CLI with the following command:
 
 ```
 sudo docker exec -it solace cli

@@ -34,11 +34,11 @@ This template deploys a **Azure Blockchain Service**. Azure Blockchain Service i
 If you're new to Azure Blockchain Service, see:
 
 - [Azure Blockchain Service](https://azure.microsoft.com/services/blockchain-service/)
-- [Template reference](https://docs.microsoft.com/azure/templates/microsoft.compute/allversions)
+- [Template reference](https://learn.microsoft.com/azure/templates/microsoft.compute/allversions)
 
 If you are new to template deployment, see:
 
-- [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
-- [Quickstart: Create an Azure Blockchain Service member using an ARM template](https://docs.microsoft.com/azure/blockchain/service/create-member-template)
+- [Azure Resource Manager documentation](https://learn.microsoft.com/azure/azure-resource-manager/)
+- [Quickstart: Create an Azure Blockchain Service member using an ARM template](https://learn.microsoft.com/azure/blockchain/service/create-member-template)
 
 `Tags: Azure4Student, Blockchain, Beginner, Microsoft.Blockchain/blockchainMembers`

@@ -43,8 +43,8 @@ It will also setup Azure Active Directory as the default Authentication mechanis
 Prior to deploying AKS using this ARM template, the following resources need to exist:
 - Azure Vnet, including a subnet of sufficient size
 - Service Principal
-- Azure AD Server Application - [instructions here](https://docs.microsoft.com/azure/aks/aad-integration#create-server-application)
-- Azure AD Client Application - [instructions here](https://docs.microsoft.com/azure/aks/aad-integration#create-client-application)
+- Azure AD Server Application - [instructions here](https://learn.microsoft.com/azure/aks/aad-integration#create-server-application)
+- Azure AD Client Application - [instructions here](https://learn.microsoft.com/azure/aks/aad-integration#create-client-application)
 
 The following Azure CLI command can be used to create a Service Principal:
 
@@ -60,6 +60,6 @@ Please note that using the 'create-for-rbac' function would assign the SPN the '
 ## Deployment steps
 
 You can click the "deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the Azure documentation:
-- [Deploy resources with Resource Manager templates and Azure PowerShell](https://docs.microsoft.com/azure/azure-resource-manager/resource-group-template-deploy)
-- [Deploy resources with Resource Manager templates and Azure CLI](https://docs.microsoft.com/azure/azure-resource-manager/resource-group-template-deploy-cli)
+- [Deploy resources with Resource Manager templates and Azure PowerShell](https://learn.microsoft.com/azure/azure-resource-manager/resource-group-template-deploy)
+- [Deploy resources with Resource Manager templates and Azure CLI](https://learn.microsoft.com/azure/azure-resource-manager/resource-group-template-deploy-cli)
 

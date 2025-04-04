@@ -27,6 +27,6 @@ languages:
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.databricks%2Fdatabricks-workspace-with-custom-vnet-address%2Fazuredeploy.json)
 
 This template allows you to create a Azure Databricks workspace with a custom virtual network address range.
-For more information, see the <a href="https://docs.microsoft.com/azure/azure-databricks/">Azure Databricks Documentation.
+For more information, see the <a href="https://learn.microsoft.com/azure/azure-databricks/">Azure Databricks Documentation.
 
 `Tags: Microsoft.Databricks/workspaces`

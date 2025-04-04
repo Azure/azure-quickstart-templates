@@ -28,7 +28,7 @@ will be maintained by Azure for the life of the node as opposed to only applying
 the configuration at the time of deployment.
 
 For details about Azure Operations Management services,
-see the [Azure Automation Documentation](https://docs.microsoft.com/azure/automation/).
+see the [Azure Automation Documentation](https://learn.microsoft.com/azure/automation/).
 
 ## What is new in this template
 
@@ -55,14 +55,14 @@ this is essentially verifying the account before the server deployment.
 This model is the go-forward recommendation for utilizing DSC with Azure Virtual Machines.
 The [DSC Extension](https://blogs.msdn.microsoft.com/powershell/2014/08/07/introducing-the-azure-powershell-dsc-desired-state-configuration-extension/)
 is used only to apply settings to the Local Configuration Manager (LCM) and direct it
-to use the [Azure Automation DSC](https://docs.microsoft.com/azure/automation/automation-dsc-overview)
+to use the [Azure Automation DSC](https://learn.microsoft.com/azure/automation/automation-dsc-overview)
 service to deliver *and maintain* the state of the machine.
 The compliance state or any error messages from DSC can be viewed in the reporting
 available with the service.
 
 Users of the service also have tools to support Operations practices,
 such as publishing changes to the configuration without re-deployment of the virtual machine,
-or [linking the Automation Account with Log Analytics](https://docs.microsoft.com/azure/automation/automation-dsc-diagnostics)
+or [linking the Automation Account with Log Analytics](https://learn.microsoft.com/azure/automation/automation-dsc-diagnostics)
 for alerting (including notifications to mobile devices) when a node has drifted from
 the intended configuration.
 

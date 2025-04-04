@@ -25,7 +25,7 @@ languages:
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.cdn%2Ffront-door-standard-premium-api-management-external%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.cdn%2Ffront-door-standard-premium-api-management-external%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.cdn%2Ffront-door-standard-premium-api-management-external%2Fazuredeploy.json)
 
-This template deploys a Front Door Standard/Premium with an API Management origin, using [external VNet connectivity for the API Management instance](https://docs.microsoft.com/azure/api-management/api-management-using-with-vnet).
+This template deploys a Front Door Standard/Premium with an API Management origin, using [external VNet connectivity for the API Management instance](https://learn.microsoft.com/azure/api-management/api-management-using-with-vnet).
 
 ## Sample overview and deployed resources
 
@@ -35,7 +35,7 @@ The following resources are deployed as part of the solution:
 
 ## Networking
 - Virtual network, with one subnet (`ApiManagement`).
-- Network security group (NSG) that will block traffic that does not flow through Front Door. It uses the Front Door service tag to identify valid traffic. The NSG also allows the API Management instance to send its own management traffic; [these rules are required for API Management to work correctly](https://docs.microsoft.com/azure/api-management/api-management-using-with-vnet#-common-network-configuration-issues).
+- Network security group (NSG) that will block traffic that does not flow through Front Door. It uses the Front Door service tag to identify valid traffic. The NSG also allows the API Management instance to send its own management traffic; [these rules are required for API Management to work correctly](https://learn.microsoft.com/azure/api-management/api-management-using-with-vnet#-common-network-configuration-issues).
 
 ## API Management
 - API Management instance with a sample API. This must be deployed using either the premium or developer SKU types, since virtual network integration in API Management requires one of these SKUs. The API Management instance is deployed with an external network, which means it has a public IP address. However, the NSG is configured to block access to this public IP address for incoming traffic that hasn't come through Front Door.

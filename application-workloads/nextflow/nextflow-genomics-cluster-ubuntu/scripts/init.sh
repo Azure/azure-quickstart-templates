@@ -132,7 +132,7 @@ copyLogsToCifsShareForDebugging() {
     apt-get install curl -y | tee -a /tmp/nfinstall.log
 
     #Get node name and other instance metadata and write details into share log folder for debugging
-    #see https://docs.microsoft.com/en-us/azure/virtual-machines/windows/instance-metadata-service
+    #see https://learn.microsoft.com/en-us/azure/virtual-machines/windows/instance-metadata-service
     METADATA=$(curl -H Metadata:true "http://169.254.169.254/metadata/instance?api-version=2017-04-02")
     NODENAME=$(curl -H Metadata:true "http://169.254.169.254/metadata/instance/compute/name?api-version=2017-04-02&format=text")
 

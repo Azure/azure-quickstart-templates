@@ -22,7 +22,7 @@ This template creates a data factory of version 2 with a pipeline that copies da
 
 Here are a few important points about the template:
 
-- The prerequisites for this template are mentioned in the [Quickstart: Create a data factory by using Azure PowerShell](https://docs.microsoft.com/azure/data-factory/tutorial-copy-data-portal#prerequisites) article.
+- The prerequisites for this template are mentioned in the [Quickstart: Create a data factory by using Azure PowerShell](https://learn.microsoft.com/azure/data-factory/tutorial-copy-data-portal#prerequisites) article.
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.datafactory%2Fdata-factory-v2-blob-to-sql-copy%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.datafactory%2Fdata-factory-v2-blob-to-sql-copy%2Fazuredeploy.json)
@@ -41,7 +41,7 @@ When you deploy this Azure Resource Manager template, a data factory of version 
 2. Click **Go to resource group**.
 3. Search for *datafactory that's created.
 
-The following sections provide steps for running and monitoring the pipeline. For more information, see [Quickstart: Create a data factory by using Azure PowerShell](https://docs.microsoft.com/azure/data-factory/quickstart-create-data-factory-powershell).
+The following sections provide steps for running and monitoring the pipeline. For more information, see [Quickstart: Create a data factory by using Azure PowerShell](https://learn.microsoft.com/azure/data-factory/quickstart-create-data-factory-powershell).
 
 ## Run and monitor the pipeline
 After you deploy the template, to run and monitor the pipeline, do the following steps:

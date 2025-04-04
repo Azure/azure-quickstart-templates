@@ -29,11 +29,11 @@ Pipeline: Copy Activity -> HDInsight Activity -> Copy Activity
 ## Prerequisites
 
 1. An Azure subscription.
-1. [Create an Azure Storage account](https://docs.microsoft.com/azure/storage/storage-create-storage-account#create-a-storage-account).
+1. [Create an Azure Storage account](https://learn.microsoft.com/azure/storage/storage-create-storage-account#create-a-storage-account).
 1. Upload the **combinefirstandlast.hql** file to a folder named **Script** in the Azure blob storage in a container named **adftutorial**.
-1. [Create an Azure SQL database](https://docs.microsoft.com/azure/sql-database/sql-database-get-started).
+1. [Create an Azure SQL database](https://learn.microsoft.com/azure/sql-database/sql-database-get-started).
 1. Use the **createemployeestable.sql** from the script folder to create a table named **Employees** in your Azure SQL database.
-1. [Create an Azure Virtual Machine](https://docs.microsoft.com/azure/virtual-machines/virtual-machines-windows-hero-tutorial) and configure it to be an FTP server. See [this article](http://itq.nl/walkthrough-hosting-ftp-on-iis-7-5-a-windows-azure-vm-2/) for details. You can use your FTP server instead.
+1. [Create an Azure Virtual Machine](https://learn.microsoft.com/azure/virtual-machines/virtual-machines-windows-hero-tutorial) and configure it to be an FTP server. See [this article](http://itq.nl/walkthrough-hosting-ftp-on-iis-7-5-a-windows-azure-vm-2/) for details. You can use your FTP server instead.
 1. Upload **input.txt** file from the script folder to a folder named **incomingfiles** on the FTP server.
 1. Add parameters to the azuredeploy.parameters.json** file and specify values for them.
       	

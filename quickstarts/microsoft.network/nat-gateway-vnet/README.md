@@ -34,9 +34,9 @@ This template is a resource manager implementation of a quickstart for deploying
 
 For more information on **Virtual Network NAT** service and **NAT gateway** see:
 
-* [What is Virtual Network NAT?](https://docs.microsoft.com/azure/virtual-network/nat-overview)
+* [What is Virtual Network NAT?](https://learn.microsoft.com/azure/virtual-network/nat-overview)
 
-* [Designing virtual networks with NAT gateway resources](https://docs.microsoft.com/azure/virtual-network/nat-gateway-resource)
+* [Designing virtual networks with NAT gateway resources](https://learn.microsoft.com/azure/virtual-network/nat-gateway-resource)
 
 The following resources are deployed as part of the solution
 

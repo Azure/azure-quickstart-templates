@@ -52,7 +52,7 @@ It showcases the following use cases:
 Although the deployment takes 10-15mins, the log aggregation by Log Analytics take a few hours to get configured in the backend. You may not see attack/mitigation logs for detection and prevention events during the aggregation time window.
 Subsequently logs will take 10-15 mins to reflect in Log Analtyics.
 
-Also note, the PowerShell experience in Azure Cloud Shell now runs PowerShell Core 6 in a Linux environment. With this change, there may be some differences in the [PowerShell experience in Cloud Shell](https://docs.microsoft.com/azure/cloud-shell/cloud-shell-windows-users) compared to what is expected in a Windows PowerShell experience.
+Also note, the PowerShell experience in Azure Cloud Shell now runs PowerShell Core 6 in a Linux environment. With this change, there may be some differences in the [PowerShell experience in Cloud Shell](https://learn.microsoft.com/azure/cloud-shell/cloud-shell-windows-users) compared to what is expected in a Windows PowerShell experience.
 
 <a name="prerequisites">
 # Prerequisites
@@ -162,8 +162,8 @@ You will notice events related to Quarantined items. It might take few minutes f
 # References
 
 * http://www.eicar.org/
-* https://docs.microsoft.com/azure/security/azure-security-antimalware
-* https://docs.microsoft.com/azure/operations-management-suite/operations-management-suite-overview
+* https://learn.microsoft.com/azure/security/azure-security-antimalware
+* https://learn.microsoft.com/azure/operations-management-suite/operations-management-suite-overview
 
 ## Disclaimer & Acknowledgements
 

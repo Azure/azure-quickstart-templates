@@ -26,6 +26,6 @@ languages:
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.sql%2Fsql-data-warehouse-transparent-encryption-create%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.sql%2Fsql-data-warehouse-transparent-encryption-create%2Fazuredeploy.json)
 
-This template creates a SQL Server and a Dedicated SQL pool (formerly SQL DW) with Transparent Data Encryption. To learn more about how to deploy the template, see the [quickstart](https://docs.microsoft.com/azure/synapse-analytics/sql-data-warehouse/quickstart-arm-template) article.
+This template creates a SQL Server and a Dedicated SQL pool (formerly SQL DW) with Transparent Data Encryption. To learn more about how to deploy the template, see the [quickstart](https://learn.microsoft.com/azure/synapse-analytics/sql-data-warehouse/quickstart-arm-template) article.
 
 `Tags: sql data warehouse transparent data encryption, Microsoft.Sql/servers, Microsoft.Sql/servers/databases, Microsoft.Sql/servers/databases/transparentDataEncryption`

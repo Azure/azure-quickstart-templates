@@ -25,19 +25,19 @@ languages:
 
 This document covers the scenario of deploying storage for SAP HANA deployments using a SAP HANA storage template. Storage is provided using Azure NetApp Files, built on NetApp ONTAP storage OS.
 
-[Azure NetApp Files application volume group for SAP HANA is currently in preview](https://docs.microsoft.com/azure/azure-netapp-files/application-volume-group-introduction).
+[Azure NetApp Files application volume group for SAP HANA is currently in preview](https://learn.microsoft.com/azure/azure-netapp-files/application-volume-group-introduction).
 You need to submit a waitlist request for accessing the feature through the [Azure NetApp Files application volume group for SAP HANA waitlist submission page](https://forms.office.com/pages/responsepage.aspx?id=v4j5cvGGr0GRqy180BHbR2Qj2eZL0mZPv1iKUrDGvc9UQzBDRUREOTc4MDdWREZaRzhOQzZGNTdFQiQlQCN0PWcu).
 Wait for an official confirmation email from the Azure NetApp Files team before using application volume group for SAP HANA.
 ## Planning your SAP HANA deployment
 Before you deploy HANA volumes using the application volume group, we recommend a thorough planning and sizing with the help of SAP and Azure NetApp Files specialists.
 The decisions to make include the following:
-* Define the network structure and delegated subnet. For details, see [Requirements and considerations](https://docs.microsoft.com/azure/azure-netapp-files/application-volume-group-considerations#requirements-and-considerations).
+* Define the network structure and delegated subnet. For details, see [Requirements and considerations](https://learn.microsoft.com/azure/azure-netapp-files/application-volume-group-considerations#requirements-and-considerations).
 * Size the SAP HANA storage and VM requirements. You might need to increase the limits on the VMs and Azure NetApp Files to deploy SAP HANA landscapes.
 * Depending on the selected regions, you need to understand various technologies (for example, AvSet and PPG) to optimize you SAP HANA deployment.
  For details, see:
-  * [Azure proximity placement groups for optimal network latency with SAP applications](https://docs.microsoft.com/azure/virtual-machines/workloads/sap/sap-proximity-placement-scenarios)
-  * [Deployment through Azure NetApp Files application volume group for SAP HANA (AVG)](https://docs.microsoft.com/azure/virtual-machines/workloads/sap/hana-vm-operations-netapp#deployment-through-azure-netapp-files-application-volume-group-for-sap-hana-avg)
-  * [Best practices about proximity placement groups](https://docs.microsoft.com/azure/azure-netapp-files/application-volume-group-considerations#best-practices-about-proximity-placement-groups) to understand different options on how to use PPG with the application volume group.
+  * [Azure proximity placement groups for optimal network latency with SAP applications](https://learn.microsoft.com/azure/virtual-machines/workloads/sap/sap-proximity-placement-scenarios)
+  * [Deployment through Azure NetApp Files application volume group for SAP HANA (AVG)](https://learn.microsoft.com/azure/virtual-machines/workloads/sap/hana-vm-operations-netapp#deployment-through-azure-netapp-files-application-volume-group-for-sap-hana-avg)
+  * [Best practices about proximity placement groups](https://learn.microsoft.com/azure/azure-netapp-files/application-volume-group-considerations#best-practices-about-proximity-placement-groups) to understand different options on how to use PPG with the application volume group.
 
 ## Prerequisites
 To use the application volume group ARM template, you need to prepare the following environment. As described in the links above, most implementations require a thorough planning and understanding of the various architectural differences. You need to manually prepare many of the steps as a one-time activity before provisioning the Azure NetApp Files volumes for SAP HANA.
@@ -47,7 +47,7 @@ The prerequisite steps include:
 1. **Networking**:
 You need to decide on the networking architecture. To use Azure NetApp Files, you need to create a VNet.
 Within the VNet, you need a delegated subnet where the Azure NetApp Files storage endpoints (IPs) will be placed.
-To ensure that the size of this subnet is large enough, see [Considerations about delegating a subnet to Azure NetApp Files](https://docs.microsoft.com/azure/azure-netapp-files/azure-netapp-files-delegate-subnet#considerations).
+To ensure that the size of this subnet is large enough, see [Considerations about delegating a subnet to Azure NetApp Files](https://learn.microsoft.com/azure/azure-netapp-files/azure-netapp-files-delegate-subnet#considerations).
    * Create a VNet.
    * Create the VM subnet and delegated subnet for Azure NetApp Files.
 
@@ -58,7 +58,7 @@ A NetApp account (storage account) is the entry point for using Azure NetApp Fil
 
 3. **Create the AvSet and PPG**:
 For production landscapes, we recommend using a AvSet that is manually pinned to a data center where Azure NetApp Files resources are available in proximity. AvSet pinning ensures that VMs will not be moved on restart.
-You need to assign the PPG to the AvSet. The PPG helps the application volume group find the closest Azure NetApp Files hardware. For details, see [Best practices about proximity placement groups](https://docs.microsoft.com/azure/azure-netapp-files/application-volume-group-considerations#best-practices-about-proximity-placement-groups).
+You need to assign the PPG to the AvSet. The PPG helps the application volume group find the closest Azure NetApp Files hardware. For details, see [Best practices about proximity placement groups](https://learn.microsoft.com/azure/azure-netapp-files/application-volume-group-considerations#best-practices-about-proximity-placement-groups).
    * Create the AvSet,
    * Create the PPG,
    * Assign the PPG to the AvSet,
@@ -75,7 +75,7 @@ After the above preparation, you can use the application volume group template t
 
 ## Automated prerequisite template
 
-As mentioned above, a long-term SAP HANA landscape requires a thorough planning and most probably a manual creation of all the prerequisites. This GitHub document includes a prerequisite template that automates all required steps without manual pinning. As described in [Best practices about proximity placement groups],(https://docs.microsoft.com/azure/azure-netapp-files/application-volume-group-considerations#best-practices-about-proximity-placement-groups) this simplified process is based on the fact that, in many regions, the VM type used for SAP HANA (Mv2 series) is collocated with the Azure NetApp Files hardware. As such, manual pinning can be skipped.
+As mentioned above, a long-term SAP HANA landscape requires a thorough planning and most probably a manual creation of all the prerequisites. This GitHub document includes a prerequisite template that automates all required steps without manual pinning. As described in [Best practices about proximity placement groups],(https://learn.microsoft.com/azure/azure-netapp-files/application-volume-group-considerations#best-practices-about-proximity-placement-groups) this simplified process is based on the fact that, in many regions, the VM type used for SAP HANA (Mv2 series) is collocated with the Azure NetApp Files hardware. As such, manual pinning can be skipped.
 
 The steps in the prerequisite template include:
 
@@ -127,11 +127,11 @@ SAP HANA Storage Template
 ## WorkFlow Scenario
 ### SAP HANA single-host system
 The storage template can be used to create SAP HANA system by setting Starting Host ID to 1, HANA System Role as PRIMARY and Prefix as default. To extend it to a multiple-host system, the volume size has to be increased manually from the volume modification Web portal GUI.
-For further details refer [here](https://docs.microsoft.com/azure/azure-netapp-files/application-volume-group-deploy-first-host).
+For further details refer [here](https://learn.microsoft.com/azure/azure-netapp-files/application-volume-group-deploy-first-host).
 
 ### SAP HANA multiple-host system
 The storage template can be used to create SAP HANA multiple-host system by setting HANA System Role as PRIMARY and Prefix as default. For N worker hosts of the SAP HANA multiple-host cluster a data and log volume will be created. For an N host SAP HANA cluster, the user needs to specify Starting SAP Host ID as 1 and Number of SAP Host as N.
-For further details refer [here](https://docs.microsoft.com/azure/azure-netapp-files/application-volume-group-add-hosts).
+For further details refer [here](https://learn.microsoft.com/azure/azure-netapp-files/application-volume-group-add-hosts).
 
 ### SAP HANA System Replication (HSR)
 HANA System Replication will require two (identical) SAP HANA systems that replicate on the application level. HSR must be configured after installation of the SAP HANA instance (single-host as well as for multiple-host system). HSR can be used within the same region to facilitate a HA scenario. It makes sense to split this scenario into two workflows.
@@ -139,7 +139,7 @@ HANA System Replication will require two (identical) SAP HANA systems that repli
 2. Use single-host system or multiple-host system workflow to create the secondary instance volumes.
 For HA: In same DZ/same or different PPG (HANA System Role as HA and Prefix default).
 
-For further details refer [here](https://docs.microsoft.com/azure/azure-netapp-files/application-volume-group-add-volume-secondary).
+For further details refer [here](https://learn.microsoft.com/azure/azure-netapp-files/application-volume-group-add-volume-secondary).
 
 ## Volume Naming Convention
 Following input attributes are used to generate volume name. Volume name and mount point are same.

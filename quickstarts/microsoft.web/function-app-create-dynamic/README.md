@@ -33,6 +33,6 @@ Azure Functions is a solution for running small pieces of code, or functions, in
 For more information about Azure Functions, see the following articles:
 
 - [Azure Functions Overview](https://azure.microsoft.com/documentation/articles/functions-overview/)
-- [Quickstart: Create and deploy Azure Functions resources from an ARM template](https://docs.microsoft.com/azure/azure-functions/functions-create-first-function-resource-manager)
+- [Quickstart: Create and deploy Azure Functions resources from an ARM template](https://learn.microsoft.com/azure/azure-functions/functions-create-first-function-resource-manager)
 
 `Tags: Microsoft.Storage/storageAccounts, Microsoft.Web/serverfarms, Microsoft.Web/sites, SystemAssigned, Microsoft.Insights/components`

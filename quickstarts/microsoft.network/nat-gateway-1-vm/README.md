@@ -29,12 +29,12 @@ This template deploys a **NAT gateway** and supporting resources.
 
 ## Overview
 
-This template is a resource manager implementation of a quickstart for deploying a NAT gateway. An Ubuntu virtual machine is deployed to the subnet that is associated with the NAT gateway. To learn more about how to deploy the template, see the [quickstart](https://docs.microsoft.com/azure/virtual-network/quickstart-create-nat-gateway-template) article.
+This template is a resource manager implementation of a quickstart for deploying a NAT gateway. An Ubuntu virtual machine is deployed to the subnet that is associated with the NAT gateway. To learn more about how to deploy the template, see the [quickstart](https://learn.microsoft.com/azure/virtual-network/quickstart-create-nat-gateway-template) article.
 
 For more information on **Virtual Network NAT** service and **NAT gateway** see:
 
-- [What is Virtual Network NAT?](https://docs.microsoft.com/azure/virtual-network/nat-overview)
-- [Designing virtual networks with NAT gateway resources](https://docs.microsoft.com/azure/virtual-network/nat-gateway-resource)
+- [What is Virtual Network NAT?](https://learn.microsoft.com/azure/virtual-network/nat-overview)
+- [Designing virtual networks with NAT gateway resources](https://learn.microsoft.com/azure/virtual-network/nat-gateway-resource)
 
 ## Deployed resources
 

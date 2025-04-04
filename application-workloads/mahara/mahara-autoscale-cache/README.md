@@ -93,7 +93,7 @@ While Azure does not currently backup up Postgres/MySQL database, by dumping it 
 
 ### *Azure Recovery Services*
 
-If you have set azureBackupSwitch to 1 then Azure will provide VM backups of your Gluster node. This is recommended as it contains both your Mahara code and your sitedata. Restoring a backed up VM is outside the scope of this dos, but Azure's documentation on Recovery Services can be found here: https://docs.microsoft.com/azure/backup/backup-azure-vms-first-look-arm
+If you have set azureBackupSwitch to 1 then Azure will provide VM backups of your Gluster node. This is recommended as it contains both your Mahara code and your sitedata. Restoring a backed up VM is outside the scope of this dos, but Azure's documentation on Recovery Services can be found here: https://learn.microsoft.com/azure/backup/backup-azure-vms-first-look-arm
 
 ### *Resizing your database*
 
@@ -133,7 +133,7 @@ As of the time of writing, Azure supports "Basic" and "Standard" tiers for datab
 - Basic: 50, 100
 - Standard: 100, 200, 400
 
-This value also limits the maximum number of connections, as defined here: https://docs.microsoft.com/azure/mysql/concepts-limits
+This value also limits the maximum number of connections, as defined here: https://learn.microsoft.com/azure/mysql/concepts-limits
 
 As the Mahara database will handle cron processes as well as the website, any public facing websites with than 10 users will likely require upgrading to 100. Once the site reaches 30+ users it will require upgrading to Standard for more compute units. This depends entirely on the individual site. As MySQL databases cannot change (or be restored to a different tier) once deployed it is a good idea to slightly overspec your database.
 

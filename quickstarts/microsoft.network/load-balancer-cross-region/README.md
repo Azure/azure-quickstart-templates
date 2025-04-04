@@ -30,7 +30,7 @@ This template creates a:
 
 * Two regional load balancers in regions of your choosing
 
-* [Global load balancer](https://docs.microsoft.com/azure/load-balancer/cross-region-overview) in a region of your choosing
+* [Global load balancer](https://learn.microsoft.com/azure/load-balancer/cross-region-overview) in a region of your choosing
 
 The template creates supporting public IP resources, virtual networks, and bastion hosts for management in each region.
 
@@ -40,8 +40,8 @@ IIS is installed with an extension. The default web page is replaced with a page
 
 The regional load balancer front-ends are added as a member of the backend pool of the global load balancer.
 
-For more information on creating a regional, public Azure load balancer see [Quickstart: Create a public load balancer to load balance VMs by using an ARM template](https://docs.microsoft.com/azure/load-balancer/quickstart-load-balancer-standard-public-template).
+For more information on creating a regional, public Azure load balancer see [Quickstart: Create a public load balancer to load balance VMs by using an ARM template](https://learn.microsoft.com/azure/load-balancer/quickstart-load-balancer-standard-public-template).
 
-For more information on global load balancer, see [Global load balancer (Preview)](https://docs.microsoft.com/azure/load-balancer/cross-region-overview).
+For more information on global load balancer, see [Global load balancer (Preview)](https://learn.microsoft.com/azure/load-balancer/cross-region-overview).
 
 `Tags: load balancer, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines/extensions, CustomScriptExtension, Microsoft.Compute/virtualMachines, Microsoft.Network/virtualNetworks/subnets, Microsoft.Network/bastionHosts, Microsoft.Network/publicIPAddresses, Microsoft.Network/loadBalancers, Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Network/loadBalancers/backendAddressPools`

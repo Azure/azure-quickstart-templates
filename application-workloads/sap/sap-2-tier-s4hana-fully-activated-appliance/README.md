@@ -35,7 +35,7 @@ Explore the latest and greatest features of SAP S/4HANA with this fully activate
 
 1. **SAP Software**: You must have the SAP S/4HANA Fully Activated Appliance software. Download the software media from the [SAP Software Centre](https://me.sap.com/softwarecenter). This deployment was build on the SAP software for the S/4HANA 2023 version, which are 51057501_1.ZIP, 51057501_2.ZIP, 51057501_3.ZIP, 51057501_4.ZIP and SWPM20SP1880003424.SAR. You might need to adjust the scripts if you are using a different version. 
 
-2. **Storage Account**: A storage account is required to store the SAP software media. Create one using the Azure portal or follow [Create an Azure Storage Account and Blob Container](https://docs.microsoft.com/azure/storage/blobs/storage-quickstart-blobs-portal). Upload the SAP software media to a blob container in the storage account. An example of the uploaded files is shown below:
+2. **Storage Account**: A storage account is required to store the SAP software media. Create one using the Azure portal or follow [Create an Azure Storage Account and Blob Container](https://learn.microsoft.com/azure/storage/blobs/storage-quickstart-blobs-portal). Upload the SAP software media to a blob container in the storage account. An example of the uploaded files is shown below:
 
 ![alt text](images/container.png "SAP Files, folders and naming conventions")
 

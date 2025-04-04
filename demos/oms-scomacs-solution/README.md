@@ -34,7 +34,7 @@ This solution was built from following Wei Ho Lim's 2 articles listed here:
     <li><a href="https://blogs.msdn.microsoft.com/wei_out_there_with_system_center/2016/08/16/acs-dashboard-in-oms-your-audit-report-highlights-at-a-glance/" target="_blank">ACS Dashboard in OMS: Your Audit Report Highlights in a Glance</li>
 </ul>
 
-This solution requires the <a href="https://docs.microsoft.com/azure/operations-management-suite/oms-security-getting-started?toc=%2fazure%2flog-analytics%2ftoc.json" target="_blank">OMS Security and Audit solution to be enabled first, as it leverages this collected data. This template includes adding the Security and Audit solution to the OMS Workspace.
+This solution requires the <a href="https://learn.microsoft.com/azure/operations-management-suite/oms-security-getting-started?toc=%2fazure%2flog-analytics%2ftoc.json" target="_blank">OMS Security and Audit solution to be enabled first, as it leverages this collected data. This template includes adding the Security and Audit solution to the OMS Workspace.
 
 For additional information, check out Tao Yang's blog on <a href="http://blog.tyang.org/2016/12/17/powershell-script-to-create-oms-saved-searches-that-maps-opsmgr-acs-reports/" target="_blank">PowerShell Script to Create OMS Saved Searches that Maps OpsMgr ACS Reports.
 

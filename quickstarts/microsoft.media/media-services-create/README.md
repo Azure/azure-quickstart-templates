@@ -28,6 +28,6 @@ languages:
 
 This template creates a Media Services account with its Storage account on Azure.
 
-For more information about Azure Media Services, see [Media Services Documentation](https://docs.microsoft.com/azure/media-services/).
+For more information about Azure Media Services, see [Media Services Documentation](https://learn.microsoft.com/azure/media-services/).
 
 `Tags: Microsoft.Media/mediaservices, Primary, Microsoft.Storage/storageAccounts`

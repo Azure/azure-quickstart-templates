@@ -34,10 +34,10 @@ It deploys the following items:
 
 For more information about Application Security Groups, please refer to:
 
-[Network Security Groups under Network Security document](https://docs.microsoft.com/azure/virtual-network/security-overview#application-security-groupshttps://docs.microsoft.com/azure/virtual-network/security-overview)
+[Network Security Groups under Network Security document](https://learn.microsoft.com/azure/virtual-network/security-overview#application-security-groupshttps://learn.microsoft.com/azure/virtual-network/security-overview)
 
-[Filter network traffic with a network security group using PowerShell](https://docs.microsoft.com/azure/virtual-network/tutorial-filter-network-traffic)
+[Filter network traffic with a network security group using PowerShell](https://learn.microsoft.com/azure/virtual-network/tutorial-filter-network-traffic)
 
-[Filter network traffic with a network security group using the Azure CLI](https://docs.microsoft.com/azure/virtual-network/tutorial-filter-network-traffic-cli)
+[Filter network traffic with a network security group using the Azure CLI](https://learn.microsoft.com/azure/virtual-network/tutorial-filter-network-traffic-cli)
 
 `Tags: Microsoft.Network/applicationSecurityGroups, Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Network/publicIPAddresses, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, CustomScript`

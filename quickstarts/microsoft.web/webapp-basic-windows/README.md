@@ -10,7 +10,7 @@ languages:
 - bicep
 ---
 # App Service Quickstart - Windows app
-This template is to be used with: https://docs.microsoft.com/azure/app-service/quickstart-arm-template
+This template is to be used with: https://learn.microsoft.com/azure/app-service/quickstart-arm-template
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/webapp-basic-windows/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/webapp-basic-windows/PublicDeployment.svg)
 

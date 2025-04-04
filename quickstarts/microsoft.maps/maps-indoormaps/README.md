@@ -29,12 +29,12 @@ This template creates an Azure Maps service with the Azure Maps Creator feature 
 
 If you're new to Azure Maps, see:
 
-- [Indoor map concepts](https://docs.microsoft.com/azure/azure-maps/creator-indoor-maps)
+- [Indoor map concepts](https://learn.microsoft.com/azure/azure-maps/creator-indoor-maps)
 - [Azure Maps service](https://azure.microsoft.com/services/azure-maps/)
-- [Azure Maps documentation](https://docs.microsoft.com/azure/azure-maps/)
+- [Azure Maps documentation](https://learn.microsoft.com/azure/azure-maps/)
 
 If you're new to Azure Resource Manager template development, see:
 
-- [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
+- [Azure Resource Manager documentation](https://learn.microsoft.com/azure/azure-resource-manager/)
 
 `Tags: Maps, Indoor Maps, Creator, Azure Maps, Microsoft.Maps/accounts, Microsoft.Maps/accounts/creators`

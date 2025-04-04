@@ -26,7 +26,7 @@ languages:
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.signalrservice%2Fsignalr%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.signalrservice%2Fsignalr%2Fazuredeploy.json)
 
-This template allows you to create an Azure SignalR Service. Azure SignalR Service is an Azure managed service that helps developers build web applications with real-time features. To learn more about how to deploy the template, see the [quickstart](https://docs.microsoft.com/azure/azure-signalr/signalr-quickstart-azure-signalr-service-arm-template) article.
+This template allows you to create an Azure SignalR Service. Azure SignalR Service is an Azure managed service that helps developers build web applications with real-time features. To learn more about how to deploy the template, see the [quickstart](https://learn.microsoft.com/azure/azure-signalr/signalr-quickstart-azure-signalr-service-arm-template) article.
 
 ## Good candidates for SignalR
 
@@ -45,15 +45,15 @@ This template allows you to create an Azure SignalR Service. Azure SignalR Servi
 
 ## Notes
 
-- [Introduction to ASP.NET Core SignalR](https://docs.microsoft.com/aspnet/core/signalr/introduction?view=aspnetcore-3.0)
-- [Integrate Azure SignalR Service with ASP.NET Core Identity](https://docs.microsoft.com/azure/azure-signalr/signalr-authenticate-oauth)
-- [Build a Serverless Real-time App with Authentication](https://docs.microsoft.com/azure/azure-signalr/signalr-tutorial-authenticate-azure-functions)
-- For more details about SignalR, see [Azure SignalR Service documentation](https://docs.microsoft.com/azure/azure-signalr)
+- [Introduction to ASP.NET Core SignalR](https://learn.microsoft.com/aspnet/core/signalr/introduction?view=aspnetcore-3.0)
+- [Integrate Azure SignalR Service with ASP.NET Core Identity](https://learn.microsoft.com/azure/azure-signalr/signalr-authenticate-oauth)
+- [Build a Serverless Real-time App with Authentication](https://learn.microsoft.com/azure/azure-signalr/signalr-tutorial-authenticate-azure-functions)
+- For more details about SignalR, see [Azure SignalR Service documentation](https://learn.microsoft.com/azure/azure-signalr)
 
 SignalR also enables completely new types of web applications that require high frequency updates from the server, for example, real-time gaming.
 
-SignalR provides a simple API for creating server-to-client remote procedure calls (RPC) that call JavaScript functions in client browsers (and other client platforms) from server-side .NET code. SignalR also includes an API for connection management such as connect and disconnect events, and grouping connections. For more information, see the [Introduction to SignalR](https://docs.microsoft.com/aspnet/signalr/overview/getting-started/introduction-to-signalr).
+SignalR provides a simple API for creating server-to-client remote procedure calls (RPC) that call JavaScript functions in client browsers (and other client platforms) from server-side .NET code. SignalR also includes an API for connection management such as connect and disconnect events, and grouping connections. For more information, see the [Introduction to SignalR](https://learn.microsoft.com/aspnet/signalr/overview/getting-started/introduction-to-signalr).
 
-To learn how to build Azure SignalR Service applications, see [Microsoft Learn SignalR modules](https://docs.microsoft.com/learn/modules/automatic-update-of-a-webapp-using-azure-functions-and-signalr/).
+To learn how to build Azure SignalR Service applications, see [Microsoft Learn SignalR modules](https://learn.microsoft.com/learn/modules/automatic-update-of-a-webapp-using-azure-functions-and-signalr/).
 
 `Tags: Microsoft.SignalRService/signalR, SystemAssigned`

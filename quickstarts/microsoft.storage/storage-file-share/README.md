@@ -31,8 +31,8 @@ This template creates an Azure Storage account with a single file share.
 If you are new to Azure Storage accounts, see:
 
 - [Azure Storage account documentation](http://azure.microsoft.com/documentation/articles/storage-create-storage-account/)
-- [Azure Storage account template reference](https://docs.microsoft.com/azure/templates/microsoft.storage/allversions)
-- [File Share template reference](https://docs.microsoft.com/azure/templates/microsoft.storage/2019-04-01/storageaccounts/fileservices/shares)
+- [Azure Storage account template reference](https://learn.microsoft.com/azure/templates/microsoft.storage/allversions)
+- [File Share template reference](https://learn.microsoft.com/azure/templates/microsoft.storage/2019-04-01/storageaccounts/fileservices/shares)
 - [Quickstart templates](https://azure.microsoft.com/resources/templates/?resourceType=Microsoft.Storage&pageNumber=1&sort=Popular)
 
 `Tags: Azure Storage account, Resource Manager, Resource Manager templates, ARM templates, File Share, Microsoft.Storage/storageAccounts, Microsoft.Storage/storageAccounts/fileServices/shares`

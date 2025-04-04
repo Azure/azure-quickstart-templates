@@ -24,7 +24,7 @@ languages:
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.authorization%2Frbac-builtinrole-resourcegroup%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.authorization%2Frbac-builtinrole-resourcegroup%2Fazuredeploy.json)
 
-This template assigns Owner, Reader or Contributor access to an existing resource group. To learn more about how to deploy the template, see the [quickstart](https://docs.microsoft.com/azure/role-based-access-control/quickstart-role-assignments-template) article.
+This template assigns Owner, Reader or Contributor access to an existing resource group. To learn more about how to deploy the template, see the [quickstart](https://learn.microsoft.com/azure/role-based-access-control/quickstart-role-assignments-template) article.
 
 Inputs to this template are following fields:
 
@@ -67,13 +67,13 @@ You can use the same cmdlet to get the role definition ID for owner and contribu
 
 If you're new to RBAC for Azure resources, see:
 
-- [RBAC documentation](https://docs.microsoft.com/azure/role-based-access-control/)
-- [RBAC template reference](https://docs.microsoft.com/azure/templates/microsoft.authorization/allversions)
+- [RBAC documentation](https://learn.microsoft.com/azure/role-based-access-control/)
+- [RBAC template reference](https://learn.microsoft.com/azure/templates/microsoft.authorization/allversions)
 - [Quickstart templates](https://azure.microsoft.com/resources/templates/?resourceType=Microsoft.Authorization&pageNumber=1&sort=Popular)
 
 If you're new to the template development, see:
 
-- [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
-- [Create resource groups and resources at the subscription level](https://docs.microsoft.com/azure/azure-resource-manager/deploy-to-subscription#create-roles)
+- [Azure Resource Manager documentation](https://learn.microsoft.com/azure/azure-resource-manager/)
+- [Create resource groups and resources at the subscription level](https://learn.microsoft.com/azure/azure-resource-manager/deploy-to-subscription#create-roles)
 
 `Tags: RBAC for Azure resources, role-based access control, Resource Manager, Resource Manager templates, ARM templates, Microsoft.Authorization/roleAssignments`

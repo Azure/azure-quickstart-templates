@@ -28,8 +28,8 @@ languages:
 
 This template creates a Virtual WAN, a Virtual Hub, a VPN Gateway in the Virtual hub, a Vpn Site and a Vpn Connection between the Vpn Site and the Vpn Gateway. All the resources are created in the same region as the resource group by default. Modify parameters file to change default values.
 
-[Virtual Wan Service](https://docs.microsoft.com/azure/virtual-wan/virtual-wan-about)
-[Virtual Wan Site-to-Site VPN Tutorial](https://docs.microsoft.com/azure/virtual-wan/virtual-wan-site-to-site-portal)
-[Virtual Wan FAQ](https://docs.microsoft.com/azure/virtual-wan/virtual-wan-faq)
+[Virtual Wan Service](https://learn.microsoft.com/azure/virtual-wan/virtual-wan-about)
+[Virtual Wan Site-to-Site VPN Tutorial](https://learn.microsoft.com/azure/virtual-wan/virtual-wan-site-to-site-portal)
+[Virtual Wan FAQ](https://learn.microsoft.com/azure/virtual-wan/virtual-wan-faq)
 
 `Tags:network, virtual network, virtual wan, vpn, vwan, connections, Microsoft.Network/virtualWans, [parameters('vWanSku')], Microsoft.Network/virtualHubs, Microsoft.Network/vpnSites, Microsoft.Network/vpnGateways`

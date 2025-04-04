@@ -33,7 +33,7 @@ Its fluent DSL simplifies the implementation and the deployment of complex paral
 
 ## What is the Purpose of this Template
 
-To enable the deployment of a nextflow cluster using Ignite Executor on [Azure Scalable VMSS Machines](https://docs.microsoft.com/azure/virtual-machine-scale-sets/virtual-machine-scale-sets-overview)
+To enable the deployment of a nextflow cluster using Ignite Executor on [Azure Scalable VMSS Machines](https://learn.microsoft.com/azure/virtual-machine-scale-sets/virtual-machine-scale-sets-overview)
 
 ## Details
 

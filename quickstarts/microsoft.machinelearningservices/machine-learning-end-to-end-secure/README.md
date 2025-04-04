@@ -52,14 +52,14 @@ This reference implementation includes the Workspace, a compute cluster, compute
 If you are new to Azure Machine Learning, see:
 
 - [Azure Machine Learning service](https://azure.microsoft.com/services/machine-learning-service/)
-- [Azure Machine Learning documentation](https://docs.microsoft.com/azure/machine-learning/)
-- [Enterprise security and governance for Azure Machine Learning](https://docs.microsoft.com/azure/machine-learning/concept-enterprise-security).
-- [Azure Machine Learning template reference](https://docs.microsoft.com/azure/templates/microsoft.machinelearningservices/allversions)
+- [Azure Machine Learning documentation](https://learn.microsoft.com/azure/machine-learning/)
+- [Enterprise security and governance for Azure Machine Learning](https://learn.microsoft.com/azure/machine-learning/concept-enterprise-security).
+- [Azure Machine Learning template reference](https://learn.microsoft.com/azure/templates/microsoft.machinelearningservices/allversions)
 
 If you are new to template development, see:
 
-- [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
-- [Use an Azure Resource Manager template to create a workspace for Azure Machine Learning](https://docs.microsoft.com/azure/machine-learning/service/how-to-create-workspace-template)
+- [Azure Resource Manager documentation](https://learn.microsoft.com/azure/azure-resource-manager/)
+- [Use an Azure Resource Manager template to create a workspace for Azure Machine Learning](https://learn.microsoft.com/azure/machine-learning/service/how-to-create-workspace-template)
 - [Quickstart templates](https://azure.microsoft.com/resources/templates/)
 
 `Tags: Microsoft.Resources/deployments, Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.KeyVault/vaults, Microsoft.Network/privateEndpoints, Microsoft.Network/privateDnsZones, Microsoft.Network/privateEndpoints/privateDnsZoneGroups, Microsoft.Network/privateDnsZones/virtualNetworkLinks, Microsoft.Storage/storageAccounts, Microsoft.ContainerRegistry/registries, Notary, Microsoft.Insights/components, Microsoft.MachineLearningServices/workspaces, SystemAssigned, Microsoft.MachineLearningServices/workspaces/computes, Microsoft.ContainerService/managedClusters, VirtualMachineScaleSets, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, [variables('aadLoginExtensionName')], Microsoft.Network/virtualNetworks/subnets, Microsoft.Network/publicIPAddresses, Microsoft.Network/bastionHosts`

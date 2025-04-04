@@ -25,6 +25,6 @@ languages:
 
 This template allows you to deploy a simple VM and specify the number of data disks at deploy time using a parameter.  Note that the number and size of data disks is bound by the VM size, this sample does not attempt to enforce those rules beyond the size used in this sample.
 
-Docs are <a href="https://docs.microsoft.com/azure/virtual-machines/virtual-machines-windows-sizes" target="_blank">here if you want the details.</a>
+Docs are <a href="https://learn.microsoft.com/azure/virtual-machines/virtual-machines-windows-sizes" target="_blank">here if you want the details.</a>
 
 `Tags: datadisk, data, disk, copy, property, loop, vm, Microsoft.Network/publicIPAddresses, Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines`

@@ -35,6 +35,6 @@ The Backup service is Microsoft's born in the cloud backup solution to backup da
 The Site Recovery service ensures your servers, virtual machines, and apps are resilient by replicating them so that when disasters and outages occur you can easily fail over to your replicated environment and continue working. When services are resumed you simply failback to your primary location with uninterrupted access. Site Recovery helps protect a wide range of Microsoft and third-party workloads. [Learn more](http://aka.ms/asr-learn-more/).
 
 ## Delete an Azure Backup Recovery Services vault
-In order to delete the recovery services vault, you first need to stop protection to any existing backup items. You may refer [Delete Recovery Services Vault](https://docs.microsoft.com/azure/backup/backup-azure-delete-vault#delete-the-recovery-services-vault-by-force)
+In order to delete the recovery services vault, you first need to stop protection to any existing backup items. You may refer [Delete Recovery Services Vault](https://learn.microsoft.com/azure/backup/backup-azure-delete-vault#delete-the-recovery-services-vault-by-force)
 
 `Tags: Microsoft.RecoveryServices/vaults`

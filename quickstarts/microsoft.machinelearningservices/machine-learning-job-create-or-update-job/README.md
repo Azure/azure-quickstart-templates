@@ -34,8 +34,8 @@ This template creates an Azure Machine Learning command job.
 
 To run this template you need to have an Azure Machine Learning Workspace and an Azure Machine Learning AML Compute Cluster. The template expects these as parameters: `workspaceName`, `storageAccountName` and `computeName`. You can use the following samples to create these:
 
-1. [Azure Machine Learning Workspace](https://docs.microsoft.com/en-us/samples/azure/azure-quickstart-templates/modules-machine-learning-workspace-0.9/)
-2. [Azure Machine Learning Compute Cluster](https://docs.microsoft.com/en-us/samples/azure/azure-quickstart-templates/machine-learning-compute-create-amlcompute/)
+1. [Azure Machine Learning Workspace](https://learn.microsoft.com/en-us/samples/azure/azure-quickstart-templates/modules-machine-learning-workspace-0.9/)
+2. [Azure Machine Learning Compute Cluster](https://learn.microsoft.com/en-us/samples/azure/azure-quickstart-templates/machine-learning-compute-create-amlcompute/)
 
 ### Deployment steps
 
@@ -49,9 +49,9 @@ You can click the "deploy to Azure" button at the beginning of this document or 
 If you are new to Azure Machine Learning, see:
 
 - [Azure Machine Learning service](https://azure.microsoft.com/services/machine-learning-service/)
-- [Azure Machine Learning documentation](https://docs.microsoft.com/azure/machine-learning/)
-- [Azure Machine Learning compute instance documentation](https://docs.microsoft.com/azure/machine-learning/concept-compute-instance)
-- [Azure Machine Learning template reference](https://docs.microsoft.com/azure/templates/microsoft.machinelearningservices/allversions)
+- [Azure Machine Learning documentation](https://learn.microsoft.com/azure/machine-learning/)
+- [Azure Machine Learning compute instance documentation](https://learn.microsoft.com/azure/machine-learning/concept-compute-instance)
+- [Azure Machine Learning template reference](https://learn.microsoft.com/azure/templates/microsoft.machinelearningservices/allversions)
 - [Quickstart templates](https://azure.microsoft.com/resources/templates/)
 
 `Tags: Microsoft.MachineLearningServices/workspaces/jobs, Microsoft.MachineLearningServices/workspaces/computes, Microsoft.MachineLearningServices/workspaces, systemAssigned`

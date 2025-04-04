@@ -27,7 +27,7 @@ resource acr 'Microsoft.ContainerRegistry/registries@2022-02-01-preview' = {
     name: 'Standard'
   }
   properties: {
-    //You will need to enable an admin user account in your Azure Container Registry even when you use an Azure managed identity https://docs.microsoft.com/azure/container-apps/containers
+    //You will need to enable an admin user account in your Azure Container Registry even when you use an Azure managed identity https://learn.microsoft.com/azure/container-apps/containers
     adminUserEnabled: true 
   }
 }

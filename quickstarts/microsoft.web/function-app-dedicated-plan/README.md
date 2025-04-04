@@ -32,13 +32,13 @@ This template has a parameter `functionPlanOS` to choose Windows or Linux OS. Wi
 
 ### Dedicated Plan
 
-The Azure Function app provisioned in this sample uses an [Azure Functions Dedicated plan](https://docs.microsoft.com/en-us/azure/azure-functions/dedicated-plan).
+The Azure Function app provisioned in this sample uses an [Azure Functions Dedicated plan](https://learn.microsoft.com/en-us/azure/azure-functions/dedicated-plan).
 
 + **Microsoft.Web/serverfarms**: The Azure Functions Dedicated plan (a.k.a. App Service plan)
 
 ### Azure Function App
 
-The Function App uses the [AzureWebJobsStorage](https://docs.microsoft.com/azure/azure-functions/functions-app-settings#azurewebjobsstorage) app setting to connect to a Storage Account.
+The Function App uses the [AzureWebJobsStorage](https://learn.microsoft.com/azure/azure-functions/functions-app-settings#azurewebjobsstorage) app setting to connect to a Storage Account.
 
 + **Microsoft.Web/sites**: The function app instance.
 
@@ -52,11 +52,11 @@ The Zip Deploy extension is added along with recommended app setting `WEBSITE_RU
 
 The Storage account that the Function uses for operation and for file contents.
 
-+ **Microsoft.Storage/storageAccounts**: [Azure Functions requires a storage account](https://docs.microsoft.com/azure/azure-functions/storage-considerations) for the function app instance.
++ **Microsoft.Storage/storageAccounts**: [Azure Functions requires a storage account](https://learn.microsoft.com/azure/azure-functions/storage-considerations) for the function app instance.
 
 ### Application Insights
 
-[Application Insights](https://docs.microsoft.com/azure/azure-monitor/app/app-insights-overview) is used to provide [monitor the Azure Function](https://docs.microsoft.com/azure/azure-functions/functions-monitoring).
+[Application Insights](https://learn.microsoft.com/azure/azure-monitor/app/app-insights-overview) is used to provide [monitor the Azure Function](https://learn.microsoft.com/azure/azure-functions/functions-monitoring).
 
 + **Microsoft.Insights/components**: The Application Insights instance used by the Azure Function for monitoring.
 

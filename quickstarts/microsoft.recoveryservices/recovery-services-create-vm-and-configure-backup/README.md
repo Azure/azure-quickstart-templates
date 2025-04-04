@@ -26,13 +26,13 @@ languages:
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.recoveryservices%2Frecovery-services-create-vm-and-configure-backup%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.recoveryservices%2Frecovery-services-create-vm-and-configure-backup%2Fazuredeploy.json)
 
-This template allows you to deploy Windows VM and Recovery Services Vault configured with the `DefaultPolicy` for Protection. To learn more about how to deploy the template, see the [quickstart](https://docs.microsoft.com/azure/backup/quick-backup-vm-template) article.
+This template allows you to deploy Windows VM and Recovery Services Vault configured with the `DefaultPolicy` for Protection. To learn more about how to deploy the template, see the [quickstart](https://learn.microsoft.com/azure/backup/quick-backup-vm-template) article.
 
 If you're new to Azure Backup service, see:
 
 - [Azure Backup service](https://azure.microsoft.com/services/backup/)
-- [Azure Backup documentation](https://docs.microsoft.com/azure/backup/)
-- [Azure Backup template reference](https://docs.microsoft.com/azure/templates/microsoft.recoveryservices/allversions)
+- [Azure Backup documentation](https://learn.microsoft.com/azure/backup/)
+- [Azure Backup template reference](https://learn.microsoft.com/azure/templates/microsoft.recoveryservices/allversions)
 - [Quickstart templates](https://azure.microsoft.com/resources/templates/?resourceType=Microsoft.Recoveryservices&pageNumber=1&sort=Popular)
   - [Create Recovery Services Vault](https://github.com/Azure/azure-quickstart-templates/tree/master/101-recovery-services-vault-create)
   - [Create Recovery Services Vault and Weekly Backup Policy](https://github.com/Azure/azure-quickstart-templates/tree/master/101-recovery-services-weekly-backup-policy-create)
@@ -40,7 +40,7 @@ If you're new to Azure Backup service, see:
 
 If you're new to the template development, see:
 
-- [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
+- [Azure Resource Manager documentation](https://learn.microsoft.com/azure/azure-resource-manager/)
 
 Tags: Azure Backup, Backup, Resource Manager, Resource Manager templates, ARM templates
 

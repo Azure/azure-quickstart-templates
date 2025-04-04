@@ -37,9 +37,9 @@ Make sure that the location of the resource group is not same as one of the addi
 If you're new to Azure API Management, see:
 
 - [Azure API Management service](https://azure.microsoft.com/services/api-management/)
-- [Azure API Management documentation](https://docs.microsoft.com/azure/api-management/)
-- [Azure API Management deployment in multiple regios](https://docs.microsoft.com/azure/api-management/api-management-howto-deploy-multi-region)
-- [Azure API Management Configure protocols and ciphers](https://docs.microsoft.com/azure/api-management/api-management-howto-manage-protocols-ciphers)
+- [Azure API Management documentation](https://learn.microsoft.com/azure/api-management/)
+- [Azure API Management deployment in multiple regios](https://learn.microsoft.com/azure/api-management/api-management-howto-deploy-multi-region)
+- [Azure API Management Configure protocols and ciphers](https://learn.microsoft.com/azure/api-management/api-management-howto-manage-protocols-ciphers)
 - [Quickstart templates](https://azure.microsoft.com/resources/templates/?resourceType=Microsoft.Apimanagement)
 
 `Tags: API, API Management, Azure API Management, Microsoft.ApiManagement/service`

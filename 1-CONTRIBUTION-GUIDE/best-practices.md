@@ -90,7 +90,7 @@ param vmCount int = 2
 * Variables must not be used for apiVersions.  The apiVersion affects the shape of the resource and often cannot be updated without updating all the resources that use a particular version.
 * Use a loop for creating repeating patterns in variables.
 * Remove all unused variables from all templates.
-* Avoid concatenating variable names for conditional scenarios – use template language expressions and dictionary objects. For more information, see [https://docs.microsoft.com/azure/azure-resource-manager/resource-group-template-functions](https://docs.microsoft.com/azure/azure-resource-manager/resource-group-template-functions)
+* Avoid concatenating variable names for conditional scenarios – use template language expressions and dictionary objects. For more information, see [https://learn.microsoft.com/azure/azure-resource-manager/resource-group-template-functions](https://learn.microsoft.com/azure/azure-resource-manager/resource-group-template-functions)
 
 ## Naming Parameters & Variables
 

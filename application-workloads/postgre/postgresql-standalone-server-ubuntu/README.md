@@ -59,8 +59,8 @@ INSERT INTO potluck (name, food, confirmed, signup_date) VALUES('John', 'Cassero
 
 [To learn more about PostgreSQL, visit the PostgreSQL website](http://www.postgresql.org/)
 
-[Microsoft Learn Modules on PostgreSQL](https://docs.microsoft.com/learn/browse/?term=postgresql)
+[Microsoft Learn Modules on PostgreSQL](https://learn.microsoft.com/learn/browse/?term=postgresql)
 
-[Microsoft Learn Modules on Linux Virtual Machine](https://docs.microsoft.com/learn/browse/?term=Virtual%20Machine)
+[Microsoft Learn Modules on Linux Virtual Machine](https://learn.microsoft.com/learn/browse/?term=Virtual%20Machine)
 
 `Tags: Microsoft.Network/publicIPAddresses, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, CustomScript`

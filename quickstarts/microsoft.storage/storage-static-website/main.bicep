@@ -31,7 +31,7 @@ param errorDocument404Contents string = '<h1>Example 404 error page</h1>'
 
 resource contributorRoleDefinition 'Microsoft.Authorization/roleDefinitions@2018-01-01-preview' existing = {
   scope: subscription()
-  // This is the Storage Account Contributor role, which is the minimum role permission we can give. See https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#:~:text=17d1049b-9a84-46fb-8f53-869881c3d3ab
+  // This is the Storage Account Contributor role, which is the minimum role permission we can give. See https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#:~:text=17d1049b-9a84-46fb-8f53-869881c3d3ab
   name: '17d1049b-9a84-46fb-8f53-869881c3d3ab'
 }
 

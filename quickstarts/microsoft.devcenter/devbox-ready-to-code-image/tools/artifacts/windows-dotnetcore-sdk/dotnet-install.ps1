@@ -916,7 +916,7 @@ if($OverrideVersion){
 
 
 Say "Note that the script does not resolve dependencies during installation."
-Say "To check the list of dependencies, go to https://docs.microsoft.com/dotnet/core/install/windows#dependencies"
+Say "To check the list of dependencies, go to https://learn.microsoft.com/dotnet/core/install/windows#dependencies"
 Say "Installation finished"
 # SIG # Begin signature block
 # MIIjjwYJKoZIhvcNAQcCoIIjgDCCI3wCAQExDzANBglghkgBZQMEAgEFADB5Bgor

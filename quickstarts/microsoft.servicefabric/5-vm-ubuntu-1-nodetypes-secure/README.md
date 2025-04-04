@@ -42,7 +42,7 @@ If you are wanting to create a custom ARM template for your cluster, then you ha
 1. Log into the azure portal and use the service fabric portal pages to generate the template for you to customize.
    1. Log on to the [Azure Portal](https://aka.ms/servicefabricportal).
 
-   1. Go through the process of creating the cluster as described in [Creating Service Fabric Cluster via portal](https://docs.microsoft.com/azure/service-fabric/service-fabric-cluster-creation-via-portal) , but do not click on ***create**, instead go to Summary and download the template and parameters.
+   1. Go through the process of creating the cluster as described in [Creating Service Fabric Cluster via portal](https://learn.microsoft.com/azure/service-fabric/service-fabric-cluster-creation-via-portal) , but do not click on ***create**, instead go to Summary and download the template and parameters.
 
  ![DownloadTemplate](./images/DownloadTemplate.png)
 

@@ -25,7 +25,7 @@ languages:
 
 This template creates a SQL Server and uses an admin password from Key Vault.  The reference parameter for the Key Vault secret is created at deployment time using a nested template.  This allows the user to simply pass parameter values to the template rather than create a reference parameter in the parameter file.
 
-More documentation can be found [here](https://docs.microsoft.com/azure/azure-resource-manager/resource-manager-keyvault-parameter).
+More documentation can be found [here](https://learn.microsoft.com/azure/azure-resource-manager/resource-manager-keyvault-parameter).
 
 Tags: Azure Key Vault, Key Vault
 

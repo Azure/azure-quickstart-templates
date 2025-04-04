@@ -16,7 +16,7 @@ param existingEncryptionKeyUrl string = ''
 @description('User-assigned identity is an identity in Azure Active Directory that can be used to give access to other Azure resource such as Azure Key Vault. This identity should have Get, Wrap key, and Unwrap key permissions on the key vault.')
 param existingUserAssignedIdentityResourceId string = ''
 
-@description('An array containing properties of the SIM(s) you wish to create. See [Provision proxy SIM(s)](https://docs.microsoft.com/en-gb/azure/private-5g-core/provision-sims-azure-portal) for a full description of the required properties and their format.')
+@description('An array containing properties of the SIM(s) you wish to create. See [Provision proxy SIM(s)](https://learn.microsoft.com/en-gb/azure/private-5g-core/provision-sims-azure-portal) for a full description of the required properties and their format.')
 param simResources array
 
 #disable-next-line BCP081

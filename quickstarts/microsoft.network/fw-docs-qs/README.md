@@ -34,6 +34,6 @@ You can select **Deploy to Azure** at the top of this document or follow the ins
 
 ## Notes
 
-This template is used by the Azure Firewall documentation [quickstart](https://docs.microsoft.com/azure/firewall/quick-create-multiple-ip-template) article.
+This template is used by the Azure Firewall documentation [quickstart](https://learn.microsoft.com/azure/firewall/quick-create-multiple-ip-template) article.
 
 `Tags: Azure Firewall, Microsoft.Network/networkSecurityGroups, Microsoft.Network/publicIPPrefixes, Microsoft.Network/publicIPAddresses, Microsoft.Network/virtualNetworks, Microsoft.Network/virtualNetworks/subnets, Microsoft.Compute/virtualMachines, Microsoft.Network/networkInterfaces, Microsoft.Network/azureFirewalls, Allow, Dnat, Microsoft.Network/routeTables`

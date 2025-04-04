@@ -23,6 +23,6 @@ languages:
 
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.hdinsight%2Fhdinsight-rserver%2Fazuredeploy.json)
 
-This template allows you to create an HDInsight cluster running Linux with R Server (with Azure Storage) with an SSH password. To learn more about how to deploy the template, see the [quickstart](https://docs.microsoft.com/azure/hdinsight/r-server/quickstart-resource-manager-template) article.
+This template allows you to create an HDInsight cluster running Linux with R Server (with Azure Storage) with an SSH password. To learn more about how to deploy the template, see the [quickstart](https://learn.microsoft.com/azure/hdinsight/r-server/quickstart-resource-manager-template) article.
 
 `Tags: Standard_LRS, Microsoft.Storage/storageAccounts, Microsoft.HDInsight/clusters`

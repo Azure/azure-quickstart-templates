@@ -77,8 +77,8 @@ The deployment contains an output which provides the private IP address of the S
 
 As connectivity to the min.io service is fully private within the VNET, you must follow these steps to access the min.io web UI from your client device:
 
-+ Use the Azure CLI to [obtain the storage account key](https://docs.microsoft.com/cli/azure/storage/account/keys?view=azure-cli-latest#az_storage_account_keys_list)
-+ Use the Azure CLI to [authenticate with the AKS cluster](https://docs.microsoft.com/cli/azure/aks?view=azure-cli-latest#az_aks_get_credentials)
++ Use the Azure CLI to [obtain the storage account key](https://learn.microsoft.com/cli/azure/storage/account/keys?view=azure-cli-latest#az_storage_account_keys_list)
++ Use the Azure CLI to [authenticate with the AKS cluster](https://learn.microsoft.com/cli/azure/aks?view=azure-cli-latest#az_aks_get_credentials)
 + Execute **kubectl get pods** and capture one of the pod names, such as **minio-55c5f4ccd5-7t9t7**
 + Execute **kubectl port-forward [pod name] 9000** to establish a tunnel to the pod
 + Browse to http://localhost:9000 to access the web UI

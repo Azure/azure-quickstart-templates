@@ -28,9 +28,9 @@ languages:
 
 This template allows you to add a subnet to an existing VNET.
 
-[Azure Virtual Network Concepts and Best Practices](https://docs.microsoft.com/azure/virtual-network/concepts-and-best-practices)
-[Azure Virtual Network Manage Subnets](https://docs.microsoft.com/azure/virtual-network/virtual-network-manage-subnet)
-[Azure Virtual Network Subnets Reference](https://docs.microsoft.com/azure/templates/microsoft.network/virtualnetworks/subnets)
+[Azure Virtual Network Concepts and Best Practices](https://learn.microsoft.com/azure/virtual-network/concepts-and-best-practices)
+[Azure Virtual Network Manage Subnets](https://learn.microsoft.com/azure/virtual-network/virtual-network-manage-subnet)
+[Azure Virtual Network Subnets Reference](https://learn.microsoft.com/azure/templates/microsoft.network/virtualnetworks/subnets)
 
 `Tags: existing vnet, add subnet, virtual network, vnet, subnet, networking, network, Microsoft.Network/virtualNetworks/subnets, Microsoft.Network/virtualNetworks`
 

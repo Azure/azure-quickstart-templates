@@ -26,7 +26,7 @@ languages:
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.network%2Fexpressroute-private-peering-vnet%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.network%2Fexpressroute-private-peering-vnet%2Fazuredeploy.json)
 
-To learn more about how to deploy the template, see the [quickstart](https://docs.microsoft.com/azure/expressroute/quickstart-create-expressroute-vnet-template) article.
+To learn more about how to deploy the template, see the [quickstart](https://learn.microsoft.com/azure/expressroute/quickstart-create-expressroute-vnet-template) article.
 
 This template makes the following actions:
 
@@ -38,7 +38,7 @@ This template makes the following actions:
 
 ## Note
 
-The deployment leaves the ExpressRoute circuit with `circuitProvisioningState` property in `Enabled` and `serviceProviderProvisioningState` property in `NotProvisioned`. After running the template, you have to work with your ExpressRoute provider to complete the provisioning process of ExpressRoute circuit. In case of ExpressRoute Direct port pair, follow the steps shown in the [article](https://docs.microsoft.com/azure/expressroute/expressroute-howto-erdirect).
+The deployment leaves the ExpressRoute circuit with `circuitProvisioningState` property in `Enabled` and `serviceProviderProvisioningState` property in `NotProvisioned`. After running the template, you have to work with your ExpressRoute provider to complete the provisioning process of ExpressRoute circuit. In case of ExpressRoute Direct port pair, follow the steps shown in the [article](https://learn.microsoft.com/azure/expressroute/expressroute-howto-erdirect).
 You can create a connection, to link the ExpressRoute circuit to the ExpressRoute gateway, only when the `serviceProviderProvisioningState` will be in `Provisioned` state.
 
 ```

@@ -51,7 +51,7 @@ To learn more about FinOps hubs, the roadmap, or how to contribute , see [FinOps
 Please ensure the following prerequisites are met before deploying this template:
 
 1. You must have permission to create the deployed resources mentioned above.
-2. The Microsoft.EventGrid resource provider must be registered in your subscription. See [Register a resource provider](https://docs.microsoft.com/azure/azure-resource-manager/management/resource-providers-and-types#register-resource-provider) for details.
+2. The Microsoft.EventGrid resource provider must be registered in your subscription. See [Register a resource provider](https://learn.microsoft.com/azure/azure-resource-manager/management/resource-providers-and-types#register-resource-provider) for details.
    > ⚠️ _If you forget this step, the deployment will succeed, but the data will not be ready. To fix, register the EventGrid RP, start the `msexports` pipeline trigger, re-run your Cost Management export, wait ~20 minutes, and refresh the data in your reports or custom tools._
 
 To use FinOps hubs, you can either leverage the available Power BI reports or connect directly to the included storage account. To learn more, see [FinOps hubs documentation](https://aka.ms/finops/hubs).
@@ -63,7 +63,7 @@ If you run into any issues, see [Troubleshooting FinOps hubs](https://aka.ms/fin
 ## 📗 How to use this template
 
 1. Register the Microsoft.EventGrid and Microsoft.CostManagementExports resource providers
-   > See [Register a resource provider](https://docs.microsoft.com/azure/azure-resource-manager/management/resource-providers-and-types#register-resource-provider) for details.
+   > See [Register a resource provider](https://learn.microsoft.com/azure/azure-resource-manager/management/resource-providers-and-types#register-resource-provider) for details.
 2. Deploy the template
    > [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.costmanagement%2Ffinops-hub%2Fazuredeploy.json/createUIDefinitionUri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.costmanagement%2Ffinops-hub%2FcreateUiDefinition.json) &nbsp; [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.costmanagement%2Ffinops-hub%2Fazuredeploy.json/createUIDefinitionUri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.costmanagement%2Ffinops-hub%2FcreateUiDefinition.json)
 3. [Create a new cost export](https://learn.microsoft.com/azure/cost-management-billing/costs/tutorial-export-acm-data?tabs=azure-portal) using the following settings:

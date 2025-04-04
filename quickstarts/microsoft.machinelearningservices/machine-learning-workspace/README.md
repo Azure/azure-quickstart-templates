@@ -54,14 +54,14 @@ This configuration describes the minimal set of resources you require to get sta
 If you are new to Azure Machine Learning, see:
 
 - [Azure Machine Learning service](https://azure.microsoft.com/services/machine-learning-service/)
-- [Azure Machine Learning documentation](https://docs.microsoft.com/azure/machine-learning/)
-- [Enterprise security and governance for Azure Machine Learning](https://docs.microsoft.com/azure/machine-learning/concept-enterprise-security).
-- [Azure Machine Learning template reference](https://docs.microsoft.com/azure/templates/microsoft.machinelearningservices/allversions)
+- [Azure Machine Learning documentation](https://learn.microsoft.com/azure/machine-learning/)
+- [Enterprise security and governance for Azure Machine Learning](https://learn.microsoft.com/azure/machine-learning/concept-enterprise-security).
+- [Azure Machine Learning template reference](https://learn.microsoft.com/azure/templates/microsoft.machinelearningservices/allversions)
 
 If you are new to template development, see:
 
-- [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
-- [Use an Azure Resource Manager template to create a workspace for Azure Machine Learning](https://docs.microsoft.com/azure/machine-learning/service/how-to-create-workspace-template)
+- [Azure Resource Manager documentation](https://learn.microsoft.com/azure/azure-resource-manager/)
+- [Use an Azure Resource Manager template to create a workspace for Azure Machine Learning](https://learn.microsoft.com/azure/machine-learning/service/how-to-create-workspace-template)
 - [Quickstart templates](https://azure.microsoft.com/resources/templates/)
 
 `Tags: Microsoft.Storage/storageAccounts, Microsoft.KeyVault/vaults, Microsoft.Insights/components, Microsoft.ContainerRegistry/registries, Microsoft.MachineLearningServices/workspaces, systemAssigned`

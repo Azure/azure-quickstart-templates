@@ -27,7 +27,7 @@ This templates creates an alert rule and user assigned MSI. It also assigns the 
 
 ## Deployment steps
 
-You can click the **Deploy to Azure** button at the beginning of this document. You may alternatively download the template and [deploy it using PowerShell](https://docs.microsoft.com/azure/azure-resource-manager/templates/deploy-powershell#deploy-local-template) or use your preferred method of ARM template deployment.
+You can click the **Deploy to Azure** button at the beginning of this document. You may alternatively download the template and [deploy it using PowerShell](https://learn.microsoft.com/azure/azure-resource-manager/templates/deploy-powershell#deploy-local-template) or use your preferred method of ARM template deployment.
 
 
 `Tags: `

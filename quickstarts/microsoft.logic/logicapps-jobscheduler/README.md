@@ -125,12 +125,12 @@ There is also an error handler that can be called when the **Job** actions fail.
 
 The Logic App template Cancel Run By Correlation Id can be used in tandem with this solution to cancel running timer jobs. This template can be found in the list of templates shown when creating a new logic app.
 
-Logic Apps has a [Log Analytics solution pack](https://docs.microsoft.com/azure/logic-apps/logic-apps-monitor-your-logic-apps-oms) that can be used to monitor and get insisghts of the logic apps runs.
+Logic Apps has a [Log Analytics solution pack](https://learn.microsoft.com/azure/logic-apps/logic-apps-monitor-your-logic-apps-oms) that can be used to monitor and get insisghts of the logic apps runs.
 
 ## Notes
 
 Learn more about Logic Apps
 
-+ **[Azure Logic Apps Overview](https://docs.microsoft.com/azure/logic-apps/logic-apps-overview)**
-+ See **[Scheduling in Logic Apps](https://docs.microsoft.com/azure/connectors/connectors-native-recurrence#trigger-details)** to better understand how recurrence works
++ **[Azure Logic Apps Overview](https://learn.microsoft.com/azure/logic-apps/logic-apps-overview)**
++ See **[Scheduling in Logic Apps](https://learn.microsoft.com/azure/connectors/connectors-native-recurrence#trigger-details)** to better understand how recurrence works
 

@@ -27,8 +27,8 @@ This template creates Azure Machine Learning workspace with multiple datasets & 
 If you are new to Azure Machine Learning, see:
 
 - [Azure Machine Learning service](https://azure.microsoft.com/services/machine-learning-service/)
-- [Azure Machine Learning documentation](https://docs.microsoft.com/azure/machine-learning/)
-- [Azure Machine Learning template reference](https://docs.microsoft.com/azure/templates/microsoft.machinelearningservices/allversions)
+- [Azure Machine Learning documentation](https://learn.microsoft.com/azure/machine-learning/)
+- [Azure Machine Learning template reference](https://learn.microsoft.com/azure/templates/microsoft.machinelearningservices/allversions)
 - [Quickstart templates](https://azure.microsoft.com/resources/templates/)
 
 `Tags: Microsoft.Storage/storageAccounts, blobServices/containers, Microsoft.KeyVault/vaults, Microsoft.Insights/components, Microsoft.MachineLearningServices/workspaces, systemAssigned, Microsoft.MachineLearningServices/workspaces/datastores, Microsoft.MachineLearningServices/workspaces/datasets`

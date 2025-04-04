@@ -27,17 +27,17 @@ languages:
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.maps%2Fmaps-create%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.maps%2Fmaps-create%2Fazuredeploy.json)
 
-This template creates an Azure Maps account. To learn more about how to deploy the template, see the [article](https://docs.microsoft.com/azure/azure-maps/how-to-create-template) article.
+This template creates an Azure Maps account. To learn more about how to deploy the template, see the [article](https://learn.microsoft.com/azure/azure-maps/how-to-create-template) article.
 
 If you're new to Azure Maps, see:
 
 - [Azure Maps service](https://azure.microsoft.com/services/azure-maps/)
-- [Azure Maps documentation](https://docs.microsoft.com/azure/azure-maps/)
-- [Azure Maps template reference](https://docs.microsoft.com/azure/templates/microsoft.maps/accounts)
+- [Azure Maps documentation](https://learn.microsoft.com/azure/azure-maps/)
+- [Azure Maps template reference](https://learn.microsoft.com/azure/templates/microsoft.maps/accounts)
 - [Quickstart templates](https://azure.microsoft.com/resources/templates/?resourceType=Microsoft.Maps)
 
 If you're new to Azure Resource Manager template development, see:
 
-- [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
+- [Azure Resource Manager documentation](https://learn.microsoft.com/azure/azure-resource-manager/)
 
 `Tags: Microsoft.Maps/accounts`

@@ -83,6 +83,6 @@ In this template, an application service environment will be created in the App 
 
 ------
 
-For more details on App Service Environments v3, see the [App Service Environment overview](https://docs.microsoft.com/azure/app-service/environment/overview).
+For more details on App Service Environments v3, see the [App Service Environment overview](https://learn.microsoft.com/azure/app-service/environment/overview).
 
 `Tags: Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Web/hostingEnvironments, Microsoft.Resources/deployments, Microsoft.Network/virtualNetworks/subnets, Microsoft.Network/privateDnsZones, Microsoft.Network/privateDnsZones/virtualNetworkLinks, Microsoft.Network/privateDnsZones/A`

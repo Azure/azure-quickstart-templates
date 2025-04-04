@@ -24,11 +24,11 @@ languages:
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.insights%2Fmonitoring-webtest-metric-alert%2Fazuredeploy.json
 )
 
-This template creates an [Application Insights availability test](https://docs.microsoft.com/azure/azure-monitor/app/monitor-web-app-availability) along with a metric alert rule that monitors it.
+This template creates an [Application Insights availability test](https://learn.microsoft.com/azure/azure-monitor/app/monitor-web-app-availability) along with a metric alert rule that monitors it.
 
 For more information on **metric alert rules** see:
 
-- [Metric alert rules overview](https://docs.microsoft.com/azure/azure-monitor/platform/alerts-metric-overview)
-- [Create a metric alert with a resource manager template](https://docs.microsoft.com/azure/azure-monitor/platform/alerts-metric-create-templates)
+- [Metric alert rules overview](https://learn.microsoft.com/azure/azure-monitor/platform/alerts-metric-overview)
+- [Create a metric alert with a resource manager template](https://learn.microsoft.com/azure/azure-monitor/platform/alerts-metric-create-templates)
 
 `Tags: Microsoft.Insights/webtests, Microsoft.Insights/metricAlerts, microsoft.insights/components`

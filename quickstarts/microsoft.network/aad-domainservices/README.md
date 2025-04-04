@@ -65,11 +65,11 @@ Before proceeding to the deployment of the AADDS template, we need to perform th
 
 * Install and configure the Azure AD PowerShell module
 
-    Follow the instructions in the article to [install the Azure AD PowerShell module and connect to Azure AD](https://docs.microsoft.com/powershell/azure/active-directory/install-adv2?toc=%2fazure%2factive-directory-domain-services%2ftoc.json).
+    Follow the instructions in the article to [install the Azure AD PowerShell module and connect to Azure AD](https://learn.microsoft.com/powershell/azure/active-directory/install-adv2?toc=%2fazure%2factive-directory-domain-services%2ftoc.json).
 
 * Install and configure the Azure PowerShell module
 
-    Follow the instructions in the article to [install the Azure PowerShell module and connect to your Azure subscription](https://docs.microsoft.com/powershell/azure/install-azurerm-ps?toc=%2fazure%2factive-directory-domain-services%2ftoc.json).
+    Follow the instructions in the article to [install the Azure PowerShell module and connect to your Azure subscription](https://learn.microsoft.com/powershell/azure/install-azurerm-ps?toc=%2fazure%2factive-directory-domain-services%2ftoc.json).
 
 #### 2. Connect To Azure Active Directory
 
@@ -152,9 +152,9 @@ To remove this deployment simply remove the resource group that contains this sa
 <a name="references">
 
 ### References
-1. Pre-requisites: https://docs.microsoft.com/azure/active-directory-domain-services/active-directory-ds-enable-using-powershell
-2. Networking Considerations: https://docs.microsoft.com/azure/active-directory-domain-services/active-directory-ds-networking
-3. Password Synchronization: https://docs.microsoft.com/azure/active-directory-domain-services/active-directory-ds-getting-started-password-sync
-4. Troubleshooting Guide: https://docs.microsoft.com/azure/active-directory-domain-services/active-directory-ds-troubleshooting
+1. Pre-requisites: https://learn.microsoft.com/azure/active-directory-domain-services/active-directory-ds-enable-using-powershell
+2. Networking Considerations: https://learn.microsoft.com/azure/active-directory-domain-services/active-directory-ds-networking
+3. Password Synchronization: https://learn.microsoft.com/azure/active-directory-domain-services/active-directory-ds-getting-started-password-sync
+4. Troubleshooting Guide: https://learn.microsoft.com/azure/active-directory-domain-services/active-directory-ds-troubleshooting
 
 `Tags: Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.AAD/domainServices`

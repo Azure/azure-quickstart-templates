@@ -28,7 +28,7 @@ languages:
 
 This template creates a key vault and managed identity, and a role assignment for the managed identity to access the key vault.
 
-For more information about using Bicep to deploy key vaults, see [Manage secrets by using Bicep](https://docs.microsoft.com/azure/azure-resource-manager/bicep/scenarios-secrets#use-key-vault), and for information about using Bicep to deploy role assignments, see [Create Azure RBAC resources by using Bicep](https://docs.microsoft.com/azure/azure-resource-manager/bicep/scenarios-rbac).
+For more information about using Bicep to deploy key vaults, see [Manage secrets by using Bicep](https://learn.microsoft.com/azure/azure-resource-manager/bicep/scenarios-secrets#use-key-vault), and for information about using Bicep to deploy role assignments, see [Create Azure RBAC resources by using Bicep](https://learn.microsoft.com/azure/azure-resource-manager/bicep/scenarios-rbac).
 
 ## Deletion behavior
 

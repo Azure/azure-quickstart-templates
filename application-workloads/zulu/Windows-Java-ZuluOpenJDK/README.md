@@ -46,7 +46,7 @@ The Zulu install script is available [here.](zulu-install.ps1)
 - [Azul Zulu for Azure - Enterprise Edition FAQ](https://assets.azul.com/files/Zulu-for-Azure-FAQ.pdf)
 - [Azul Zulu for Azure - Enterprise Edition](https://www.azul.com/downloads/azure-only/zulu/)
 - [Java on Azure](https://azure.microsoft.com/develop/java/)
-- [Azure for Java Developers](https://docs.microsoft.com/java/azure/?view=azure-java-stable)
+- [Azure for Java Developers](https://learn.microsoft.com/java/azure/?view=azure-java-stable)
 - [Azul](https://www.azul.com/)
 - [Azul Zulu Enterprise](https://www.azul.com/products/zulu-enterprise/)
 - [Azul Zulu Embedded](https://www.azul.com/products/zulu-embedded/)
@@ -54,15 +54,15 @@ The Zulu install script is available [here.](zulu-install.ps1)
 **If you are new to Azure virtual machines, see:**
 
 - [Azure Virtual Machines](https://azure.microsoft.com/services/virtual-machines/).
-- [Azure Linux Virtual Machines documentation](https://docs.microsoft.com/azure/virtual-machines/linux/)
-- [Azure Windows Virtual Machines documentation](https://docs.microsoft.com/azure/virtual-machines/windows/)
-- [Template reference](https://docs.microsoft.com/azure/templates/microsoft.compute/allversions)
+- [Azure Linux Virtual Machines documentation](https://learn.microsoft.com/azure/virtual-machines/linux/)
+- [Azure Windows Virtual Machines documentation](https://learn.microsoft.com/azure/virtual-machines/windows/)
+- [Template reference](https://learn.microsoft.com/azure/templates/microsoft.compute/allversions)
 - [Quickstart templates](https://azure.microsoft.com/resources/templates/?resourceType=Microsoft.Compute&pageNumber=1&sort=Popular)
-- [Microsoft Learn Modules for Linux VMs](https://docs.microsoft.com/learn/browse/?term=linux%20Virtual%20Machine)
+- [Microsoft Learn Modules for Linux VMs](https://learn.microsoft.com/learn/browse/?term=linux%20Virtual%20Machine)
 
 **If you are new to template deployment, see:**
 
-- [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
+- [Azure Resource Manager documentation](https://learn.microsoft.com/azure/azure-resource-manager/)
 
 `Tags: Windows, Java, OpenJDK, Zulu, Microsoft.Storage/storageAccounts, Microsoft.Network/virtualNetworks, Microsoft.Network/publicIPAddresses, Microsoft.Network/networkSecurityGroups, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, extensions, CustomScriptExtension`
 

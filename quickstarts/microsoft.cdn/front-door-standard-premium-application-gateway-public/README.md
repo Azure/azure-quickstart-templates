@@ -29,7 +29,7 @@ This template deploys a Front Door Standard/Premium with an Application Gateway 
 
 ## Sample overview and deployed resources
 
-This sample template creates an Application Gateway instance and a Front Door profile. To keep the sample simple, the Application Gateway instance is configured to direct traffic to a static website configured as a backend, but this could be [any backend supported by Application Gateway](https://docs.microsoft.com/azure/application-gateway/application-gateway-components#backend-pools). The Application Gateway instance has a public IP address associated with it, but a network security group is used to ensure that incoming connections to your system must come through Front Door. The Application Gateway WAF is used to verify that the traffic has come specifically from your Front Door instance.
+This sample template creates an Application Gateway instance and a Front Door profile. To keep the sample simple, the Application Gateway instance is configured to direct traffic to a static website configured as a backend, but this could be [any backend supported by Application Gateway](https://learn.microsoft.comm/azure/application-gateway/application-gateway-components#backend-pools). The Application Gateway instance has a public IP address associated with it, but a network security group is used to ensure that incoming connections to your system must come through Front Door. The Application Gateway WAF is used to verify that the traffic has come specifically from your Front Door instance.
 
 The following resources are deployed as part of the solution:
 

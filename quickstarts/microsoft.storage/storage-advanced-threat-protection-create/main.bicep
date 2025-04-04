@@ -4,7 +4,7 @@ param storageAccountName string = 'store${uniqueString(resourceGroup().id)}'
 @description('Storage account location, default is same as resource group location.')
 param location string = resourceGroup().location
 
-@description('Storage account replication, for more info see \'https://docs.microsoft.com/en-us/azure/storage/common/storage-redundancy\'.')
+@description('Storage account replication, for more info see \'https://learn.microsoft.com/en-us/azure/storage/common/storage-redundancy\'.')
 @allowed([
   'Premium_LRS'
   'Premium_ZRS'

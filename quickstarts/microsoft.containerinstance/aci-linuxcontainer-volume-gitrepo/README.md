@@ -24,6 +24,6 @@ languages:
 
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.containerinstance%2Faci-linuxcontainer-volume-gitrepo%2Fazuredeploy.json)
 
-This template demonstrates a simple use case for gitRepo volume of [Azure Container Instances](https://docs.microsoft.com/azure/container-instances/). It clones the source code files in GitHub repository [aci-helloword](https://github.com/Azure-Samples/aci-helloworld) and mounts them into a volume in the container.
+This template demonstrates a simple use case for gitRepo volume of [Azure Container Instances](https://learn.microsoft.com/azure/container-instances/). It clones the source code files in GitHub repository [aci-helloword](https://github.com/Azure-Samples/aci-helloworld) and mounts them into a volume in the container.
 
 `Tags: Microsoft.ContainerInstance/containerGroups, Public`

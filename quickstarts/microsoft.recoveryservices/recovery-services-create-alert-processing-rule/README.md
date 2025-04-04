@@ -28,7 +28,7 @@ languages:
 
 This template enables you to setup email notifications for your Recovery Services vaults using Azure Monitor.
 
-To route Azure Monitor based alerts to notification channels like email, [action groups](https://docs.microsoft.com/azure/azure-monitor/alerts/action-groups) and [alert processing rules](https://docs.microsoft.com/azure/azure-monitor/alerts/alerts-action-rules?tabs=portal) are used. This template deploys an alert processing rule and an action group in your required subscription to programmatically configure email notifications for all Recovery Services vaults in that subscription.
+To route Azure Monitor based alerts to notification channels like email, [action groups](https://learn.microsoft.com/azure/azure-monitor/alerts/action-groups) and [alert processing rules](https://learn.microsoft.com/azure/azure-monitor/alerts/alerts-action-rules?tabs=portal) are used. This template deploys an alert processing rule and an action group in your required subscription to programmatically configure email notifications for all Recovery Services vaults in that subscription.
 
 ## More details
 
@@ -44,6 +44,6 @@ Azure Backup now provides a new and improved alerting solution using Azure Monit
 
 If you are using classic backup alerts, it is recommended to start using Azure Monitor based alerts for backup for its varied benefits.
 
-[Learn more about Azure Backup Monitoring](https://docs.microsoft.com/azure/backup/monitoring-and-alerts-overview)
+[Learn more about Azure Backup Monitoring](https://learn.microsoft.com/azure/backup/monitoring-and-alerts-overview)
 
 `Tags: Microsoft.Insights/actionGroups, Microsoft.AlertsManagement/actionRules`

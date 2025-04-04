@@ -46,7 +46,7 @@ This template associates the new NSG with an existing subnet within an existing 
 + **Microsoft.Network/virtualNetworks**: an existing Virtual Network and subnet
 
 ## Prerequisites
-An existing Virtual Network and subnet is required before deploying this template. Learn more about the VNet requirements for Azure Redis Cache [here](https://docs.microsoft.com/azure/redis-cache/cache-how-to-premium-vnet). The provided prerequisite templates may be used to deploy the required VNet.
+An existing Virtual Network and subnet is required before deploying this template. Learn more about the VNet requirements for Azure Redis Cache [here](https://learn.microsoft.com/azure/redis-cache/cache-how-to-premium-vnet). The provided prerequisite templates may be used to deploy the required VNet.
 
 ## Deployment steps
 You can click the "deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the scripts in the root of this repo.

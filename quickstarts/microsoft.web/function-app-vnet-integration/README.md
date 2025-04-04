@@ -22,7 +22,7 @@ languages:
 
 ![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/function-app-vnet-integration/BicepVersion.svg)
 
-This sample Azure Resource Manager template deploys an Azure Function Premium plan with [virtual network integration](https://docs.microsoft.com/en-us/azure/azure-functions/functions-networking-options#virtual-network-integration) enabled and allows the Azure Function to utilizes resources within the virtual network.
+This sample Azure Resource Manager template deploys an Azure Function Premium plan with [virtual network integration](https://learn.microsoft.com/en-us/azure/azure-functions/functions-networking-options#virtual-network-integration) enabled and allows the Azure Function to utilizes resources within the virtual network.
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.web%2Ffunction-app-vnet-integration%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.web%2Ffunction-app-vnet-integration%2Fazuredeploy.json)
@@ -40,13 +40,13 @@ This template has a parameter `functionPlanOS` to choose Windows or Linux OS. Wi
 
 ### Elastic Premium Plan
 
-The Azure Function app provisioned in this sample uses an [Azure Functions Elastic Premium plan](https://docs.microsoft.com/azure/azure-functions/functions-premium-plan#features).
+The Azure Function app provisioned in this sample uses an [Azure Functions Elastic Premium plan](https://learn.microsoft.com/azure/azure-functions/functions-premium-plan#features).
 
 + **Microsoft.Web/serverfarms**: The Azure Functions Premium plan (a.k.a. Elastic Premium plan)
 
 ### Azure Function App
 
-The Function App uses the [AzureWebJobsStorage](https://docs.microsoft.com/azure/azure-functions/functions-app-settings#azurewebjobsstorage) and [WEBSITE_CONTENTAZUREFILECONNECTIONSTRING](https://docs.microsoft.com/azure/azure-functions/functions-app-settings#website_contentazurefileconnectionstring) app settings to connect to a private endpoint-secured Storage Account.
+The Function App uses the [AzureWebJobsStorage](https://learn.microsoft.com/azure/azure-functions/functions-app-settings#azurewebjobsstorage) and [WEBSITE_CONTENTAZUREFILECONNECTIONSTRING](https://learn.microsoft.com/azure/azure-functions/functions-app-settings#website_contentazurefileconnectionstring) app settings to connect to a private endpoint-secured Storage Account.
 
 + **Microsoft.Web/sites**: The function app instance.
 
@@ -54,18 +54,18 @@ The Function App uses the [AzureWebJobsStorage](https://docs.microsoft.com/azure
 
 The Storage account that the Function uses for operation and for file contents.
 
-+ **Microsoft.Storage/storageAccounts**: [Azure Functions requires a storage account](https://docs.microsoft.com/azure/azure-functions/storage-considerations) for the function app instance.
++ **Microsoft.Storage/storageAccounts**: [Azure Functions requires a storage account](https://learn.microsoft.com/azure/azure-functions/storage-considerations) for the function app instance.
 
 ### Application Insights
 
-[Application Insights](https://docs.microsoft.com/azure/azure-monitor/app/app-insights-overview) is used to provide [monitor the Azure Function](https://docs.microsoft.com/azure/azure-functions/functions-monitoring).
+[Application Insights](https://learn.microsoft.com/azure/azure-monitor/app/app-insights-overview) is used to provide [monitor the Azure Function](https://learn.microsoft.com/azure/azure-functions/functions-monitoring).
 
 + **Microsoft.Insights/components**: The Application Insights instance used by the Azure Function for monitoring.
 
 ### NOTE
 
-+ For more information on configuring Azure Storage firewalls and virtual networks, please refer: [Configure Azure Storage firewalls and virtual networks](https://docs.microsoft.com/en-us/azure/storage/common/storage-network-security?tabs=azure-portal)
++ For more information on configuring Azure Storage firewalls and virtual networks, please refer: [Configure Azure Storage firewalls and virtual networks](https://learn.microsoft.com/en-us/azure/storage/common/storage-network-security?tabs=azure-portal)
 
-+ For more information on Azure Functions networking options and VNET integration, please refer: [Azure Functions Networking Options](https://docs.microsoft.com/en-us/azure/azure-functions/functions-networking-options#restrict-your-storage-account-to-a-virtual-network)
++ For more information on Azure Functions networking options and VNET integration, please refer: [Azure Functions Networking Options](https://learn.microsoft.com/en-us/azure/azure-functions/functions-networking-options#restrict-your-storage-account-to-a-virtual-network)
 
 `Tags: Microsoft.Network/virtualNetworks, Microsoft.Storage/storageAccounts, Microsoft.Insights/components, Microsoft.Web/serverfarms, Microsoft.Web/sites`

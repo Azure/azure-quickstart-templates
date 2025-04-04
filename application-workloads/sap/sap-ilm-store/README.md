@@ -65,7 +65,7 @@ Click the [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quic
 
 ## Error Handling
 
-For deployment errors raised with Azure Resource Manager, refer to [Troubleshoot common Azure deployment errors with Azure Resource Manager](https://docs.microsoft.com/azure/azure-resource-manager/templates/common-deployment-errors).
+For deployment errors raised with Azure Resource Manager, refer to [Troubleshoot common Azure deployment errors with Azure Resource Manager](https://learn.microsoft.com/azure/azure-resource-manager/templates/common-deployment-errors).
 
 Some of the errors are listed below:
 

@@ -23,7 +23,7 @@ languages:
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.sql%2Fsqlmi-new-vnet-w-point-to-site-vpn%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.sql%2Fsqlmi-new-vnet-w-point-to-site-vpn%2Fazuredeploy.json)
 
-This template allows you to create a [Azure SQL Database Managed Instances](https://docs.microsoft.com/azure/sql-database/sql-database-managed-instance) inside a new virtual network with Virtual network gateway that will be configured for point-to-site connections.
+This template allows you to create a [Azure SQL Database Managed Instances](https://learn.microsoft.com/azure/sql-database/sql-database-managed-instance) inside a new virtual network with Virtual network gateway that will be configured for point-to-site connections.
 
 `Tags: Azure, SqlDb, Managed Instance, Point-to-Site VPN, Microsoft.Network/networkSecurityGroups, Microsoft.Network/routeTables, Microsoft.Network/virtualNetworks, Microsoft.Sql/managedInstances, SystemAssigned, Microsoft.Network/publicIPAddresses, Microsoft.Network/virtualNetworkGateways`
 
@@ -58,7 +58,7 @@ Invoke-Command -ScriptBlock ([Scriptblock]::Create((New-Object System.Net.WebCli
 
 You can click the "Deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the scripts in the root of this repo, and populate following parameters:
  - Name of the Managed Instance that will be create including Managed Instance admin name and password
- - Public self-signed root certificate data. For detailed information on this and setting up certificates for point-to-site VPN visit the [documentation](https://docs.microsoft.com/azure/vpn-gateway/vpn-gateway-certificates-point-to-site)
+ - Public self-signed root certificate data. For detailed information on this and setting up certificates for point-to-site VPN visit the [documentation](https://learn.microsoft.com/azure/vpn-gateway/vpn-gateway-certificates-point-to-site)
  - Name of the Azure Virtual Network that will be created and configured, including the address range that will be associated to this VNet. Default address range is 10.0.0.0/16 but you could change it to fit your needs.
  - Name of the subnet where Managed Instance will be created. The name will be _ManagedInstance_, if you don't want to change it. Default address range is 10.0.0.0/24 but you could change it to fit your needs.
  - Address range for _GatewaySubnet_. Default address range is 10.0.1.0/28 but you could change it to fit your needs.
@@ -77,6 +77,6 @@ You can click the "Deploy to Azure" button at the beginning of this document or 
 
 ## Important
 
-Deployment of first instance in the subnet might take up to six hours, while subsequent deployments take up to 1.5 hours. This is because a virtual cluster that hosts the instances needs time to deploy or resize the virtual cluster. For more details visit [Overview of Azure SQL Managed Instance management operations](https://docs.microsoft.com/azure/azure-sql/managed-instance/management-operations-overview)
+Deployment of first instance in the subnet might take up to six hours, while subsequent deployments take up to 1.5 hours. This is because a virtual cluster that hosts the instances needs time to deploy or resize the virtual cluster. For more details visit [Overview of Azure SQL Managed Instance management operations](https://learn.microsoft.com/azure/azure-sql/managed-instance/management-operations-overview)
 
-Each virtual cluster is associated with a subnet and deployed together with first instance creation. In the same way, a virtual cluster is [automatically removed together with last instance deletion](https://docs.microsoft.com/azure/azure-sql/managed-instance/virtual-cluster-delete) leaving the subnet empty and ready for removal.
+Each virtual cluster is associated with a subnet and deployed together with first instance creation. In the same way, a virtual cluster is [automatically removed together with last instance deletion](https://learn.microsoft.com/azure/azure-sql/managed-instance/virtual-cluster-delete) leaving the subnet empty and ready for removal.

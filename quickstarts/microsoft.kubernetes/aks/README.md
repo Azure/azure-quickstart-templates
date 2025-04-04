@@ -28,9 +28,9 @@ languages:
 
 ## Deployment
 
-This template deploys an **AKS cluster**. To learn more about how to deploy the template, see the [quickstart](https://docs.microsoft.com/azure/aks/kubernetes-walkthrough-rm-template) article.
+This template deploys an **AKS cluster**. To learn more about how to deploy the template, see the [quickstart](https://learn.microsoft.com/azure/aks/kubernetes-walkthrough-rm-template) article.
 
-For information about how to deploy an AKS cluster using Azure CLI, see the [quickstart](https://docs.microsoft.com/azure/aks/kubernetes-walkthrough) article.
+For information about how to deploy an AKS cluster using Azure CLI, see the [quickstart](https://learn.microsoft.com/azure/aks/kubernetes-walkthrough) article.
 
 ## Keys
 

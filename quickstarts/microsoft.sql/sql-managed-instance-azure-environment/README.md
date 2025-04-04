@@ -24,7 +24,7 @@ languages:
 
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.sql%2Fsql-managed-instance-azure-environment%2Fazuredeploy.json)
 
-This template allows you to create an Azure networking environment required to deploy [Azure SQL Database Managed Instances](https://docs.microsoft.com/azure/sql-database/sql-database-managed-instance) - fully managed SQL Server Database Engine hosted in the Azure cloud.
+This template allows you to create an Azure networking environment required to deploy [Azure SQL Database Managed Instances](https://learn.microsoft.com/azure/sql-database/sql-database-managed-instance) - fully managed SQL Server Database Engine hosted in the Azure cloud.
 
 `Tags: Azure, SqlDb, Managed Instance, VNet, Microsoft.Network/virtualNetworks, Microsoft.Network/networkSecurityGroups, Microsoft.Network/routeTables`
 

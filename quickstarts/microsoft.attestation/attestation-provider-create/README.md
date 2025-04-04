@@ -31,6 +31,6 @@ This template creates an Attestation provider.
 
 Microsoft Azure Attestation (MAA) is a new solution for attesting Trusted Execution Environments (TEEs) such as Software Guard Extensions (SGX) enclaves and Virtualization-based Security (VBS) enclaves. Enclave attestation is a process for verifying that an enclave is secure and trustworthy.
 
-This template demonstrates a simple use case for creating an Attestation provider. For more information see [Quickstart: Create an Azure Attestation provider with an ARM template](https://docs.microsoft.com/azure/attestation/quickstart-template).
+This template demonstrates a simple use case for creating an Attestation provider. For more information see [Quickstart: Create an Azure Attestation provider with an ARM template](https://learn.microsoft.com/azure/attestation/quickstart-template).
 
 `Tags: Microsoft.Attestation/attestationProviders`

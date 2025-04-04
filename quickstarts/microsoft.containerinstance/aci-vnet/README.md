@@ -26,6 +26,6 @@ languages:
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.containerinstance%2Faci-vnet%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.containerinstance%2Faci-vnet%2Fazuredeploy.json)
 
-This template demonstrates a simple use case for deploying a container instance into an Azure virtual network. (https://docs.microsoft.com/azure/container-instances/container-instances-vnet).
+This template demonstrates a simple use case for deploying a container instance into an Azure virtual network. (https://learn.microsoft.com/azure/container-instances/container-instances-vnet).
 
 `Tags: Microsoft.Network/virtualNetworks, Microsoft.Network/virtualNetworks/subnets, Microsoft.Network/networkProfiles, Microsoft.ContainerInstance/containerGroups`

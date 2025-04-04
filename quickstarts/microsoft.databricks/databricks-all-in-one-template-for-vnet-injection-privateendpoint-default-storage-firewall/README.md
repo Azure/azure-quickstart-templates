@@ -27,7 +27,7 @@ languages:
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.databricks%2Fdatabricks-all-in-one-template-for-vnet-injection-privateendpoint-default-storage-firewall%2Fazuredeploy.json)
 
 This template allows you to create a network security group, a virtual network, private endpoint, and a default storage firewall enabled Azure Databricks workspace with the virtual network and the system-assigned access connector.
-For more information, see the [Azure Databricks Documentation](https://docs.microsoft.com/azure/azure-databricks/).
+For more information, see the [Azure Databricks Documentation](https://learn.microsoft.com/azure/azure-databricks/).
 
 ### What is Azure Databricks?
 
@@ -43,11 +43,11 @@ This template allows you to install the following options
 
 ### Databricks Resources
 
-[Getting Started with Databricks](https://docs.microsoft.com/azure/databricks/getting-started/index)
+[Getting Started with Databricks](https://learn.microsoft.com/azure/databricks/getting-started/index)
 [Databricks Admin Guide](https://docs.azuredatabricks.net/administration-guide/index.html)
 
 ### Microsoft Learn Modules
 
-[Databricks Microsoft Learn Modules](https://docs.microsoft.com/learn/browse/?term=Databricks)
+[Databricks Microsoft Learn Modules](https://learn.microsoft.com/learn/browse/?term=Databricks)
 
 `Tags: Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Databricks/workspaces, Microsoft.Network/privateEndpoints, Microsoft.Network/privateDnsZones, Microsoft.Network/privateDnsZones/virtualNetworkLinks, Microsoft.Network/privateEndpoints/privateDnsZoneGroups`

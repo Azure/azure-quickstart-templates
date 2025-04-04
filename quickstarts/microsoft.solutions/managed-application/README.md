@@ -25,15 +25,15 @@ languages:
 
 This sample template deploys a Service catalog managed application definition that creates a single storage account as an application resource.  The application definition demonstrates how you can customize default application overview: header and description.
 
-[To learn more about managed applications click here](https://docs.microsoft.com/azure/managed-applications/overview)
+[To learn more about managed applications click here](https://learn.microsoft.com/azure/managed-applications/overview)
 
 This template deploys a Service catalog managed application definition first, after that uses this application definition to  deploy a managed application.
 You can also use the package located under the artifacts folder to deploy the managed application as Azure Marketplace application offer.
 
 To learn more about Managed Application definitions and Marketplace please visit :
 
-+ [Publish an Azure managed application definition](https://docs.microsoft.com/azure/managed-applications/publish-managed-app-definition-quickstart)
-+ [Azure managed applications in the Marketplace](https://docs.microsoft.com/azure/managed-applications/publish-marketplace-app)
++ [Publish an Azure managed application definition](https://learn.microsoft.com/azure/managed-applications/publish-managed-app-definition-quickstart)
++ [Azure managed applications in the Marketplace](https://learn.microsoft.com/azure/managed-applications/publish-marketplace-app)
 
 ## Exploring created Managed Application
 
@@ -51,7 +51,7 @@ Once you click on the deployed managed application you will notice that Overview
 This view is driven by [viewDefinition.json](artifacts/ManagedAppZip/viewDefinition.json) file from application definition package.
 
 To learn more about View definition please visit:
-+ [**View definition artifact in Azure Managed Applications**](https://docs.microsoft.com/azure/managed-applications/concepts-view-definition)
++ [**View definition artifact in Azure Managed Applications**](https://learn.microsoft.com/azure/managed-applications/concepts-view-definition)
 
 Every managed application has associated managed resource group, that actually contains application resources. These resources are deployed using Azure Resource Manager template [mainTemplate.json](artifacts/ManagedAppZip/mainTemplate.json) from the application definition package.
 
@@ -98,8 +98,8 @@ You should see notification that application deployment was successful, so you c
 Create experience is driven by [createUiDefinition.json](artifacts/ManagedAppZip/createUiDefinition.json) file from application definition package.
 
 To learn more about authoring your managed application create experience please visit:
-+ [Create Azure portal user interface for your managed application](https://docs.microsoft.com/azure/managed-applications/create-uidefinition-overview)
-+ [Test your portal interface for Azure Managed Applications](https://docs.microsoft.com/azure/managed-applications/test-createuidefinition)
++ [Create Azure portal user interface for your managed application](https://learn.microsoft.com/azure/managed-applications/create-uidefinition-overview)
++ [Test your portal interface for Azure Managed Applications](https://learn.microsoft.com/azure/managed-applications/test-createuidefinition)
 
 To learn how to create application with metrics and alerts please visit:
 + [Creating managed application with metrics and alerts](https://github.com/Azure/azure-quickstart-templates/tree/master/101-managed-application-with-metrics-and-alerts)

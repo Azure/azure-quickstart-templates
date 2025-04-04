@@ -22,7 +22,7 @@ languages:
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.network%2Fload-balancer-ip-configured-backend-pool%2Fazuredeploy.json)
 
 ## Oerview and deployed resources
-This template is used to demonstrate how ARM Templates can be used to configure the Backend Pool of a Load Balancer by IP Address as outlined in the [Backend Pool management](https://docs.microsoft.com/azure/load-balancer/backend-pool-management) document.
+This template is used to demonstrate how ARM Templates can be used to configure the Backend Pool of a Load Balancer by IP Address as outlined in the [Backend Pool management](https://learn.microsoft.com/azure/load-balancer/backend-pool-management) document.
 
 The following resources are deployed in this template:
   * One Standard Public Load Balancer

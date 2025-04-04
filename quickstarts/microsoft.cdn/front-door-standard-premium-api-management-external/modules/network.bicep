@@ -53,7 +53,7 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@2020-05-01' = {
   location: location
   properties: {
     securityRules: [
-      // Rules for API Management as documented here: https://docs.microsoft.com/en-us/azure/api-management/api-management-using-with-vnet
+      // Rules for API Management as documented here: https://learn.microsoft.comm/en-us/azure/api-management/api-management-using-with-vnet
       {
         name: 'Client_communication_to_API_Management'
         properties: {

@@ -42,7 +42,7 @@ Frontend and Backend will be configured with individual Availability Sets and Pr
 
 ## Prerequisites
 
-Installation can proceed within the Azure Portal via [Azure Cloud Shell](https://azure.microsoft.com/features/cloud-shell/) or by using the [Azure CLI v2](https://docs.microsoft.com/cli/azure/overview) on a workstation.
+Installation can proceed within the Azure Portal via [Azure Cloud Shell](https://azure.microsoft.com/features/cloud-shell/) or by using the [Azure CLI v2](https://learn.microsoft.com/cli/azure/overview) on a workstation.
 
 The AD identity running this installation should have the **Owner** role on the required Subscription.
 
@@ -84,7 +84,7 @@ Note the values for **appId**, **objectId** and **password** for the parameters 
 
 ### 2. Customize azuredeploy.parameters file
 
-*[Cloud Shell]* To read more about transferring files to Azure Cloud Shell, visit the Azure documentation: [https://docs.microsoft.com/azure/cloud-shell/persisting-shell-storage](https://docs.microsoft.com/azure/cloud-shell/persisting-shell-storage#transfer-local-files-to-cloud-shell)
+*[Cloud Shell]* To read more about transferring files to Azure Cloud Shell, visit the Azure documentation: [https://learn.microsoft.com/azure/cloud-shell/persisting-shell-storage](https://learn.microsoft.com/azure/cloud-shell/persisting-shell-storage#transfer-local-files-to-cloud-shell)
 
 *[Cloud Shell]* You will need to copy ```azuredeploy.json``` and ```azuredeploy.json.parameters``` to your Cloud Shell before updating the parameters:
 

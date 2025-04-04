@@ -30,11 +30,11 @@ This template creates a **CDN Profile** and a **CDN Endpoint** with a user speci
 
 ## Overview and deployed resources
 
-This template is a resource manager implementation to deploy a CDN endpoint and profile. To learn more, see the [quickstart](https://docs.microsoft.com/azure/cdn/create-profile-endpoint-template) article.
+This template is a resource manager implementation to deploy a CDN endpoint and profile. To learn more, see the [quickstart](https://learn.microsoft.com/azure/cdn/create-profile-endpoint-template) article.
 
 For more information on **Azure CDN**:
 
-- [What is a content delivery network on Azure?](https://docs.microsoft.com/azure/cdn/cdn-overview)
+- [What is a content delivery network on Azure?](https://learn.microsoft.com/azure/cdn/cdn-overview)
 
 The following resources are deployed as part of the solution
 

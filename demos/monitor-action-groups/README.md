@@ -22,7 +22,7 @@ languages:
 
 ![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/demos/monitor-action-groups/BicepVersion.svg)
 
-This template deploys an [Action Group](https://docs.microsoft.com/azure/azure-monitor/platform/action-groups) to Azure. An action group is a collection of notification preferences defined by the owner of an Azure subscription. Azure Monitor and Service Health alerts use action groups to notify users that an alert has been triggered.
+This template deploys an [Action Group](https://learn.microsoft.com/azure/azure-monitor/platform/action-groups) to Azure. An action group is a collection of notification preferences defined by the owner of an Azure subscription. Azure Monitor and Service Health alerts use action groups to notify users that an alert has been triggered.
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fmonitor-action-groups%2Fazuredeploy.json)  [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fmonitor-action-groups%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fmonitor-action-groups%2Fazuredeploy.json)
 
@@ -40,10 +40,10 @@ Currently action groups support the following receivers:
 
 # Reference
 
-- The latest template for Azure Action Groups can be found [here](https://docs.microsoft.com/azure/templates/microsoft.insights/2019-06-01/actiongroups)
-- [Tutorial](https://docs.microsoft.com/azure/azure-monitor/platform/action-groups-create-resource-manager-template) from Azure on how to create action groups via ARM template
+- The latest template for Azure Action Groups can be found [here](https://learn.microsoft.com/azure/templates/microsoft.insights/2019-06-01/actiongroups)
+- [Tutorial](https://learn.microsoft.com/azure/azure-monitor/platform/action-groups-create-resource-manager-template) from Azure on how to create action groups via ARM template
 - [Introduction Video](https://azure.microsoft.com/resources/videos/azure-friday-azure-monitor-action-groups/)
-- [Creating action group via Azure Portal](https://docs.microsoft.com/azure/azure-monitor/platform/action-groups)
+- [Creating action group via Azure Portal](https://learn.microsoft.com/azure/azure-monitor/platform/action-groups)
 
 ## Notes
 `Tags: Azure Monitor, Azure Action Groups, microsoft.insights/actionGroups`

@@ -46,6 +46,6 @@ You can't delete a Backup Vault with any of the following dependencies:
 If you try to delete the vault without removing the dependencies, you'll encounter the following error messages:
 Cannot delete the Backup vault as there are existing backup instances or backup policies in the vault. Delete all backup instances and backup policies that are present in the vault and then try deleting the vault.
 
-Here are the steps for [Delete a Backup Vault](https://docs.microsoft.com/azure/backup/backup-vault-overview#delete-a-backup-vault).
+Here are the steps for [Delete a Backup Vault](https://learn.microsoft.com/azure/backup/backup-vault-overview#delete-a-backup-vault).
 
 `Tags: Microsoft.DataProtection/backupVaults, systemAssigned, [parameters('vaultStorageRedundancy')], Microsoft.DataProtection/backupVaults/backupPolicies, Microsoft.DBforPostgreSQL/flexibleServers, Microsoft.Authorization/roleAssignments, Microsoft.DataProtection/backupVaults/backupInstances`

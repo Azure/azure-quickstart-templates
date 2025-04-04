@@ -22,13 +22,13 @@ languages:
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fag-alert-backend-lastbyte-resp%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fag-alert-backend-lastbyte-resp%2Fazuredeploy.json)
 
-This template deploys an Azure Monitor alert which notifies you in an event **the average backend last byte response time is greater than [dynamic threshold](https://docs.microsoft.com/azure/azure-monitor/alerts/alerts-dynamic-thresholds)**.
+This template deploys an Azure Monitor alert which notifies you in an event **the average backend last byte response time is greater than [dynamic threshold](https://learn.microsoft.com/azure/azure-monitor/alerts/alerts-dynamic-thresholds)**.
 
 ## Notes
 
 - Azure Monitor alert rules are charged based on the type and number of signals it monitors. You may want to visit the [pricing page](https://azure.microsoft.com/pricing/details/monitor/) before deploying this alert template or can view the estimated cost after the deployment.
 
-- You will need to create [Azure Monitor Action Group](https://docs.microsoft.com/azure/azure-monitor/alerts/action-groups) in advance and provide its ResourceID during this deployment. This action group notifies your users when the alert rule is triggered. You can use an existing or create a new one and reuse it for multiple such alerts.
+- You will need to create [Azure Monitor Action Group](https://learn.microsoft.com/azure/azure-monitor/alerts/action-groups) in advance and provide its ResourceID during this deployment. This action group notifies your users when the alert rule is triggered. You can use an existing or create a new one and reuse it for multiple such alerts.
 
   You can manually form the ResourceID for your Action Group by following these steps.
    1. Select Azure Monitor in your Azure portal
@@ -37,6 +37,6 @@ This template deploys an Azure Monitor alert which notifies you in an event **th
    1. Use the Resource Group Name, Action Group Name and Subscription Info here to form the ResourceID for the action group as shown below. <br>
 `/subscriptions/<subscription-id-from-your-account>/resourcegroups/<resource-group-name>/providers/microsoft.insights/actiongroups/<action-group-name>`
 
-- This guidance template uses generic settings for Severity, Aggregation Granularity, Frequency of Evaluation, Condition Type, etc. It uses Dynamic threshold value with [High sensitivity](https://docs.microsoft.com/azure/azure-monitor/alerts/alerts-dynamic-thresholds#what-does-sensitivity-setting-in-dynamic-thresholds-mean). It is recommended that you modify these after the deployment to suit your requirements. [Learn more](https://docs.microsoft.com/azure/azure-monitor/alerts/alerts-metric-overview).
+- This guidance template uses generic settings for Severity, Aggregation Granularity, Frequency of Evaluation, Condition Type, etc. It uses Dynamic threshold value with [High sensitivity](https://learn.microsoft.com/azure/azure-monitor/alerts/alerts-dynamic-thresholds#what-does-sensitivity-setting-in-dynamic-thresholds-mean). It is recommended that you modify these after the deployment to suit your requirements. [Learn more](https://learn.microsoft.com/azure/azure-monitor/alerts/alerts-metric-overview).
 
 `Tags: microsoft.insights/metricAlerts, Microsoft.Network/networkSecurityGroups, Microsoft.Network/publicIPAddresses, Microsoft.Network/virtualNetworks, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, CustomScriptExtension, Microsoft.Network/applicationGateways, Microsoft.Network/networkInterfaces, microsoft.insights/actionGroups`

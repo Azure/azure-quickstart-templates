@@ -36,7 +36,7 @@ As a part of this solution, an Azure API for FHIR® resource is created.
 
 ## Deployment steps
 
-You can click the **Deploy to Azure** button at the beginning of this document to deploy an instance of the Azure API for FHIR®. To learn more about how to deploy the template, see the [quickstart](https://docs.microsoft.com/azure/healthcare-apis/fhir-paas-arm-template-quickstart?tabs=azure-portal) article.
+You can click the **Deploy to Azure** button at the beginning of this document to deploy an instance of the Azure API for FHIR®. To learn more about how to deploy the template, see the [quickstart](https://learn.microsoft.com/azure/healthcare-apis/fhir-paas-arm-template-quickstart?tabs=azure-portal) article.
 
 During deployment, you can specify the service name, environment name and location. All other parameters for deployment are automatically configured for you.
 

@@ -26,6 +26,6 @@ languages:
 
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.web%2Fapp-service-regional-vnet-integration%2Fazuredeploy.json)
 
-This template allows you to deploy an app service plan and a basic Windows web app, with [regional VNet integration](https://docs.microsoft.com/azure/app-service/web-sites-integrate-with-vnet#regional-vnet-integration) enabled to a newly created virtual network.
+This template allows you to deploy an app service plan and a basic Windows web app, with [regional VNet integration](https://learn.microsoft.com/azure/app-service/web-sites-integrate-with-vnet#regional-vnet-integration) enabled to a newly created virtual network.
 
 `Tags: Microsoft.Web/serverfarms, Microsoft.Network/virtualNetworks, Microsoft.Web/sites`

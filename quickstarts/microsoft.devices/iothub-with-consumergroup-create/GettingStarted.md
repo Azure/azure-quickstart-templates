@@ -6,7 +6,7 @@ Let's understand a bit better how all this work.
 
 ## Overview
 
-This template creates an IoT Hub instance with device to cloud and cloud to device messaging configurations and a device to cloud consumer group. For more information, go to: https://docs.microsoft.com/azure/iot-hub/.
+This template creates an IoT Hub instance with device to cloud and cloud to device messaging configurations and a device to cloud consumer group. For more information, go to: https://learn.microsoft.com/azure/iot-hub/.
 
 ## Pre Deployment Steps
 
@@ -28,7 +28,7 @@ Parameter         | Suggested value     | Description
 ## Deployment
 
 There are a few ways to deploy this template.
-You can use [PowerShell](https://docs.microsoft.com/azure/azure-resource-manager/resource-group-template-deploy), [Azure CLI](https://docs.microsoft.com/azure/azure-resource-manager/resource-group-template-deploy-cli), [Azure Portal](https://docs.microsoft.com/azure/azure-resource-manager/resource-group-template-deploy-portal) or your favorite SDK.
+You can use [PowerShell](https://learn.microsoft.com/azure/azure-resource-manager/resource-group-template-deploy), [Azure CLI](https://learn.microsoft.com/azure/azure-resource-manager/resource-group-template-deploy-cli), [Azure Portal](https://learn.microsoft.com/azure/azure-resource-manager/resource-group-template-deploy-portal) or your favorite SDK.
 
 For Azure CLI I'm using the Visual Code with Azure CLI extensions, if you like, you can find more information [here](https://code.visualstudio.com/docs/azure/extensions). But bare in mind that you don't need to use the Visual Code, you can stick with the old good always present **Command Line** on Windows or any **bash terminal**
 

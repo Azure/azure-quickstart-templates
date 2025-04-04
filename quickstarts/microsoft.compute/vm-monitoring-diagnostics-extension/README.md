@@ -23,6 +23,6 @@ languages:
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.compute%2Fvm-monitoring-diagnostics-extension%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.compute%2Fvm-monitoring-diagnostics-extension%2Fazuredeploy.json)
 
-This template deploys a Windows VM along with the diagnostics extension. For more information on the diagnostics configuration see [Azure Diagnostics Extension in a resource manager template](https://docs.microsoft.com/azure/azure-monitor/agents/resource-manager-agent).
+This template deploys a Windows VM along with the diagnostics extension. For more information on the diagnostics configuration see [Azure Diagnostics Extension in a resource manager template](https://learn.microsoft.comm/azure/azure-monitor/agents/resource-manager-agent).
 
 `Tags: Microsoft.Network/publicIPAddresses, Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, extensions, IaaSDiagnostics, Microsoft.Storage/storageAccounts`

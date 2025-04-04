@@ -44,7 +44,7 @@ In order to check progress\status of the install use the command provided in the
 
 ![portal-template-deployment-outputs](./images/portal-template-deployment-outputs.png)
 
-Full details of SQL Server AG on AKS can be be found [here](https://docs.microsoft.com/sql/linux/sql-server-linux-kubernetes-deploy?view=sqlallproducts-allversions)
+Full details of SQL Server AG on AKS can be be found [here](https://learn.microsoft.com/sql/linux/sql-server-linux-kubernetes-deploy?view=sqlallproducts-allversions)
 
 ## Parameters and Credentials
 

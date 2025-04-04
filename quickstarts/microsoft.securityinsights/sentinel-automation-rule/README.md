@@ -23,7 +23,7 @@ languages:
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.securityinsights%2Fsentinel-automation-rule%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.securityinsights%2Fsentinel-automation-rule%2Fazuredeploy.json)
 
-This sample template demonstrates how to create an Automation Rule in your Microsoft Sentinel workspace. This sample automation rule triggers on incident creation and looks for specific analytic rule ID, severity, tactics and title. If the incident matches these conditions, it then modifies incident status and adds a tag. For more information about automation rules, visit [Automation in Azure Sentinel](https://docs.microsoft.com/azure/sentinel/automation-in-azure-sentinel)
+This sample template demonstrates how to create an Automation Rule in your Microsoft Sentinel workspace. This sample automation rule triggers on incident creation and looks for specific analytic rule ID, severity, tactics and title. If the incident matches these conditions, it then modifies incident status and adds a tag. For more information about automation rules, visit [Automation in Azure Sentinel](https://learn.microsoft.com/azure/sentinel/automation-in-azure-sentinel)
 
 ## Prerequisites ##
 

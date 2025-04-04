@@ -28,14 +28,14 @@ This template deploys a **Jupyter Server** using a Ubuntu Linux VM. This will de
 If you are new to Azure virtual machines, see:
 
 - [Azure Virtual Machines](https://azure.microsoft.com/services/virtual-machines/).
-- [Azure Linux Virtual Machines documentation](https://docs.microsoft.com/azure/virtual-machines/linux/)
-- [Template reference](https://docs.microsoft.com/azure/templates/microsoft.compute/allversions)
+- [Azure Linux Virtual Machines documentation](https://learn.microsoft.com/azure/virtual-machines/linux/)
+- [Template reference](https://learn.microsoft.com/azure/templates/microsoft.compute/allversions)
 - [Quickstart templates](https://azure.microsoft.com/resources/templates/?resourceType=Microsoft.Compute&pageNumber=1&sort=Popular)
-- [Microsoft learn](https://docs.microsoft.com/learn/modules/interactive-deep-learning/)
+- [Microsoft learn](https://learn.microsoft.com/learn/modules/interactive-deep-learning/)
 
 If you are new to template deployment, see:
 
-[Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
+[Azure Resource Manager documentation](https://learn.microsoft.com/azure/azure-resource-manager/)
 
 ## Usage
 
@@ -51,9 +51,9 @@ It is recommended 1 GB of memory per user if you are using a CPU based VM and 2 
 
 - [Estimate Memory / CPU / Disk needed](https://the-littlest-jupyterhub.readthedocs.io/en/latest/howto/admin/resource-estimation.html)
 
-- [Azure VM sizes](https://docs.microsoft.com/azure/virtual-machines/linux/sizes-general)
+- [Azure VM sizes](https://learn.microsoft.com/azure/virtual-machines/linux/sizes-general)
 
-- [Azure VMs disks](https://docs.microsoft.com/azure/virtual-machines/windows/disks-types)
+- [Azure VMs disks](https://learn.microsoft.com/azure/virtual-machines/windows/disks-types)
 
 The template supports the following VM Sizes which have been optimized for multi-user experiences.
 
@@ -78,7 +78,7 @@ The template supports the following VM Sizes which have been optimized for multi
 
 i.e. if you want a CPU based VM to be used by 80 users, you will need a VM with 100 GB of memory.
 
-For more details on [Azure Compute Sizes](https://docs.microsoft.com/azure/virtual-machines/linux/sizes-compute)
+For more details on [Azure Compute Sizes](https://learn.microsoft.com/azure/virtual-machines/linux/sizes-compute)
 
 ### Storage Support
 
@@ -186,7 +186,7 @@ After that, let's press the [Run] button. If we visit our **public IP** where ou
 
 ### Additional Resources
 
-- [Azure Resource Manger templates docs](https://docs.microsoft.com/azure/azure-resource-manager/template-deployment-overview)
+- [Azure Resource Manger templates docs](https://learn.microsoft.com/azure/azure-resource-manager/template-deployment-overview)
 
 - [The Littlest JupyterHub docs](https://the-littlest-jupyterhub.readthedocs.io/en/latest/index.html)
 

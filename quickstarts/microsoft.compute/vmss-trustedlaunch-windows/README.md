@@ -26,17 +26,17 @@ languages:
 
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.compute%2Fvmss-trustedlaunch-windows%2Fazuredeploy.json)
 
-This template allows you to deploy a [trusted launch](https://docs.microsoft.com/azure/virtual-machines/trusted-launch) capable Windows virtual machine scale set using a few different options for the Windows version, using the latest patched version. If you enable Secureboot and vTPM, the Guest Attestation extension will be installed on your VM. This extension will perform remote [attestation](https://docs.microsoft.com/windows/security/information-protection/tpm/tpm-fundamentals#measured-boot-with-support-for-attestation) by the cloud. By default, this will deploy a Standard_D2_v3 size virtual machine in the resource group location and return the fully qualified domain name of the virtual machine.
+This template allows you to deploy a [trusted launch](https://learn.microsoft.com/azure/virtual-machines/trusted-launch) capable Windows virtual machine scale set using a few different options for the Windows version, using the latest patched version. If you enable Secureboot and vTPM, the Guest Attestation extension will be installed on your VM. This extension will perform remote [attestation](https://learn.microsoft.com/windows/security/information-protection/tpm/tpm-fundamentals#measured-boot-with-support-for-attestation) by the cloud. By default, this will deploy a Standard_D2_v3 size virtual machine in the resource group location and return the fully qualified domain name of the virtual machine.
 
 If you're new to Azure virtual machines, see:
 
 - [Azure Virtual Machine Scale Sets](https://learn.microsoft.com/en-us/azure/virtual-machine-scale-sets/overview)
-- [Template reference](https://docs.microsoft.com/azure/templates/microsoft.compute/allversions)
+- [Template reference](https://learn.microsoft.com/azure/templates/microsoft.compute/allversions)
 - [Quickstart templates](https://azure.microsoft.com/resources/templates/?resourceType=Microsoft.Compute&pageNumber=1&sort=Popular)
 
 If you're new to template deployment, see:
 
-- [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
+- [Azure Resource Manager documentation](https://learn.microsoft.com/azure/azure-resource-manager/)
 - [Quickstart: Create a Linux virtual machine scale set using an ARM template](https://learn.microsoft.com/en-us/azure/virtual-machine-scale-sets/flexible-virtual-machine-scale-sets-rest-api)
 
 `Tags:Azure4Student, virtual machine scale set, Windows, Windows Server, Beginner, Trusted Launch, Microsoft.Network/publicIPAddresses, Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachineScaleSets, Microsoft.Compute/virtualMachineScaleSets/extensions, [variables('extensionName')]`

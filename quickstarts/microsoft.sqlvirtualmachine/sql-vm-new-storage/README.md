@@ -28,7 +28,7 @@ languages:
 
 ## Solution overview and deployed resources
 
-Before deploying the template you must have the **Virtual Network** and **Subnet** in the same location. To learn more about how to deploy the template, see the [quickstart](https://docs.microsoft.com/azure/azure-sql/virtual-machines/windows/create-sql-vm-resource-manager-template) article.
+Before deploying the template you must have the **Virtual Network** and **Subnet** in the same location. To learn more about how to deploy the template, see the [quickstart](https://learn.microsoft.com/azure/azure-sql/virtual-machines/windows/create-sql-vm-resource-manager-template) article.
 
 This deployment will create a VM running SQL Server with SQL Data, Log, and Temp DB file on
 different drives. The user specifies the number of managed disks used for SQL Data and Log files.

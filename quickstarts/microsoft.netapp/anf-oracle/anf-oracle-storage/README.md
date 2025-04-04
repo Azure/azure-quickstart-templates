@@ -28,19 +28,19 @@ languages:
 
 This document covers the scenario of deploying storage for ORACLE deployments using an ORACLE storage template. Storage is provided using Azure NetApp Files, built on NetApp ONTAP storage OS.
 
-[Azure NetApp Files application volume group for ORACLE is currently in preview](https://docs.microsoft.com/azure/azure-netapp-files/application-volume-group-introduction).
+[Azure NetApp Files application volume group for ORACLE is currently in preview](https://learn.microsoft.com/azure/azure-netapp-files/application-volume-group-introduction).
 You need to submit a waitlist request for accessing the feature through the [Azure NetApp Files application volume group for ORACLE waitlist submission page](https://forms.office.com/pages/responsepage.aspx?id=v4j5cvGGr0GRqy180BHbR2Qj2eZL0mZPv1iKUrDGvc9UQzBDRUREOTc4MDdWREZaRzhOQzZGNTdFQiQlQCN0PWcu).
 Wait for an official confirmation email from the Azure NetApp Files team before using application volume group for ORACLE.
 ## Planning your ORACLE deployment
 Before you deploy ORACLE volumes using the application volume group, we recommend a thorough planning and sizing with the help of SAP and Azure NetApp Files specialists.
 The decisions to make include the following:
-* Define the network structure and delegated subnet. For details, see [Requirements and considerations](https://docs.microsoft.com/azure/azure-netapp-files/application-volume-group-considerations#requirements-and-considerations).
+* Define the network structure and delegated subnet. For details, see [Requirements and considerations](https://learn.microsoft.com/azure/azure-netapp-files/application-volume-group-considerations#requirements-and-considerations).
 * Size the ORACLE storage and VM requirements. You might need to increase the limits on the VMs and Azure NetApp Files to deploy ORACLE landscapes.
 * Depending on the selected regions, you need to understand various technologies (for example, Zone, AvSet and PPG) to optimize you ORACLE deployment.
  For details, see:
-  * [Azure proximity placement groups for optimal network latency with SAP applications](https://docs.microsoft.com/azure/virtual-machines/workloads/sap/sap-proximity-placement-scenarios)
-  * [Deployment through Azure NetApp Files application volume group for ORACLE (AVG)](https://docs.microsoft.com/azure/virtual-machines/workloads/sap/oracle-vm-operations-netapp#deployment-through-azure-netapp-files-application-volume-group-for-oracle-avg)
-  * [Best practices about proximity placement groups](https://docs.microsoft.com/azure/azure-netapp-files/application-volume-group-considerations#best-practices-about-proximity-placement-groups) to understand different options on how to use PPG with the application volume group.
+  * [Azure proximity placement groups for optimal network latency with SAP applications](https://learn.microsoft.com/azure/virtual-machines/workloads/sap/sap-proximity-placement-scenarios)
+  * [Deployment through Azure NetApp Files application volume group for ORACLE (AVG)](https://learn.microsoft.com/azure/virtual-machines/workloads/sap/oracle-vm-operations-netapp#deployment-through-azure-netapp-files-application-volume-group-for-oracle-avg)
+  * [Best practices about proximity placement groups](https://learn.microsoft.com/azure/azure-netapp-files/application-volume-group-considerations#best-practices-about-proximity-placement-groups) to understand different options on how to use PPG with the application volume group.
 
 ## Prerequisites
 To use the application volume group ARM template, you need to prepare the following environment. As described in the links above, most implementations require a thorough planning and understanding of the various architectural differences. You need to manually prepare many of the steps as a one-time activity before provisioning the Azure NetApp Files volumes for ORACLE.
@@ -50,7 +50,7 @@ The prerequisite steps include:
 1. **Networking**:
 You need to decide on the networking architecture. To use Azure NetApp Files, you need to create a VNet.
 Within the VNet, you need a delegated subnet where the Azure NetApp Files storage endpoints (IPs) will be placed.
-To ensure that the size of this subnet is large enough, see [Considerations about delegating a subnet to Azure NetApp Files](https://docs.microsoft.com/azure/azure-netapp-files/azure-netapp-files-delegate-subnet#considerations).
+To ensure that the size of this subnet is large enough, see [Considerations about delegating a subnet to Azure NetApp Files](https://learn.microsoft.com/azure/azure-netapp-files/azure-netapp-files-delegate-subnet#considerations).
    * Create a VNet.
    * Create the VM subnet and delegated subnet for Azure NetApp Files.
 
@@ -61,7 +61,7 @@ A NetApp account (storage account) is the entry point for using Azure NetApp Fil
 
 3. **Create the AvSet and PPG**:
 For production landscapes, we recommend using a AvSet that is manually pinned to a data center where Azure NetApp Files resources are available in proximity. AvSet pinning ensures that VMs will not be moved on restart.
-You need to assign the PPG to the AvSet. The PPG helps the application volume group find the closest Azure NetApp Files hardware. For details, see [Best practices about proximity placement groups](https://docs.microsoft.com/azure/azure-netapp-files/application-volume-group-considerations#best-practices-about-proximity-placement-groups).
+You need to assign the PPG to the AvSet. The PPG helps the application volume group find the closest Azure NetApp Files hardware. For details, see [Best practices about proximity placement groups](https://learn.microsoft.com/azure/azure-netapp-files/application-volume-group-considerations#best-practices-about-proximity-placement-groups).
    * Create the AvSet,
    * Create the PPG,
    * Assign the PPG to the AvSet,

@@ -28,7 +28,7 @@ This template deploys a Front Door Standard/Premium with a Web Application Firew
 
 ## Sample overview and deployed resources
 
-This sample template creates a Front Door profile with a WAF. To keep the sample simple, Front Door is configured to direct traffic to a static website configured as an origin, but this could be [any origin supported by Front Door](https://docs.microsoft.com/azure/frontdoor/standard-premium/concept-origin).
+This sample template creates a Front Door profile with a WAF. To keep the sample simple, Front Door is configured to direct traffic to a static website configured as an origin, but this could be [any origin supported by Front Door](https://learn.microsoft.comm/azure/frontdoor/standard-premium/concept-origin).
 
 The following resources are deployed as part of the solution:
 
@@ -41,7 +41,7 @@ The following resources are deployed as part of the solution:
 
 ### Log Analytics
 - Log Analytics workspace.
-- Diagnostic settings to route the `FrontDoorWebApplicationFirewallLogs` to the Log Analytics workspace. This allows you to [tune the Front Door WAF](https://docs.microsoft.com/azure/web-application-firewall/afds/waf-front-door-tuning) based on your own traffic.
+- Diagnostic settings to route the `FrontDoorWebApplicationFirewallLogs` to the Log Analytics workspace. This allows you to [tune the Front Door WAF](https://learn.microsoft.comm/azure/web-application-firewall/afds/waf-front-door-tuning) based on your own traffic.
 
 ## Deployment steps
 

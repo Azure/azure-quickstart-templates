@@ -40,8 +40,8 @@ For more information about using this template, see [Provision a web app with a 
 
 ### Microsoft Learn Resources
 
-- [Learn SQL Server](https://docs.microsoft.com/learn/browse/?term=SQL)
+- [Learn SQL Server](https://learn.microsoft.com/learn/browse/?term=SQL)
 
-- [Learn App Services](https://docs.microsoft.com/learn/browse/?term=web%20app)
+- [Learn App Services](https://learn.microsoft.com/learn/browse/?term=web%20app)
 
 `Tags: Microsoft.Sql/servers, Microsoft.Sql/servers/databases, Microsoft.Sql/servers/firewallRules, Microsoft.Web/serverfarms, Microsoft.Web/sites, Microsoft.Web/sites/config, SQLAzure, Microsoft.Insights/components`

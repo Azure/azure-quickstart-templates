@@ -31,16 +31,16 @@ The WebPlan is settled for Consumption. For more information about [hosting Plan
 If you are new to Web App Services, see:
 
 - [Web App](https://azure.microsoft.com/services/app-service/web)
-- [Web App Documentation](https://docs.microsoft.com/azure/app-service/)
-- [Template reference](https://docs.microsoft.com/azure/templates/microsoft.compute/allversions)
+- [Web App Documentation](https://learn.microsoft.com/azure/app-service/)
+- [Template reference](https://learn.microsoft.com/azure/templates/microsoft.compute/allversions)
 
 If you are new to template deployment, see:
 
-- [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
+- [Azure Resource Manager documentation](https://learn.microsoft.com/azure/azure-resource-manager/)
 
 Learning Resources
 
-- [Microsoft Learn Modules](https://docs.microsoft.com/learn/browse/?products=azure-app-service)
+- [Microsoft Learn Modules](https://learn.microsoft.com/learn/browse/?products=azure-app-service)
 
 Tags: Azure4Student, WebApp, Java, TomCat, Intermediate
 

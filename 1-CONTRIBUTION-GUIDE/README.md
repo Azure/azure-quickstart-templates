@@ -15,7 +15,7 @@ You can deploy these samples directly through the Azure Portal or by using the s
 
 To deploy a sample using the Azure Portal, click the **Deploy to Azure** button found in the README.md of each sample.
 
-To deploy the sample via the command line (using [Azure PowerShell](https://docs.microsoft.com/powershell/azure/overview) or the [Azure CLI](https://docs.microsoft.com/cli/azure/install-azure-cli)) you can use the scripts below.
+To deploy the sample via the command line (using [Azure PowerShell](https://learn.microsoft.com/powershell/azure/overview) or the [Azure CLI](https://learn.microsoft.com/cli/azure/install-azure-cli)) you can use the scripts below.
 
 Simply execute the script and pass in the folder name of the sample you want to deploy.
 
@@ -29,7 +29,7 @@ For example:
 
 ### Bash
 
-Please ensure that you have [node and npm](https://docs.npmjs.com/getting-started/installing-node), [jq](https://stedolan.github.io/jq/download/) and [azure-cli](https://docs.microsoft.com/cli/azure/install-azure-cli) installed.
+Please ensure that you have [node and npm](https://docs.npmjs.com/getting-started/installing-node), [jq](https://stedolan.github.io/jq/download/) and [azure-cli](https://learn.microsoft.com/cli/azure/install-azure-cli) installed.
 
 ```bash
 ./az-group-deploy.sh -a [foldername] -l eastus
@@ -110,7 +110,7 @@ The target scope itself should not be created by the sample unless the creation 
 
 ## Bicep support
 
-We encourage new samples to be written directly in [Bicep](https://docs.microsoft.com/azure/azure-resource-manager/bicep/overview) and encourage existing samples to be converted to support Bicep.
+We encourage new samples to be written directly in [Bicep](https://learn.microsoft.com/azure/azure-resource-manager/bicep/overview) and encourage existing samples to be converted to support Bicep.
 
 1. The bicep file must be named **main.bicep**
 1. The **azuredeploy.json** must **not** be included in the PR as it will be built automatically when the sample is merged.
@@ -152,7 +152,7 @@ The decompiler is not guaranteed to produce correct Bicep code from JSON, so you
     ])
 ```
 
-See also [Best practices for Bicep](https://docs.microsoft.com/azure/azure-resource-manager/bicep/best-practices)
+See also [Best practices for Bicep](https://learn.microsoft.com/azure/azure-resource-manager/bicep/best-practices)
 
 ## README.md
 
@@ -342,11 +342,11 @@ You can optionally provide a UI Definition file to customize the deployment expe
 
 More information can be found at the links below - the documentation is tailored for the marketplace but the schema and behavior for createUiDefinition is a generic construct for the Azure portal.
 
-[createUiDefinition Overview](https://docs.microsoft.com/azure/azure-resource-manager/managed-applications/create-uidefinition-overview)
+[createUiDefinition Overview](https://learn.microsoft.com/azure/azure-resource-manager/managed-applications/create-uidefinition-overview)
 
-[createUiDefinition UI elements reference](https://docs.microsoft.com/azure/azure-resource-manager/managed-applications/create-uidefinition-elements)
+[createUiDefinition UI elements reference](https://learn.microsoft.com/azure/azure-resource-manager/managed-applications/create-uidefinition-elements)
 
-[testing createUiDefinition](https://docs.microsoft.com/azure/azure-resource-manager/managed-applications/test-createuidefinition)
+[testing createUiDefinition](https://learn.microsoft.com/azure/azure-resource-manager/managed-applications/test-createuidefinition)
 
 ### Diagnosing Failures
 

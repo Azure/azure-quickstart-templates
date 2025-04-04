@@ -35,7 +35,7 @@ The following resources are deployed as part of the solution
 
 + **Storage Account**: Storage account for the file share
 + **Azure Container Instance**: Azure Container Instance, where the az-cli is executed to create the file share
-+ **File share**: [Azure File share](https://docs.microsoft.com/azure/storage/files/storage-files-introduction) accessiable via SMB protocol
++ **File share**: [Azure File share](https://learn.microsoft.com/azure/storage/files/storage-files-introduction) accessiable via SMB protocol
 
 ## Deployment steps
 
@@ -43,8 +43,8 @@ You can click the "Deploy to Azure" button at the beginning of this document or 
 
 #### Mount
 
-Mount via SMB protocol on [Windows](https://docs.microsoft.com/azure/storage/files/storage-how-to-use-files-windows), [Linux](https://docs.microsoft.com/azure/storage/files/storage-how-to-use-files-linux), [macOS](https://docs.microsoft.com/azure/storage/files/storage-how-to-use-files-mac) or [Azure Container Instance](https://docs.microsoft.com/azure/container-instances/container-instances-volume-azure-files)
+Mount via SMB protocol on [Windows](https://learn.microsoft.com/azure/storage/files/storage-how-to-use-files-windows), [Linux](https://learn.microsoft.com/azure/storage/files/storage-how-to-use-files-linux), [macOS](https://learn.microsoft.com/azure/storage/files/storage-how-to-use-files-mac) or [Azure Container Instance](https://learn.microsoft.com/azure/container-instances/container-instances-volume-azure-files)
 
 ## Notes
-Azure Container Instance is available in selected [locations](https://docs.microsoft.com/azure/container-instances/container-instances-quotas#region-availability). Please use one of the available location for Azure Container Instance resource.
+Azure Container Instance is available in selected [locations](https://learn.microsoft.com/azure/container-instances/container-instances-quotas#region-availability). Please use one of the available location for Azure Container Instance resource.
 

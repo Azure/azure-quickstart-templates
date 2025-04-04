@@ -30,14 +30,14 @@ The web app with Python is an app service that allow you to deploy your Django o
 If you are new to Azure App Service, see:
 
 - [Azure App Service](https://azure.microsoft.com/services/app-service/web/)
-- [Template reference](https://docs.microsoft.com/azure/templates/microsoft.web/allversions)
+- [Template reference](https://learn.microsoft.com/azure/templates/microsoft.web/allversions)
 - [Quickstart templates](https://azure.microsoft.com/resources/templates/?resourceType=Microsoft.Compute&pageNumber=1&sort=Popular&term=web+apps)
 
 If you are new to template deployment, see:
 
-- [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
+- [Azure Resource Manager documentation](https://learn.microsoft.com/azure/azure-resource-manager/)
 
-- [Creating a Python App in Azure App Services](https://docs.microsoft.com/azure/app-service/containers/quickstart-python?tabs=bash)
+- [Creating a Python App in Azure App Services](https://learn.microsoft.com/azure/app-service/containers/quickstart-python?tabs=bash)
 
 ### Prerequisites
 

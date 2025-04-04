@@ -33,6 +33,6 @@ The template creates the following Azure resources:
 - an Internet-facing Standard Load Balancer with both IPv4 and an IPv6 Public IP addresses
 - Network Security Group rules- including an IPv6-specific example
 
-For a more information about this template, see [What is IPv6 for Azure Virtual Network?](https://docs.microsoft.com/azure/virtual-network/ipv6-overview/)
+For a more information about this template, see [What is IPv6 for Azure Virtual Network?](https://learn.microsoft.com/azure/virtual-network/ipv6-overview/)
 
 `Tags: Microsoft.Network/virtualNetworks, Microsoft.Network/publicIPAddresses, Microsoft.Network/loadBalancers, Microsoft.Network/networkSecurityGroups, Microsoft.Compute/virtualMachineScaleSets`

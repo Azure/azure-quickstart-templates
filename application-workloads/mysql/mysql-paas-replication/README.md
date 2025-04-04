@@ -38,11 +38,11 @@ This ARM template will deploy only MySQL PaaS instances. Depending on the inform
 
 ![image](images/img01.png)
 
-This implementation is based on what is described in [Read replicas in Azure Database for MySQL](https://docs.microsoft.com/azure/mysql/concepts-read-replicas)
+This implementation is based on what is described in [Read replicas in Azure Database for MySQL](https://learn.microsoft.com/azure/mysql/concepts-read-replicas)
 
 ## How to connect to the services deployed
 
-Use this command line to connect to the MySQL PaaS instances, if using the CloudShell no additional steps will be required. But if connecting from somewhere else you might need to add your IP to the MySQL firewall ([Configure Firewall Rules](https://docs.microsoft.com/azure/mysql/howto-manage-firewall-using-portal)):
+Use this command line to connect to the MySQL PaaS instances, if using the CloudShell no additional steps will be required. But if connecting from somewhere else you might need to add your IP to the MySQL firewall ([Configure Firewall Rules](https://learn.microsoft.com/azure/mysql/howto-manage-firewall-using-portal)):
 
 ```bash
 mysql -h <fqdnOfTheMySQLInstance> -u <userCreatedForTheMySQLInstance>@<fqdnOfTheMySQLInstance> -p

@@ -36,16 +36,16 @@ The Backup service is Microsoft's born in the cloud backup solution to backup da
 
 ### Azure Database for PostgreSQL backup
 
-Azure Backup and Azure Database Services have come together to build an enterprise-class backup solution for Azure Database for PostgreSQL servers that retains backups for up to 10 years. [Learn more](https://docs.microsoft.com/azure/backup/backup-azure-database-postgresql)
+Azure Backup and Azure Database Services have come together to build an enterprise-class backup solution for Azure Database for PostgreSQL servers that retains backups for up to 10 years. [Learn more](https://learn.microsoft.com/azure/backup/backup-azure-database-postgresql)
 
 ### Azure Blobs backup
 
 Operational backup for Blobs is a managed, local data protection solution that lets you protect your block blobs from various data loss scenarios like corruptions, blob deletions, and accidental storage account deletion. The data is stored locally within the source storage account itself and can be recovered to a selected point in time whenever needed. So it provides a simple, secure, and cost-effective means to protect your blobs.
 
-Operational backup for Blobs integrates with Backup Center, among other Backup management capabilities, to provide a single pane of glass that can help you govern, monitor, operate, and analyze backups at scale. [Learn more](https://docs.microsoft.com/azure/backup/blob-backup-overview)
+Operational backup for Blobs integrates with Backup Center, among other Backup management capabilities, to provide a single pane of glass that can help you govern, monitor, operate, and analyze backups at scale. [Learn more](https://learn.microsoft.com/azure/backup/blob-backup-overview)
 
 ### Azure Disk backup
 
-Azure Disk Backup is a native, cloud-based backup solution that protects your data in managed disks. It's a simple, secure, and cost-effective solution that enables you to configure protection for managed disks in a few steps. It assures that you can recover your data in a disaster scenario. [Learn more](https://docs.microsoft.com/azure/backup/disk-backup-overview)
+Azure Disk Backup is a native, cloud-based backup solution that protects your data in managed disks. It's a simple, secure, and cost-effective solution that enables you to configure protection for managed disks in a few steps. It assures that you can recover your data in a disaster scenario. [Learn more](https://learn.microsoft.com/azure/backup/disk-backup-overview)
 
 `Tags: Microsoft.DataProtection/backupVaults, systemAssigned, [parameters('vaultStorageRedundancy')]`

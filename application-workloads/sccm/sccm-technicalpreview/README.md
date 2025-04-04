@@ -36,6 +36,6 @@ Each VM has its own public IP address and is added to a subnet protected with a 
 
 Each VM has a private network IP which is for ConfigMgr communication.
 
-For more information, Visit [Create a Configuration Manager lab in Azure](https://docs.microsoft.com/configmgr/core/get-started/azure-template)
+For more information, Visit [Create a Configuration Manager lab in Azure](https://learn.microsoft.com/configmgr/core/get-started/azure-template)
 
 `Tags: Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, DSC, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Network/publicIpAddresses, Microsoft.Network/networkSecurityGroups`

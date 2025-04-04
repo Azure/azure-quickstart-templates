@@ -50,9 +50,9 @@ Make use of conditional property in the template to toggle between new vs existi
 In order to delete the recovery services vault, you first need to stop protection to any existing backup item (e.g. database) and unregister the virtual machine containing the workload. You may refer below documentation:
 
 <ul>
-<li>[Stop backup and delete backup data](https://docs.microsoft.com/azure/backup/backup-azure-sql-automation#delete-backup-data)</li>
-<li>[Unregister VM](https://docs.microsoft.com/azure/backup/backup-azure-sql-automation#unregister-sql-vm)</li>
-<li>[Delete Recovery Services Vault](https://docs.microsoft.com/azure/backup/backup-azure-delete-vault#delete-the-recovery-services-vault-by-force)</li>
+<li>[Stop backup and delete backup data](https://learn.microsoft.com/azure/backup/backup-azure-sql-automation#delete-backup-data)</li>
+<li>[Unregister VM](https://learn.microsoft.com/azure/backup/backup-azure-sql-automation#unregister-sql-vm)</li>
+<li>[Delete Recovery Services Vault](https://learn.microsoft.com/azure/backup/backup-azure-delete-vault#delete-the-recovery-services-vault-by-force)</li>
 </ul>
 
 To know more about Azure Backup for SQL Server in Azure Virtual Machines [Click Here](https://azure.microsoft.com/blog/azure-backup-for-sql-server-in-azure-virtual-machines-now-generally-available/)

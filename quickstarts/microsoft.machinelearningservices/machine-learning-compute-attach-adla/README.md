@@ -27,8 +27,8 @@ This template creates an Azure Machine Learning service compute instance.
 If you are new to Azure Machine Learning, see:
 
 - [Azure Machine Learning service](https://azure.microsoft.com/services/machine-learning-service/)
-- [Azure Machine Learning documentation](https://docs.microsoft.com/azure/machine-learning/)
-- [Azure Machine Learning template reference](https://docs.microsoft.com/azure/templates/microsoft.machinelearningservices/allversions)
+- [Azure Machine Learning documentation](https://learn.microsoft.com/azure/machine-learning/)
+- [Azure Machine Learning template reference](https://learn.microsoft.com/azure/templates/microsoft.machinelearningservices/allversions)
 - [Quickstart templates](https://azure.microsoft.com/resources/templates/)
 
 `Tags: Microsoft.MachineLearningServices/workspaces/computes, Microsoft.DataLakeStore/accounts, Microsoft.DataLakeAnalytics/accounts, Microsoft.Resources/deployments`

@@ -202,7 +202,7 @@ resource cluster 'Microsoft.Kusto/clusters@2023-08-15' = {
 //  Authorize Kusto Cluster to receive event from Event Hub
 resource clusterEventHubAuthorization 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   name: guid(cluster.name, eventHubName, 'Azure Event Hubs Data Receiver')
-  //  See https://docs.microsoft.com/en-us/azure/azure-resource-manager/bicep/scope-extension-resources
+  //  See https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/scope-extension-resources
   //  for scope for extension
   scope: eventHubNamespace::eventHub
   properties: {
@@ -221,7 +221,7 @@ resource clusterEventHubAuthorization 'Microsoft.Authorization/roleAssignments@2
 //  Authorize Kusto Cluster to read storage
 resource clusterStorageAuthorization 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   name: guid(cluster.name, storageContainerName, 'Storage Blob Data Contributor')
-  //  See https://docs.microsoft.com/en-us/azure/azure-resource-manager/bicep/scope-extension-resources
+  //  See https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/scope-extension-resources
   //  for scope for extension
   scope: storage::blobServices
   properties: {

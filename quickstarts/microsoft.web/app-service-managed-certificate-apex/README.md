@@ -39,7 +39,7 @@ To deploy this template, you need to have the following resources:
 
     c. Add your root domain going to -> App Services => Custom Domains -> Add custom domain. (ie contoso.com).
 
-    More information can be found [here](https://docs.microsoft.com/azure/app-service/app-service-web-tutorial-custom-domain?tabs=cname).
+    More information can be found [here](https://learn.microsoft.com/azure/app-service/app-service-web-tutorial-custom-domain?tabs=cname).
 
 4. **Make sure you Web App does not have any Network restriction or redirection (such as http to https or to another url).**
 
