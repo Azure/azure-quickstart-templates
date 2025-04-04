@@ -109,8 +109,8 @@ param dataExplorerSku string = 'Dev(No SLA)_Standard_D11_v2'
 @maxValue(1000)
 param dataExplorerCapacity int = 1
 
-@description('Optional. Array of external tenant IDs that should have access to the cluster. Default: empty (no external access).')
-param dataExplorerTrustedExternalTenants string[] = []
+// @description('Optional. Array of external tenant IDs that should have access to the cluster. Default: empty (no external access).')
+// param dataExplorerTrustedExternalTenants string[] = []
 
 @description('Optional. Tags to apply to all resources. We will also add the cm-resource-parent tag for improved cost roll-ups in Cost Management.')
 param tags object = {}
@@ -204,8 +204,23 @@ var safeScriptSubnetId = enablePublicAccess ? '' : vnet.outputs.scriptSubnetId
 // }
 // var finalEventGridLocation = eventGridLocation != null && !empty(eventGridLocation) ? eventGridLocation : (eventGridLocationFallback[?location] ?? location)
 
-// The last segment of the telemetryId is used to identify this module
-var telemetryId = '00f120b5-2007-6120-0000-40b000000000'
+// The last segment of the GUID in the telemetryId (40b) is used to identify this module
+// Remaining characters identify settings; must be <= 12 chars -- Example: (guid)_RLXD##x1000P
+var telemetryId = join([
+  '00f120b5-2007-6120-0000-40b000000000_'
+  // R = remote hubs enabled
+  empty(remoteHubStorageUri) || empty(remoteHubStorageKey) ? '' : 'R'
+  // L = LRS, Z = ZRS
+  substring(split(storageSku, '_')[1], 0, 1)
+  // X = ADX enabled + D (dev) or S (standard) SKU
+  empty(dataExplorerName) ? '' : 'X${substring(dataExplorerSku, 0, 1)}'
+  // Number of cores in the VM size
+  empty(dataExplorerName) ? '' : replace(replace(replace(replace(replace(replace(replace(replace(split(split(dataExplorerSku, 'Standard_')[1], '_')[0], 'C', ''), 'D', ''), 'E', ''), 'L', ''), 'a', ''), 'd', ''), 'i', ''), 's', '')
+  // Number of nodes in the cluster
+  empty(dataExplorerName) || dataExplorerCapacity == 1 ? '' : 'x${dataExplorerCapacity}'
+  // P = private endpoints enabled
+  enablePublicAccess ? '' : 'P'
+], '')
 
 //==============================================================================
 // Resources
@@ -219,7 +234,7 @@ var telemetryId = '00f120b5-2007-6120-0000-40b000000000'
 //------------------------------------------------------------------------------
 
 resource defaultTelemetry 'Microsoft.Resources/deployments@2022-09-01' = if (enableDefaultTelemetry) {
-  name: 'pid-${telemetryId}-${uniqueString(deployment().name, location)}'
+  name: 'pid-${telemetryId}_${uniqueString(deployment().name, location)}'
   properties: {
     mode: 'Incremental'
     template: {
@@ -289,7 +304,7 @@ module dataExplorer 'dataExplorer.bicep' = if (deployDataExplorer) {
     clusterName: dataExplorerName
     clusterSku: dataExplorerSku
     clusterCapacity: dataExplorerCapacity
-    clusterTrustedExternalTenants: dataExplorerTrustedExternalTenants
+    // TODO: Figure out why this is breaking upgrades -- clusterTrustedExternalTenants: dataExplorerTrustedExternalTenants
     location: location
     tags: resourceTags
     tagsByResource: tagsByResource
@@ -339,7 +354,7 @@ module dataFactoryResources 'dataFactory.bicep' = {
     dataExplorerIngestionCapacity: safeDataExplorerIngestionCapacity
     dataExplorerUri: safeDataExplorerUri
     dataExplorerId: safeDataExplorerId
-    keyVaultName: keyVault.outputs.name
+    keyVaultName: empty(remoteHubStorageKey) ? '' : keyVault.outputs.name
     remoteHubStorageUri: remoteHubStorageUri
     enablePublicAccess: enablePublicAccess
   }
@@ -349,7 +364,7 @@ module dataFactoryResources 'dataFactory.bicep' = {
 // Key Vault for storing secrets
 //------------------------------------------------------------------------------
 
-module keyVault 'keyVault.bicep' = {
+module keyVault 'keyVault.bicep' = if (!empty(remoteHubStorageKey)) {
   name: 'keyVault'
   params: {
     hubName: hubName
