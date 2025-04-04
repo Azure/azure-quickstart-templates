@@ -16,7 +16,7 @@ param backupPolicyName string = 'policy${uniqueString(resourceGroup().id)}'
 @maxValue(35)
 param retentionDays int = 30
 
-@description('Name of the MySqlFlex server')
+@description('Name of the MySQL Flexible Server')
 param mysqlFlexServerName string = 'mysqlflex${uniqueString(resourceGroup().id)}'
 
 @description('Location for all resources')
