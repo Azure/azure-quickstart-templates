@@ -11,6 +11,9 @@ languages:
 ---
 # Basic Agent Setup Identity
 
+> [!IMPORTANT]
+> All Agent templates in this repository are out of date and have been moved. [Please visit the updated repository.](https://github.com/Azure-Samples/azureai-samples/tree/main/scenarios/Agents/setup/basic-agent-identity)
+
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.azure-ai-agent-service/basic-agent-identity/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.azure-ai-agent-service/basic-agent-identity/PublicDeployment.svg)
 
