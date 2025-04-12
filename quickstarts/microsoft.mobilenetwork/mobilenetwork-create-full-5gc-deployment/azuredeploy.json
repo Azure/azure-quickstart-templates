@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.17.1.54307",
-      "templateHash": "7814816517305121913"
+      "version": "0.28.1.47646",
+      "templateHash": "15409419855356169046"
     }
   },
   "parameters": {
@@ -148,12 +148,34 @@
         "description": "The name of the data network"
       }
     },
+    "desiredState": {
+      "type": "string",
+      "defaultValue": "Uninstalled",
+      "metadata": {
+        "description": "The desired installation state"
+      }
+    },
+    "ueMtu": {
+      "type": "int",
+      "defaultValue": 1440,
+      "metadata": {
+        "description": "The MTU (in bytes) signaled to the UE. The same MTU is set on the user plane data links for all data networks. The MTU set on the user plane access link is calculated to be 60 bytes greater than this value to allow for GTP encapsulation. "
+      }
+    },
+    "allowSupportTelemetryAccess": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Provide consent for Microsoft to access non-PII telemetry information from the packet core."
+      }
+    },
     "coreNetworkTechnology": {
       "type": "string",
       "defaultValue": "5GC",
       "allowedValues": [
         "EPC",
-        "5GC"
+        "5GC",
+        "EPC + 5GC"
       ],
       "metadata": {
         "description": "The mode in which the packet core instance will run"
@@ -191,7 +213,7 @@
       },
       "condition": "[not(empty(parameters('simGroupName')))]",
       "type": "Microsoft.MobileNetwork/simGroups/sims",
-      "apiVersion": "2022-11-01",
+      "apiVersion": "2024-04-01",
       "name": "[format('{0}/{1}', if(empty(parameters('simGroupName')), 'placeHolderForValidation', parameters('simGroupName')), parameters('simResources')[copyIndex()].simName)]",
       "properties": {
         "integratedCircuitCardIdentifier": "[parameters('simResources')[copyIndex()].integratedCircuitCardIdentifier]",
@@ -210,7 +232,7 @@
     },
     {
       "type": "Microsoft.MobileNetwork/packetCoreControlPlanes/packetCoreDataPlanes/attachedDataNetworks",
-      "apiVersion": "2022-11-01",
+      "apiVersion": "2024-04-01",
       "name": "[format('{0}/{1}/{2}', parameters('siteName'), parameters('siteName'), parameters('dataNetworkName'))]",
       "location": "[parameters('location')]",
       "properties": {
@@ -230,7 +252,7 @@
     },
     {
       "type": "Microsoft.MobileNetwork/packetCoreControlPlanes/packetCoreDataPlanes",
-      "apiVersion": "2022-11-01",
+      "apiVersion": "2024-04-01",
       "name": "[format('{0}/{1}', parameters('siteName'), parameters('siteName'))]",
       "location": "[parameters('location')]",
       "properties": {
@@ -244,7 +266,7 @@
     },
     {
       "type": "Microsoft.MobileNetwork/mobileNetworks",
-      "apiVersion": "2022-11-01",
+      "apiVersion": "2024-04-01",
       "name": "[parameters('mobileNetworkName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -256,7 +278,7 @@
     },
     {
       "type": "Microsoft.MobileNetwork/mobileNetworks/sites",
-      "apiVersion": "2022-11-01",
+      "apiVersion": "2024-04-01",
       "name": "[format('{0}/{1}', parameters('mobileNetworkName'), parameters('siteName'))]",
       "location": "[parameters('location')]",
       "dependsOn": [
@@ -265,7 +287,7 @@
     },
     {
       "type": "Microsoft.MobileNetwork/mobileNetworks/dataNetworks",
-      "apiVersion": "2022-11-01",
+      "apiVersion": "2024-04-01",
       "name": "[format('{0}/{1}', parameters('mobileNetworkName'), parameters('dataNetworkName'))]",
       "location": "[parameters('location')]",
       "properties": {},
@@ -275,7 +297,7 @@
     },
     {
       "type": "Microsoft.MobileNetwork/mobileNetworks/slices",
-      "apiVersion": "2022-11-01",
+      "apiVersion": "2024-04-01",
       "name": "[format('{0}/{1}', parameters('mobileNetworkName'), parameters('sliceName'))]",
       "location": "[parameters('location')]",
       "properties": {
@@ -289,7 +311,7 @@
     },
     {
       "type": "Microsoft.MobileNetwork/mobileNetworks/services",
-      "apiVersion": "2022-11-01",
+      "apiVersion": "2024-04-01",
       "name": "[format('{0}/{1}', parameters('mobileNetworkName'), parameters('serviceName'))]",
       "location": "[parameters('location')]",
       "properties": {
@@ -320,7 +342,7 @@
     },
     {
       "type": "Microsoft.MobileNetwork/mobileNetworks/simPolicies",
-      "apiVersion": "2022-11-01",
+      "apiVersion": "2024-04-01",
       "name": "[format('{0}/{1}', parameters('mobileNetworkName'), parameters('simPolicyName'))]",
       "location": "[parameters('location')]",
       "properties": {
@@ -368,7 +390,7 @@
     {
       "condition": "[not(empty(parameters('simGroupName')))]",
       "type": "Microsoft.MobileNetwork/simGroups",
-      "apiVersion": "2022-11-01",
+      "apiVersion": "2024-04-01",
       "name": "[if(empty(parameters('simGroupName')), 'placeHolderForValidation', parameters('simGroupName'))]",
       "location": "[parameters('location')]",
       "properties": {
@@ -386,7 +408,7 @@
     },
     {
       "type": "Microsoft.MobileNetwork/packetCoreControlPlanes",
-      "apiVersion": "2022-11-01",
+      "apiVersion": "2024-04-01",
       "name": "[parameters('siteName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -396,6 +418,10 @@
           }
         ],
         "sku": "G0",
+        "ueMtu": "[parameters('ueMtu')]",
+        "userConsent": {
+          "allowSupportTelemetryAccess": "[parameters('allowSupportTelemetryAccess')]"
+        },
         "coreNetworkTechnology": "[parameters('coreNetworkTechnology')]",
         "platform": {
           "type": "AKS-HCI",
@@ -403,6 +429,9 @@
           "azureStackEdgeDevice": {
             "id": "[parameters('azureStackEdgeDevice')]"
           }
+        },
+        "installation": {
+          "desiredState": "[parameters('desiredState')]"
         },
         "localDiagnosticsAccess": {
           "authenticationType": "Password"

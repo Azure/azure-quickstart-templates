@@ -1,5 +1,5 @@
 ---
-description: This template creates 5 new Azure VMs, each group load balancer and a VNet. It configures a primary and backup AD Domain Controller for a new Forest and Domain, two SQL Servers and witness in AlwaysOn configuration
+description: This template creates 5 new Azure VMs, each group load balancer and a VNet. It configures a primary and backup AD Domain Controller for a new Forest and Domain, two SQL Servers and witness in an availability group configuration
 page_type: sample
 products:
 - azure
@@ -8,7 +8,7 @@ urlFragment: sqlvm-alwayson-cluster
 languages:
 - json
 ---
-# Create a SQL Server AlwaysOn Cluster Deployment
+# Create a SQL Server availability group cluster deployment
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sql/sqlvm-alwayson-cluster/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sql/sqlvm-alwayson-cluster/PublicDeployment.svg)
@@ -25,7 +25,7 @@ languages:
 
 ## Solution overview
 
-This template uses the PowerShell DSC extension to deploy a fully configured Always On Availability Group with SQL Server 2014 replicas.
+This template uses the PowerShell DSC extension to deploy a fully configured availability group with SQL Server 2014 replicas.
 
 This template creates the following resources:
 
@@ -46,7 +46,7 @@ This template creates the following resources:
     +     1 for SQL Server and Witness virtual machines
 +   1 public IP addresses for RDP access
 
-`Tags: SQL Server, AlwaysOn, High Availability, Cluster, Microsoft.Resources/deployments, Microsoft.Compute/virtualMachines/extensions, DSC, Microsoft.Network/networkInterfaces, SqlIaaSAgent, Microsoft.Storage/storageAccounts, Microsoft.Network/publicIPAddresses, Microsoft.Network/loadBalancers, Microsoft.Network/virtualNetworks, Microsoft.Compute/availabilitySets, Microsoft.Compute/virtualMachines, extensions`
+`Tags: SQL Server, Always On, Availability Group, AG, High Availability, Cluster, Microsoft.Resources/deployments, Microsoft.Compute/virtualMachines/extensions, DSC, Microsoft.Network/networkInterfaces, SqlIaaSAgent, Microsoft.Storage/storageAccounts, Microsoft.Network/publicIPAddresses, Microsoft.Network/loadBalancers, Microsoft.Network/virtualNetworks, Microsoft.Compute/availabilitySets, Microsoft.Compute/virtualMachines, extensions`
 
 ## Notes
 

@@ -83,12 +83,12 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@2021-03-01' = {
         }
       }
       {
-        name: 'Microsoft.Databricks-workspaces_UseOnly_databricks-worker-to-databricks-webapp'
+        name: 'Microsoft.Databricks-workspaces_UseOnly_databricks-worker-to-databricks-cp'
         properties: {
-          description: 'Required for workers communication with Databricks Webapp.'
+          description: 'Required for workers communication with Databricks control plane.'
           protocol: 'Tcp'
           sourcePortRange: '*'
-          destinationPortRange: '443'
+          destinationPortRanges: ['443','8443-8451','3306']
           sourceAddressPrefix: 'VirtualNetwork'
           destinationAddressPrefix: 'AzureDatabricks'
           access: 'Allow'
@@ -211,7 +211,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2021-08-01' = {
   }
 }
 
-resource workspace 'Microsoft.Databricks/workspaces@2023-02-01' = {
+resource workspace 'Microsoft.Databricks/workspaces@2024-05-01' = {
   name: workspaceName
   location: location
   sku: {

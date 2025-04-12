@@ -1,14 +1,15 @@
 ---
-description: This creates a new AKS Cluster and then deploy SQL Server always on availability groups into it using a CNAB Package deployed using Duffle and ACI
+description: This creates a new AKS Cluster and then deploys SQL Server availability groups into it using a CNAB package deployed using Duffle and ACI
 page_type: sample
 products:
 - azure
 - azure-resource-manager
 urlFragment: aks-sql-server-always-on
 languages:
+- bicep
 - json
 ---
-# SQL Server Always On AG on AKS
+# SQL Server availability group on AKS
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sql/aks-sql-server-always-on/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sql/aks-sql-server-always-on/PublicDeployment.svg)
@@ -18,6 +19,8 @@ languages:
 
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sql/aks-sql-server-always-on/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sql/aks-sql-server-always-on/CredScanResult.svg)
+
+![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sql/aks-sql-server-always-on/BicepVersion.svg)
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fsql%2Faks-sql-server-always-on%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fsql%2Faks-sql-server-always-on%2Fazuredeploy.json)

@@ -17,8 +17,9 @@ param location string = resourceGroup().location
 @description('Optional. Array of access policies object.')
 param accessPolicies array = []
 
-@description('Required. Name of the storage account to store access keys for.')
-param storageAccountName string
+@description('Optional. Create and store a key for a remote storage account.')
+@secure()
+param storageAccountKey string
 
 @description('Optional. Specifies the SKU for the vault.')
 @allowed([
@@ -30,6 +31,18 @@ param sku string = 'premium'
 @description('Optional. Resource tags.')
 param tags object = {}
 
+@description('Optional. Tags to apply to resources based on their resource type. Resource type specific tags will be merged with tags for all resources.')
+param tagsByResource object = {}
+
+@description('Required. Resource ID of the virtual network for private endpoints.')
+param virtualNetworkId string
+
+@description('Required. Resource ID of the subnet for private endpoints.')
+param privateEndpointSubnetId string
+
+@description('Optional. Enable public access to the data lake.  Default: false.')
+param enablePublicAccess bool
+
 //------------------------------------------------------------------------------
 // Variables
 //------------------------------------------------------------------------------
@@ -38,22 +51,25 @@ param tags object = {}
 var keyVaultPrefix = '${replace(hubName, '_', '-')}-vault'
 var keyVaultSuffix = '-${uniqueSuffix}'
 var keyVaultName = replace('${take(keyVaultPrefix, 24 - length(keyVaultSuffix))}${keyVaultSuffix}', '--', '-')
+var keyVaultSecretName = '${toLower(hubName)}-storage-key'
+// cSpell:ignore privatelink, vaultcore
+var keyVaultPrivateDnsZoneName = 'privatelink${replace(environment().suffixes.keyvaultDns, 'vault', 'vaultcore')}'
 
 var formattedAccessPolicies = [for accessPolicy in accessPolicies: {
-  applicationId: contains(accessPolicy, 'applicationId') ? accessPolicy.applicationId : ''
-  objectId: contains(accessPolicy, 'objectId') ? accessPolicy.objectId : ''
+  applicationId: accessPolicy.?applicationId ?? ''
+  objectId: accessPolicy.?objectId ?? ''
   permissions: accessPolicy.permissions
-  tenantId: contains(accessPolicy, 'tenantId') ? accessPolicy.tenantId : tenant().tenantId
+  tenantId: accessPolicy.?tenantId ?? tenant().tenantId
 }]
 
 //==============================================================================
 // Resources
 //==============================================================================
 
-resource keyVault 'Microsoft.KeyVault/vaults@2022-11-01' = {
+resource keyVault 'Microsoft.KeyVault/vaults@2023-02-01' = {
   name: keyVaultName
   location: location
-  tags: tags
+  tags: union(tags, tagsByResource[?'Microsoft.KeyVault/vaults'] ?? {})
   properties: {
     enabledForDeployment: true
     enabledForTemplateDeployment: true
@@ -65,13 +81,18 @@ resource keyVault 'Microsoft.KeyVault/vaults@2022-11-01' = {
     tenantId: subscription().tenantId
     accessPolicies: formattedAccessPolicies
     sku: {
-      name: sku
+      // Azure China only supports standard
+      name: startsWith(location, 'china') ? 'standard' : sku
       family: 'A'
+    }
+    networkAcls: {
+      bypass: 'AzureServices'
+      defaultAction: enablePublicAccess ? 'Allow' : 'Deny'
     }
   }
 }
 
-resource keyVault_accessPolicies 'Microsoft.KeyVault/vaults/accessPolicies@2022-11-01' = if (!empty(accessPolicies)) {
+resource keyVault_accessPolicies 'Microsoft.KeyVault/vaults/accessPolicies@2023-02-01' = if (!empty(accessPolicies)) {
   name: 'add'
   parent: keyVault
   properties: {
@@ -79,12 +100,8 @@ resource keyVault_accessPolicies 'Microsoft.KeyVault/vaults/accessPolicies@2022-
   }
 }
 
-resource storageRef 'Microsoft.Storage/storageAccounts@2022-09-01' existing = {
-  name: storageAccountName
-}
-
-resource keyVault_secrets 'Microsoft.KeyVault/vaults/secrets@2022-11-01' = {
-  name: storageRef.name
+resource keyVault_secret 'Microsoft.KeyVault/vaults/secrets@2023-02-01' = if (!empty(storageAccountKey)) {
+  name: keyVaultSecretName
   parent: keyVault
   properties: {
     attributes: {
@@ -92,9 +109,65 @@ resource keyVault_secrets 'Microsoft.KeyVault/vaults/secrets@2022-11-01' = {
       exp: 1702648632
       nbf: 10000
     }
-    value: storageRef.listKeys().keys[0].value
+    value: storageAccountKey
   }
 }
+
+resource keyVaultPrivateDnsZone 'Microsoft.Network/privateDnsZones@2024-06-01' = if (!enablePublicAccess) {
+  name: keyVaultPrivateDnsZoneName
+  location: 'global'
+  tags: union(tags, tagsByResource[?'Microsoft.KeyVault/privateDnsZones'] ?? {})
+  properties: {}
+}
+
+resource keyVaultPrivateDnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2024-06-01' = if (!enablePublicAccess) {
+  name: '${replace(keyVaultPrivateDnsZone.name, '.', '-')}-link'
+  location: 'global'
+  parent: keyVaultPrivateDnsZone
+  tags: union(tags, tagsByResource[?'Microsoft.Network/privateDnsZones/virtualNetworkLinks'] ?? {})
+  properties: {
+    virtualNetwork: {
+      id: virtualNetworkId
+    }
+    registrationEnabled: false
+  }
+}
+
+resource keyVaultEndpoint 'Microsoft.Network/privateEndpoints@2023-11-01' = if (!enablePublicAccess) {
+  name: '${keyVault.name}-ep'
+  location: location
+  tags: union(tags, tagsByResource[?'Microsoft.Network/privateEndpoints'] ?? {})
+  properties: {
+    subnet: {
+      id: privateEndpointSubnetId
+    }
+    privateLinkServiceConnections: [
+      {
+        name: 'keyVaultLink'
+        properties: {
+          privateLinkServiceId: keyVault.id
+          groupIds: ['vault']
+        }
+      }
+    ]
+  }
+}
+
+resource keyVaultPrivateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2023-11-01' = if (!enablePublicAccess) {
+  name: 'keyvault-endpoint-zone'
+  parent: keyVaultEndpoint
+  properties: {
+    privateDnsZoneConfigs: [
+      {
+        name: keyVaultPrivateDnsZone.name
+        properties: {
+          privateDnsZoneId: keyVaultPrivateDnsZone.id
+        }
+      }
+    ]
+  }
+}
+
 
 //==============================================================================
 // Outputs

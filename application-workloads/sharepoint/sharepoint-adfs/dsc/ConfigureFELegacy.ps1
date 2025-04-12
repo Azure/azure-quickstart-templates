@@ -17,18 +17,18 @@ configuration ConfigureFEVM
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPPassphraseCreds
     )
 
-    Import-DscResource -ModuleName ComputerManagementDsc -ModuleVersion 9.0.0 # Custom
+    Import-DscResource -ModuleName ComputerManagementDsc -ModuleVersion 10.0.0 # Custom
     Import-DscResource -ModuleName NetworkingDsc -ModuleVersion 9.0.0
-    Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion 6.2.0
-    Import-DscResource -ModuleName WebAdministrationDsc -ModuleVersion 4.1.0
-    Import-DscResource -ModuleName SharePointDsc -ModuleVersion 5.4.0
+    Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion 6.6.0 # Custom workaround on ADObjectPermissionEntry
+    Import-DscResource -ModuleName WebAdministrationDsc -ModuleVersion 4.2.1
+    Import-DscResource -ModuleName SharePointDsc -ModuleVersion 5.6.1 # custom
     Import-DscResource -ModuleName DnsServerDsc -ModuleVersion 3.0.0
-    Import-DscResource -ModuleName CertificateDsc -ModuleVersion 5.1.0
-    Import-DscResource -ModuleName SqlServerDsc -ModuleVersion 16.3.1
-    Import-DscResource -ModuleName cChoco -ModuleVersion 2.5.0.0    # With custom changes to implement retry on package downloads
+    Import-DscResource -ModuleName CertificateDsc -ModuleVersion 6.0.0
+    Import-DscResource -ModuleName SqlServerDsc -ModuleVersion 17.0.0
+    Import-DscResource -ModuleName cChoco -ModuleVersion 2.6.0.0    # With custom changes to implement retry on package downloads
 
     # Init
-    [String] $InterfaceAlias = (Get-NetAdapter | Where-Object Name -Like "Ethernet*" | Select-Object -First 1).Name
+    [String] $InterfaceAlias = (Get-NetAdapter| Where-Object InterfaceDescription -Like "Microsoft Hyper-V Network Adapter*" | Select-Object -First 1).Name
     [String] $ComputerName = Get-Content env:computername
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
 
@@ -83,6 +83,7 @@ configuration ConfigureFEVM
         WindowsFeature AddADLDS               { Name = "RSAT-ADLDS";         Ensure = "Present"; }
         WindowsFeature AddADCSManagementTools { Name = "RSAT-ADCS-Mgmt";     Ensure = "Present"; }
         DnsServerAddress SetDNS { Address = $DNSServerIP; InterfaceAlias = $InterfaceAlias; AddressFamily  = 'IPv4' }
+        
 
         # # xCredSSP is required forSharePointDsc resources SPUserProfileServiceApp and SPDistributedCacheService
         # xCredSSP CredSSPServer { Ensure = "Present"; Role = "Server"; DependsOn = "[DnsServerAddress]SetDNS" }
@@ -128,21 +129,10 @@ configuration ConfigureFEVM
 
         SqlAlias AddSqlAlias { Ensure = "Present"; Name = $SQLAlias; ServerName = $SQLServerName; Protocol = "TCP"; TcpPort= 1433 }
 
-        Script EnableFileSharing
-        {
-            TestScript = {
-                # Test if firewall rules for file sharing already exist
-                $rulesSet = Get-NetFirewallRule -DisplayGroup "File And Printer Sharing" -Enabled True -ErrorAction SilentlyContinue | Where-Object{$_.Profile -eq "Domain"}
-                if ($null -eq $rulesSet) {
-                    return $false   # Run SetScript
-                } else {
-                    return $true    # Rules already set
-                }
-            }
-            SetScript = {
-                Set-NetFirewallRule -DisplayGroup "File And Printer Sharing" -Enabled True -Profile Domain -Confirm:$false
-            }
-            GetScript = { }
+        Script EnableFileSharing {
+            GetScript  = { }
+            TestScript = { return $null -ne (Get-NetFirewallRule -DisplayGroup "File And Printer Sharing" -Enabled True -ErrorAction SilentlyContinue | Where-Object { $_.Profile -eq "Domain" }) }
+            SetScript  = { Set-NetFirewallRule -DisplayGroup "File And Printer Sharing" -Enabled True -Profile Domain }
         }
 
         # Create the rules in the firewall required for the distributed cache - https://learn.microsoft.com/en-us/sharepoint/administration/plan-for-feeds-and-the-distributed-cache-service#firewall
@@ -267,6 +257,32 @@ configuration ConfigureFEVM
         #     }
         # }
 
+        Script CreateSPLOGSFileShare {
+            SetScript  = 
+            { 
+                $foldername = "C:\Program Files\Common Files\Microsoft Shared\Web Server Extensions\16\LOGS"
+                $shareName = "SPLOGS"
+                # if (!(Get-WmiObject Win32_Share -Filter "name='$sharename'")) {
+                $shares = [WMICLASS]"WIN32_Share"
+                if ($shares.Create($foldername, $sharename, 0).ReturnValue -ne 0) {
+                    Write-Verbose -Verbose -Message "Failed to create file share '$sharename' for folder '$foldername'"
+                } else {
+                    Write-Verbose -Verbose -Message "Created file share '$sharename' for folder '$foldername'"
+                }
+                # }
+            }
+            GetScript  = { }
+            TestScript = 
+            {
+                $shareName = "SPLOGS"
+                if (!(Get-WmiObject Win32_Share -Filter "name='$sharename'")) {
+                    return $false
+                } else {
+                    return $true
+                }
+            }
+        }
+
         #**********************************************************
         # Join AD forest
         #**********************************************************
@@ -284,7 +300,7 @@ configuration ConfigureFEVM
                     }
                     catch [System.Net.Sockets.SocketException] {
                         # GetHostEntry() throws SocketException "No such host is known" if DNS entry is not found
-                        Write-Host "DNS record '$dnsRecordFQDN' not found yet: $_"
+                        Write-Verbose -Verbose -Message "DNS record '$dnsRecordFQDN' not found yet: $_"
                         Start-Sleep -Seconds $sleepTime
                     }
                 } while ($false -eq $dnsRecordFound)
@@ -345,7 +361,7 @@ configuration ConfigureFEVM
                 # Create SPNs WSMAN/SP and WSMAN/sp.contoso.local
                 $domainFQDN = $using:DomainFQDN
                 $computerName = $using:ComputerName
-                Write-Host "Adding SPNs 'WSMAN/$computerName' and 'WSMAN/$computerName.$domainFQDN' to computer '$computerName'"
+                Write-Verbose -Verbose -Message "Adding SPNs 'WSMAN/$computerName' and 'WSMAN/$computerName.$domainFQDN' to computer '$computerName'"
                 setspn.exe -S "WSMAN/$computerName" "$computerName"
                 setspn.exe -S "WSMAN/$computerName.$domainFQDN" "$computerName"
             }
@@ -402,7 +418,7 @@ configuration ConfigureFEVM
                 do {
                     try
                     {
-                        Write-Host "Trying to connect to $uri..."
+                        Write-Verbose -Verbose -Message "Trying to connect to $uri..."
                         # -UseDefaultCredentials: Does NTLM authN
                         # -UseBasicParsing: Avoid exception because IE was not first launched yet
                         $Response = Invoke-WebRequest -Uri $uri -UseDefaultCredentials -TimeoutSec 10 -ErrorAction Stop -UseBasicParsing
@@ -412,22 +428,22 @@ configuration ConfigureFEVM
                     catch [System.Net.WebException]
                     {
                         # We always expect a WebException until site is actually up. 
-                        # Write-Host "Request failed with a WebException: $($_.Exception)"
+                        # Write-Verbose -Verbose -Message "Request failed with a WebException: $($_.Exception)"
                         if ($null -ne $_.Exception.Response) {
                             $currentStatusCode = $_.Exception.Response.StatusCode.value__
                         }
                     }
                     catch
                     {
-                        Write-Host "Request failed with an unexpected exception: $($_.Exception)"
+                        Write-Verbose -Verbose -Message "Request failed with an unexpected exception: $($_.Exception)"
                     }
 
                     if ($currentStatusCode -ne $expectedStatusCode){
-                        Write-Host "Connection to $uri... returned status code $currentStatusCode while $expectedStatusCode is expected, retrying in $sleepTime secs..."
+                        Write-Verbose -Verbose -Message "Connection to $uri... returned status code $currentStatusCode while $expectedStatusCode is expected, retrying in $sleepTime secs..."
                         Start-Sleep -Seconds $sleepTime
                     }
                     else {
-                        Write-Host "Connection to $uri... returned expected status code $currentStatusCode, exiting..."
+                        Write-Verbose -Verbose -Message "Connection to $uri... returned expected status code $currentStatusCode, exiting..."
                     }
                 } while ($currentStatusCode -ne $expectedStatusCode)
             }
@@ -490,7 +506,7 @@ configuration ConfigureFEVM
                     $computerNumber = 0
                 }
                 $sleepTimeInSeconds = $computerNumber * 90  # Add a delay of 90 secs between each server
-                Write-Host "Computer $computerName is going to wait for $sleepTimeInSeconds seconds before joining the SharePoint farm, to avoid multiple servers joining it at the same time"
+                Write-Verbose -Verbose -Message "Computer $computerName is going to wait for $sleepTimeInSeconds seconds before joining the SharePoint farm, to avoid multiple servers joining it at the same time"
                 Start-Sleep -Seconds $sleepTimeInSeconds
                 New-Item -Path HKLM:\SOFTWARE\DscScriptExecution\Flag_WaitToAvoidServersJoiningFarmSimultaneously -Force
             }
@@ -580,6 +596,7 @@ configuration ConfigureFEVM
             CARootName             = "$DomainNetbiosName-$DCServerName-CA"
             CAServerFQDN           = "$DCServerName.$DomainFQDN"
             Subject                = "$SharePointSitesAuthority.$DomainFQDN"
+            FriendlyName           = "$SharePointSitesAuthority.$DomainFQDN"
             SubjectAltName         = "dns=*.$DomainFQDN&dns=*.$AppDomainIntranetFQDN"
             KeyLength              = '2048'
             Exportable             = $true
@@ -614,24 +631,24 @@ configuration ConfigureFEVM
                 $jobBlock = {
                     $uri = $args[0]
                     try {
-                        Write-Host "Connecting to $uri..."
+                        Write-Verbose -Verbose -Message "Connecting to $uri..."
                         # -UseDefaultCredentials: Does NTLM authN
                         # -UseBasicParsing: Avoid exception because IE was not first launched yet
                         # Expected traffic is HTTP 401/302/200, and $Response.StatusCode is 200
                         Invoke-WebRequest -Uri $uri -UseDefaultCredentials -TimeoutSec 40 -UseBasicParsing -ErrorAction SilentlyContinue
-                        Write-Host "Connected successfully to $uri"
+                        Write-Verbose -Verbose -Message "Connected successfully to $uri"
                     }
                     catch [System.Exception] {
-                        Write-Host "Unexpected error while connecting to '$uri': $_"
+                        Write-Verbose -Verbose -Message "Unexpected error while connecting to '$uri': $_"
                     }
                     catch {
                         # It may typically be a System.Management.Automation.ErrorRecord, which does not inherit System.Exception
-                        Write-Host "Unexpected error while connecting to '$uri'"
+                        Write-Verbose -Verbose -Message "Unexpected error while connecting to '$uri'"
                     }
                 }
                 [System.Management.Automation.Job[]] $jobs = @()
                 $spsite = "http://$($using:SharePointSitesAuthority)/"
-                Write-Host "Warming up '$spsite'..."
+                Write-Verbose -Verbose -Message "Warming up '$spsite'..."
                 $jobs += Start-Job -ScriptBlock $jobBlock -ArgumentList @($spsite)
 
                 # Must wait for the jobs to complete, otherwise they do not actually run
@@ -697,7 +714,7 @@ configuration ConfigureFEVM
         #             $fullPathToDscLogs = [System.IO.Path]::Combine($dscExtensionPath, $folderWithMaxVersionNumber)
                     
         #             # Start python script
-        #             Write-Host "Run python `"$localScriptPath`" `"$fullPathToDscLogs`"..."
+        #             Write-Verbose -Verbose -Message "Run python `"$localScriptPath`" `"$fullPathToDscLogs`"..."
         #             #Start-Process -FilePath "powershell" -ArgumentList "python `"$localScriptPath`" `"$fullPathToDscLogs`""
         #             #invoke-expression "cmd /c start powershell -Command { $localScriptPath $fullPathToDscLogs }"
         #             python "$localScriptPath" "$fullPathToDscLogs"

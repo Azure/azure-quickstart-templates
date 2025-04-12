@@ -1,0 +1,140 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.28.1.47646",
+      "templateHash": "16437894293713542842"
+    }
+  },
+  "parameters": {
+    "name": {
+      "type": "string",
+      "maxLength": 15
+    },
+    "location": {
+      "type": "string"
+    },
+    "vCPUCount": {
+      "type": "int",
+      "defaultValue": 2
+    },
+    "memoryMB": {
+      "type": "int",
+      "defaultValue": 8192
+    },
+    "adminUsername": {
+      "type": "string"
+    },
+    "imageName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of a custom already created on the Azure Stack HCI cluster. For example: ubuntu-01"
+      }
+    },
+    "hciLogicalNetworkName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of an existing Logical Network in your HCI cluster - for example: vnet-compute-vlan240-dhcp"
+      }
+    },
+    "customLocationName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the custom location to use for the deployment. This name is specified during the deployment of the Azure Stack HCI cluster and can be found on the Azure Stack HCI cluster resource Overview in the Azure portal."
+      }
+    },
+    "adminPassword": {
+      "type": "securestring"
+    },
+    "sshPublicKey": {
+      "type": "string",
+      "defaultValue": ""
+    }
+  },
+  "variables": {
+    "nicName": "[format('nic-{0}', parameters('name'))]",
+    "customLocationId": "[resourceId('Microsoft.ExtendedLocation/customLocations', parameters('customLocationName'))]",
+    "galleryImageId": "[resourceId('microsoft.azurestackhci/galleryimages', parameters('imageName'))]",
+    "logicalNetworkId": "[resourceId('microsoft.azurestackhci/logicalnetworks', parameters('hciLogicalNetworkName'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.HybridCompute/machines",
+      "apiVersion": "2024-05-20-preview",
+      "name": "[parameters('name')]",
+      "location": "[parameters('location')]",
+      "kind": "HCI",
+      "identity": {
+        "type": "SystemAssigned"
+      }
+    },
+    {
+      "type": "Microsoft.AzureStackHCI/networkInterfaces",
+      "apiVersion": "2024-01-01",
+      "name": "[variables('nicName')]",
+      "location": "[parameters('location')]",
+      "extendedLocation": {
+        "type": "CustomLocation",
+        "name": "[variables('customLocationId')]"
+      },
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "subnet": {
+                "id": "[variables('logicalNetworkId')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.AzureStackHCI/virtualMachineInstances",
+      "apiVersion": "2024-01-01",
+      "scope": "[format('Microsoft.HybridCompute/machines/{0}', parameters('name'))]",
+      "name": "default",
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "Custom",
+          "processors": "[parameters('vCPUCount')]",
+          "memoryMB": "[parameters('memoryMB')]"
+        },
+        "osProfile": {
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]",
+          "computerName": "[parameters('name')]",
+          "linuxConfiguration": {
+            "provisionVMAgent": true,
+            "provisionVMConfigAgent": true,
+            "ssh": "[if(empty(parameters('sshPublicKey')), null(), createObject('publicKeys', createArray(createObject('keyData', parameters('sshPublicKey')))))]",
+            "disablePasswordAuthentication": "[if(empty(parameters('sshPublicKey')), false(), true())]"
+          }
+        },
+        "storageProfile": {
+          "imageReference": {
+            "id": "[variables('galleryImageId')]"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.AzureStackHCI/networkInterfaces', variables('nicName'))]"
+            }
+          ]
+        }
+      },
+      "extendedLocation": {
+        "type": "CustomLocation",
+        "name": "[variables('customLocationId')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.HybridCompute/machines', parameters('name'))]",
+        "[resourceId('Microsoft.AzureStackHCI/networkInterfaces', variables('nicName'))]"
+      ]
+    }
+  ]
+}

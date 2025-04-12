@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: streamanalytics-create
 languages:
-- json
 - bicep
+- json
 ---
 # Create a Standard Stream Analytics Job
 

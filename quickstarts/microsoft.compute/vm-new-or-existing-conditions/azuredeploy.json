@@ -1,6 +1,13 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.25.53.49325",
+      "templateHash": "8819315637254780619"
+    }
+  },
   "parameters": {
     "location": {
       "type": "string",
@@ -55,7 +62,7 @@
     },
     "storageAccountName": {
       "type": "string",
-      "defaultValue": "[concat('storage', uniqueString(resourceGroup().id))]",
+      "defaultValue": "[format('storage{0}', uniqueString(resourceGroup().id))]",
       "metadata": {
         "description": "Name of the storage account"
       }
@@ -121,6 +128,11 @@
     "publicIpNewOrExisting": {
       "type": "string",
       "defaultValue": "new",
+      "allowedValues": [
+        "new",
+        "existing",
+        "none"
+      ],
       "metadata": {
         "description": "Determines whether or not a new public ip should be provisioned."
       }
@@ -134,7 +146,7 @@
     },
     "publicIpDns": {
       "type": "string",
-      "defaultValue": "[concat('linux-vm-', uniqueString(resourceGroup().id))]",
+      "defaultValue": "[format('linux-vm-{0}', uniqueString(resourceGroup().id))]",
       "metadata": {
         "description": "DNS of the public ip address for the VM"
       }
@@ -158,58 +170,39 @@
       }
     },
     "imageOffer": {
-      "defaultValue": "0001-com-ubuntu-server-lunar",
-      "allowedValues": [
-          "0001-com-ubuntu-minimal-bionic",
-          "0001-com-ubuntu-minimal-lunar-daily",
-          "0001-com-ubuntu-server-focal",
-          "0001-com-ubuntu-server-jammy",
-          "0001-com-ubuntu-server-lunar",
-          "0001-com-ubuntu-server-lunar-daily",
-          "0003-com-ubuntu-server-trusted-vm"
-      ],
       "type": "string",
+      "defaultValue": "0001-com-ubuntu-server-jammy",
       "metadata": {
-          "description": "Windows Server and SQL Offer"
+        "description": "The offer of the Ubuntu image from which to launch the Virtual Machine."
       }
     },
-    "sqlSku": {
-      "defaultValue": "23_04-gen2",
-      "allowedValues": [
-          "22_10-minimal-gen2",
-          "18_04-lts-gen2",
-          "minimal-20_04-daily-lts-gen2",
-          "minimal-23_04-daily-gen2",
-          "minimal-23_04-gen2",
-          "20_04-daily-lts-gen2",
-          "23_04-daily-gen2",
-          "23_04-gen2"
-      ],
+    "imageSku": {
       "type": "string",
+      "defaultValue": "22_04-lts-gen2",
       "metadata": {
-          "description": "SQL Server Sku"
+        "description": "The SKU of the Ubuntu image from which to launch the Virtual Machine."
       }
     }
   },
   "variables": {
-      "securityProfileJson": {
-        "uefiSettings": {
-          "secureBootEnabled": true,
-          "vTpmEnabled": true
-        },
-        "securityType": "[parameters('securityType')]"
+    "securityProfileJson": {
+      "uefiSettings": {
+        "secureBootEnabled": true,
+        "vTpmEnabled": true
       },
-      "extensionName": "GuestAttestation",
-      "extensionPublisher": "Microsoft.Azure.Security.LinuxAttestation",
-      "extensionVersion": "1.0",
-      "maaTenantName": "GuestAttestation",
-      "nicName": "[concat(parameters('vmName'), '-nic')]",
-      "linuxConfiguration": {
+      "securityType": "[parameters('securityType')]"
+    },
+    "extensionName": "GuestAttestation",
+    "extensionPublisher": "Microsoft.Azure.Security.LinuxAttestation",
+    "extensionVersion": "1.0",
+    "maaTenantName": "GuestAttestation",
+    "nicName": "[format('{0}-nic', parameters('vmName'))]",
+    "linuxConfiguration": {
       "disablePasswordAuthentication": true,
       "ssh": {
         "publicKeys": [
           {
-            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "path": "[format('/home/{0}/.ssh/authorized_keys', parameters('adminUsername'))]",
             "keyData": "[parameters('adminPasswordOrKey')]"
           }
         ]
@@ -224,7 +217,7 @@
     {
       "condition": "[equals(parameters('storageNewOrExisting'), 'new')]",
       "type": "Microsoft.Storage/storageAccounts",
-      "apiVersion": "2020-08-01-preview",
+      "apiVersion": "2023-01-01",
       "name": "[parameters('storageAccountName')]",
       "location": "[parameters('location')]",
       "kind": "Storage",
@@ -235,7 +228,7 @@
     {
       "condition": "[equals(parameters('publicIpNewOrExisting'), 'new')]",
       "type": "Microsoft.Network/publicIPAddresses",
-      "apiVersion": "2017-09-01",
+      "apiVersion": "2023-05-01",
       "name": "[parameters('publicIpName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -247,9 +240,8 @@
     },
     {
       "condition": "[equals(parameters('virtualNetworkNewOrExisting'), 'new')]",
-      "comments": "Default Network Security Group for template",
       "type": "Microsoft.Network/networkSecurityGroups",
-      "apiVersion": "2019-08-01",
+      "apiVersion": "2023-05-01",
       "name": "[variables('networkSecurityGroupName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -273,12 +265,9 @@
     {
       "condition": "[equals(parameters('virtualNetworkNewOrExisting'), 'new')]",
       "type": "Microsoft.Network/virtualNetworks",
-      "apiVersion": "2017-09-01",
+      "apiVersion": "2023-05-01",
       "name": "[parameters('virtualNetworkName')]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
-      ],
       "properties": {
         "addressSpace": {
           "addressPrefixes": "[parameters('addressPrefixes')]"
@@ -294,17 +283,16 @@
             }
           }
         ]
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+      ]
     },
     {
-      "apiVersion": "2017-09-01",
       "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2023-05-01",
       "name": "[variables('nicName')]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[parameters('publicIpName')]",
-        "[parameters('virtualNetworkName')]"
-      ],
       "properties": {
         "ipConfigurations": [
           {
@@ -314,21 +302,21 @@
               "subnet": {
                 "id": "[resourceId(parameters('virtualNetworkResourceGroupName'), 'Microsoft.Network/virtualNetworks/subnets/', parameters('virtualNetworkName'), parameters('subnetName'))]"
               },
-              "publicIPAddress": "[if(not(equals(parameters('publicIpNewOrExisting'), 'none')), variables('publicIpAddressId') , json('null'))]"
+              "publicIPAddress": "[if(not(equals(parameters('publicIpNewOrExisting'), 'none')), variables('publicIpAddressId'), null())]"
             }
           }
         ]
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIpName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
+      ]
     },
     {
-      "apiVersion": "2022-11-01",
       "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2023-07-01",
       "name": "[parameters('vmName')]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[parameters('storageAccountName')]",
-        "[variables('nicName')]"
-      ],
       "properties": {
         "hardwareProfile": {
           "vmSize": "[parameters('vmSize')]"
@@ -337,13 +325,13 @@
           "computerName": "[parameters('vmName')]",
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPasswordOrKey')]",
-          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), null(), variables('linuxConfiguration'))]"
         },
         "storageProfile": {
           "imageReference": {
             "publisher": "Canonical",
             "offer": "[parameters('imageOffer')]",
-            "sku": "[parameters('sqlSku')]",
+            "sku": "[parameters('imageSku')]",
             "version": "latest"
           },
           "osDisk": {
@@ -365,37 +353,41 @@
             "storageUri": "[reference(resourceId(parameters('storageAccountResourceGroupName'), 'Microsoft.Storage/storageAccounts/', parameters('storageAccountName')), '2020-08-01-preview').primaryEndpoints.blob]"
           }
         }
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+      ]
     },
     {
       "condition": "[and(equals(parameters('securityType'), 'TrustedLaunch'), and(equals(variables('securityProfileJson').uefiSettings.secureBootEnabled, true()), equals(variables('securityProfileJson').uefiSettings.vTpmEnabled, true())))]",
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "apiVersion": "2022-03-01",
-      "name": "[format('{0}/GuestAttestation', parameters('vmName'))]",
+      "apiVersion": "2023-07-01",
+      "name": "[format('{0}/{1}', parameters('vmName'), 'GuestAttestation')]",
       "location": "[parameters('location')]",
       "properties": {
-          "publisher": "[variables('extensionPublisher')]",
-          "type": "[variables('extensionName')]",
-          "typeHandlerVersion": "[variables('extensionVersion')]",
-          "autoUpgradeMinorVersion": true,
-          "enableAutomaticUpgrade": true,
-          "settings": {
-              "AttestationConfig": {
-                  "MaaSettings": {
-                      "maaEndpoint": "",
-                      "maaTenantName": "[variables('maaTenantName')]"
-                  },
-                  "AscSettings": {
-                    "ascReportingEndpoint": "",
-                    "ascReportingFrequency": ""
-                  },
-                  "useCustomToken": "false",
-                  "disableAlerts": "false"
-              }
+        "publisher": "[variables('extensionPublisher')]",
+        "type": "[variables('extensionName')]",
+        "typeHandlerVersion": "[variables('extensionVersion')]",
+        "autoUpgradeMinorVersion": true,
+        "enableAutomaticUpgrade": true,
+        "settings": {
+          "AttestationConfig": {
+            "MaaSettings": {
+              "maaEndpoint": "",
+              "maaTenantName": "[variables('maaTenantName')]"
+            },
+            "AscSettings": {
+              "ascReportingEndpoint": "",
+              "ascReportingFrequency": ""
+            },
+            "useCustomToken": "false",
+            "disableAlerts": "false"
           }
+        }
       },
       "dependsOn": [
-          "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmName'))]"
+        "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmName'))]"
       ]
     }
   ]

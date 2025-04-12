@@ -11,6 +11,7 @@ param basename string
   'eastus'
   'eastus2'
   'francecentral'
+  'germanywestcentral'
   'japaneast'
   'koreacentral'
   'northcentralus'
@@ -40,7 +41,7 @@ param deviceMapping object = {
       template: {
         typeName: 'HeartRate'
         typeMatchExpression: '$..[?(@Body.HeartRate)]'
-        patientIdExpression: '$.SystemProperties.iothub-connection-device-id'
+        patientIdExpression: '$.Body.PatientId'
         values: [
           {
             required: true
@@ -55,7 +56,7 @@ param deviceMapping object = {
       template: {
         typeName: 'HeartRateVariability'
         typeMatchExpression: '$..[?(@Body.HeartRateVariability)]'
-        patientIdExpression: '$.SystemProperties.iothub-connection-device-id'
+        patientIdExpression: '$.Body.PatientId'
         values: [
           {
             required: true
@@ -70,7 +71,7 @@ param deviceMapping object = {
       template: {
         typeName: 'RespiratoryRate'
         typeMatchExpression: '$..[?(@Body.RespiratoryRate)]'
-        patientIdExpression: '$.SystemProperties.iothub-connection-device-id'
+        patientIdExpression: '$.Body.PatientId'
         values: [
           {
             required: true
@@ -85,7 +86,7 @@ param deviceMapping object = {
       template: {
         typeName: 'BodyTemperature'
         typeMatchExpression: '$..[?(@Body.BodyTemperature)]'
-        patientIdExpression: '$.SystemProperties.iothub-connection-device-id'
+        patientIdExpression: '$.Body.PatientId'
         values: [
           {
             required: true
@@ -100,7 +101,7 @@ param deviceMapping object = {
       template: {
         typeName: 'BloodPressure'
         typeMatchExpression: '$..[?(@Body.BloodPressure.Systolic && @Body.BloodPressure.Diastolic)]'
-        patientIdExpression: '$.SystemProperties.iothub-connection-device-id'
+        patientIdExpression: '$.Body.PatientId'
         values: [
           {
             required: true

@@ -32,7 +32,7 @@ This template will log API traffic from Azure API Management using [Moesif API A
 
 ## How it works
 
-This solution is deployed using an [Azure Resource Manager Template](https://azure.microsoft.com/resources/templates/201-api-management-logs-to-moesif-using-eventhub-webapp/). An XML Policy configures an APIM logger to send API logs to an Azure EventHub. An Azure WebJob reads from the EventHub and sends to Moesif for data processing.
+This solution is deployed using an [Azure Resource Manager Template](https://learn.microsoft.com/en-us/samples/azure/azure-quickstart-templates/api-management-logs-to-moesif-using-eventhub-webapp/). An XML Policy configures an APIM logger to send API logs to an Azure EventHub. An Azure WebJob reads from the EventHub and sends to Moesif for data processing.
 [More info on this integration](https://www.moesif.com/implementation/log-http-calls-from-azure-api-management?platform=azure-management).
 
 ![Architecture Diagram Logging API Calls from Azure API Management](images/azure-api-management-logging-architecture-diagram.png)
@@ -176,7 +176,7 @@ That's it. Once the XML is added to your APIs, the logs should start showing up 
 The below fields in the XML policy can be modified by you to meet your requirements. XML Policies support a number of [context variables](https://docs.microsoft.com/azure/api-management/api-management-policy-expressions#ContextVariables) which you can also leverage.
 
 ### User Id
-_String_, The field `user_id` identifies who the user is making the API and enables Moesif to associate API calls to user profiles. The default XML policy extracts the user id from the `context.User.Id` or the Subject of the JWT Token. If you are a B2B company, this can be used simultaneously with company id to track API Usage both at the individual user-level and also account-level. See [identifying customers in Moesif](https://www.moesif.com/docs/getting-started/identify-customers/) for more info.
+_String_, The field `user_id` identifies who the user is making the API and enables Moesif to associate API calls to user profiles. The default XML policy extracts the user id from the `context.User.Id` or the Subject of the JWT. If you are a B2B company, this can be used simultaneously with company id to track API Usage both at the individual user-level and also account-level. See [identifying customers in Moesif](https://www.moesif.com/docs/getting-started/identify-customers/) for more info.
 
 ### User Metadata
 _String_, The field `contextRequestUser` allows you to store additional user metadata as part of the [user's profile in Moesif](https://www.moesif.com/docs/getting-started/users/). By default, the XML policy also saves Email, FirstName, and LastName from Azure's `context.User` object. Any fields can be stored. Keep in mind `contextRequestUser` is expecting a base64 encoded string.
@@ -204,7 +204,7 @@ Once created, the script will clone the [ApimEventProcessor repo 'v1' branch](ht
 
 ### APIM Logger
 
-If the name of an existing Azure API Management is not specified during deployment, you will need to add the `log-to-eventhub` logger to your Azure API Management service manually. To do so, utilize the [`nested/microsoft.apimanagement/service/loggers.json` ARM template](nested/microsoft.apimanagement/service/loggers.json) or view [Microsoft docs](https://docs.microsoft.com/azure/api-management/api-management-howto-log-event-hubs)
+If the name of an existing Azure API Management is not specified during deployment, you will need to add the `log-to-eventhub` logger to your Azure API Management service manually. To do so, utilize the [`nested/microsoft.apimanagement/service/loggers.bicep` ARM template](nested/microsoft.apimanagement/service/loggers.bicep) or view [Microsoft docs](https://docs.microsoft.com/azure/api-management/api-management-howto-log-event-hubs)
 
 More info on configuring Moesif is available on [Microsoft's documentation](https://docs.microsoft.com/azure/api-management/api-management-log-to-eventhub-sample).
 

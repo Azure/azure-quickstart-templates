@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.9.1.41621",
-      "templateHash": "7270757728234245791"
+      "version": "0.25.53.49325",
+      "templateHash": "9380698035208685611"
     }
   },
   "parameters": {
@@ -47,8 +47,8 @@
     "numberOfFirewallPublicIPAddresses": {
       "type": "int",
       "defaultValue": 1,
-      "maxValue": 100,
       "minValue": 1,
+      "maxValue": 100,
       "metadata": {
         "description": "Number of public IP addresses for the Azure Firewall"
       }
@@ -65,7 +65,7 @@
       }
     },
     "adminPasswordOrKey": {
-      "type": "secureString",
+      "type": "securestring",
       "metadata": {
         "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
       }
@@ -124,7 +124,7 @@
   "resources": [
     {
       "type": "Microsoft.Network/ipGroups",
-      "apiVersion": "2021-08-01",
+      "apiVersion": "2023-09-01",
       "name": "[parameters('ipgroups_name1')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -137,7 +137,7 @@
     },
     {
       "type": "Microsoft.Network/ipGroups",
-      "apiVersion": "2021-08-01",
+      "apiVersion": "2023-09-01",
       "name": "[parameters('ipgroups_name2')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -149,7 +149,7 @@
     },
     {
       "type": "Microsoft.Storage/storageAccounts",
-      "apiVersion": "2021-09-01",
+      "apiVersion": "2023-01-01",
       "name": "[variables('storageAccountName')]",
       "location": "[parameters('location')]",
       "sku": {
@@ -160,7 +160,7 @@
     },
     {
       "type": "Microsoft.Network/routeTables",
-      "apiVersion": "2021-08-01",
+      "apiVersion": "2023-09-01",
       "name": "[variables('azfwRouteTableName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -179,14 +179,14 @@
     },
     {
       "type": "Microsoft.Network/networkSecurityGroups",
-      "apiVersion": "2021-08-01",
+      "apiVersion": "2023-09-01",
       "name": "[variables('networkSecurityGroupName')]",
       "location": "[parameters('location')]",
       "properties": {}
     },
     {
       "type": "Microsoft.Network/virtualNetworks",
-      "apiVersion": "2021-08-01",
+      "apiVersion": "2023-09-01",
       "name": "[parameters('virtualNetworkName')]",
       "location": "[parameters('location')]",
       "tags": {
@@ -236,7 +236,7 @@
         "count": "[length(range(0, parameters('numberOfFirewallPublicIPAddresses')))]"
       },
       "type": "Microsoft.Network/publicIPAddresses",
-      "apiVersion": "2021-08-01",
+      "apiVersion": "2023-09-01",
       "name": "[format('{0}{1}', variables('publicIPNamePrefix'), add(range(0, parameters('numberOfFirewallPublicIPAddresses'))[copyIndex()], 1))]",
       "location": "[parameters('location')]",
       "sku": {
@@ -249,7 +249,7 @@
     },
     {
       "type": "Microsoft.Network/publicIPAddresses",
-      "apiVersion": "2021-08-01",
+      "apiVersion": "2023-09-01",
       "name": "[variables('jumpBoxPublicIPAddressName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -258,7 +258,7 @@
     },
     {
       "type": "Microsoft.Network/networkSecurityGroups",
-      "apiVersion": "2021-08-01",
+      "apiVersion": "2023-09-01",
       "name": "[variables('jumpBoxNsgName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -281,7 +281,7 @@
     },
     {
       "type": "Microsoft.Network/networkInterfaces",
-      "apiVersion": "2021-08-01",
+      "apiVersion": "2023-09-01",
       "name": "[variables('jumpBoxNicName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -311,7 +311,7 @@
     },
     {
       "type": "Microsoft.Network/networkInterfaces",
-      "apiVersion": "2021-08-01",
+      "apiVersion": "2023-09-01",
       "name": "[variables('serverNicName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -333,7 +333,7 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines",
-      "apiVersion": "2022-03-01",
+      "apiVersion": "2023-09-01",
       "name": "JumpBox",
       "location": "[parameters('location')]",
       "properties": {
@@ -367,7 +367,7 @@
         "diagnosticsProfile": {
           "bootDiagnostics": {
             "enabled": true,
-            "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))).primaryEndpoints.blob]"
+            "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2023-01-01').primaryEndpoints.blob]"
           }
         }
       },
@@ -378,7 +378,7 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines",
-      "apiVersion": "2022-03-01",
+      "apiVersion": "2023-09-01",
       "name": "Server",
       "location": "[parameters('location')]",
       "properties": {
@@ -400,7 +400,7 @@
           "computerName": "Server",
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPasswordOrKey')]",
-          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), null(), variables('linuxConfiguration'))]"
         },
         "networkProfile": {
           "networkInterfaces": [
@@ -412,7 +412,7 @@
         "diagnosticsProfile": {
           "bootDiagnostics": {
             "enabled": true,
-            "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))).primaryEndpoints.blob]"
+            "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2023-01-01').primaryEndpoints.blob]"
           }
         }
       },
@@ -423,7 +423,7 @@
     },
     {
       "type": "Microsoft.Network/azureFirewalls",
-      "apiVersion": "2021-08-01",
+      "apiVersion": "2023-09-01",
       "name": "[variables('firewallName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -515,5 +515,23 @@
         "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
       ]
     }
-  ]
+  ],
+  "outputs": {
+    "location": {
+      "type": "string",
+      "value": "[parameters('location')]"
+    },
+    "name": {
+      "type": "string",
+      "value": "[variables('firewallName')]"
+    },
+    "resourceGroupName": {
+      "type": "string",
+      "value": "[resourceGroup().name]"
+    },
+    "resourceId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Network/azureFirewalls', variables('firewallName'))]"
+    }
+  }
 }

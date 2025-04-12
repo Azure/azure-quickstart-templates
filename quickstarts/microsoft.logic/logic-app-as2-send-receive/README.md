@@ -6,6 +6,7 @@ products:
 - azure-resource-manager
 urlFragment: logic-app-as2-send-receive
 languages:
+- bicep
 - json
 ---
 # Azure Logic Apps - AS2 Send Receive
@@ -18,6 +19,8 @@ languages:
 
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.logic/logic-app-as2-send-receive/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.logic/logic-app-as2-send-receive/CredScanResult.svg)
+
+![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.logic/logic-app-as2-send-receive/BicepVersion.svg)
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.logic%2Flogic-app-as2-send-receive%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.logic%2Flogic-app-as2-send-receive%2Fazuredeploy.json)
@@ -45,17 +48,17 @@ To test your logic apps after deployment completes, you can perform these steps:
 
 1. In the Azure portal, open the resource group page that shows where you deployed all the resources.
 
-   ![Screenshot that shows Azure resources](images/azure-resources.png"Azure resources")
+   ![Screenshot that shows Azure resources](images/azure-resources.png)
 
    The logic apps, FabrikamSales-AS2Send and Contoso-Receive, show the sync send receive scenario.
 
 1. Open the logic app for FabrikamSales-AS2Send. On the logic app's **Overview** page, and select **Run Trigger**.
 
-   ![Screenshot that shows FabrikamSales-AS2Send logic app](images/fabrikamsales-as2send.png"Run FabrikamSales-AS2Send Logic App")
+   ![Screenshot that shows FabrikamSales-AS2Send logic app](images/fabrikamsales-as2send.png)
 
 1. On the **Overview** page, you can also review the run history, inputs, and outputs for each action in these logic apps:
 
-   ![Screenshot that shows Contoso-AS2Receive run history](images/contoso-as2receive-runhistory.png"Contoso-AS2Receive run history")
+   ![Screenshot that shows Contoso-AS2Receive run history](images/contoso-as2receive-runhistory.png)
 
    The logic apps, FabrikamFinance-AS2Send and Contoso-Receive, show the async send receive scenario.
 
@@ -63,7 +66,7 @@ To test your logic apps after deployment completes, you can perform these steps:
 
    The async MDN is received by the logic app, FabrikamFinance-AS2ReceiveMDN.
 
-   ![Screenshot that shows FabrikamFinance-AS2ReceiveMDN run history](images/fabrikamfinance-as2receivemdn-runhistory.png"FabrikamFinance-AS2ReceiveMDN run history")
+   ![Screenshot that shows FabrikamFinance-AS2ReceiveMDN run history](images/fabrikamfinance-as2receivemdn-runhistory.png)
 
 1. Again, you can review the run history, inputs, and outputs for each action in these logic apps.
 
