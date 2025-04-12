@@ -23,20 +23,20 @@ configuration ConfigureSPVM
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSuperReaderCreds
     )
 
-    Import-DscResource -ModuleName ComputerManagementDsc -ModuleVersion 9.0.0 # Custom
+    Import-DscResource -ModuleName ComputerManagementDsc -ModuleVersion 10.0.0 # Custom
     Import-DscResource -ModuleName NetworkingDsc -ModuleVersion 9.0.0
-    Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion 6.3.0
+    Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion 6.6.0 # Custom workaround on ADObjectPermissionEntry
     Import-DscResource -ModuleName xCredSSP -ModuleVersion 1.4.0
-    Import-DscResource -ModuleName WebAdministrationDsc -ModuleVersion 4.1.0
-    Import-DscResource -ModuleName SharePointDsc -ModuleVersion 5.4.0
+    Import-DscResource -ModuleName WebAdministrationDsc -ModuleVersion 4.2.1
+    Import-DscResource -ModuleName SharePointDsc -ModuleVersion 5.6.1 # custom
     Import-DscResource -ModuleName DnsServerDsc -ModuleVersion 3.0.0
-    Import-DscResource -ModuleName CertificateDsc -ModuleVersion 5.1.0
-    Import-DscResource -ModuleName SqlServerDsc -ModuleVersion 16.5.0
+    Import-DscResource -ModuleName CertificateDsc -ModuleVersion 6.0.0
+    Import-DscResource -ModuleName SqlServerDsc -ModuleVersion 17.0.0
     Import-DscResource -ModuleName cChoco -ModuleVersion 2.6.0.0    # With custom changes to implement retry on package downloads
-    Import-DscResource -ModuleName xPSDesiredStateConfiguration -ModuleVersion 9.1.0
+    Import-DscResource -ModuleName xPSDesiredStateConfiguration -ModuleVersion 9.2.1
 
     # Init
-    [String] $InterfaceAlias = (Get-NetAdapter | Where-Object Name -Like "Ethernet*" | Select-Object -First 1).Name
+    [String] $InterfaceAlias = (Get-NetAdapter| Where-Object InterfaceDescription -Like "Microsoft Hyper-V Network Adapter*" | Select-Object -First 1).Name
     [String] $ComputerName = Get-Content env:computername
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
     [String] $DomainLDAPPath = "DC=$($DomainFQDN.Split(".")[0]),DC=$($DomainFQDN.Split(".")[1])"
@@ -111,6 +111,7 @@ configuration ConfigureSPVM
         WindowsFeature AddADLDS               { Name = "RSAT-ADLDS";         Ensure = "Present"; }
         WindowsFeature AddADCSManagementTools { Name = "RSAT-ADCS-Mgmt";     Ensure = "Present"; }
         DnsServerAddress SetDNS { Address = $DNSServerIP; InterfaceAlias = $InterfaceAlias; AddressFamily  = 'IPv4' }
+        
 
         # xCredSSP is required forSharePointDsc resources SPUserProfileServiceApp and SPDistributedCacheService
         xCredSSP CredSSPServer { Ensure = "Present"; Role = "Server"; DependsOn = "[DnsServerAddress]SetDNS" }
@@ -150,21 +151,10 @@ configuration ConfigureSPVM
 
         SqlAlias AddSqlAlias { Ensure = "Present"; Name = $SQLAlias; ServerName = $SQLServerName; Protocol = "TCP"; TcpPort= 1433 }
 
-        Script EnableFileSharing
-        {
-            TestScript = {
-                # Test if firewall rules for file sharing already exist
-                $rulesSet = Get-NetFirewallRule -DisplayGroup "File And Printer Sharing" -Enabled True -ErrorAction SilentlyContinue | Where-Object{$_.Profile -eq "Domain"}
-                if ($null -eq $rulesSet) {
-                    return $false   # Run SetScript
-                } else {
-                    return $true    # Rules already set
-                }
-            }
-            SetScript = {
-                Set-NetFirewallRule -DisplayGroup "File And Printer Sharing" -Enabled True -Profile Domain -Confirm:$false
-            }
-            GetScript = { }
+        Script EnableFileSharing {
+            GetScript  = { }
+            TestScript = { return $null -ne (Get-NetFirewallRule -DisplayGroup "File And Printer Sharing" -Enabled True -ErrorAction SilentlyContinue | Where-Object { $_.Profile -eq "Domain" }) }
+            SetScript  = { Set-NetFirewallRule -DisplayGroup "File And Printer Sharing" -Enabled True -Profile Domain }
         }
 
         # Create the rules in the firewall required for the distributed cache - https://learn.microsoft.com/en-us/sharepoint/administration/plan-for-feeds-and-the-distributed-cache-service#firewall
@@ -291,9 +281,9 @@ configuration ConfigureSPVM
                 # if (!(Get-WmiObject Win32_Share -Filter "name='$sharename'")) {
                 $shares = [WMICLASS]"WIN32_Share"
                 if ($shares.Create($foldername, $sharename, 0).ReturnValue -ne 0) {
-                    Write-Host "Failed to create file share '$sharename' for folder '$foldername'"
+                    Write-Verbose -Verbose -Message "Failed to create file share '$sharename' for folder '$foldername'"
                 } else {
-                    Write-Host "Created file share '$sharename' for folder '$foldername'"
+                    Write-Verbose -Verbose -Message "Created file share '$sharename' for folder '$foldername'"
                 }
                 # }
             }
@@ -329,7 +319,7 @@ configuration ConfigureSPVM
                     }
                     catch [System.Net.Sockets.SocketException] {
                         # GetHostEntry() throws SocketException "No such host is known" if DNS entry is not found
-                        Write-Host "DNS record '$dnsRecordFQDN' not found yet: $_"
+                        Write-Verbose -Verbose -Message "DNS record '$dnsRecordFQDN' not found yet: $_"
                         Start-Sleep -Seconds $sleepTime
                     }
                 } while ($false -eq $dnsRecordFound)
@@ -390,7 +380,7 @@ configuration ConfigureSPVM
                 # Create SPNs WSMAN/SP and WSMAN/sp.contoso.local
                 $domainFQDN = $using:DomainFQDN
                 $computerName = $using:ComputerName
-                Write-Host "Adding SPNs 'WSMAN/$computerName' and 'WSMAN/$computerName.$domainFQDN' to computer '$computerName'"
+                Write-Verbose -Verbose -Message "Adding SPNs 'WSMAN/$computerName' and 'WSMAN/$computerName.$domainFQDN' to computer '$computerName'"
                 setspn.exe -S "WSMAN/$computerName" "$computerName"
                 setspn.exe -S "WSMAN/$computerName.$domainFQDN" "$computerName"
             }
@@ -624,12 +614,12 @@ configuration ConfigureSPVM
                     $sqlConnection = New-Object System.Data.SqlClient.SqlConnection "Data Source=$server;Initial Catalog=$db;Integrated Security=True;Enlist=False;Connect Timeout=3"
                     try {
                         $sqlConnection.Open()
-                        Write-Host "Connection to SQL Server $server succeeded"
+                        Write-Verbose -Verbose -Message "Connection to SQL Server $server succeeded"
                         $sqlConnection.Close()
                         $retry = $false
                     }
                     catch {
-                        Write-Host "SQL connection to $server failed, retry in $retrySleep secs..."
+                        Write-Verbose -Verbose -Message "SQL connection to $server failed, retry in $retrySleep secs..."
                         Start-Sleep -s $retrySleep
                     }
                 }
@@ -972,6 +962,7 @@ configuration ConfigureSPVM
             CARootName             = "$DomainNetbiosName-$DCServerName-CA"
             CAServerFQDN           = "$DCServerName.$DomainFQDN"
             Subject                = "$SharePointSitesAuthority.$DomainFQDN"
+            FriendlyName           = "$SharePointSitesAuthority.$DomainFQDN"
             SubjectAltName         = "dns=*.$DomainFQDN&dns=*.$AppDomainIntranetFQDN"
             KeyLength              = '2048'
             Exportable             = $true
@@ -1349,11 +1340,11 @@ configuration ConfigureSPVM
                 $certSubject = "HighTrustAddins"
                 $certName = "HighTrustAddins.cer"
                 $certFullPath = [System.IO.Path]::Combine($destinationPath, $certName)
-                Write-Host "Exporting public key of certificate with subject $certSubject to $certFullPath..."
+                Write-Verbose -Verbose -Message "Exporting public key of certificate with subject $certSubject to $certFullPath..."
                 New-Item $destinationPath -Type directory -ErrorAction SilentlyContinue
                 $signingCert = Get-ChildItem -Path "cert:\LocalMachine\My\" -DnsName "$certSubject"
                 $signingCert | Export-Certificate -FilePath $certFullPath
-                Write-Host "Public key of certificate with subject $certSubject successfully exported to $certFullPath."
+                Write-Verbose -Verbose -Message "Public key of certificate with subject $certSubject successfully exported to $certFullPath."
             }
             GetScript =  
             {
@@ -1387,27 +1378,27 @@ configuration ConfigureSPVM
                 $jobBlock = {
                     $uri = $args[0]
                     try {
-                        Write-Host "Connecting to $uri..."
+                        Write-Verbose -Verbose -Message "Connecting to $uri..."
                         # -UseDefaultCredentials: Does NTLM authN
                         # -UseBasicParsing: Avoid exception because IE was not first launched yet
                         # Expected traffic is HTTP 401/302/200, and $Response.StatusCode is 200
                         Invoke-WebRequest -Uri $uri -UseDefaultCredentials -TimeoutSec 40 -UseBasicParsing -ErrorAction SilentlyContinue
-                        Write-Host "Connected successfully to $uri"
+                        Write-Verbose -Verbose -Message "Connected successfully to $uri"
                     }
                     catch [System.Exception] {
-                        Write-Host "Unexpected error while connecting to '$uri': $_"
+                        Write-Verbose -Verbose -Message "Unexpected error while connecting to '$uri': $_"
                     }
                     catch {
                         # It may typically be a System.Management.Automation.ErrorRecord, which does not inherit System.Exception
-                        Write-Host "Unexpected error while connecting to '$uri'"
+                        Write-Verbose -Verbose -Message "Unexpected error while connecting to '$uri'"
                     }
                 }
                 [System.Management.Automation.Job[]] $jobs = @()
                 $spsite = "http://$($using:ComputerName):$($using:SharePointCentralAdminPort)/"
-                Write-Host "Warming up '$spsite'..."
+                Write-Verbose -Verbose -Message "Warming up '$spsite'..."
                 $jobs += Start-Job -ScriptBlock $jobBlock -ArgumentList @($spsite)
                 $spsite = "http://$($using:SharePointSitesAuthority)/"
-                Write-Host "Warming up '$spsite'..."
+                Write-Verbose -Verbose -Message "Warming up '$spsite'..."
                 $jobs += Start-Job -ScriptBlock $jobBlock -ArgumentList @($spsite)
 
                 # Must wait for the jobs to complete, otherwise they do not actually run
@@ -1435,10 +1426,10 @@ configuration ConfigureSPVM
                         $site = Get-SPSite -Identity $uri -ErrorAction SilentlyContinue
                         $ctx = Get-SPServiceContext $site -ErrorAction SilentlyContinue
                         $upm = New-Object Microsoft.Office.Server.UserProfiles.UserProfileManager($ctx)
-                        Write-Host "Got UserProfileManager"
+                        Write-Verbose -Verbose -Message "Got UserProfileManager"
                     }
                     catch {
-                        Write-Host "Unable to get UserProfileManager: $_"
+                        Write-Verbose -Verbose -Message "Unable to get UserProfileManager: $_"
                         # If Write-Error is called, then the Script resource is going to failed state
                         # Write-Error -Exception $_ -Message "Unable to get UserProfileManager for '$accountName'"
                         return
@@ -1458,30 +1449,30 @@ configuration ConfigureSPVM
                         $profile = $null
                         try {
                             $profile = $upm.GetUserProfile($accountName)
-                            Write-Host "Got existing user profile for '$accountName'"
+                            Write-Verbose -Verbose -Message "Got existing user profile for '$accountName'"
                         }
                         catch {
                             $profile = $upm.CreateUserProfile($accountName);
-                            Write-Host "Successfully created user profile for '$accountName'"
+                            Write-Verbose -Verbose -Message "Successfully created user profile for '$accountName'"
                         }
                     
                         if ($null -eq $profile) {
-                            Write-Host "Unable to get/create the profile for '$accountName', give up"
+                            Write-Verbose -Verbose -Message "Unable to get/create the profile for '$accountName', give up"
                             continue
                         }
                         
                         if ($null -eq $profile.PersonalSite) {
-                            Write-Host "Adding creation of personal site for '$accountName' to the queue..."
+                            Write-Verbose -Verbose -Message "Adding creation of personal site for '$accountName' to the queue..."
                             try {
                                 $profile.CreatePersonalSiteEnque($false)
-                                Write-Host "Successfully enqueued the creation of personal site for '$accountName'"
+                                Write-Verbose -Verbose -Message "Successfully enqueued the creation of personal site for '$accountName'"
                             }
                             catch {
-                                Write-Host "Could not enqueue creation of personal site for '$accountName': $_"
+                                Write-Verbose -Verbose -Message "Could not enqueue creation of personal site for '$accountName': $_"
                             }
                         } else 
                         {
-                            Write-Host "Personal site for '$accountName' already exists, nothing to do"
+                            Write-Verbose -Verbose -Message "Personal site for '$accountName' already exists, nothing to do"
                         }
                     }
                 }
@@ -1551,7 +1542,7 @@ configuration ConfigureSPVM
         #             $fullPathToDscLogs = [System.IO.Path]::Combine($dscExtensionPath, $folderWithMaxVersionNumber)
                     
         #             # Start python script
-        #             Write-Host "Run python `"$localScriptPath`" `"$fullPathToDscLogs`"..."
+        #             Write-Verbose -Verbose -Message "Run python `"$localScriptPath`" `"$fullPathToDscLogs`"..."
         #             #Start-Process -FilePath "powershell" -ArgumentList "python `"$localScriptPath`" `"$fullPathToDscLogs`""
         #             #invoke-expression "cmd /c start powershell -Command { $localScriptPath $fullPathToDscLogs }"
         #             python "$localScriptPath" "$fullPathToDscLogs"

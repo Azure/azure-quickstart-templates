@@ -46,7 +46,7 @@ If you're new to template deployment, see:
 Click the "Deploy to Azure" button to deploy. There will be the deployment page as below:
 ![Deployment Sample](assets/deployment-page.png)
 
-or Run the Powershell script if you do not know how to get user principal id. 
+or Run the PowerShell script if you do not know how to get user principal id. 
 
 ### Microsoft.DevCenter
 

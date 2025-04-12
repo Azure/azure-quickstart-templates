@@ -1,5 +1,5 @@
-@description('Display name of Text Translation API account')
-param accountName string = 'TextTranslation'
+@description('Display name of the Azure AI Language resource')
+param aiServicesName string = 'textTranslation-${uniqueString(resourceGroup().id)}'
 
 @description('SKU for Text Translation API')
 @allowed([
@@ -9,18 +9,26 @@ param accountName string = 'TextTranslation'
   'S3'
   'S4'
 ])
-param SKU string = 'S1'
+param sku string = 'S1'
 
-@description('Location for the account')
+@description('Location for the resource')
 param translateLocation string
 
-resource account 'Microsoft.CognitiveServices/accounts@2022-03-01' = {
-  name: accountName
+resource aiServices 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
+  name: aiServicesName
   location: translateLocation
+  identity: {
+    type: 'SystemAssigned'
+  }
   kind: 'TextTranslation'
   sku: {
-    name: SKU
+    name: sku
   }
   properties: {
+    publicNetworkAccess: 'Disabled'
+    networkAcls: {
+      defaultAction: 'Deny'
+    }
+    disableLocalAuth: true
   }
 }

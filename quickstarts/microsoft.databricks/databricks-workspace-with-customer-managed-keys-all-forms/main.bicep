@@ -58,8 +58,9 @@ param diskCmkKeyVaultUrl string = ''
 
 param diskCmkEnableAutoRotation bool = false
 
-var managedResourceGroupId = '${subscription().id}/resourceGroups/${managedResourceGroupName}'
 var managedResourceGroupName = 'databricks-rg-${workspaceName}-${uniqueString(workspaceName, resourceGroup().id)}'
+var trimmedMRGName = substring(managedResourceGroupName, 0, min(length(managedResourceGroupName), 90))
+var managedResourceGroupId = '${subscription().id}/resourceGroups/${trimmedMRGName}'
 var msCmkKeyVaultUrl = uri('https://${msCmkKeyVaultName}${environment().suffixes.keyvaultDns}', '/')
 var dbfsCmkKeyVaultUrl = uri('https://${dbfsCmkKeyVaultName}${environment().suffixes.keyvaultDns}', '/')
 var trimmedDiskCmkKeyVaultUrl = replace(diskCmkKeyVaultUrl, '.net/', '.net/')

@@ -5,8 +5,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.26.170.59819",
-      "templateHash": "14831209556751482127"
+      "version": "0.30.23.60470",
+      "templateHash": "15545223331420313847"
     }
   },
   "definitions": {
@@ -51,7 +51,14 @@
     "imageName": {
       "type": "string",
       "metadata": {
-        "description": "The name of a Marketplace Gallery Image already downloaded to the Azure Stack HCI cluster. For example: winServer2022-01"
+        "description": "The name of the image to use for the VM deployment. For example: winServer2022-01"
+      }
+    },
+    "isMarketplaceImage": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Set to true if the referenced image is from Azure Marketplace."
       }
     },
     "hciLogicalNetworkName": {
@@ -108,7 +115,7 @@
   "variables": {
     "nicName": "[format('nic-{0}', parameters('name'))]",
     "customLocationId": "[resourceId('Microsoft.ExtendedLocation/customLocations', parameters('customLocationName'))]",
-    "marketplaceGalleryImageId": "[resourceId('microsoft.azurestackhci/marketplaceGalleryImages', parameters('imageName'))]",
+    "imageId": "[if(parameters('isMarketplaceImage'), resourceId('microsoft.azurestackhci/marketplaceGalleryImages', parameters('imageName')), resourceId('microsoft.azurestackhci/galleryImages', parameters('imageName')))]",
     "logicalNetworkId": "[resourceId('microsoft.azurestackhci/logicalnetworks', parameters('hciLogicalNetworkName'))]"
   },
   "resources": {
@@ -124,7 +131,7 @@
     },
     "nic": {
       "type": "Microsoft.AzureStackHCI/networkInterfaces",
-      "apiVersion": "2023-09-01-preview",
+      "apiVersion": "2024-01-01",
       "name": "[variables('nicName')]",
       "location": "[parameters('location')]",
       "extendedLocation": {
@@ -150,7 +157,7 @@
         "count": "[length(parameters('dataDiskParams'))]"
       },
       "type": "Microsoft.AzureStackHCI/virtualHardDisks",
-      "apiVersion": "2023-09-01-preview",
+      "apiVersion": "2024-01-01",
       "name": "[format('{0}dataDisk{1}', parameters('name'), padLeft(add(copyIndex(), 1), 2, '0'))]",
       "location": "[parameters('location')]",
       "extendedLocation": {
@@ -164,7 +171,7 @@
     },
     "virtualMachine": {
       "type": "Microsoft.AzureStackHCI/virtualMachineInstances",
-      "apiVersion": "2023-09-01-preview",
+      "apiVersion": "2024-01-01",
       "scope": "[format('Microsoft.HybridCompute/machines/{0}', parameters('name'))]",
       "name": "default",
       "properties": {
@@ -193,7 +200,7 @@
             }
           ],
           "imageReference": {
-            "id": "[variables('marketplaceGalleryImageId')]"
+            "id": "[variables('imageId')]"
           }
         },
         "networkProfile": {
