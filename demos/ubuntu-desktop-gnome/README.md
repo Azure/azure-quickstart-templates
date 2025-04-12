@@ -1,4 +1,15 @@
-# Ubuntu Desktop VM in ARM
+---
+description: This template creates an ubuntu desktop machine.  This works great for use as a jumpbox behind a NAT.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: ubuntu-desktop-gnome
+languages:
+- bicep
+- json
+---
+# Create an Ubuntu GNOME desktop
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/ubuntu-desktop-gnome/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/ubuntu-desktop-gnome/PublicDeployment.svg)
@@ -11,7 +22,9 @@
 
 This is an Azure template to create an Ubuntu Desktop VM.  This is great as a jumpbox behind a NAT.
 
-[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fubuntu-desktop-gnome%2Fazuredeploy.json)  
+![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/demos/ubuntu-desktop-gnome/BicepVersion.svg)
+
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fubuntu-desktop-gnome%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fubuntu-desktop-gnome%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fubuntu-desktop-gnome%2Fazuredeploy.json)
 
@@ -60,5 +73,4 @@ Go to Finder, and press `Cmd + K`. Then connect to the VNC tunnel, using `passwo
 
 Enter the password and you'll be all setup.
 
-
-
+`Tags: Microsoft.Storage/storageAccounts, Microsoft.Compute/availabilitySets, Microsoft.Network/publicIPAddresses, Microsoft.Network/virtualNetworks, Microsoft.Network/networkSecurityGroups, Microsoft.Network/networkInterfaces, Microsoft.Network/loadBalancers, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, CustomScript`

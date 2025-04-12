@@ -1,0 +1,1070 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": { 
+      "dashboardName": {
+          "type": "string",
+          "defaultValue":  "Azure ML WS Monitoring",
+          "metadata": {
+              "description": "Display Name of the Dashboard"
+          }
+      },
+      "logAnalyticsWorkspaceName": {
+          "type": "string",
+          "metadata": {
+              "description": "Name of the existing Log Analytics Workspace"
+          }
+      },
+      "logAnalyticsWorkspaceResourceGroup": {
+        "type": "string",
+        "metadata": {
+            "description": "Name of the existing Log Analytics Workspace Resource Group"
+        }
+      },
+      "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "The location of the Azure Machine Learning Workspace."
+    }
+  }
+  },
+  "variables": {
+    "dashboardID": "[concat(uniquestring(resourceGroup().id), uniquestring(parameters('dashboardName')))]"
+  },
+  "resources": [
+      {
+          "name":  "[variables('dashboardID')]",
+          "type": "Microsoft.Portal/dashboards",
+          "location": "[parameters('location')]",
+          "apiVersion": "2020-09-01-preview",
+          "tags": {
+              "hidden-title": "[parameters('dashboardName')]"
+          },
+"properties": {
+  "lenses": [
+    {
+      "order": 0,
+      "parts": [
+         {
+          "position": {
+            "x": 0,
+            "y": 0,
+            "colSpan": 13,
+            "rowSpan": 4
+          },
+          "metadata": {
+            "inputs": [
+              {
+                "name": "resourceTypeMode",
+                "isOptional": true
+              },
+              {
+                "name": "ComponentId",
+                "isOptional": true
+              },
+              {
+                "name": "Scope",
+                "value": {
+                  "resourceIds": [
+                                          "[concat('/subscriptions/',subscription().subscriptionId,'/resourceGroups/',parameters('logAnalyticsWorkspaceResourceGroup'),'/providers/microsoft.operationalinsights/workspaces/',parameters('logAnalyticsWorkspaceName'))]"
+                  ]
+                },
+                "isOptional": true
+              },
+              {
+                "name": "PartId",
+                "value": "4246be30-72ef-406c-83b9-f22c19279bee",
+                "isOptional": true
+              },
+              {
+                "name": "Version",
+                "value": "2.0",
+                "isOptional": true
+              },
+              {
+                "name": "TimeRange",
+                "value": "P30D",
+                "isOptional": true
+              },
+              {
+                "name": "DashboardId",
+                "isOptional": true
+              },
+              {
+                "name": "DraftRequestParameters",
+                "isOptional": true
+              },
+              {
+                "name": "Query",
+                "value": "// Get failed jobs \nAmlComputeJobEvent\n| where EventType in (\"JobSubmitted\", \"JobFailed\", \"JobSucceeded\") \n| summarize count=count() by EventType, Hourly=bin(TimeGenerated, 1day) \n\n",
+                "isOptional": true
+              },
+              {
+                "name": "ControlType",
+                "value": "FrameControlChart",
+                "isOptional": true
+              },
+              {
+                "name": "SpecificChart",
+                "value": "Line",
+                "isOptional": true
+              },
+              {
+                "name": "PartTitle",
+                "value": "Analytics",
+                "isOptional": true
+              },
+              {
+                "name": "Dimensions",
+                "value": {
+                  "xAxis": {
+                    "name": "Hourly",
+                    "type": "datetime"
+                  },
+                  "yAxis": [
+                    {
+                      "name": "count",
+                      "type": "long"
+                    }
+                  ],
+                  "splitBy": [
+                    {
+                      "name": "EventType",
+                      "type": "string"
+                    }
+                  ],
+                  "aggregation": "Sum"
+                },
+                "isOptional": true
+              },
+              {
+                "name": "LegendOptions",
+                "value": {
+                  "isEnabled": true,
+                  "position": "Bottom"
+                },
+                "isOptional": true
+              },
+              {
+                "name": "IsQueryContainTimeRange",
+                "value": false,
+                "isOptional": true
+              }
+            ],
+            "type": "Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/LogsDashboardPart",
+            "settings": {
+              "content": {
+                "PartTitle": "Jobs statistics",
+                "IsQueryContainTimeRange": false
+              }
+            }
+          }
+        },
+        {
+          "position": {
+            "x": 13,
+            "y": 0,
+            "colSpan": 6,
+            "rowSpan": 4
+          },
+          "metadata": {
+            "inputs": [
+              {
+                "name": "scope",
+                "value": "[concat('/subscriptions/',subscription().subscriptionId)]"
+              },
+              {
+                "name": "scopeName",
+                "value": "Machine Learning Workspaces"
+              },
+              {
+                "name": "view",
+                "value": {
+                  "currency": "USD",
+                  "dateRange": "Last30Days",
+                  "query": {
+                    "type": "ActualCost",
+                    "dataSet": {
+                      "granularity": "Daily",
+                      "aggregation": {
+                        "totalCost": {
+                          "name": "Cost",
+                          "function": "Sum"
+                        },
+                        "totalCostUSD": {
+                          "name": "CostUSD",
+                          "function": "Sum"
+                        }
+                      },
+                      "sorting": [
+                        {
+                          "direction": "ascending",
+                          "name": "UsageDate"
+                        }
+                      ],
+                      "grouping": [
+                        {
+                          "type": "Dimension",
+                          "name": "ResourceId"
+                        }
+                      ]
+                    },
+                    "timeframe": "None"
+                  },
+                  "chart": "Line",
+                  "accumulated": "false",
+                  "pivots": [
+                    {
+                      "type": "Dimension",
+                      "name": "ServiceName"
+                    },
+                    {
+                      "type": "Dimension",
+                      "name": "ResourceLocation"
+                    },
+                    {
+                      "type": "Dimension",
+                      "name": "ResourceGroupName"
+                    }
+                  ],
+                  "scope": "[concat('/subscriptions/',subscription().subscriptionId)]",
+                  "kpis": [
+                    {
+                      "type": "Budget",
+                      "id": "COST_NAVIGATOR.BUDGET_OPTIONS.NONE",
+                      "enabled": true,
+                      "extendedProperties": {
+                        "name": "COST_NAVIGATOR.BUDGET_OPTIONS.NONE"
+                      }
+                    },
+                    {
+                      "type": "Forecast",
+                      "enabled": false
+                    }
+                  ],
+                  "displayName": "DailyCosts"
+                },
+                "isOptional": true
+              },
+              {
+                "name": "externalState",
+                "isOptional": true
+              }
+            ],
+            "type": "Extension/Microsoft_Azure_CostManagement/PartType/CostAnalysisPinPart",
+            "deepLink": "[concat('#blade/Microsoft_Azure_CostManagement/Menu/costanalysis/scope/%2Fsubscriptions%2F',subscription().subscriptionId,'/open/costanalysisv3.resources')]"
+          }
+        },
+         {
+          "position": {
+            "x": 0,
+            "y": 4,
+            "colSpan": 8,
+            "rowSpan": 4
+          },
+          "metadata": {
+            "inputs": [
+              {
+                "name": "resourceTypeMode",
+                "isOptional": true
+              },
+              {
+                "name": "ComponentId",
+                "isOptional": true
+              },
+              {
+                "name": "Scope",
+                "value": {
+                  "resourceIds": [
+                                          "[concat('/subscriptions/',subscription().subscriptionId,'/resourceGroups/',parameters('logAnalyticsWorkspaceResourceGroup'),'/providers/microsoft.operationalinsights/workspaces/',parameters('logAnalyticsWorkspaceName'))]"
+                  ]
+                },
+                "isOptional": true
+              },
+              {
+                "name": "PartId",
+                "value": "7581891a-c35b-4da5-b716-3180f888016e",
+                "isOptional": true
+              },
+              {
+                "name": "Version",
+                "value": "2.0",
+                "isOptional": true
+              },
+              {
+                "name": "TimeRange",
+                "isOptional": true
+              },
+              {
+                "name": "DashboardId",
+                "isOptional": true
+              },
+              {
+                "name": "DraftRequestParameters",
+                "value": {
+                  "scope": "hierarchy"
+                },
+                "isOptional": true
+              },
+              {
+                "name": "Query",
+                "value": "// Get failed jobs  \nAmlComputeJobEvent\n| where EventType == \"JobFailed\" \n| project  JobName, TimeGenerated, ClusterId, EventType, ExecutionState, ToolType, JobErrorMessage, ErrorDetails, ExperimentName\n| summarize  Count=count() by ExperimentName",
+                "isOptional": true
+              },
+              {
+                "name": "ControlType",
+                "value": "FrameControlChart",
+                "isOptional": true
+              },
+              {
+                "name": "SpecificChart",
+                "value": "StackedColumn",
+                "isOptional": true
+              },
+              {
+                "name": "PartTitle",
+                "value": "Analytics",
+                "isOptional": true
+              },
+              {
+                "name": "Dimensions",
+                "value": {
+                  "xAxis": {
+                    "name": "ExperimentName",
+                    "type": "string"
+                  },
+                  "yAxis": [
+                    {
+                      "name": "Count",
+                      "type": "long"
+                    }
+                  ],
+                  "aggregation": "Sum"
+                },
+                "isOptional": true
+              },
+              {
+                "name": "LegendOptions",
+                "value": {
+                  "isEnabled": true,
+                  "position": "Bottom"
+                },
+                "isOptional": true
+              },
+              {
+                "name": "IsQueryContainTimeRange",
+                "value": false,
+                "isOptional": true
+              }
+            ],
+            "type": "Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/LogsDashboardPart",
+            "settings": {
+              "content": {
+                "PartTitle": "Job failures by experiments",
+                "IsQueryContainTimeRange": false
+              }
+            }
+          }
+        },
+        {
+          "position": {
+            "x": 8,
+            "y": 4,
+            "colSpan": 5,
+            "rowSpan": 4
+          },
+          "metadata": {
+            "inputs": [
+              {
+                "name": "resourceTypeMode",
+                "isOptional": true
+              },
+              {
+                "name": "ComponentId",
+                "isOptional": true
+              },
+              {
+                "name": "Scope",
+                "value": {
+                  "resourceIds": [
+                                          "[concat('/subscriptions/',subscription().subscriptionId,'/resourceGroups/',parameters('logAnalyticsWorkspaceResourceGroup'),'/providers/microsoft.operationalinsights/workspaces/',parameters('logAnalyticsWorkspaceName'))]"
+                  ]
+                },
+                "isOptional": true
+              },
+              {
+                "name": "PartId",
+                "value": "140dd980-317a-4b8a-821b-cb192c4337e1",
+                "isOptional": true
+              },
+              {
+                "name": "Version",
+                "value": "2.0",
+                "isOptional": true
+              },
+              {
+                "name": "TimeRange",
+                "isOptional": true
+              },
+              {
+                "name": "DashboardId",
+                "isOptional": true
+              },
+              {
+                "name": "DraftRequestParameters",
+                "isOptional": true
+              },
+              {
+                "name": "Query",
+                "value": "AmlComputeClusterEvent \n| where ClusterType == \"DSI\" and EventType ==\"CreateOperationCompleted\" //and split(_ResourceId, \"/\")[-1]==\"<wsname>\" \n| project ClusterName, TimeCreated=TimeGenerated \n| summarize Last_Time_Created=arg_max(TimeCreated, *) by ClusterName \n| join kind = leftouter (AmlComputeClusterEvent \n    | where ClusterType == \"DSI\" and EventType ==\"DeleteOperationCompleted\"  \n    | project ClusterName, TimeGenerated \n    | summarize Last_Time_Deleted=arg_max(TimeGenerated, *) by ClusterName) \n    on ClusterName  \n| where (Last_Time_Created>Last_Time_Deleted or isnull(Last_Time_Deleted)) and Last_Time_Created < ago(1days) \n| project ClusterName, Last_Time_Created, Last_Time_Deleted \n\n",
+                "isOptional": true
+              },
+              {
+                "name": "ControlType",
+                "value": "AnalyticsGrid",
+                "isOptional": true
+              },
+              {
+                "name": "SpecificChart",
+                "isOptional": true
+              },
+              {
+                "name": "PartTitle",
+                "value": "Analytics",
+                "isOptional": true
+              },
+              {
+                "name": "Dimensions",
+                "isOptional": true
+              },
+              {
+                "name": "LegendOptions",
+                "isOptional": true
+              },
+              {
+                "name": "IsQueryContainTimeRange",
+                "value": true,
+                "isOptional": true
+              }
+            ],
+            "type": "Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/LogsDashboardPart",
+            "settings": {
+              "content": {
+                "GridColumnsWidth": {
+                  "ClusterName": "114px",
+                  "Last_Time_Created": "148px",
+                  "Last_Time_Deleted": "150px"
+                },
+                "PartTitle": "Existing compute instances creation time"
+
+              }
+            }
+          }
+        },
+       {
+          "position": {
+            "x": 13,
+            "y": 4,
+            "colSpan": 6,
+            "rowSpan": 4
+          },
+          "metadata": {
+            "inputs": [
+              {
+                "name": "resourceTypeMode",
+                "isOptional": true
+              },
+              {
+                "name": "ComponentId",
+                "isOptional": true
+              },
+              {
+                "name": "Scope",
+                "value": {
+                  "resourceIds": [
+                                          "[concat('/subscriptions/',subscription().subscriptionId,'/resourceGroups/',parameters('logAnalyticsWorkspaceResourceGroup'),'/providers/microsoft.operationalinsights/workspaces/',parameters('logAnalyticsWorkspaceName'))]"
+                  ]
+                },
+                "isOptional": true
+              },
+              {
+                "name": "PartId",
+                "value": "10b83005-63df-4b00-9d8e-11531a10d5d3",
+                "isOptional": true
+              },
+              {
+                "name": "Version",
+                "value": "2.0",
+                "isOptional": true
+              },
+              {
+                "name": "TimeRange",
+                "value": "P1D",
+                "isOptional": true
+              },
+              {
+                "name": "DashboardId",
+                "isOptional": true
+              },
+              {
+                "name": "DraftRequestParameters",
+                "value": {
+                  "scope": "hierarchy"
+                },
+                "isOptional": true
+              },
+              {
+                "name": "Query",
+                "value": "// Count datasets reads \n// Count datasets reads grouped by users and datasets. \nAmlDataSetEvent\n| where split(OperationName, \"/\")[-1]==\"READ\" and AmlDatasetId !=\"\"\n| extend  Identity=(parse_json(Identity))\n| project AmlDatasetId, UserName=Identity.UserName\n| summarize  Count=count() by AmlDatasetId, UserName=tostring(UserName)\n",
+                "isOptional": true
+              },
+              {
+                "name": "ControlType",
+                "value": "FrameControlChart",
+                "isOptional": true
+              },
+              {
+                "name": "SpecificChart",
+                "value": "StackedColumn",
+                "isOptional": true
+              },
+              {
+                "name": "PartTitle",
+                "value": "Analytics",
+                "isOptional": true
+              },
+              {
+                "name": "Dimensions",
+                "value": {
+                  "xAxis": {
+                    "name": "UserName",
+                    "type": "string"
+                  },
+                  "yAxis": [
+                    {
+                      "name": "Count",
+                      "type": "long"
+                    }
+                  ],
+                  "aggregation": "Sum"
+                },
+                "isOptional": true
+              },
+              {
+                "name": "LegendOptions",
+                "value": {
+                  "isEnabled": true,
+                  "position": "Bottom"
+                },
+                "isOptional": true
+              },
+              {
+                "name": "IsQueryContainTimeRange",
+                "value": false,
+                "isOptional": true
+              }
+            ],
+            "type": "Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/LogsDashboardPart",
+            "settings": {
+              "content": {
+                "PartTitle": "Datasets accessed by users",
+                "Dimensions": {
+                  "xAxis": {
+                    "name": "UserName",
+                    "type": "string"
+                  },
+                  "yAxis": [
+                    {
+                      "name": "Count",
+                      "type": "long"
+                    }
+                  ],
+                  "splitBy": [
+                    {
+                      "name": "AmlDatasetId",
+                      "type": "string"
+                    }
+                  ],
+                  "aggregation": "Sum"
+                }
+              }
+            }
+          }
+        },
+         {
+          "position": {
+            "x": 0,
+            "y": 8,
+            "colSpan": 12,
+            "rowSpan": 5
+          },
+          "metadata": {
+            "inputs": [
+              {
+                "name": "resourceTypeMode",
+                "isOptional": true
+              },
+              {
+                "name": "ComponentId",
+                "isOptional": true
+              },
+              {
+                "name": "Scope",
+                "value": {
+                  "resourceIds": [
+                                          "[concat('/subscriptions/',subscription().subscriptionId,'/resourceGroups/',parameters('logAnalyticsWorkspaceResourceGroup'),'/providers/microsoft.operationalinsights/workspaces/',parameters('logAnalyticsWorkspaceName'))]"
+                  ]
+                },
+                "isOptional": true
+              },
+              {
+                "name": "PartId",
+                "value": "37cae416-f4aa-4306-a119-d229cc9f1776",
+                "isOptional": true
+              },
+              {
+                "name": "Version",
+                "value": "2.0",
+                "isOptional": true
+              },
+              {
+                "name": "TimeRange",
+                "value": "P7D",
+                "isOptional": true
+              },
+              {
+                "name": "DashboardId",
+                "isOptional": true
+              },
+              {
+                "name": "DraftRequestParameters",
+                "value": {
+                  "scope": "hierarchy"
+                },
+                "isOptional": true
+              },
+              {
+                "name": "Query",
+                "value": "// Display top longest job runs. \nAmlComputeJobEvent\n| where OperationName == \"JobSubmitted\" \n| join kind = inner (AmlComputeJobEvent\n    | where OperationName == \"JobSucceeded\"\n    | project StopTime=TimeGenerated, JobId)\n    on JobId \n| project Duration_hours=(StopTime - TimeGenerated) / 1hour, ExperimentName, WorkspaceName, ClusterName, JobName\n| top 10 by Duration_hours desc nulls last\n\n",
+                "isOptional": true
+              },
+              {
+                "name": "ControlType",
+                "value": "AnalyticsGrid",
+                "isOptional": true
+              },
+              {
+                "name": "SpecificChart",
+                "isOptional": true
+              },
+              {
+                "name": "PartTitle",
+                "value": "Analytics",
+                "isOptional": true
+              },
+              {
+                "name": "Dimensions",
+                "isOptional": true
+              },
+              {
+                "name": "LegendOptions",
+                "isOptional": true
+              },
+              {
+                "name": "IsQueryContainTimeRange",
+                "value": false,
+                "isOptional": true
+              }
+            ],
+            "type": "Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/LogsDashboardPart",
+            "settings": {
+              "content": {
+                "GridColumnsWidth": {
+                  "Average_Duration_Minutes": "236px",
+                  "JobName": "292px",
+                  "ExperimentName": "279px",
+                  "ClusterName": "122px"
+                },
+                "PartTitle": "Top longest job runs",
+                "IsQueryContainTimeRange": false
+              }
+            }
+          }
+        },
+        {
+          "position": {
+            "x": 12,
+            "y": 8,
+            "colSpan": 7,
+            "rowSpan": 5
+          },
+          "metadata": {
+            "inputs": [
+              {
+                "name": "resourceTypeMode",
+                "isOptional": true
+              },
+              {
+                "name": "ComponentId",
+                "isOptional": true
+              },
+              {
+                "name": "Scope",
+                "value": {
+                  "resourceIds": [
+                                          "[concat('/subscriptions/',subscription().subscriptionId,'/resourceGroups/',parameters('logAnalyticsWorkspaceResourceGroup'),'/providers/microsoft.operationalinsights/workspaces/',parameters('logAnalyticsWorkspaceName'))]"
+                  ]
+                },
+                "isOptional": true
+              },
+              {
+                "name": "PartId",
+                "value": "12302e63-15cb-4edb-b3e6-a9b983890cb9",
+                "isOptional": true
+              },
+              {
+                "name": "Version",
+                "value": "2.0",
+                "isOptional": true
+              },
+              {
+                "name": "TimeRange",
+                "value": "P30D",
+                "isOptional": true
+              },
+              {
+                "name": "DashboardId",
+                "isOptional": true
+              },
+              {
+                "name": "DraftRequestParameters",
+                "isOptional": true
+              },
+              {
+                "name": "Query",
+                "value": "// Plot compute cluster utilization \n// Plot recent compute cluster CPU utilization over time for specific cluster. \nAmlComputeCpuGpuUtilization\n| summarize Utilization=avg(todecimal(Utilization)) by NodeId, DeviceType, Hourly=bin(TimeGenerated, 1hour) \n| join kind = inner (AmlComputeJobEvent\n        | where  NodeId!=\"\" and EventType ==\"JobSucceeded\" \n        | project NodeId, ClusterName)\n    on NodeId \n| summarize Utilization=avg(todecimal(Utilization)) by Hourly, NodeId, DeviceType, ClusterName\n| project Hourly, Utilization, ClusterName, DeviceType\n\n",
+                "isOptional": true
+              },
+              {
+                "name": "ControlType",
+                "value": "FrameControlChart",
+                "isOptional": true
+              },
+              {
+                "name": "SpecificChart",
+                "value": "Line",
+                "isOptional": true
+              },
+              {
+                "name": "PartTitle",
+                "value": "Analytics",
+                "isOptional": true
+              },
+              {
+                "name": "Dimensions",
+                "value": {
+                  "xAxis": {
+                    "name": "Hourly",
+                    "type": "datetime"
+                  },
+                  "yAxis": [
+                    {
+                      "name": "Utilization",
+                      "type": "decimal"
+                    }
+                  ],
+                  "splitBy": [
+                    {
+                      "name": "ClusterName",
+                      "type": "string"
+                    }
+                  ],
+                  "aggregation": "Average"
+                },
+                "isOptional": true
+              },
+              {
+                "name": "LegendOptions",
+                "value": {
+                  "isEnabled": true,
+                  "position": "Bottom"
+                },
+                "isOptional": true
+              },
+              {
+                "name": "IsQueryContainTimeRange",
+                "value": false,
+                "isOptional": true
+              }
+            ],
+            "type": "Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/LogsDashboardPart",
+            "settings": {
+              "content": {
+                "PartTitle": "Compute clusters CPU/GPU utilization",
+                "IsQueryContainTimeRange": false
+              }
+            }
+          }
+        },
+        {
+          "position": {
+            "x": 0,
+            "y": 13,
+            "colSpan": 9,
+            "rowSpan": 5
+          },
+          "metadata": {
+            "inputs": [
+              {
+                "name": "resourceTypeMode",
+                "isOptional": true
+              },
+              {
+                "name": "ComponentId",
+                "isOptional": true
+              },
+              {
+                "name": "Scope",
+                "value": {
+                  "resourceIds": [
+                                          "[concat('/subscriptions/',subscription().subscriptionId,'/resourceGroups/',parameters('logAnalyticsWorkspaceResourceGroup'),'/providers/microsoft.operationalinsights/workspaces/',parameters('logAnalyticsWorkspaceName'))]"
+                  ]
+                },
+                "isOptional": true
+              },
+              {
+                "name": "PartId",
+                "value": "5008b375-22ae-4baf-b7a1-ab2e71420fdc",
+                "isOptional": true
+              },
+              {
+                "name": "Version",
+                "value": "2.0",
+                "isOptional": true
+              },
+              {
+                "name": "TimeRange",
+                "value": "P1D",
+                "isOptional": true
+              },
+              {
+                "name": "DashboardId",
+                "isOptional": true
+              },
+              {
+                "name": "DraftRequestParameters",
+                "value": {
+                  "scope": "hierarchy"
+                },
+                "isOptional": true
+              },
+              {
+                "name": "Query",
+                "value": "AmlComputeClusterEvent\n| project TimeGenerated, WorkspaceName=split(_ResourceId, \"/\")[-1], ClusterName, ClusterType, VmSize, VmPriority, \n  InitialNodeCount , IdleNodeCount, RunningNodeCount, PreparingNodeCount, MinimumNodeCount, MaximumNodeCount , CurrentNodeCount, TargetNodeCount \n|summarize round(sum(RunningNodeCount),1), round(sum(IdleNodeCount),1) by  Hourly=bin(TimeGenerated, 60m) \n| render timechart\n",
+                "isOptional": true
+              },
+              {
+                "name": "ControlType",
+                "value": "AnalyticsGrid",
+                "isOptional": true
+              },
+              {
+                "name": "SpecificChart",
+                "isOptional": true
+              },
+              {
+                "name": "PartTitle",
+                "value": "Analytics",
+                "isOptional": true
+              },
+              {
+                "name": "Dimensions",
+                "isOptional": true
+              },
+              {
+                "name": "LegendOptions",
+                "isOptional": true
+              },
+              {
+                "name": "IsQueryContainTimeRange",
+                "value": false,
+                "isOptional": true
+              }
+            ],
+            "type": "Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/LogsDashboardPart",
+            "settings": {
+              "content": {
+                "ControlType": "FrameControlChart",
+                "SpecificChart": "Line",
+                "PartTitle": "Total cluster nodes count",
+                "Dimensions": {
+                  "xAxis": {
+                    "name": "Hourly",
+                    "type": "datetime"
+                  },
+                  "yAxis": [
+                    {
+                      "name": "sum_RunningNodeCount",
+                      "type": "real"
+                    },
+                    {
+                      "name": "sum_IdleNodeCount",
+                      "type": "real"
+                    }
+                  ],
+                  "aggregation": "Sum"
+                },
+                "LegendOptions": {
+                  "isEnabled": true,
+                  "position": "Bottom"
+                }
+              }
+            }
+          }
+        },
+        {
+          "position": {
+            "x": 9,
+            "y": 13,
+            "colSpan": 10,
+            "rowSpan": 5
+          },
+          "metadata": {
+            "inputs": [
+              {
+                "name": "resourceTypeMode",
+                "isOptional": true
+              },
+              {
+                "name": "ComponentId",
+                "isOptional": true
+              },
+              {
+                "name": "Scope",
+                "value": {
+                  "resourceIds": [
+                                          "[concat('/subscriptions/',subscription().subscriptionId,'/resourceGroups/',parameters('logAnalyticsWorkspaceResourceGroup'),'/providers/microsoft.operationalinsights/workspaces/',parameters('logAnalyticsWorkspaceName'))]"
+                  ]
+                },
+                "isOptional": true
+              },
+              {
+                "name": "PartId",
+                "value": "148bab67-530b-49f8-ba1f-83347c25146f",
+                "isOptional": true
+              },
+              {
+                "name": "Version",
+                "value": "2.0",
+                "isOptional": true
+              },
+              {
+                "name": "TimeRange",
+                "value": "P7D",
+                "isOptional": true
+              },
+              {
+                "name": "DashboardId",
+                "isOptional": true
+              },
+              {
+                "name": "DraftRequestParameters",
+                "value": {
+                  "scope": "hierarchy"
+                },
+                "isOptional": true
+              },
+              {
+                "name": "Query",
+                "value": "// Get number of running nodes across workspaces and clusters. \nAmlComputeClusterEvent\n| where ClusterType != 'DSI' and TargetNodeCount > 0\n| summarize avgRunningNodes=avg(TargetNodeCount), maxRunningNodes=max(TargetNodeCount) by Workspace=tostring(split(_ResourceId, \"/\")[8]), ClusterName, VmSize, VmPriority\n| sort by maxRunningNodes\n| limit 10\n\n",
+                "isOptional": true
+              },
+              {
+                "name": "ControlType",
+                "value": "AnalyticsGrid",
+                "isOptional": true
+              },
+              {
+                "name": "SpecificChart",
+                "isOptional": true
+              },
+              {
+                "name": "PartTitle",
+                "value": "Analytics",
+                "isOptional": true
+              },
+              {
+                "name": "PartSubTitle",
+                "isOptional": true
+              },
+              {
+                "name": "Dimensions",
+                "isOptional": true
+              },
+              {
+                "name": "LegendOptions",
+                "isOptional": true
+              },
+              {
+                "name": "IsQueryContainTimeRange",
+                "value": false,
+                "isOptional": true
+              }
+            ],
+            "type": "Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/LogsDashboardPart",
+            "settings": {
+              "content": {
+                "GridColumnsWidth": {
+                  "VmSize": "176px",
+                  "ClusterName": "116px",
+                  "VmPriority": "115px"
+                },
+                "PartTitle": "Top clusters with the largest number of nodes"
+              }
+            },
+            "partHeader": {
+              "title": "Top clusters with the largest number of nodes"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "model": {
+      "timeRange": {
+        "value": {
+          "relative": {
+            "duration": 24,
+            "timeUnit": 1
+          }
+        },
+        "type": "MsPortalFx.Composition.Configuration.ValueTypes.TimeRange"
+      },
+      "filterLocale": {
+        "value": "en-us"
+      },
+      "filters": {
+        "value": {
+          "MsPortalFx_TimeRange": {
+            "model": {
+              "format": "utc",
+              "granularity": "auto",
+              "relative": "30d"
+            },
+            "displayCache": {
+              "name": "UTC Time",
+              "value": "Past 30 days"
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+}]
+           
+        }      
+

@@ -1,17 +1,24 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.8.9.13224",
+      "templateHash": "2614956787969031174"
+    }
+  },
   "parameters": {
     "virtualNetworkName": {
       "type": "string",
-      "defaultValue": "[concat('vnet', uniqueString(resourceGroup().id))]",
+      "defaultValue": "[format('vnet{0}', uniqueString(resourceGroup().id))]",
       "metadata": {
         "description": "Virtual network name"
       }
     },
     "firewallName": {
       "type": "string",
-      "defaultValue": "",
+      "defaultValue": "[format('fw{0}', uniqueString(resourceGroup().id))]",
       "metadata": {
         "description": "Azure Firewall name"
       }
@@ -19,16 +26,15 @@
     "numberOfPublicIPAddresses": {
       "type": "int",
       "defaultValue": 2,
-      "minValue": 1,
       "maxValue": 100,
+      "minValue": 1,
       "metadata": {
         "description": "Number of public IP addresses for the Azure Firewall"
       }
     },
     "availabilityZones": {
       "type": "array",
-      "defaultValue": [
-      ],
+      "defaultValue": [],
       "metadata": {
         "description": "Zone numbers e.g. 1,2,3."
       }
@@ -40,49 +46,48 @@
         "description": "Location for all resources."
       }
     },
-    "infraipgroup": {
-      "defaultValue": "[concat(parameters('location'),'-infra-ipgroup','-',uniqueString(resourceGroup().id))]",
-      "type": "String"
+    "infraIpGroupName": {
+      "type": "string",
+      "defaultValue": "[format('{0}-infra-ipgroup-{1}', parameters('location'), uniqueString(resourceGroup().id))]"
     },
-    "workloadipgroup": {
-      "defaultValue": "[concat(parameters('location'),'-workload-ipgroup','-',uniqueString(resourceGroup().id))]",
-      "type": "String"
+    "workloadIpGroupName": {
+      "type": "string",
+      "defaultValue": "[format('{0}-workload-ipgroup-{1}', parameters('location'), uniqueString(resourceGroup().id))]"
     },
     "firewallPolicyName": {
-      "defaultValue": "[concat(parameters('firewallName'),'-','firewallPolicy')]",
-      "type": "String"
+      "type": "string",
+      "defaultValue": "[format('{0}-firewallPolicy', parameters('firewallName'))]"
     }
   },
   "variables": {
+    "copy": [
+      {
+        "name": "azureFirewallIpConfigurations",
+        "count": "[length(range(0, parameters('numberOfPublicIPAddresses')))]",
+        "input": {
+          "name": "[format('IpConf{0}', range(0, parameters('numberOfPublicIPAddresses'))[copyIndex('azureFirewallIpConfigurations')])]",
+          "properties": {
+            "subnet": "[if(equals(range(0, parameters('numberOfPublicIPAddresses'))[copyIndex('azureFirewallIpConfigurations')], 0), json(format('{{\"id\": \"{0}\"}}', variables('azureFirewallSubnetId'))), json('null'))]",
+            "publicIPAddress": {
+              "id": "[format('{0}{1}', variables('azureFirewallPublicIpId'), add(range(0, parameters('numberOfPublicIPAddresses'))[copyIndex('azureFirewallIpConfigurations')], 1))]"
+            }
+          }
+        }
+      }
+    ],
     "vnetAddressPrefix": "10.10.0.0/24",
     "azureFirewallSubnetPrefix": "10.10.0.0/25",
     "publicIPNamePrefix": "publicIP",
     "azurepublicIpname": "[variables('publicIPNamePrefix')]",
     "azureFirewallSubnetName": "AzureFirewallSubnet",
-    "azureFirewallSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets',parameters('virtualNetworkName'), variables('azureFirewallSubnetName'))]",
-    "azureFirewallPublicIpId": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPNamePrefix'))]",
-    "azureFirewallSubnetJSON": "[json(format('{{\"id\": \"{0}\"}}', variables('azureFirewallSubnetId')))]",
-    "copy": [
-      {
-        "name": "azureFirewallIpConfigurations",
-        "count": "[parameters('numberOfPublicIPAddresses')]",
-        "input": {
-          "name": "[concat('IpConf', copyIndex('azureFirewallIpConfigurations'))]",
-          "properties": {
-            "subnet": "[if(equals(copyIndex('azureFirewallIpConfigurations'), 0), variables('azureFirewallSubnetJSON'), json('null'))]",
-            "publicIPAddress": {
-              "id": "[concat(variables('azureFirewallPublicIpId'), add(copyIndex('azureFirewallIpConfigurations'), 1))]"
-            }
-          }
-        }
-      }
-    ]
+    "azureFirewallSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), variables('azureFirewallSubnetName'))]",
+    "azureFirewallPublicIpId": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPNamePrefix'))]"
   },
   "resources": [
     {
       "type": "Microsoft.Network/ipGroups",
-      "apiVersion": "2019-12-01",
-      "name": "[parameters('workloadipgroup')]",
+      "apiVersion": "2022-01-01",
+      "name": "[parameters('workloadIpGroupName')]",
       "location": "[parameters('location')]",
       "properties": {
         "ipAddresses": [
@@ -93,8 +98,8 @@
     },
     {
       "type": "Microsoft.Network/ipGroups",
-      "apiVersion": "2019-12-01",
-      "name": "[parameters('infraipgroup')]",
+      "apiVersion": "2022-01-01",
+      "name": "[parameters('infraIpGroupName')]",
       "location": "[parameters('location')]",
       "properties": {
         "ipAddresses": [
@@ -104,9 +109,9 @@
       }
     },
     {
-      "name": "[parameters('virtualNetworkName')]",
-      "apiVersion": "2019-04-01",
       "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2022-01-01",
+      "name": "[parameters('virtualNetworkName')]",
       "location": "[parameters('location')]",
       "tags": {
         "displayName": "[parameters('virtualNetworkName')]"
@@ -129,9 +134,13 @@
       }
     },
     {
-      "name": "[concat(variables('azurepublicIpname'), add(copyIndex(), 1))]",
+      "copy": {
+        "name": "publicIpAddress",
+        "count": "[length(range(0, parameters('numberOfPublicIPAddresses')))]"
+      },
       "type": "Microsoft.Network/publicIPAddresses",
-      "apiVersion": "2019-04-01",
+      "apiVersion": "2022-01-01",
+      "name": "[format('{0}{1}', variables('azurepublicIpname'), add(range(0, parameters('numberOfPublicIPAddresses'))[copyIndex()], 1))]",
       "location": "[parameters('location')]",
       "sku": {
         "name": "Standard"
@@ -139,15 +148,11 @@
       "properties": {
         "publicIPAllocationMethod": "Static",
         "publicIPAddressVersion": "IPv4"
-      },
-      "copy": {
-        "name": "publicIpCopy",
-        "count": "[parameters('numberOfPublicIPAddresses')]"
       }
     },
     {
-      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/firewallPolicies",
+      "apiVersion": "2022-01-01",
       "name": "[parameters('firewallPolicyName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -156,14 +161,8 @@
     },
     {
       "type": "Microsoft.Network/firewallPolicies/ruleCollectionGroups",
-      "apiVersion": "2020-05-01",
-      "name": "[concat(parameters('firewallPolicyName'), '/DefaultNetworkRuleCollectionGroup')]",
-      "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/ipGroups', parameters('workloadipgroup'))]",
-        "[resourceId('Microsoft.Network/ipGroups', parameters('infraipgroup'))]",
-        "[resourceId('Microsoft.Network/firewallPolicies',parameters('firewallPolicyName'))]"
-      ],
+      "apiVersion": "2022-01-01",
+      "name": "[format('{0}/{1}', parameters('firewallPolicyName'), 'DefaultNetworkRuleCollectionGroup')]",
       "properties": {
         "priority": 200,
         "ruleCollections": [
@@ -185,8 +184,8 @@
                   "13.86.101.172"
                 ],
                 "sourceIpGroups": [
-                  "[resourceId('Microsoft.Network/ipGroups', parameters('workloadipgroup'))]",
-                  "[resourceId('Microsoft.Network/ipGroups', parameters('infraipgroup'))]"
+                  "[resourceId('Microsoft.Network/ipGroups', parameters('workloadIpGroupName'))]",
+                  "[resourceId('Microsoft.Network/ipGroups', parameters('infraIpGroupName'))]"
                 ],
                 "destinationPorts": [
                   "123"
@@ -195,18 +194,17 @@
             ]
           }
         ]
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/firewallPolicies', parameters('firewallPolicyName'))]",
+        "[resourceId('Microsoft.Network/ipGroups', parameters('infraIpGroupName'))]",
+        "[resourceId('Microsoft.Network/ipGroups', parameters('workloadIpGroupName'))]"
+      ]
     },
     {
-      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/firewallPolicies/ruleCollectionGroups",
-      "name": "[concat(parameters('firewallPolicyName'), '/DefaultApplicationRuleCollectionGroup')]",
-      "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/ipGroups', parameters('workloadipgroup'))]",
-        "[resourceId('Microsoft.Network/ipGroups', parameters('infraipgroup'))]",
-        "[resourceId('Microsoft.Network/firewallPolicies/ruleCollectionGroups',parameters('firewallPolicyName'), 'DefaultNetworkRuleCollectionGroup')]"
-      ],
+      "apiVersion": "2022-01-01",
+      "name": "[format('{0}/{1}', parameters('firewallPolicyName'), 'DefaultApplicationRuleCollectionGroup')]",
       "properties": {
         "priority": 300,
         "ruleCollections": [
@@ -231,11 +229,13 @@
                     "port": 80
                   }
                 ],
-                "fqdnTags": [ "WindowsUpdate" ],
+                "fqdnTags": [
+                  "WindowsUpdate"
+                ],
                 "terminateTLS": false,
                 "sourceIpGroups": [
-                  "[resourceId('Microsoft.Network/ipGroups',parameters('workloadipgroup'))]",
-                  "[resourceId('Microsoft.Network/ipGroups', parameters('infraipgroup'))]"
+                  "[resourceId('Microsoft.Network/ipGroups', parameters('workloadIpGroupName'))]",
+                  "[resourceId('Microsoft.Network/ipGroups', parameters('infraIpGroupName'))]"
                 ]
               }
             ]
@@ -262,36 +262,42 @@
                 ],
                 "terminateTLS": false,
                 "sourceIpGroups": [
-                  "[resourceId('Microsoft.Network/ipGroups',parameters('workloadipgroup'))]",
-                  "[resourceId('Microsoft.Network/ipGroups', parameters('infraipgroup'))]"
+                  "[resourceId('Microsoft.Network/ipGroups', parameters('workloadIpGroupName'))]",
+                  "[resourceId('Microsoft.Network/ipGroups', parameters('infraIpGroupName'))]"
                 ]
               }
             ]
           }
         ]
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/firewallPolicies', parameters('firewallPolicyName'))]",
+        "[resourceId('Microsoft.Network/ipGroups', parameters('infraIpGroupName'))]",
+        "[resourceId('Microsoft.Network/firewallPolicies/ruleCollectionGroups', parameters('firewallPolicyName'), 'DefaultNetworkRuleCollectionGroup')]",
+        "[resourceId('Microsoft.Network/ipGroups', parameters('workloadIpGroupName'))]"
+      ]
     },
     {
-      "apiVersion": "2019-04-01",
       "type": "Microsoft.Network/azureFirewalls",
+      "apiVersion": "2021-03-01",
       "name": "[parameters('firewallName')]",
       "location": "[parameters('location')]",
-      "zones": "[if(equals(length(parameters('availabilityZones')), 0), json('null'), parameters('availabilityZones'))]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
-        "publicIpCopy",
-        "[resourceId('Microsoft.Network/ipGroups', parameters('workloadipgroup'))]",
-        "[resourceId('Microsoft.Network/ipGroups', parameters('infraipgroup'))]",
-        "[resourceId('Microsoft.Network/firewallPolicies',parameters('firewallPolicyName'))]",
-        "[resourceId('Microsoft.Network/firewallPolicies/ruleCollectionGroups',parameters('firewallPolicyName'), 'DefaultNetworkRuleCollectionGroup')]",
-        "[resourceId('Microsoft.Network/firewallPolicies/ruleCollectionGroups',parameters('firewallPolicyName'), 'DefaultApplicationRuleCollectionGroup')]"
-      ],
+      "zones": "[if(equals(length(parameters('availabilityZones')), 0), null(), parameters('availabilityZones'))]",
       "properties": {
         "ipConfigurations": "[variables('azureFirewallIpConfigurations')]",
         "firewallPolicy": {
           "id": "[resourceId('Microsoft.Network/firewallPolicies', parameters('firewallPolicyName'))]"
         }
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/firewallPolicies/ruleCollectionGroups', parameters('firewallPolicyName'), 'DefaultApplicationRuleCollectionGroup')]",
+        "[resourceId('Microsoft.Network/firewallPolicies', parameters('firewallPolicyName'))]",
+        "[resourceId('Microsoft.Network/ipGroups', parameters('infraIpGroupName'))]",
+        "[resourceId('Microsoft.Network/firewallPolicies/ruleCollectionGroups', parameters('firewallPolicyName'), 'DefaultNetworkRuleCollectionGroup')]",
+        "publicIpAddress",
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
+        "[resourceId('Microsoft.Network/ipGroups', parameters('workloadIpGroupName'))]"
+      ]
     }
   ]
 }

@@ -1,3 +1,13 @@
+---
+description: This template allows you to run VM-to-VM bandwidth test with PsPing utility.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: vm-to-vm-bandwidth-meter
+languages:
+- json
+---
 # Azure VM-to-VM bandwidth meter
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/vm-to-vm-bandwidth-meter/PublicLastTestDate.svg)
@@ -14,10 +24,10 @@
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Fvm-to-vm-bandwidth-meter%2Fazuredeploy.json)
 
 This template allows you to run a VM-to-VM bandwidth test using PsPing utility.
-Please note that by deploying this template you are automatically accepting [Sysinternals Software License Terms](https://technet.microsoft.com/en-us/sysinternals/bb469936).
+Please note that by deploying this template you are automatically accepting [Sysinternals Software License Terms](https://technet.microsoft.com/sysinternals/bb469936).
 
-The VM sizes selected should be available in chosen regions. Please check availability [here](https://azure.microsoft.com/en-us/regions/services/).
-See VM series/sizes [description](https://azure.microsoft.com/en-us/documentation/articles/virtual-machines-windows-sizes/).
+The VM sizes selected should be available in chosen regions. Please check availability [here](https://azure.microsoft.com/regions/services/).
+See VM series/sizes [description](https://azure.microsoft.com/documentation/articles/virtual-machines-windows-sizes/).
 
 Upon template deployment you will have the bandwidth between the VMs automatically measured. You can see the measurements:
 
@@ -33,3 +43,5 @@ OutputsString           :
 To re-measure the bandwidth you can login to the probe VM with credentials you provided during deployment.
 
 In case you don't need to re-measure, it is safe to delete the created resource group.
+
+`Tags: Microsoft.Network/publicIPAddresses, Microsoft.Network/virtualNetworks, Microsoft.Network/networkSecurityGroups, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, CustomScriptExtension, CustomScript`

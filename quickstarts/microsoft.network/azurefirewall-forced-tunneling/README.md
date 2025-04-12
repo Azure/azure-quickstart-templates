@@ -1,4 +1,14 @@
-# Create Azure Firewall sandbox with Forced Tunneling
+---
+description: This template creates an Azure Firewall sandbox (Linux) with one firewall force tunneled through another firewall in a peered VNET
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: azurefirewall-forced-tunneling
+languages:
+- json
+---
+# Create an Azure Firewall sandbox with forced tunneling
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/azurefirewall-forced-tunneling/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/azurefirewall-forced-tunneling/PublicDeployment.svg)
@@ -9,7 +19,7 @@
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/azurefirewall-forced-tunneling/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/azurefirewall-forced-tunneling/CredScanResult.svg)
 
-[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.network%2Fazurefirewall-forced-tunneling%2Fazuredeploy.json)  
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.network%2Fazurefirewall-forced-tunneling%2Fazuredeploy.json)
 
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.network%2Fazurefirewall-forced-tunneling%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.network%2Fazurefirewall-forced-tunneling%2Fazuredeploy.json)
@@ -20,6 +30,6 @@ Azure Firewall is a managed cloud-based network security service that protects y
 
 The service is fully integrated with Azure Monitor for logging and analytics.
 
-Azure Firewall is currently a managed public preview that you need to explicitly enable using the Register-AzureRmProviderFeature PowerShell command. Learn more at https://docs.microsoft.com/en-us/azure/firewall.
+Azure Firewall is currently a managed public preview that you need to explicitly enable using the Register-AzureRmProviderFeature PowerShell command. Learn more at https://docs.microsoft.com/azure/firewall.
 
-
+`Tags: Microsoft.Storage/storageAccounts, Microsoft.Network/routeTables, Microsoft.Network/virtualNetworks, Microsoft.Network/virtualNetworks/virtualNetworkPeerings, Microsoft.Network/publicIPAddresses, Microsoft.Network/networkSecurityGroups, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Network/azureFirewalls, Allow`

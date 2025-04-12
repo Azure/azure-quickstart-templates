@@ -1,4 +1,14 @@
-﻿# Provision a Spark 2.0 Cluster on Suse Linux Enterprise Server
+---
+description: This template creates a Spark 2.0 Cluster on SUSE Linux Enterprise Server. This is a starting point for learning Spark and in-memory computation on SUSE’s enterprise linux distribution.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: spark-2.0-on-suse
+languages:
+- json
+---
+# Provision Spark 2.0 Cluster on Suse Linux Enterprise Server
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/spark/spark-2.0-on-suse/spark-2.0-on-suse/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/spark/spark-2.0-on-suse/spark-2.0-on-suse/PublicDeployment.svg)
@@ -13,16 +23,16 @@ This template creates a Spark 2.0 Cluster on SUSE Linux Enterprise Server.  This
 
 In Memory Cluster Computing to solve query optimization, slow Machine Learning and many other BI problems.
 
-To master this template and Spark 2.0 on SUSE Linux Enterprise Server you can leverage hands on workshop from [Value Amplify](http://www.valueamplify.com) 
+To master this template and Spark 2.0 on SUSE Linux Enterprise Server you can leverage hands on workshop from [Value Amplify](http://www.valueamplify.com)
 
-[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fspark%2Fspark-2.0-on-suse%2Fspark-2.0-on-suse%2Fazuredeploy.json)  
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fspark%2Fspark-2.0-on-suse%2Fspark-2.0-on-suse%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fspark%2Fspark-2.0-on-suse%2Fspark-2.0-on-suse%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fspark%2Fspark-2.0-on-suse%2Fspark-2.0-on-suse%2Fazuredeploy.json)
 
 ### To deploy this sample using a script in the root of this repo
 
 ```PowerShell
-.\Deploy-AzureResourceGroup.ps1 -ResourceGroupLocation 'eastus' -ArtifactsStagingDirectory 'spark-2.0-on-suse' -UploadArtifacts 
+.\Deploy-AzureResourceGroup.ps1 -ResourceGroupLocation 'eastus' -ArtifactsStagingDirectory 'spark-2.0-on-suse' -UploadArtifacts
 ```
 ```bash
 azure-group-deploy.sh -a 'spark-2.0-on-suse' -l eastus -u
@@ -132,5 +142,4 @@ You can see on VM Spark 2.0 processes running
 sudo jps -l -m
 <pre>
 
-
-
+`Tags: Microsoft.Compute/virtualMachines, extensions, CustomScript, Microsoft.Network/networkInterfaces, Microsoft.Network/publicIPAddresses, Microsoft.Network/virtualNetworks, Microsoft.Network/networkSecurityGroups, Microsoft.Storage/storageAccounts`

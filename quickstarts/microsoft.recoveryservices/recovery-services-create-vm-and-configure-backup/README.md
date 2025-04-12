@@ -1,4 +1,15 @@
-# Create a Windows VM and configure backup
+---
+description: This template allows you to deploy a Windows VM and Recovery Services Vault configured with the DefaultPolicy for Protection.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: recovery-services-create-vm-and-configure-backup
+languages:
+- json
+- bicep
+---
+# Deploy a Windows VM and enable backup using Azure Backup
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.recoveryservices/recovery-services-create-vm-and-configure-backup/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.recoveryservices/recovery-services-create-vm-and-configure-backup/PublicDeployment.svg)
@@ -8,6 +19,8 @@
 
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.recoveryservices/recovery-services-create-vm-and-configure-backup/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.recoveryservices/recovery-services-create-vm-and-configure-backup/CredScanResult.svg)
+
+![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.recoveryservices/recovery-services-create-vm-and-configure-backup/BicepVersion.svg)
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.recoveryservices%2Frecovery-services-create-vm-and-configure-backup%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.recoveryservices%2Frecovery-services-create-vm-and-configure-backup%2Fazuredeploy.json)
@@ -30,3 +43,5 @@ If you're new to the template development, see:
 - [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
 
 Tags: Azure Backup, Backup, Resource Manager, Resource Manager templates, ARM templates
+
+`Tags: Microsoft.Storage/storageAccounts, Microsoft.Network/publicIPAddresses, Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.RecoveryServices/vaults, Microsoft.RecoveryServices/vaults/backupFabrics/protectionContainers/protectedItems`

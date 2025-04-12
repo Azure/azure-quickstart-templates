@@ -1,4 +1,15 @@
-# Create a WordPress site on a Container Instance
+---
+description: This template creates a WordPress site on Container Instance
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: aci-wordpress
+languages:
+- json
+- bicep
+---
+# Create a WordPress site
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/wordpress/aci-wordpress/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/wordpress/aci-wordpress/PublicDeployment.svg)
@@ -19,20 +30,20 @@ Create a WordPress site (and its MySQL database) on a Container Instance
 
 This template creates a WordPress website and its MySQL database on a Container Instance. The WordPress site content and MySQL database are persistently stored on an Azure Storage File Share.
 
-`Tags: Azure Container Instance, WordPress`
+`Tags: Azure Container Instance, WordPress, Microsoft.ManagedIdentity/userAssignedIdentities, Microsoft.Authorization/roleAssignments, Microsoft.Storage/storageAccounts, Microsoft.Resources/deploymentScripts, UserAssigned, Microsoft.ContainerInstance/containerGroups, Public`
 
 ## Solution overview and deployed resources
 
 The following resources are deployed as part of the solution
 
 + **Azure Container Instance**: Azure Container Instance to host the WordPress site and the MySQL database.
-+ **Azure Container Instance**: A [run-once](https://docs.microsoft.com/en-us/azure/container-instances/container-instances-restart-policy#container-restart-policy) Azure Container Instance, where the az-cli is executed to create the file shares
++ **Azure Container Instance**: A [run-once](https://docs.microsoft.com/azure/container-instances/container-instances-restart-policy#container-restart-policy) Azure Container Instance, where the az-cli is executed to create the file shares
 + **Storage Account**: Storage account for the file shares to store the WordPress site content and MySQL database
 + **File share**: Azure File shares to store WordPress site content and MySQL database.
 
 ## Deployment steps
 
-You can click the "deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the scripts in the root of this repo. 
+You can click the "deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the scripts in the root of this repo.
 
 #### Parameters:
 + **siteName**: The site name, the first segment of the WordPress site FQDN (e.g.  **`mywordpress`**`.westus.azurecontainer.io`)
@@ -46,4 +57,4 @@ You can click the "deploy to Azure" button at the beginning of this document or 
 Use browser to access the site FQDN from deployment output. WordPress will guide you through the rest of the setup.
 
 ## Notes
-Azure Container Instance is available in selected [locations](https://docs.microsoft.com/en-us/azure/container-instances/container-instances-quotas#region-availability). Please use one of the available location for Azure Container Instance resource.
+Azure Container Instance is available in selected [locations](https://docs.microsoft.com/azure/container-instances/container-instances-quotas#region-availability). Please use one of the available location for Azure Container Instance resource.

@@ -1,3 +1,13 @@
+---
+description: This template deploys a Function App hosted in a new dedicated App Service Plan. The Function App has a child resource that enables continous integration and deploys the function code from a GitHub repository.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: function-app-dedicated-github-deploy
+languages:
+- json
+---
 # Provision a function app with source deployed from GitHub
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/function-app-dedicated-github-deploy/PublicLastTestDate.svg)
@@ -13,7 +23,6 @@
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.web%2Ffunction-app-dedicated-github-deploy%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.web%2Ffunction-app-dedicated-github-deploy%2Fazuredeploy.json)
 
-
 ## Overview
 
 This template deploys a Function App hosted in a new dedicated App Service Plan. The Function App has a child resource that enables continuous integration and deploys the function code from a GitHub repository.
@@ -28,14 +37,12 @@ This template deploys the following resources:
 
 ## Azure Functions
 
-> Azure functions is a solution for easily running small pieces of code, or "functions," in the cloud. You can write just the code you need for the problem at hand, without worrying about a whole application or the infrastructure to run it. For more information about Azure Functions, see the [Azure Functions Overview](https://azure.microsoft.com/en-us/documentation/articles/functions-overview/).
+> Azure functions is a solution for easily running small pieces of code, or "functions," in the cloud. You can write just the code you need for the problem at hand, without worrying about a whole application or the infrastructure to run it. For more information about Azure Functions, see the [Azure Functions Overview](https://azure.microsoft.com/documentation/articles/functions-overview/).
 
 - [Microsoft Learn Functions Modules](https://docs.microsoft.com/learn/browse/?products=azure-functions)
 - [Microsoft Function Pricing](https://azure.microsoft.com/pricing/details/functions/)
-- [Microsoft Function Documentation](https://docs.microsoft.com/en-us/azure/azure-functions/)
+- [Microsoft Function Documentation](https://docs.microsoft.com/azure/azure-functions/)
 
 ## Miscellaneous
 
-``Tags: app-service, function, github``
-
-
+`Tags: Microsoft.Storage/storageAccounts, Microsoft.Web/serverfarms, Microsoft.Web/sites, sourcecontrols`

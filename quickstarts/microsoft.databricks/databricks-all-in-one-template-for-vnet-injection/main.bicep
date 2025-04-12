@@ -37,15 +37,12 @@ param vnetName string = 'databricks-vnet'
 param workspaceName string
 
 var managedResourceGroupName = 'databricks-rg-${workspaceName}-${uniqueString(workspaceName, resourceGroup().id)}'
+var trimmedMRGName = substring(managedResourceGroupName, 0, min(length(managedResourceGroupName), 90))
+var managedResourceGroupId = '${subscription().id}/resourceGroups/${trimmedMRGName}'
 
-resource managedResourceGroup 'Microsoft.Resources/resourceGroups@2021-04-01' existing = {
-  scope: subscription()
-  name: managedResourceGroupName
-}
-
-resource nsg 'Microsoft.Network/networkSecurityGroups@2020-05-01' = {
-  location: location
+resource nsg 'Microsoft.Network/networkSecurityGroups@2022-09-01' = {
   name: nsgName
+  location: location
   properties: {
     securityRules: [
       {
@@ -136,9 +133,9 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@2020-05-01' = {
   }
 }
 
-resource vnet 'Microsoft.Network/virtualNetworks@2020-05-01' = {
-  location: location
+resource vnet 'Microsoft.Network/virtualNetworks@2022-09-01' = {
   name: vnetName
+  location: location
   properties: {
     addressSpace: {
       addressPrefixes: [
@@ -184,14 +181,14 @@ resource vnet 'Microsoft.Network/virtualNetworks@2020-05-01' = {
   }
 }
 
-resource ws 'Microsoft.Databricks/workspaces@2018-04-01' = {
+resource workspace 'Microsoft.Databricks/workspaces@2023-02-01' = {
   name: workspaceName
   location: location
   sku: {
     name: pricingTier
   }
   properties: {
-    managedResourceGroupId: managedResourceGroup.id
+    managedResourceGroupId: managedResourceGroupId
     parameters: {
       customVirtualNetworkId: {
         value: vnet.id

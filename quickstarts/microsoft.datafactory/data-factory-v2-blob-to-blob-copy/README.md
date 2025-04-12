@@ -1,4 +1,15 @@
-# Copy data from one folder to another folder in an Azure Blob Storage
+---
+description: This template creates a V2 data factory that copies data from a folder in an Azure Blob Storage to another folder in the storage.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: data-factory-v2-blob-to-blob-copy
+languages:
+- json
+- bicep
+---
+# Create a V2 data factory
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.datafactory/data-factory-v2-blob-to-blob-copy/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.datafactory/data-factory-v2-blob-to-blob-copy/PublicDeployment.svg)
@@ -58,3 +69,5 @@ After you deploy the template, to run and monitor the pipeline, do the following
 ## Learn more
 
 For more information about how to deploy an Azure Data Factory, see [Quickstart: Create an Azure Data Factory using ARM template](https://docs.microsoft.com/azure/data-factory/quickstart-create-data-factory-resource-manager-template).
+
+`Tags: Microsoft.Storage/storageAccounts, Microsoft.Storage/storageAccounts/blobServices/containers, Microsoft.DataFactory/factories, SystemAssigned, Microsoft.DataFactory/factories/linkedservices, AzureBlobStorage, Microsoft.DataFactory/factories/datasets, Binary, LinkedServiceReference, AzureBlobStorageLocation, Microsoft.DataFactory/factories/pipelines, Copy, BinarySource, AzureBlobStorageReadSettings, BinarySink, AzureBlobStorageWriterSettings, DatasetReference`

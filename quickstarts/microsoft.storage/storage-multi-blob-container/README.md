@@ -1,4 +1,15 @@
-# Create an Azure storage account with multiple blob containers
+---
+description: Creates an Azure storage account and multiple blob containers. 
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: storage-multi-blob-container
+languages:
+- json
+- bicep
+---
+# Create a storage account with multiple Blob containers
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.storage/storage-multi-blob-container/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.storage/storage-multi-blob-container/PublicDeployment.svg)
@@ -8,6 +19,8 @@
 
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.storage/storage-multi-blob-container/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.storage/storage-multi-blob-container/CredScanResult.svg)
+
+![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.storage/storage-multi-blob-container/BicepVersion.svg)
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.storage%2Fstorage-multi-blob-container%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.storage%2Fstorage-multi-blob-container%2Fazuredeploy.json)
@@ -29,4 +42,4 @@ If you are new to template development, see:
 
 Tags: Azure Storage account, Resource Manager, Resource Manager templates, ARM templates
 
-
+`Tags: Microsoft.Storage/storageAccounts, Microsoft.Storage/storageAccounts/blobServices/containers`

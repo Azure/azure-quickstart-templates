@@ -1,4 +1,14 @@
-# IIS VMs and SQL VM
+---
+description: Create 1 or 2 IIS Windows 2012 R2 Web Servers and one back end SQL Server 2014 in VNET.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: iis-2vm-sql-1vm
+languages:
+- json
+---
+# IIS VMs & SQL Server 2014 VM.
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/iis-2vm-sql-1vm/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/iis-2vm-sql-1vm/PublicDeployment.svg)
@@ -27,3 +37,5 @@ The following resources are created by this template:
 
 ## Architecture Diagram
 <img src="images/architecture.png" />
+
+`Tags: Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Network/publicIPAddresses, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Compute/availabilitySets, Microsoft.Network/loadBalancers, Microsoft.Compute/virtualMachines/extensions, DSC`

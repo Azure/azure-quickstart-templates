@@ -1,4 +1,14 @@
-# Deployment of Red Hat Enterprise Linux VM (RHEL 7.8)
+---
+description: This template will deploy a Red Hat Enterprise Linux VM (RHEL 7.8), using the Pay-As-You-Go RHEL VM image for the selected version on Standard D1 VM in the location of your chosen resource group with an additional 100 GiB data disk attached to the VM. Additional charges apply to this image - consult Azure VM Pricing page for details.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: vm-simple-rhel
+languages:
+- json
+---
+# Red Hat Enterprise Linux VM (RHEL 7.8)
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/vm-simple-rhel/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/vm-simple-rhel/PublicDeployment.svg)
@@ -23,4 +33,6 @@ azure group create TestCLIRG EastUS
 azure vm quick-create TestCLIRG vm1 EastUS Linux RedHat:RHEL:7.8:latest azureuser
 ```
 
-Note: this template and the above commands use RHEL Pay-As-You-Go VM image which carries an additional charge in addition to the base Linux VM price. Check out [RHEL VM pricing](https://azure.microsoft.com/en-us/pricing/details/virtual-machines/#red-hat) for more details.
+Note: this template and the above commands use RHEL Pay-As-You-Go VM image which carries an additional charge in addition to the base Linux VM price. Check out [RHEL VM pricing](https://azure.microsoft.com/pricing/details/virtual-machines/#red-hat) for more details.
+
+`Tags: Microsoft.Network/publicIPAddresses, Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines`

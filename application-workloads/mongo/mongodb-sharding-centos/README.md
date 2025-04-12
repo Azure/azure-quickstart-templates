@@ -1,4 +1,14 @@
-# Install MongoDB Sharding Cluster
+---
+description: This template deploys a MongoDB Sharding Cluster on CentOS and enables Zabbix monitoring
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: mongodb-sharding-centos
+languages:
+- json
+---
+# MongoDB Sharding Cluster
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/mongo/mongodb-sharding-centos/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/mongo/mongodb-sharding-centos/PublicDeployment.svg)
@@ -9,10 +19,9 @@
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/mongo/mongodb-sharding-centos/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/mongo/mongodb-sharding-centos/CredScanResult.svg)
 
-[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fmongo%2Fmongodb-sharding-centos%2Fazuredeploy.json)  
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fmongo%2Fmongodb-sharding-centos%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fmongo%2Fmongodb-sharding-centos%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fmongo%2Fmongodb-sharding-centos%2Fazuredeploy.json)
-  
 
 This template deploys a MongoDB Sharding Cluster on CentOS. It deploys 2 router servers, one config server replica set with 3 nodes, and 2 shards which both are replica set with 3 nodes. So it totally deploys 11 nodes.
 
@@ -27,7 +36,7 @@ The nodes are under the same subnet 10.0.0.0/24. Except the 2 router server node
 This template also allows you to input your existing zabbix server IP address to monitor these MongoDB router servers.
 
 ##Important Notice
-Each VM of the shard uses raid0 to improve performance. The number and the size of data disks(setup raid0) on each shard VM are determined by yourself. However, there is number and size of data disks limit per the VM size. Before you set number and size of data disks, please refer to the link https://azure.microsoft.com/en-us/documentation/articles/virtual-machines-linux-sizes/ for the correct choice.
+Each VM of the shard uses raid0 to improve performance. The number and the size of data disks(setup raid0) on each shard VM are determined by yourself. However, there is number and size of data disks limit per the VM size. Before you set number and size of data disks, please refer to the link https://azure.microsoft.com/documentation/articles/virtual-machines-linux-sizes/ for the correct choice.
 
 ##After deployment, you can do below to verify if the sharding cluster really works or not:
 
@@ -40,7 +49,7 @@ Each VM of the shard uses raid0 to improve performance. The number and the size 
   exit
   ```
 
-  Upper db.runCommand( { listshards : 1 } ) command will show the sharding cluster details. 
+  Upper db.runCommand( { listshards : 1 } ) command will show the sharding cluster details.
 
 2. You can "shard" any database and collections you want. SSH connect to one of the router server, execute below:
   ```
@@ -59,7 +68,7 @@ Each VM of the shard uses raid0 to improve performance. The number and the size 
   ```
   $mongo -u "<mongouser>" -p "<mongopassword>" "admin"
 
-  sh.addShard("<replica set name>/<primary ip>:27017")   
+  sh.addShard("<replica set name>/<primary ip>:27017")
 
   exit
   ```
@@ -69,9 +78,9 @@ Each VM of the shard uses raid0 to improve performance. The number and the size 
 ##Known Limitations
 - The MongoDB version is 3.2.
 - We expose 2 router server nodes on public addresses so that you can access MongoDB service through internet directly.
-- This cluster only has 2 shards, you can add more shards after the deployment. 
+- This cluster only has 2 shards, you can add more shards after the deployment.
 - The nodes use internal authentication. So if you want to add your own replica set into this sharding cluster, you should enable the internal authentication in your replica set first. Check any node /etc/mongokeyfile for more details.
 - The replica set is composed with 1 primary node, 2 secondary nodes.
 - More MongoDB usage details please visit MongoDB website https://www.mongodb.org/ .
 
-
+`Tags: Microsoft.Resources/deployments, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, CustomScript, Microsoft.Network/publicIPAddresses, Microsoft.Compute/availabilitySets, Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks`

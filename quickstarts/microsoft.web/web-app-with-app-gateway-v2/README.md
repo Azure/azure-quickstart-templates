@@ -1,3 +1,13 @@
+---
+description: This template creates an Azure Web App with Access Restriction for an Application Gateway v2. The Application Gateway is deployed in a vNet (subnet) which has a 'Microsoft.Web' Service Endpoint enabled. The Web App restricts access to traffic from the subnet.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: web-app-with-app-gateway-v2
+languages:
+- json
+---
 # Create a Web App protected by Application Gateway v2
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/web-app-with-app-gateway-v2/PublicLastTestDate.svg)
@@ -14,10 +24,7 @@ This template creates an Azure Web App with Access Restriction for an Applicatio
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.web%2Fweb-app-with-app-gateway-v2%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.web%2Fweb-app-with-app-gateway-v2%2Fazuredeploy.json)
 
-
-
 The Application Gateway is deployed in a vNet (subnet) which has the 'Microsoft.Web' Service Endpoint enabled. The Web App restricts access to traffic from a subnet. By default, everything is created with generated names, however, you can easily modify the template to use other default values or parameterize values. You can also 'bring your own' subnet, web app, application gateway or public ip, if you have any of the items already created.
 
-`Tags: web-app, application-gateway, service-endpoint`
-
+`Tags: web-app, application-gateway, service-endpoint, Microsoft.Network/virtualNetworks, Microsoft.Web/serverfarms, Microsoft.Web/sites, Microsoft.Network/publicIPAddresses, Microsoft.Network/applicationGateways`
 

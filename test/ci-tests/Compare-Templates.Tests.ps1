@@ -33,6 +33,12 @@
         $same | Should -Be $true
     }
 
+    It 'Recognizes when templates are same except for metadata with nested templates' {
+        $same = Compare-Templates "$dataFolder/ModularTemplateWithMetadata.json" "$dataFolder/ModularTemplateWithoutMetadata.json" -RemoveGeneratorMetadata
+
+        $same | Should -Be $true
+    }
+
     It 'Shows a hash difference between bicep versions only if not using -RemoveGeneratorMetadata' {
         $same = Compare-Templates "$dataFolder/TemplateWithMetadata.json" "$dataFolder/TemplateWithoutMetadata.json"
         $same | Should -Be $false

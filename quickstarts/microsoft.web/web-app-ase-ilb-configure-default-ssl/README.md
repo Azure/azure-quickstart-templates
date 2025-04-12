@@ -1,4 +1,14 @@
-# Configure the Default SSL Certificate for an ILB ASE or an ILB ASE v2
+---
+description: Configures the default SSL certificate for an ILB ASE or an ILB ASE v2
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: web-app-ase-ilb-configure-default-ssl
+languages:
+- json
+---
+# SSL certificate for an ILB ASE or an ILB ASE v2
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/web-app-ase-ilb-configure-default-ssl/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/web-app-ase-ilb-configure-default-ssl/PublicDeployment.svg)
@@ -17,4 +27,4 @@ The syntax for configuring the default SSL certificate for an ASE is the same fo
 
 For more details on App Service Environments, see the [Introduction to App Service Environments](https://docs.microsoft.com/azure/app-service/app-service-environment/app-service-env-intro/).
 
-
+`Tags: Microsoft.Web/certificates, Microsoft.Web/hostingEnvironments`

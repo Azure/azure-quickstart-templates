@@ -1,0 +1,101 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "type": "string",
+            "allowedValues": [
+                "westeurope",
+                "eastus",
+                "westus2",
+                "northeurope",
+                "westcentralus",
+                "usgovvirginia",
+                "usgovarizona"
+            ],
+            "metadata": {
+                "description": "Specifies the location for all the resources."
+            }
+        },
+        "keyVaultName": {
+            "type": "string",
+            "defaultValue": "[concat('vault', uniqueString(resourceGroup().id))]",
+            "metadata": {
+                "description": "Specifies the name of the key vault."
+            }
+        },
+        "userAssignedIdentityName": {
+            "type": "string",
+            "defaultValue": "[concat('identity', uniqueString(resourceGroup().id))]",
+            "metadata": {
+                "description": "The name for your managed identity resource."
+            }
+        },
+        "objectId": {
+            "type": "string",
+            "metadata": {
+                "description": "Specifies the object ID of a user, service principal or security group in the Azure Active Directory tenant for the vault. The object ID must be unique for the set of access policies. Get it by using Get-AzADUser or Get-AzADServicePrincipal cmdlets."
+            }
+        },
+        "secretsPermissions": {
+            "type": "array",
+            "defaultValue": [
+                "list",
+                "get",
+                "set"
+            ],
+            "metadata": {
+                "description": "Specifies the permissions to secrets in the vault. Valid values are: all, get, list, set, delete, backup, restore, recover, and purge."
+            }
+        }
+    },
+    "resources": [
+        {
+            "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+            "apiVersion": "2018-11-30",
+            "name": "[parameters('userAssignedIdentityName')]",
+            "location": "[parameters('location')]"
+        },
+        {            
+            "type": "Microsoft.KeyVault/vaults",
+            "apiVersion": "2021-04-01-preview",
+            "name": "[parameters('keyVaultName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "tenantId": "[subscription().tenantId]",
+                "sku": {
+                    "name": "Standard",
+                    "family": "A"
+                },
+                "enabledForTemplateDeployment": true,
+                "accessPolicies": [
+                    {
+                        "objectId": "[parameters('objectId')]",
+                        "tenantId": "[subscription().tenantId]",
+                        "permissions": {
+                            "secrets": "[parameters('secretsPermissions')]"
+                        }
+                    }
+                ]
+            }
+        }
+    ],
+    "outputs": {
+        "userIdentityResourceId": {
+            "type": "string",
+            "value": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('userAssignedIdentityName'))]"
+        },
+        "userAssignedIdentityPrincipalId": {
+            "type": "string",
+            "value": "[reference(parameters('userAssignedIdentityName')).principalId]"
+        },
+        "keyVaultName": {
+            "type": "string",
+            "value": "[parameters('keyVaultName')]"
+        },
+        "location": {
+            "type": "string",
+            "value": "[parameters('location')]"
+        }
+    }
+}

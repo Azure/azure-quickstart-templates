@@ -1,4 +1,14 @@
-﻿# This template will create a SQL Server 2014 SP1 Enterprise edition with Auto Patching, Auto Backup and Azure Key Vault Integration features enabled.
+---
+description: This template will create a SQL Server 2014 SP1 Enterprise edition with Auto Patching, Auto Backup and Azure Key Vault Integration features enabled.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: vm-sql-full-autobackup-autopatching-keyvault
+languages:
+- json
+---
+# SQL Server 2014 SP1 Enterprise all SQL VM features enabled
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sql/vm-sql-full-autobackup-autopatching-keyvault/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sql/vm-sql-full-autobackup-autopatching-keyvault/PublicDeployment.svg)
@@ -9,15 +19,12 @@
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sql/vm-sql-full-autobackup-autopatching-keyvault/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sql/vm-sql-full-autobackup-autopatching-keyvault/CredScanResult.svg)
 
-[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fsql%2Fvm-sql-full-autobackup-autopatching-keyvault%2Fazuredeploy.json)  
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fsql%2Fvm-sql-full-autobackup-autopatching-keyvault%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fsql%2Fvm-sql-full-autobackup-autopatching-keyvault%2Fazuredeploy.json)
-  
-
-  
 
 This template deploys a **SQL SERVER 2014 SP1 Virtual Machine** solution with all necessary components. It also enable Auto Patching, Auto Backup and Azure Key Vault Integration features.
 
-`Tags: SQL Server, Auto Patching, Auto Backup, Azure Key Vault,SQL Server 2014 Enterprise `
+`Tags: SQL Server, Auto Patching, Auto Backup, Azure Key Vault, SQL Server 2014 Enterprise, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, SqlIaaSAgent, Microsoft.Resources/deployments, Microsoft.Storage/storageAccounts, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Network/publicIPAddresses, Microsoft.Network/networkSecurityGroups, DSC`
 
 ## Solution overview and deployed resources
 
@@ -26,7 +33,7 @@ This is an overview of the solution
 This template will create a SQL Server 2014 Enterprise edition with Auto Patching, Auto Backup and Azure Key Vault Integration features enabled:
 
 +	A Virtual Network
-+	Two Storage Accounts one is used for SQL Server VM, one for SQL Server VM Autobackup 
++	Two Storage Accounts one is used for SQL Server VM, one for SQL Server VM Autobackup
 + 	One public IP address
 +	One network interface
 +	One network security group
@@ -71,5 +78,4 @@ When this feature is enabled, it automatically installs the SQL Server Connector
 |sqlAkvUrl|The location of the key vault|https://contosokeyvault.vault.azure.net/|
 |servicePrincipalName|Azure Active Directory service principal name. This is also referred to as the Client ID.|fde2b411-33d5-4e11-af04eb07b669ccf2|
 |servicePrincipalSecret|Azure Active Directory service principal secret. This is also referred to as the Client Secret.|9VTJSQwzlFepD8XODnzy8n2V01Jd8dAjwm/azF1XDKM=|
-
 

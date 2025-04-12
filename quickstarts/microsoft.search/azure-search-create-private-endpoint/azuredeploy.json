@@ -1,0 +1,200 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "name": {
+            "minLength": 2,
+            "maxLength": 60,
+            "type": "string",
+            "metadata": {
+                "description": "Service name must only contain lowercase letters, digits or dashes, cannot use dash as the first two or last one characters, cannot contain consecutive dashes, and is limited between 2 and 60 characters in length."
+            }
+        },
+        "sku": {
+            "defaultValue": "standard",
+            "allowedValues": [
+                "basic",
+                "standard",
+                "standard2",
+                "standard3",
+                "storage_optimized_l1",
+                "storage_optimized_l2"
+            ],
+            "type": "string",
+            "metadata": {
+                "description": "The pricing tier of the search service you want to create (for example, basic or standard)."
+            }
+        },
+        "replicaCount": {
+            "defaultValue": 1,
+            "minValue": 1,
+            "maxValue": 12,
+            "type": "int",
+            "metadata": {
+                "description": "Replicas distribute search workloads across the service. You need at least two replicas to support high availability of query workloads (not applicable to the free tier)."
+            }
+        },
+        "partitionCount": {
+            "defaultValue": 1,
+            "allowedValues": [
+                1,
+                2,
+                3,
+                4,
+                6,
+                12
+            ],
+            "type": "int",
+            "metadata": {
+                "description": "Partitions are units of storage. Increasing partitions adds capacity and speed by spreading an index over multiple shards."
+            }
+        },
+        "hostingMode": {
+            "defaultValue": "default",
+            "allowedValues": [
+                "default",
+                "highDensity"
+            ],
+            "type": "string",
+            "metadata": {
+                "description": "Applicable only for SKUs set to standard3. You can set this property to enable a single, high density partition that allows up to 1000 indexes, which is much higher than the maximum indexes allowed for any other SKU."
+            }
+        },
+        "location": {
+            "defaultValue": "[resourceGroup().location]",
+            "type": "string",
+            "metadata": {
+                "description": "Location for all resources."
+            }
+        },
+        "vnetName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of virtual network"
+            }
+        },
+        "subnetName": {
+            "type": "string"
+        },
+        "privateEndpointName": {
+            "type": "string"
+        }
+    },
+    "variables": {
+        "vnetAddressPrefix": "10.0.0.0/16",
+        "subnetPrefix": "10.0.0.0/24",
+        "privateDnsZoneName": "privatelink.search.windows.net",
+        "privateDnsZoneGroupName": "[format('{0}/dnsgroupname', parameters('privateEndpointName'))]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Search/searchServices",
+            "apiVersion": "2020-08-01",
+            "name": "[parameters('name')]",
+            "location": "[parameters('location')]",
+            "sku": {
+                "name": "[parameters('sku')]"
+            },
+            "properties": {
+                "replicaCount": "[parameters('replicaCount')]",
+                "partitionCount": "[parameters('partitionCount')]",
+                "hostingMode": "[parameters('hostingMode')]",
+                "publicNetworkAccess": "disabled"
+            }
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworks",
+            "apiVersion": "2022-01-01",
+            "name": "[parameters('vnetName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[variables('vnetAddressPrefix')]"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "[parameters('subnetName')]",
+                        "properties": {
+                            "addressPrefix": "[variables('subnetPrefix')]",
+                            "privateEndpointNetworkPolicies": "Disabled",
+                            "privateLinkServiceNetworkPolicies": "Disabled"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/privateDnsZones",
+            "apiVersion": "2020-06-01",
+            "name": "[variables('privateDnsZoneName')]",
+            "location": "global",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+            ],
+            "properties": {}
+        },
+        {
+            "type": "Microsoft.Network/privateEndpoints",
+            "apiVersion": "2022-01-01",
+            "name": "[parameters('privateEndpointName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Search/searchServices', parameters('name'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+            ],
+            "properties": {
+                "subnet": {
+                    "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('subnetName'))]"
+                },
+                "privateLinkServiceConnections": [
+                    {
+                        "name": "[parameters('privateEndpointName')]",
+                        "properties": {
+                            "privateLinkServiceId": "[resourceId('Microsoft.Search/searchServices', parameters('name'))]",
+                            "groupIds": [
+                                "searchService"
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+            "apiVersion": "2020-06-01",
+            "name": "[format('{0}/{1}', variables('privateDnsZoneName'), format('{0}-link', parameters('vnetName')))]",
+            "location": "global",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/privateDnsZones', variables('privateDnsZoneName'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+            ],
+            "properties": {
+                "registrationEnabled": false,
+                "virtualNetwork": {
+                    "id": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+            "apiVersion": "2021-08-01",
+            "name": "[variables('privateDnsZoneGroupName')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/privateDnsZones', variables('privateDnsZoneName'))]",
+                "[resourceId('Microsoft.Network/privateEndpoints', parameters('privateEndpointName'))]"
+            ],
+            "properties": {
+                "privateDnsZoneConfigs": [
+                    {
+                        "name": "config1",
+                        "properties": {
+                            "privateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', variables('privateDnsZoneName'))]"
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}

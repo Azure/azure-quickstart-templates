@@ -27,7 +27,7 @@ Parameter         | Suggested value     | Description
 ## Deployment
 
 There are a few ways to deploy this template.
-You can use [PowerShell](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-template-deploy), [Azure CLI](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-template-deploy-cli), [Azure Portal](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-template-deploy-portal) or your favorite SDK.
+You can use [PowerShell](https://docs.microsoft.com/azure/azure-resource-manager/resource-group-template-deploy), [Azure CLI](https://docs.microsoft.com/azure/azure-resource-manager/resource-group-template-deploy-cli), [Azure Portal](https://docs.microsoft.com/azure/azure-resource-manager/resource-group-template-deploy-portal) or your favorite SDK.
 
 For Azure CLI I'm using the Visual Code with Azure CLI extensions, if you like, you can find more information [here](https://code.visualstudio.com/docs/azure/extensions). But bare in mind that you don't need to use the Visual Code, you can stick with the old good always present **Command Line** on Windows or any **bash terminal**
 
@@ -171,6 +171,6 @@ Once the web site load, you now read as a Java developer
 - Allow you to take the next step and deploy your code.
 - Easily use deployment center to get code published from your client or setup continuous deployment.
 
-- Follow our [quickstart guide](https://docs.microsoft.com/en-us/azure/app-service/containers/quickstart-java) and you'll have a full app ready in 5 minutes or less.
+- Follow our [quickstart guide](https://docs.microsoft.com/azure/app-service/containers/quickstart-java) and you'll have a full app ready in 5 minutes or less.
 
 ![Screen](./images/Website.png)

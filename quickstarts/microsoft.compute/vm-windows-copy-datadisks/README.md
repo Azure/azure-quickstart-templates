@@ -1,4 +1,14 @@
-# Windows VM deployment with a variable number of data disks
+---
+description: This template allows you to deploy a simple VM and specify the number of data disks at deploy time using a parameter.  Note that the number and size of data disks is bound by the VM size.  The VM size for this sample is Standard_DS4_v2 with a default of 16 data disks.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: vm-windows-copy-datadisks
+languages:
+- json
+---
+# Deploy a Windows VM with a variable number of data disks
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/vm-windows-copy-datadisks/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/vm-windows-copy-datadisks/PublicDeployment.svg)
@@ -15,6 +25,6 @@
 
 This template allows you to deploy a simple VM and specify the number of data disks at deploy time using a parameter.  Note that the number and size of data disks is bound by the VM size, this sample does not attempt to enforce those rules beyond the size used in this sample.
 
-Docs are <a href="https://docs.microsoft.com/en-us/azure/virtual-machines/virtual-machines-windows-sizes" target="_blank">here if you want the details.</a>
+Docs are <a href="https://docs.microsoft.com/azure/virtual-machines/virtual-machines-windows-sizes" target="_blank">here if you want the details.</a>
 
-`Tags: datadisk, data, disk, copy, property, loop, vm`
+`Tags: datadisk, data, disk, copy, property, loop, vm, Microsoft.Network/publicIPAddresses, Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines`

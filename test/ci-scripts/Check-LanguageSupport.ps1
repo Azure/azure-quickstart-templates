@@ -36,13 +36,21 @@ else {
 Write-Host "Found ${mainTemplateFilenameBicep}: $isBicepFileFound"
 Write-Host "Found ${mainTemplateFilenameJson}: $isJsonFileFound"
 
-if ($isBicepFileFound -and !$isJsonFileFound) {
-    Write-Error "If $mainTemplateFilenameBicep file is included, $jsonFilename1 must also be included (use 'bicep -build $mainTemplateFilenameBicep --outfile $jsonFilename1' to create it)"
-}
-if (!$isJsonFileFound) {
-    Write-Error "$jsonFilename1 must always be included in the sample"
+# if bicep and json are found remind user json is no longer needed - but this is only needed if it's in the PR - can probably do it manually for now?
+# if ($isBicepFileFound -and $isJsonFileFound) {
+#    Write-Error "If $mainTemplateFilenameBicep file is included, $jsonFilename1 should not be modified as it will be automatically updated."
+#}
+# if (!$isJsonFileFound) {
+#     Write-Error "$jsonFilename1 must always be included in the sample"
+# }
+
+if($isBicepFileFound){
+    $mainTemplateDeploymentFilename = $mainTemplateFilenameBicep
+}else{
+    $mainTemplateDeploymentFilename = $mainTemplateFilenameJson
 }
 
 Write-Host "##vso[task.setvariable variable=bicep.supported]$isBicepFileFound"
 Write-Host "##vso[task.setvariable variable=mainTemplate.filename.json]$mainTemplateFilenameJson"
-Write-Host "##vso[task.setvariable variable=bicep.version]" # Initialize to empty string, will be filled in by Install-Bicep.ps1
+Write-Host "##vso[task.setvariable variable=mainTemplate.deployment.filename]$mainTemplateDeploymentFilename"
+#Write-Host "##vso[task.setvariable variable=bicep.version]" # Initialize to empty string, will be filled in by Install-Bicep.ps1

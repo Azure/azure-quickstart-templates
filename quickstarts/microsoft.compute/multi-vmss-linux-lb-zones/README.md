@@ -1,4 +1,14 @@
-# Virtual Machine Scaleset distributed across Availability Zones with Load Balancer
+---
+description: This template creates a VMSS placed in separate Availability Zones with a load balancer.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: multi-vmss-linux-lb-zones
+languages:
+- json
+---
+# Virtual Machine Scaleset example using Availability Zones
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/multi-vmss-linux-lb-zones/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.compute/multi-vmss-linux-lb-zones/PublicDeployment.svg)
@@ -15,4 +25,4 @@
 
 This template creates a VMSS placed in separate Availability Zones with a load balancer.
 
-
+`Tags: Microsoft.Network/virtualNetworks, Microsoft.Network/networkSecurityGroups, Microsoft.Network/publicIPAddresses, Microsoft.Network/loadBalancers, Microsoft.Compute/virtualMachineScaleSets, CustomScript`

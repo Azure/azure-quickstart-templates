@@ -1,3 +1,13 @@
+---
+description: Azure Network Security Group Analytics with Azure Log Analytics (OMS)
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: oms-azurensg-solution
+languages:
+- json
+---
 # Azure Network Security Group Analytics
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/oms-azurensg-solution/PublicLastTestDate.svg)
@@ -13,11 +23,11 @@
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Foms-azurensg-solution%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdemos%2Foms-azurensg-solution%2Fazuredeploy.json)
 
-This template deploys **Azure Network Security Group analytics solution** on an Azure Log Analytics workspace. 
+This template deploys **Azure Network Security Group analytics solution** on an Azure Log Analytics workspace.
 
-Note: The Microsoft recommended solution for Network Analytics is [Traffic Analytics](https://docs.microsoft.com/azure/networking/network-monitoring-overview#traffic-analytics) 
+Note: The Microsoft recommended solution for Network Analytics is [Traffic Analytics](https://docs.microsoft.com/azure/networking/network-monitoring-overview#traffic-analytics)
 
-`Tags: Azure Network Security Group, OMS Log Analytics, Monitoring`
+`Tags: Azure Network Security Group, OMS Log Analytics, Monitoring, Microsoft.OperationalInsights/workspaces, views, Blade, OverviewTile, Microsoft.OperationsManagement/solutions`
 
 The Azure Network Security Group analytics solution provides visualizations and insights into your Azure NSG Logs:
 * NetworkSecurityGroupEvent
@@ -31,7 +41,7 @@ Perform the following steps to configure the Azure Network Security Group analyt
 
 <BR>
 2. Follow steps to Enable diagnostics logging for the Network Security Group:
-(https://docs.microsoft.com/en-us/azure/virtual-network/virtual-network-nsg-manage-log) 
+(https://docs.microsoft.com/azure/virtual-network/virtual-network-nsg-manage-log)
 
 After you configure the solution, data should start flowing to your workspace within 15 minutes.
 
@@ -53,5 +63,4 @@ After you click the **Azure Network Security Group analytics** tile on the Overv
 On the **Azure Network Security Group analytics** dashboard, review the summary information in one of the blades, and then click one to view detailed information on the log search page.
 
 On any of the log search pages, you can view results by time, detailed results, and your log search history. You can also filter by facets to narrow the results.
-
 

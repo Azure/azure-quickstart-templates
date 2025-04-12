@@ -1,4 +1,14 @@
-# Create a Windows VM with Symantec Endpoint Protection extension enabled
+---
+description: This template creates a Windows VM and sets up a trial version of Symantec Endpoint Protection
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: symantec-extension-windows-vm
+languages:
+- json
+---
+# Symantec Endpoint Protection extension trial on Windows VM
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/symantec-extension-windows-vm/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/symantec-extension-windows-vm/PublicDeployment.svg)
@@ -13,4 +23,4 @@
 
 Create a Windows VM with Symantec Endpoint Protection extension enabled. This is a sample template that shows how to set up a VM with a trial version of Symantec Endpoint Protection service with this configuration.
 
-
+`Tags: Microsoft.Storage/storageAccounts, Microsoft.Network/publicIPAddresses, Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, SymantecEndpointProtection`

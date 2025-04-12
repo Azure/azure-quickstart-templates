@@ -1,4 +1,14 @@
-# Azure Marketplace VM with CreateUIDefinition
+---
+description: This template allows deploying a linux VM using new or existing resources for the Virtual Network, Storage and Public IP Address.  It also allows for choosing between SSH and Password authenticate.  The templates uses conditions and logic functions to remove the need for nested deployments.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: 100-marketplace-sample
+languages:
+- json
+---
+# Marketplace Sample VM with Conditional Resources
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/100-marketplace-sample/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/100-marketplace-sample/PublicDeployment.svg)
@@ -24,8 +34,10 @@ Before submitting to Marketplace, the following steps will need to be performed
 - Rename ```azuredeploy.json``` to ```mainTemplate.json```
 - Remove ```azuredeploy.parameters.json``` from the list of files to be submitted
 - Update the GUID in ```mainTemplate.json``` for Customer Usage Attribution
-  - https://docs.microsoft.com/en-us/azure/marketplace/marketplace-solution-templates
+  - https://docs.microsoft.com/azure/marketplace/marketplace-solution-templates
 - Create a zip package of all the dependencies including the templates files, scripts, UI definition etc
-  - https://docs.microsoft.com/en-us/azure/marketplace/cloud-partner-portal/azure-applications/cpp-skus-tab#package-details-for-solution-template 
-  
+  - https://docs.microsoft.com/azure/marketplace/cloud-partner-portal/azure-applications/cpp-skus-tab#package-details-for-solution-template
+
   `Tags: new, exiting, resource, vm, condition, conditional`
+
+`Tags: Microsoft.Resources/deployments, Microsoft.Storage/storageAccounts, Microsoft.Network/publicIPAddresses, Microsoft.Network/virtualNetworks, Microsoft.Network/networkSecurityGroups, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, extensions, CustomScript`

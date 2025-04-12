@@ -1,4 +1,14 @@
-# Kentico Xperience environment
+---
+description: This template facilitates the deployment of resources required to host Kentico Xperience environments in Microsoft Azure.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: kentico-xperience-environment
+languages:
+- json
+---
+# Kentico Xperience
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/kentico/kentico-xperience-environment/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/kentico/kentico-xperience-environment/PublicDeployment.svg)
@@ -13,7 +23,6 @@
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fkentico%2Fkentico-xperience-environment%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fkentico%2Fkentico-xperience-environment%2Fazuredeploy.json)
 
-
 This template deploys resources required to host Kentico Xperience environments in Microsoft Azure.
 
 [Kentico Xperience](https://xperience.io/) is an all-in-one content management, E-commerce, and Online Marketing platform that drives business results for companies of all sizes, both on-premise or in the cloud. It gives customers and partners powerful, comprehensive tools and customer-centric solutions to create stunning websites and manage customer experiences easily in a dynamic business environment.
@@ -22,19 +31,17 @@ Xperience supports website development using ASP.&#8203;NET Core or ASP.NET MVC 
 
 Both the Xperience and live site applications access data from the same database and use the Xperience API. Web farms handle content synchronization of the application cache, files, and other data. This approach allows the live site and the administration to exist separately, providing finer control over each website's presentation layer.
 
-`Tags: Kentico, Xperience, cms, ASP.NET, content management, e-commerce, online marketing`
-
 ## Deployed resources
 
 The template deploys the following resources:
 
 ### Microsoft.Sql
 
-Deploys an Azure SQL server with the specified configuration. 
+Deploys an Azure SQL server with the specified configuration.
 
 The deployed SQL server by default only allows connections from other Azure resources. To allow connections from non-Azure services or environments, you need to set custom firewall rules.
 
-#### Deployed resources:
+#### Deployed resources
 
 + **Azure SQL Server**: An Azure SQL Server instance
 
@@ -47,7 +54,7 @@ Furthermore, if deployed to an App Service plan with a pricing tier of *S1* or h
 #### Deployed resources:
 
 + **Administration App Service Plan:** An App Service plan housing the Xperience administration application
-+ **Live-site App Service Plan:** An App Service plan housing the ASP.NET Core or MVC 5 front-end application 
++ **Live-site App Service Plan:** An App Service plan housing the ASP.NET Core or MVC 5 front-end application
 + **Azure App Service front-end Web App:** A Web App hosting the front-end application
 + **Azure App Service administration Web App:** A Web App hosting the Xperience Administration application
 
@@ -55,7 +62,7 @@ Furthermore, if deployed to an App Service plan with a pricing tier of *S1* or h
 
 Deploys Application Insights for the live site application.
 
-#### Deployed resources:
+#### Deployed resources
 
 + **Application Insights:** An Application Insights service that provides performance monitoring for the Web App hosting the live site application.
 
@@ -67,6 +74,8 @@ You can use this template to configure and deploy resources necessary to host a 
 2. Use this template to deploy resources necessary to host the Xperience site in Azure (click *Deploy to Azure* at the top of this document).
 	- See the **Deployed resources** section for an overview of all resources deployed by the template.
 3. [Publish](https://devnet.kentico.com/CMSPages/DocLinkMapper.ashx?version=latest&link=kentico_azure_webapps) the Xperience administration and front-end applications to the deployed Web Apps.
-4. Upload the project's database to a database created under the Azure SQL server instance deployed by the template. 
+4. Upload the project's database to a database created under the Azure SQL server instance deployed by the template.
 
 For more information about site development and general best practices, visit the [Xperience documentation](https://docs.xperience.io/).
+
+`Tags: Kentico, Xperience, cms, ASP.NET, content management, e-commerce, online marketing, Microsoft.Resources/deployments, Microsoft.Sql/servers, firewallrules, Microsoft.Web/serverfarms, Microsoft.Web/sites, SQLServer, Microsoft.Insights/autoscalesettings, ChangeCount, Microsoft.Insights/components`

@@ -1,4 +1,14 @@
-# Provision a function app on a consumption plan with managed identity enabled
+---
+description: Creates a function app with managed service identity enabled with Application Insights set up for logs and metrics.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: functions-managed-identity
+languages:
+- json
+---
+# Creates a function app with managed service identity
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/functions-managed-identity/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/functions-managed-identity/PublicDeployment.svg)
@@ -17,7 +27,7 @@ This template creates a function application on a consumption plan on Windows. I
 
 ## Managed identities in Azure Functions
 
-You can learn more about [managed identities](https://docs.microsoft.com/en-us/azure/app-service/overview-managed-identity) and common scenarios in the [documentation](https://docs.microsoft.com/en-us/azure/app-service/overview-managed-identity#obtaining-tokens-for-azure-resources).
+You can learn more about [managed identities](https://docs.microsoft.com/azure/app-service/overview-managed-identity) and common scenarios in the [documentation](https://docs.microsoft.com/azure/app-service/overview-managed-identity#obtaining-tokens-for-azure-resources).
 
 Another common scenario is to grant the managed identity access to either resource groups or subscriptions so that the function has permissions to take action on Azure resources. This is useful when using functions to automate Azure operational tasks.
 
@@ -38,4 +48,6 @@ This template performs the following tasks
 * Creates an application insights resource to store logs and metrics for the function.
 * Creates a functions application with managed identity enabled, and running on a consumption plan.
 
-For more information about Azure Functions, see the [Azure Functions Overview](https://azure.microsoft.com/en-us/documentation/articles/functions-overview/).
+For more information about Azure Functions, see the [Azure Functions Overview](https://azure.microsoft.com/documentation/articles/functions-overview/).
+
+`Tags: Microsoft.Web/sites, SystemAssigned, Microsoft.Web/serverfarms, Microsoft.Storage/storageAccounts, Microsoft.Insights/components`

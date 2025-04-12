@@ -71,35 +71,30 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2020-06-01' = {
         virtualNetwork_CIDR
       ]
     }
-  }
-}
-
-resource subnet1 'Microsoft.Network/virtualNetworks/subnets@2020-06-01' = {
-  parent: virtualNetwork
-  name: subnet1Name
-  properties: {
-    addressPrefix: subnet1_CIDR
-    privateEndpointNetworkPolicies: 'Disabled'
-  }
-}
-
-resource subnet2 'Microsoft.Network/virtualNetworks/subnets@2020-06-01' = {
-  parent: virtualNetwork
-  name: subnet2Name
-  dependsOn: [
-    subnet1
-  ]
-  properties: {
-    addressPrefix: subnet2_CIDR
-    delegations: [
+    subnets: [
       {
-        name: 'delegation'
+        name: subnet1Name
         properties: {
-          serviceName: 'Microsoft.Web/serverfarms'
+          addressPrefix: subnet1_CIDR
+          privateEndpointNetworkPolicies: 'Disabled'
+        }
+      }
+      {
+        name: subnet2Name
+        properties: {
+          addressPrefix: subnet2_CIDR
+          delegations: [
+            {
+              name: 'delegation'
+              properties: {
+                serviceName: 'Microsoft.Web/serverfarms'
+              }
+            }
+          ]
+          privateEndpointNetworkPolicies: 'Enabled'
         }
       }
     ]
-    privateEndpointNetworkPolicies: 'Enabled'
   }
 }
 
@@ -116,7 +111,7 @@ resource serverFarm 'Microsoft.Web/serverfarms@2020-06-01' = {
   kind: 'app'
 }
 
-resource webApp1 'Microsoft.Web/sites@2020-06-01' = {
+resource webApp1 'Microsoft.Web/sites@2022-03-01' = {
   name: site1_Name
   location: location
   kind: 'app'
@@ -125,21 +120,14 @@ resource webApp1 'Microsoft.Web/sites@2020-06-01' = {
   }
 }
 
-resource webApp2 'Microsoft.Web/sites@2020-06-01' = {
+resource webApp2 'Microsoft.Web/sites@2022-03-01' = {
   name: site2_Name
   location: location
   kind: 'app'
   properties: {
     serverFarmId: serverFarm.id
-  }
-}
-
-resource webApp2AppSettings 'Microsoft.Web/sites/config@2020-06-01' = {
-  parent: webApp2
-  name: 'appsettings'
-  properties: {
-    WEBSITE_DNS_SERVER: '168.63.129.16'
-    WEBSITE_VNET_ROUTE_ALL: '1'
+    virtualNetworkSubnetId: resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetwork.name, subnet2Name)
+    vnetRouteAllEnabled: true
   }
 }
 
@@ -177,20 +165,12 @@ resource webApp2Binding 'Microsoft.Web/sites/hostNameBindings@2019-08-01' = {
   }
 }
 
-resource webApp2NetworkConfig 'Microsoft.Web/sites/networkConfig@2020-06-01' = {
-  parent: webApp2
-  name: 'virtualNetwork'
-  properties: {
-    subnetResourceId: subnet2.id
-  }
-}
-
 resource privateEndpoint 'Microsoft.Network/privateEndpoints@2020-06-01' = {
   name: privateEndpointName
   location: location
   properties: {
     subnet: {
-      id: subnet1.id
+      id: resourceId('Microsoft.Network/virtualNetworks/subnets',virtualNetwork.name ,subnet1Name)
     }
     privateLinkServiceConnections: [
       {

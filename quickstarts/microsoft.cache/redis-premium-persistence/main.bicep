@@ -47,7 +47,7 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2021-04-01' existing 
   name: storageAccountName
 }
 
-var cacheAccountKey = listKeys(storageAccount.id, '2021-04-01').keys[0].value
+var cacheAccountKey = storageAccount.listKeys().keys[0].value
 
 resource cache 'Microsoft.Cache/Redis@2020-06-01' = {
   name: redisCacheName
@@ -69,7 +69,7 @@ resource cache 'Microsoft.Cache/Redis@2020-06-01' = {
   }
 }
 
-resource diagSettings 'Microsoft.Insights/diagnosticsettings@2017-05-01-preview' = {
+resource diagSettings 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
   scope: cache
   name: redisCacheName
   properties: {

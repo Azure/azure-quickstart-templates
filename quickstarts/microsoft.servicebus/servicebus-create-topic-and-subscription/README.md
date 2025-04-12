@@ -1,4 +1,14 @@
-# Create a Service Bus namespace with Topic and Subscription
+---
+description: This template enables you to deploy a Service Bus Standard namespace, a topic, and a subscription.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: servicebus-create-topic-and-subscription
+languages:
+- json
+---
+# Create a Service Bus namespace, topic, and subscription
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.servicebus/servicebus-create-topic-and-subscription/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.servicebus/servicebus-create-topic-and-subscription/PublicDeployment.svg)
@@ -15,5 +25,4 @@
 
 For information about using this template, see [Create a Service Bus namespace with Topic and Subscription using an ARM template](http://azure.microsoft.com/documentation/articles/service-bus-resource-manager-namespace-topic/).
 
-
-
+`Tags: Microsoft.ServiceBus/namespaces, topics, Subscriptions`

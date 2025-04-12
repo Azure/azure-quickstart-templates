@@ -1,4 +1,14 @@
-# Creating a Custom Provider with Resources
+---
+description: This template creates function app used as the workload for a custom resource provider in a template deployment.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: custom-rp-with-function
+languages:
+- json
+---
+# Create a function app and call it using a Custom Resource
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.customproviders/custom-rp-with-function/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.customproviders/custom-rp-with-function/PublicDeployment.svg)
@@ -67,7 +77,7 @@ Navigating to the deployment details on the Azure Resource Manager template will
 To confirm that the custom resource has been created , you can use a rest api client such as postman and run the following query and see the results:
 
 ```
-GET  
+GET
 https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.CustomProviders/resourceProviders/{resourceProviderName}/customResources/{customResourceName}?api-version=2018-09-01-preview
 ```
 
@@ -90,7 +100,7 @@ In addition to users you can also define actions on your resourceprovider. An ex
 The format for this action is similar to the resource type defined above , but since this is an action this call will only support POST methods as follows:
 
 ```
-POST  
+POST
 https://management.azure.com/subscriptions/{subscriptionid}/resourceGroups/{resourcegroup}/providers/Microsoft.CustomProviders/resourceProviders/{customrpname}/ping?api-version=2018-09-01-preview
 ```
 
@@ -98,4 +108,4 @@ The code that enables this process is all implemented as part of the azure funct
 
 + [**Creating an azure function**](SampleFunctions/CSharpSimpleProvider/README.md)
 
-
+`Tags: Microsoft.Storage/storageAccounts, Microsoft.Web/sites, Microsoft.CustomProviders/resourceProviders, Microsoft.CustomProviders/resourceProviders/customResources`

@@ -1,4 +1,14 @@
-# Logic app that posts a message to a slack channel when an alert fires
+---
+description: This template allows you to create a Logic app that has a webhook to be used from an Azure Alert. When the Alert is triggered, it will post a message to a slack channel that you specify. You need to have a slack account to use this template.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: alert-to-slack-with-logic-app
+languages:
+- json
+---
+# Alert to Slack with Logic app
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/alert-to-slack-with-logic-app/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/alert-to-slack-with-logic-app/PublicDeployment.svg)
@@ -21,9 +31,9 @@ After the template deployment has completed, there is a manual step that you mus
 1. Once the template has completed, navigate to the resource group you deployed it to.
 2. Find the Logic app in the resource list, and click it.
 3. Select the **Edit** button in the command bar.
-4. You'll now see the *Logic app designer* with "Connections" as being the last step. 
-5. Click "Connections". 
-6. Sign in, and acknowledge that Logic apps can access your account. 
+4. You'll now see the *Logic app designer* with "Connections" as being the last step.
+5. Click "Connections".
+6. Sign in, and acknowledge that Logic apps can access your account.
 7. Click the Green checkmark at the bottom of the **Slack** card.
 8. Click the Save button in the command bar.
 
@@ -34,9 +44,9 @@ To call this whenever your Alert fires, you need to paste in the webhook URI int
 1. Once the template has completed, navigate to the resource group you deployed it to.
 2. Under **Settings**, click on **Deployments**
 3. Select the top deployment.
-4. Click on **Outputs**. Copy the output called **WebHookURI**. 
+4. Click on **Outputs**. Copy the output called **WebHookURI**.
 5. Navigate to the alert you want to trigger the Logic app and select **Edit**.
-6. Scroll to the bottom and paste in the **WebHook**. 
+6. Scroll to the bottom and paste in the **WebHook**.
 7. Click save.
 
-
+`Tags: Microsoft.Web/connections, Microsoft.Logic/workflows, request, object, string, Http, ApiConnection`

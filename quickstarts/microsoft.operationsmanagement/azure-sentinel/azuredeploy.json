@@ -4,49 +4,59 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.4.1.14562",
-      "templateHash": "14574378311890430918"
+      "version": "0.5.6.12127",
+      "templateHash": "5342707434901268757"
     }
   },
   "parameters": {
-    "workspaceName": {
-      "type": "string"
-    },
     "location": {
       "type": "string",
       "defaultValue": "[resourceGroup().location]"
+    },
+    "sentinelName": {
+      "type": "string",
+      "defaultValue": "sentinel"
+    },
+    "retentionInDays": {
+      "type": "int",
+      "defaultValue": 90,
+      "maxValue": 730,
+      "minValue": 30
     }
   },
-  "functions": [],
+  "variables": {
+    "workspaceName": "[format('{0}-{1}-{2}', parameters('location'), parameters('sentinelName'), uniqueString(resourceGroup().id))]",
+    "solutionName": "[format('SecurityInsights({0})', variables('workspaceName'))]"
+  },
   "resources": [
     {
       "type": "Microsoft.OperationalInsights/workspaces",
       "apiVersion": "2020-08-01",
-      "name": "[parameters('workspaceName')]",
+      "name": "[variables('workspaceName')]",
       "location": "[parameters('location')]",
       "properties": {
-        "retentionInDays": 7,
         "sku": {
-          "name": "Free"
-        }
+          "name": "PerGB2018"
+        },
+        "retentionInDays": "[parameters('retentionInDays')]"
       }
     },
     {
       "type": "Microsoft.OperationsManagement/solutions",
       "apiVersion": "2015-11-01-preview",
-      "name": "[format('SecurityInsights({0})', parameters('workspaceName'))]",
+      "name": "[variables('solutionName')]",
       "location": "[parameters('location')]",
       "properties": {
-        "workspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('workspaceName'))]"
+        "workspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('workspaceName'))]"
       },
       "plan": {
-        "name": "[format('SecurityInsights({0})', parameters('workspaceName'))]",
-        "product": "OMSGallery/SecurityInsights",
+        "name": "[variables('solutionName')]",
         "publisher": "Microsoft",
+        "product": "OMSGallery/SecurityInsights",
         "promotionCode": ""
       },
       "dependsOn": [
-        "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('workspaceName'))]"
+        "[resourceId('Microsoft.OperationalInsights/workspaces', variables('workspaceName'))]"
       ]
     }
   ]
