@@ -339,7 +339,7 @@
       "defaultValue": false,
       "metadata": {
         "description": "Allows customers to use DHCP for Hosts and Cluster IPs. If not declared, the deployment will default to static IPs. When true, GW and DNS servers are not required"
-      }
+     }
     },
     "physicalNodesSettings": {
       "defaultValue": [
@@ -484,40 +484,41 @@
     "CloudWithnessStorageAccountIdVar": "[resourceId('Microsoft.Storage/storageAccounts', parameters('clusterWitnessStorageAccountName'))]",
     "copy": [
       {
-        "name": "answerfileSBESecrets",
-        "count": "[length(parameters('partnerCredentialList'))]",
-        "input": {
-          "secretName": "[parameters('partnerCredentialList')[copyIndex('answerfileSBESecrets')].secretName]",
-          "eceSecretName": "[parameters('partnerCredentialList')[copyIndex('answerfileSBESecrets')].secretName]",
-          "secretLocation": "[concat('https://', parameters('keyVaultName'), '.vault.azure.net/secrets/', parameters('partnerCredentialList')[copyIndex('answerfileSBESecrets')].secretName)]"
-        }
+          "name": "answerfileSBESecrets",
+          "count": "[length(parameters('partnerCredentialList'))]",
+          "input": {
+              "secretName": "[parameters('partnerCredentialList')[copyIndex('answerfileSBESecrets')].secretName]",
+              "eceSecretName": "[parameters('partnerCredentialList')[copyIndex('answerfileSBESecrets')].secretName]",
+              "secretLocation": "[concat('https://', parameters('keyVaultName'), '.vault.azure.net/secrets/', parameters('partnerCredentialList')[copyIndex('answerfileSBESecrets')].secretName)]"
+          }
       },
       {
-        "name": "isNodeNameValid",
-        "count": "[length(parameters('physicalNodesSettings'))]",
-        "input": "[if(equals(parameters('clusterName'), parameters('physicalNodesSettings')[copyIndex('isNodeNameValid')].name), 'false', 'true')]"
+          "name": "isNodeNameValid",
+          "count": "[length(parameters('physicalNodesSettings'))]",
+          "input": "[if(equals(parameters('clusterName'), parameters('physicalNodesSettings')[copyIndex('isNodeNameValid')].name), 'false', 'true')]"
       }
     ],
-    "deploymentSecretsList": [
+    "deploymentSecretsList":[
       {
         "secretName": "[variables('storageWitnessSecretName')]",
-        "eceSecretName": "[variables('storageWitnessECEName')]",
+        "eceSecretName" : "[variables('storageWitnessECEName')]",
         "secretLocation": "[concat('https://', parameters('keyVaultName'), '.vault.azure.net/secrets/', variables('storageWitnessSecretName'))]"
       },
       {
-        "secretName": "[variables('LocalAdminCredentialSecretName')]",
-        "eceSecretName": "[variables('LocalAdminCredentialECEName')]",
-        "secretLocation": "[concat('https://', parameters('keyVaultName'), '.vault.azure.net/secrets/', variables('LocalAdminCredentialSecretName'))]"
+        "secretName":  "[variables('LocalAdminCredentialSecretName')]",
+        "eceSecretName" :  "[variables('LocalAdminCredentialECEName')]",
+         "secretLocation": "[concat('https://', parameters('keyVaultName'), '.vault.azure.net/secrets/', variables('LocalAdminCredentialSecretName'))]"
       },
       {
-        "secretName": "[variables('domainAdminSecretName')]",
-        "eceSecretName": "[variables('domainAdminCredentialECEName')]",
+        "secretName":  "[variables('domainAdminSecretName')]",
+        "eceSecretName" :  "[variables('domainAdminCredentialECEName')]",
         "secretLocation": "[concat('https://', parameters('keyVaultName'), '.vault.azure.net/secrets/', variables('domainAdminSecretName'))]"
       }
+
     ]
   },
-  "resources": {
-    "witnessStorageAcc": {
+  "resources":{
+    "witnessStorageAcc" : {
       "type": "Microsoft.Storage/storageAccounts",
       "apiVersion": "2023-01-01",
       "name": "[parameters('clusterWitnessStorageAccountName')]",
@@ -529,7 +530,7 @@
       "kind": "StorageV2",
       "properties": {
         "supportsHttpsTrafficOnly": true,
-        "minimumTlsVersion": "TLS1_2"
+         "minimumTlsVersion": "TLS1_2"
       }
     },
     "hcirproleassignment": {
@@ -571,22 +572,22 @@
         }
       }
     },
-    "edgeDevices": {
-      "condition": "[equals(parameters('deploymentMode'), 'Validate')]",
-      "dependsOn": [
+    "edgeDevices" : {
+        "condition": "[equals(parameters('deploymentMode'), 'Validate')]",
+        "dependsOn": [
         "hcirproleassignment"
-      ],
-      "copy": {
-        "name": "edgeDeviceCopy",
-        "count": "[length(parameters('arcNodeResourceIds'))]"
+       ],
+        "copy": {
+          "name": "edgeDeviceCopy",
+          "count": "[length(parameters('arcNodeResourceIds'))]"
+        },
+        "type": "Microsoft.AzureStackHCI/edgeDevices",
+        "apiVersion": "2024-09-01-preview",
+        "name": "default",
+        "scope": "[concat('Microsoft.HybridCompute/machines', '/', last(split(parameters('arcNodeResourceIds')[copyindex()], '/')))]",
+        "kind": "HCI",
+        "properties": {}
       },
-      "type": "Microsoft.AzureStackHCI/edgeDevices",
-      "apiVersion": "2024-09-01-preview",
-      "name": "default",
-      "scope": "[concat('Microsoft.HybridCompute/machines', '/', last(split(parameters('arcNodeResourceIds')[copyindex()], '/')))]",
-      "kind": "HCI",
-      "properties": {}
-    },
     "arcMachineRoleAssignment": {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2021-04-01",
@@ -607,18 +608,18 @@
           "resources": [
             {
               "copy": {
-                "name": "DVMroleAssignmentCopy",
-                "count": "[length(parameters('arcNodeResourceIds1'))]"
+              "name": "DVMroleAssignmentCopy",
+              "count": "[length(parameters('arcNodeResourceIds1'))]"
               },
               "type": "Microsoft.Authorization/roleAssignments",
               "apiVersion": "2022-04-01",
               "name": "[guid(concat('DMR-', parameters('arcNodeResourceIds1')[copyIndex()]))]",
               "properties": {
-                "mode": "Incremental",
-                "roleDefinitionId": "[concat(subscription().id, '/providers/Microsoft.Authorization/roleDefinitions/', '865ae368-6a45-4bd1-8fbf-0d5151f56fc1')]",
-                "principalId": "[reference(parameters('arcNodeResourceIds1')[copyIndex()], '2023-10-03-preview', 'full').identity.principalId]",
-                "scope": "[resourceGroup().id]",
-                "description": "[concat(substring(parameters('arcNodeResourceIds1')[copyIndex()],lastIndexOf(parameters('arcNodeResourceIds1')[copyIndex()],'/')),'- Azure Stack HCI Device Management Role')]"
+              "mode": "Incremental",
+              "roleDefinitionId": "[concat(subscription().id, '/providers/Microsoft.Authorization/roleDefinitions/', '865ae368-6a45-4bd1-8fbf-0d5151f56fc1')]",
+              "principalId": "[reference(parameters('arcNodeResourceIds1')[copyIndex()], '2023-10-03-preview', 'full').identity.principalId]",
+              "scope": "[resourceGroup().id]",
+              "description": "[concat(substring(parameters('arcNodeResourceIds1')[copyIndex()],lastIndexOf(parameters('arcNodeResourceIds1')[copyIndex()],'/')),'- Azure Stack HCI Device Management Role')]"
               }
             }
           ]
@@ -650,8 +651,8 @@
           "resources": [
             {
               "copy": {
-                "name": "KVroleAssignmentCopy",
-                "count": "[length(parameters('arcNodeResourceIds1'))]"
+              "name": "KVroleAssignmentCopy",
+              "count": "[length(parameters('arcNodeResourceIds1'))]"
               },
               "type": "Microsoft.Authorization/roleAssignments",
               "apiVersion": "2022-04-01",
@@ -693,8 +694,8 @@
           "resources": [
             {
               "copy": {
-                "name": "IfraVMroleAssignmentCopy",
-                "count": "[length(parameters('arcNodeResourceIds1'))]"
+              "name": "IfraVMroleAssignmentCopy",
+              "count": "[length(parameters('arcNodeResourceIds1'))]"
               },
               "type": "Microsoft.Authorization/roleAssignments",
               "apiVersion": "2022-04-01",
@@ -716,7 +717,7 @@
         }
       }
     },
-    "StorageAccountConfigurations": {
+    "StorageAccountConfigurations":{
       "type": "Microsoft.Storage/storageAccounts",
       "apiVersion": "2023-01-01",
       "name": "[parameters('diagnosticStorageAccountName')]",
@@ -730,13 +731,13 @@
       "properties": {
         "publicNetworkAccess": "Disabled",
         "supportsHttpsTrafficOnly": true,
-        "minimumTlsVersion": "TLS1_2",
-        "networkAcls": {
+         "minimumTlsVersion": "TLS1_2",
+         "networkAcls": {
           "defaultAction": "Deny"
-        }
+         }
       }
     },
-    "KVConfigurations": {
+    "KVConfigurations":{
       "type": "Microsoft.KeyVault/vaults",
       "apiVersion": "2021-06-01-preview",
       "name": "[parameters('keyVaultName')]",
@@ -762,7 +763,7 @@
         }
       }
     },
-    "KVDiagnosticsConfig": {
+    "KVDiagnosticsConfig":{
       "type": "Microsoft.KeyVault/vaults/providers/diagnosticsettings",
       "name": "[concat(parameters('keyVaultName'), '/Microsoft.Insights/service')]",
       "apiVersion": "2016-09-01",
@@ -786,11 +787,11 @@
         ]
       }
     },
-    "nodeNameValidation": {
+    "nodeNameValidation":{
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2021-04-01",
       "name": "[if(contains(variables('isNodeNameValid'), 'false'), '##ClusterNameIsSameAsNodeName##', 'NodeNameIsValid')]",
-      "properties": {
+      "properties":{
         "mode": "Incremental",
         "template": {
           "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
@@ -799,7 +800,7 @@
         }
       }
     },
-    "HCICluster": {
+    "HCICluster":{
       "condition": "[equals(parameters('deploymentMode'), 'Validate')]",
       "type": "Microsoft.AzureStackHCI/clusters",
       "apiVersion": "2024-09-01-preview",
@@ -815,7 +816,7 @@
       "location": "[parameters('location')]",
       "properties": {}
     },
-    "KVDomainAdminSecret": {
+    "KVDomainAdminSecret":{
       "type": "Microsoft.KeyVault/vaults/secrets",
       "apiVersion": "2021-06-01-preview",
       "name": "[concat(parameters('keyVaultName'), '/', variables('domainAdminSecretName'))]",
@@ -832,7 +833,7 @@
         }
       }
     },
-    "KVLocalAdminSecret": {
+    "KVLocalAdminSecret":{
       "type": "Microsoft.KeyVault/vaults/secrets",
       "apiVersion": "2021-06-01-preview",
       "name": "[concat(parameters('keyVaultName'), '/', variables('LocalAdminCredentialSecretName'))]",
@@ -849,7 +850,7 @@
         }
       }
     },
-    "KVWitnessSecret": {
+    "KVWitnessSecret":{
       "type": "Microsoft.KeyVault/vaults/secrets",
       "apiVersion": "2021-06-01-preview",
       "name": "[concat(parameters('keyVaultName'), '/', variables('storageWitnessSecretName'))]",
@@ -866,7 +867,7 @@
         }
       }
     },
-    "KVPartnerCreds": {
+    "KVPartnerCreds":{
       "type": "Microsoft.KeyVault/vaults/secrets",
       "apiVersion": "2021-06-01-preview",
       "name": "[concat(parameters('keyVaultName'), '/', parameters('partnerCredentialList')[copyIndex()].secretName)]",
@@ -974,5 +975,5 @@
         }
       }
     }
-  }
+}
 }
