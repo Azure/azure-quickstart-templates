@@ -37,7 +37,7 @@ sudo sed -i -e 's/console/anybody/g' /etc/X11/Xwrapper.config
 
 logger -t devvm "Mate Desktop configured. $?"
 
-logger -t devvm "Installing VSCode: $?"
+logger -t devvm "Installing VS Code: $?"
 
 
 curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > microsoft.gpg
@@ -50,7 +50,7 @@ sudo apt-get update
 
 sudo apt-get install -y code
 
-logger -t devvm "VSCode Installed: $?"
+logger -t devvm "VS Code Installed: $?"
 
 logger -t devvm "Success"
 exit 0

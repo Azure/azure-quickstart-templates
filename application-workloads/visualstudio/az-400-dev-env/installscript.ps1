@@ -10,7 +10,7 @@ Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManage
 New-LocalGroup -Name docker-users -Description "Users of Docker Desktop"
 Add-LocalGroupMember -Group 'docker-users' -Member $UserName
 
-# removed packages VSCode and Git which were included in base-image !
+# removed packages VS Code and Git which were included in base-image !
 # Included a new tool "DBeaver" : A universal sql-client
 # Included a new tool "MobaXTerm" : A multi-tabbed SSH client with embedded X-Server
 choco install wsl-ubuntu-2204 docker-desktop dbeaver mobaxterm azure-cli choco install -y
