@@ -199,7 +199,7 @@ function Get-ExtensionMetadata {
         [Parameter(Mandatory = $true)] [string]$TargetPlatform,
         [Parameter(Mandatory = $false)] [bool]$DownloadPreRelease = $false
     )
-    # Define base API URL (same for both Visual Studio and VSCode)
+    # Define base API URL (same for both Visual Studio and VS Code)
     $baseApiUrl = "https://marketplace.visualstudio.com/_apis/public/gallery/extensionquery"
 
     # Call helper methods to construct headers and request body

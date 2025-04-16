@@ -1,6 +1,6 @@
-# Deploy Ubuntu Desktop VM with VSCode, Azure CLI and RDP support
+# Deploy Ubuntu Desktop VM with VS Code, Azure CLI and RDP support
 
-The purpose of this ARM Template is **Deploy Ubuntu Desktop VM with VSCode, Azure CLI and RDP support** inserting a few parameters.
+The purpose of this ARM Template is **Deploy Ubuntu Desktop VM with VS Code, Azure CLI and RDP support** inserting a few parameters.
 
 ## The Template
 

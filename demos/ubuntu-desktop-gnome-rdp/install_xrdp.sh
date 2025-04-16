@@ -21,13 +21,13 @@ apt-get update && sudo apt-get install -y azure-cli
 logger -t devvm "Azure-cli installed: $?"
 sudo apt-get -y update
 
-#install VSCode
-logger -t devvm "Installing VSCode: $?"
+#install VS Code
+logger -t devvm "Installing VS Code: $?"
 curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > microsoft.gpg
 sudo mv microsoft.gpg /etc/apt/trusted.gpg.d/microsoft.gpg
 sudo sh -c 'echo "deb [arch=amd64] https://packages.microsoft.com/repos/vscode stable main" > /etc/apt/sources.list.d/vscode.list'
 sudo apt-get update
 sudo apt-get install -y code
-logger -t devvm "VSCode Installed: $?"
+logger -t devvm "VS Code Installed: $?"
 logger -t devvm "Success"
 exit 0

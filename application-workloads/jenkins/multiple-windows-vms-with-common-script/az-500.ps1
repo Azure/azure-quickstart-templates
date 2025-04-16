@@ -1,7 +1,7 @@
 ## Install Chocolatey using PowerShell script
 Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
 
-## Install VSCode & GIT for OSS Development
+## Install VS Code & GIT for OSS Development
 choco install vscode git sql-server-management-studio -y
 
 ## Install Visual Studio 2019 Community edition

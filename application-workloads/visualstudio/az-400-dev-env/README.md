@@ -1,5 +1,5 @@
 ---
-description: VM with VS2017 Community, Docker-desktop, Git and VSCode for AZ-400 (Azure DevOps) Labs
+description: VM with VS2017 Community, Docker-desktop, Git and VS Code for AZ-400 (Azure DevOps) Labs
 page_type: sample
 products:
 - azure

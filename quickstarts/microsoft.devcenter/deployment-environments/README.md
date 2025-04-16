@@ -54,9 +54,9 @@ If you're new to template deployment, see:
 
 ### Bicep
 
-You can use VSCode to deploy **main.bicep**:
+You can use VS Code to deploy **main.bicep**:
 
-- [Deploying Bicep via VSCode](https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/deploy-vscode)
+- [Deploying Bicep via VS Code](https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/deploy-vscode)
 
 ### 
 

@@ -9,7 +9,7 @@ languages:
 - bicep
 - json
 ---
-# Linux VM with Gnome Desktop RDP VSCode and Azure CLI
+# Linux VM with Gnome Desktop RDP VS Code and Azure CLI
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/ubuntu-desktop-gnome-rdp/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/ubuntu-desktop-gnome-rdp/PublicDeployment.svg)
@@ -41,7 +41,7 @@ When connected over RDP to the VM the first time, it will prompt for password a 
 
 To open a terminal with Ctrl + Alt + t
 
-# Running VSCode
+# Running VS Code
 
 ### Manage IDE from the Command Line
 The vscode IDE includes a command line tool called code which can use to manage the IDE directly from the Ubuntu terminal.

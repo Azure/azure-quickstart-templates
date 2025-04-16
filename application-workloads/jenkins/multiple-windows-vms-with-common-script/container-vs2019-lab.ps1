@@ -7,7 +7,7 @@ Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManage
 ## Install docker-desktop for Windows
 choco install docker-desktop -y
 
-## Install Git and VSCode
+## Install Git and VS Code
 choco install git vscode -y
 
 # Install VS2019 Community with ALL packages and recommendations
