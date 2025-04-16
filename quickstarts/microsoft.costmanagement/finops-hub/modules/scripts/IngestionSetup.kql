@@ -303,11 +303,11 @@ Prices_transform_v1_0()
     | extend x_ContractedUnitPriceDiscount = ListUnitPrice - ContractedUnitPrice
     | extend x_TotalUnitPriceDiscount = ListUnitPrice - x_EffectiveUnitPrice
     | project
-        BillingAccountId = case(
+        BillingAccountId = tolower(case(
             BillingProfileId startswith '/', BillingProfileId,
             BillingAccountId startswith '/', BillingAccountId,
-            strcat('/providers/Microsoft.Billing/billingAccounts/', x_BillingAccountId, iff(x_BillingProfileId != x_BillingAccountId, '', strcat('/billingProfiles/', x_BillingProfileId)))
-        ),
+            strcat('/providers/microsoft.billing/billingaccounts/', x_BillingAccountId, iff(x_BillingProfileId == x_BillingAccountId, '', strcat('/billingprofiles/', x_BillingProfileId)))
+        )),
         BillingAccountName = coalesce(BillingProfileName, BillingAccountName, x_BillingProfileId),
         BillingCurrency = coalesce(BillingCurrency, CurrencyCode, Currency),  // Currency last as a fallback only
         ChargeCategory,
@@ -780,6 +780,8 @@ Costs_transform_v1_0()
         iff(ChargeCategory == 'Purchase' and isnotempty(CommitmentDiscountId) and EffectiveCost > 0,                                'InvalidEffectiveCost,',             ''),
         iff((isempty(ContractedCost)      or ContractedCost == 0)      and EffectiveCost != 0,                                      'MissingContractedCost,',            ''),
         iff((isempty(ContractedUnitPrice) or ContractedUnitPrice == 0) and x_EffectiveUnitPrice != 0,                               'MissingContractedUnitPrice,',       ''),
+        iff(ListCost < ContractedCost,                                                                                              'ListCostLessThanContractedCost,',      ''),
+        iff(ContractedCost < EffectiveCost,                                                                                         'ContractedCostLessThanEffectiveCost,', ''),
         iff((isempty(ListCost)            or ListCost == 0)            and (ContractedCost != 0      or EffectiveCost != 0),        'MissingListCost,',                  ''),
         iff((isempty(ListUnitPrice)       or ListUnitPrice == 0)       and (ContractedUnitPrice != 0 or x_EffectiveUnitPrice != 0), 'MissingListUnitPrice,',             ''),
         iff(isempty(ProviderName),                                                                                                  'MissingProviderName,',              ''),
@@ -824,15 +826,16 @@ Costs_transform_v1_0()
         and isnotempty(strcat(x_SkuMeterId, x_SkuOfferId))
     | as allCosts
     | where tmp_MissingPrices
-    | extend tmp_ReservationPriceLookupKey = strcat(x_BillingProfileId, substring(ChargePeriodStart, 0, 7), x_SkuMeterId, x_SkuOfferId)
+    | extend tmp_ReservationPriceLookupKey = tolower(strcat(x_BillingProfileId, substring(ChargePeriodStart, 0, 7), x_SkuMeterId, x_SkuOfferId))
     | as costsWithMissingPrices
     | join kind=leftouter (
         Prices_final_v1_0
-        | extend tmp_ReservationPriceLookupKey = strcat(x_BillingProfileId, substring(x_EffectivePeriodStart, 0, 7), x_SkuMeterId, x_SkuOfferId)
+        | extend tmp_ReservationPriceLookupKey = tolower(strcat(x_BillingProfileId, substring(x_EffectivePeriodStart, 0, 7), x_SkuMeterId, x_SkuOfferId))
         | where x_SkuPriceType == 'Consumption' and tmp_ReservationPriceLookupKey in ((costsWithMissingPrices | summarize by tmp_ReservationPriceLookupKey))
         | summarize ListUnitPrice = min(ListUnitPrice), ContractedUnitPrice = min(ContractedUnitPrice) by tmp_ReservationPriceLookupKey, x_PricingBlockSize, PricingUnit
     ) on tmp_ReservationPriceLookupKey
     // Select the best price to use for each row
+    // TODO: Save values before changing -- | extend x_ms_ContractedUnitPrice = ContractedUnitPrice, x_ms_ListUnitPrice = ListUnitPrice, x_ms_ListCost = ListCost, x_ms_ContractedCost = ContractedCost
     | extend ContractedUnitPrice = case(
         // If price is already correct, keep that
         ContractedUnitPrice != 0 or x_EffectiveUnitPrice == 0, ContractedUnitPrice,
@@ -856,8 +859,20 @@ Costs_transform_v1_0()
         ContractedUnitPrice
     )
     // Calculate missing costs based on new prices -- If cost is already correct, keep that; if not and price is available, recalculate the cost; otherwise, keep the existing cost
-    | extend ListCost = case(ListCost != 0 or EffectiveCost == 0, ListCost, ListUnitPrice != 0, ListUnitPrice * PricingQuantity, ListCost)
-    | extend ContractedCost = case(ContractedCost != 0 or EffectiveCost == 0, ContractedCost, ContractedUnitPrice != 0, ContractedUnitPrice * PricingQuantity, ContractedCost)
+    | extend ContractedCost = case(
+        ContractedCost != 0 or EffectiveCost == 0, ContractedCost,
+        ContractedUnitPrice == x_EffectiveUnitPrice, EffectiveCost,  // Use EffectiveCost if both prices are the same to avoid rounding errors
+        ContractedUnitPrice != 0, ContractedUnitPrice * PricingQuantity,
+        ContractedCost == 0 and ContractedUnitPrice == 0, EffectiveCost,  // Fall back to EffectiveCost when ContractedCost and ContractedUnitPrice are 0
+        ContractedCost
+    )
+    | extend ListCost = case(
+        ListCost != 0 or EffectiveCost == 0, ListCost,
+        ListUnitPrice == ContractedUnitPrice, ContractedCost,  // Use ContractedCost if both prices are the same to avoid rounding errors
+        ListUnitPrice != 0, ListUnitPrice * PricingQuantity,
+        ListCost == 0 and ListUnitPrice == 0, ContractedCost,  // Fall back to ContractedCost when ListCost and ListUnitPrice are 0
+        ListCost
+    )
     // Merge the rest of the unmodified cost records and remove excess columns
     | union (allCosts | where not(tmp_MissingPrices))
     | project-away x_PricingBlockSize1, PricingUnit1, ListUnitPrice1, ContractedUnitPrice1, tmp_MissingPrices, tmp_ReservationPriceLookupKey, tmp_ReservationPriceLookupKey1
@@ -903,7 +918,7 @@ Costs_transform_v1_0()
     | project
         AvailabilityZone,
         BilledCost,
-        BillingAccountId,
+        BillingAccountId = tolower(BillingAccountId),
         BillingAccountName,
         BillingAccountType,
         BillingCurrency,
@@ -922,7 +937,7 @@ Costs_transform_v1_0()
         ChargePeriodEnd,
         ChargePeriodStart,
         CommitmentDiscountCategory,
-        CommitmentDiscountId,
+        CommitmentDiscountId = tolower(CommitmentDiscountId),
         CommitmentDiscountName,
         CommitmentDiscountStatus = case(
             // Handle FOCUS 1.0-preview ChargeSubcategory
@@ -1352,36 +1367,27 @@ CommitmentDiscountUsage_transform_v1_0()
 // Recommendations_raw table
 .create-merge table Recommendations_raw (
     CostWithNoReservedInstances:     decimal,   // MS CM EA resv reco 2024-05-01
-    CostWithNoReservedInstances2:    decimal,   // MS CM MCA resv reco 2024-05-01 -- Renamed to remove spaces
-    FirstUsageDate:                  datetime,  // MS CM EA resv reco 2024-05-01
-    FirstUsageDate2:                 datetime,  // MS CM MCA resv reco 2024-05-01 -- Renamed to remove spaces
-    InstanceFlexibilityGroup:        string,    // MS CM EA resv reco 2024-05-01
-    InstanceFlexibilityGroup2:       string,    // MS CM MCA resv reco 2024-05-01 -- Renamed to remove spaces
-    InstanceFlexibilityRatio:        decimal,   // MS CM EA resv reco 2024-05-01
-    InstanceFlexibilityRatio2:       decimal,   // MS CM MCA resv reco 2024-05-01 -- Renamed to remove spaces
+    CostWithNoReservedInstancesJson:    string,    // MS CM MCA resv reco 2024-05-01 -- Renamed to remove spaces and flag as JSON
+    FirstUsageDate:                     datetime,  // MS CM EA/MCA resv reco 2024-05-01 -- Renamed for MCA
+    InstanceFlexibilityGroup:           string,    // MS CM EA/MCA resv reco 2024-05-01 -- Renamed for MCA
+    InstanceFlexibilityRatio:           decimal,   // MS CM EA/MCA resv reco 2024-05-01 -- Renamed for MCA
     Location:                        string,    // MS CM EA+MCA resv reco 2024-05-01
     LookBackPeriod:                  string,    // MS CM EA+MCA resv reco 2024-05-01
-    MeterId:                         string,    // MS CM EA resv reco 2024-05-01
-    MeterID:                         string,    // MS CM MCA resv reco 2024-05-01
+    MeterId:                            string,    // MS CM EA/MCA resv reco 2024-05-01 -- Renamed for MCA
     NetSavings:                      decimal,   // MS CM EA resv reco 2024-05-01
-    NetSavings2:                     decimal,   // MS CM MCA resv reco 2024-05-01 -- Renamed to remove spaces
-    NormalizedSize:                  string,    // MS CM EA resv reco 2024-05-01
-    NormalizedSize2:                 string,    // MS CM MCA resv reco 2024-05-01 -- Renamed to remove spaces
-    RecommendedQuantity:             decimal,   // MS CM EA resv reco 2024-05-01
-    RecommendedQuantity2:            decimal,   // MS CM MCA resv reco 2024-05-01 -- Renamed to remove spaces
-    RecommendedQuantityNormalized:   decimal,   // MS CM EA resv reco 2024-05-01
-    RecommendedQuantityNormalized2:  decimal,   // MS CM MCA resv reco 2024-05-01 -- Renamed to remove spaces
+    NetSavingsJson:                     string,    // MS CM MCA resv reco 2024-05-01 -- Renamed to remove spaces and flag as JSON
+    NormalizedSize:                     string,    // MS CM EA/MCA resv reco 2024-05-01 -- Renamed for MCA
+    RecommendedQuantity:                decimal,   // MS CM EA/MCA resv reco 2024-05-01 -- Renamed for MCA
+    RecommendedQuantityNormalized:      decimal,   // MS CM EA/MCA resv reco 2024-05-01 -- Renamed for MCA
     ResourceType:                    string,    // MS CM EA+MCA resv reco 2024-05-01
-    Scope:                           string,    // MS CM EA resv reco 2024-05-01
-    scope:                           string,    // MS CM MCA resv reco 2024-05-01
+    Scope:                              string,    // MS CM EA/MCA resv reco 2024-05-01 -- Renamed for MCA
     SKU:                             string,    // MS CM EA resv reco 2024-05-01
-    SkuName:                         string,    // MS CM MCA resv reco 2024-05-01
-    SkuProperties:                   string,    // MS CM EA resv reco 2024-05-01
-    SkuProperties2:                  string,    // MS CM MCA resv reco 2024-05-01 -- Renamed to remove spaces
+    SkuName:                            string,    // MS CM MCA resv reco 2024-05-01 -- Renamed to remove spaces
+    SkuProperties:                      string,    // MS CM EA/MCA resv reco 2024-05-01 -- Renamed for MCA
     SubscriptionId:                  string,    // MS CM EA+MCA resv reco 2024-05-01
     Term:                            string,    // MS CM EA+MCA resv reco 2024-05-01
     TotalCostWithReservedInstances:  decimal,   // MS CM EA resv reco 2024-05-01
-    TotalCostWithReservedInstances2: decimal,   // MS CM MCA resv reco 2024-05-01 -- Renamed to remove spaces
+    TotalCostWithReservedInstancesJson: string,    // MS CM MCA resv reco 2024-05-01 -- Renamed to remove spaces and flag as JSON
     x_SourceName:                    string,    // Hubs add-on
     x_SourceProvider:                string,    // Hubs add-on
     x_SourceType:                    string,    // Hubs add-on
@@ -1393,36 +1399,27 @@ CommitmentDiscountUsage_transform_v1_0()
 ```
 [
     { "Column": "CostWithNoReservedInstances",     "Properties": { "Field": "CostWithNoReservedInstances" } },
-    { "Column": "CostWithNoReservedInstances2",    "Properties": { "Field": "Cost With No ReservedInstances" } },
+    { "Column": "CostWithNoReservedInstancesJson",    "Properties": { "Field": "CostWithNoReservedInstancesJson" } },
     { "Column": "FirstUsageDate",                  "Properties": { "Field": "FirstUsageDate" } },
-    { "Column": "FirstUsageDate2",                 "Properties": { "Field": "First UsageDate" } },
     { "Column": "InstanceFlexibilityGroup",        "Properties": { "Field": "InstanceFlexibilityGroup" } },
-    { "Column": "InstanceFlexibilityGroup2",       "Properties": { "Field": "Instance Flexibility Group" } },
     { "Column": "InstanceFlexibilityRatio",        "Properties": { "Field": "InstanceFlexibilityRatio" } },
-    { "Column": "InstanceFlexibilityRatio2",       "Properties": { "Field": "Instance Flexibility Ratio" } },
     { "Column": "Location",                        "Properties": { "Field": "Location" } },
     { "Column": "LookBackPeriod",                  "Properties": { "Field": "LookBackPeriod" } },
     { "Column": "MeterId",                         "Properties": { "Field": "MeterId" } },
-    { "Column": "MeterID",                         "Properties": { "Field": "MeterID" } },
     { "Column": "NetSavings",                      "Properties": { "Field": "NetSavings" } },
-    { "Column": "NetSavings2",                     "Properties": { "Field": "Net Savings" } },
+    { "Column": "NetSavingsJson",                     "Properties": { "Field": "NetSavingsJson" } },
     { "Column": "NormalizedSize",                  "Properties": { "Field": "NormalizedSize" } },
-    { "Column": "NormalizedSize2",                 "Properties": { "Field": "Normalized Size" } },
     { "Column": "RecommendedQuantity",             "Properties": { "Field": "RecommendedQuantity" } },
-    { "Column": "RecommendedQuantity2",            "Properties": { "Field": "Recommended Quantity" } },
     { "Column": "RecommendedQuantityNormalized",   "Properties": { "Field": "RecommendedQuantityNormalized" } },
-    { "Column": "RecommendedQuantityNormalized2",  "Properties": { "Field": "Recommended Quantity Normalized" } },
     { "Column": "ResourceType",                    "Properties": { "Field": "ResourceType" } },
     { "Column": "Scope",                           "Properties": { "Field": "Scope" } },
-    { "Column": "scope",                           "Properties": { "Field": "scope" } },
     { "Column": "SKU",                             "Properties": { "Field": "SKU" } },
     { "Column": "SkuName",                         "Properties": { "Field": "SkuName" } },
     { "Column": "SkuProperties",                   "Properties": { "Field": "SkuProperties" } },
-    { "Column": "SkuProperties2",                  "Properties": { "Field": "Sku Properties" } },
     { "Column": "SubscriptionId",                  "Properties": { "Field": "SubscriptionId" } },
     { "Column": "Term",                            "Properties": { "Field": "Term" } },
     { "Column": "TotalCostWithReservedInstances",  "Properties": { "Field": "TotalCostWithReservedInstances" } },
-    { "Column": "TotalCostWithReservedInstances2", "Properties": { "Field": "Total Cost With ReservedInstances" } },
+    { "Column": "TotalCostWithReservedInstancesJson", "Properties": { "Field": "TotalCostWithReservedInstancesJson" } },
     { "Column": "x_SourceName",                    "Properties": { "Field": "x_SourceName" } },
     { "Column": "x_SourceProvider",                "Properties": { "Field": "x_SourceProvider" } },
     { "Column": "x_SourceType",                    "Properties": { "Field": "x_SourceType" } },
@@ -1437,7 +1434,7 @@ CommitmentDiscountUsage_transform_v1_0()
 
 // Recommendations_transform_v1_0 function
 .create-or-alter function
-with (docstring='All recommendations transformed to FOCUS 1.0.', folder='Recommendations')
+with (docstring = "All recommendations transformed to FOCUS 1.0.",folder = "Recommendations")
 Recommendations_transform_v1_0()
 {
     // NOTE: All open issues and questions are tracked @ https://github.com/microsoft/finops-toolkit/issues/1111
@@ -1451,6 +1448,7 @@ Recommendations_transform_v1_0()
         ))
     };
     Recommendations_raw
+    | extend x_IngestionTime = ingestion_time()
     //
     // Set ProviderName
     | extend ProviderName = 'Microsoft'
@@ -1461,20 +1459,13 @@ Recommendations_transform_v1_0()
     | extend x_SourceType     = coalesce(x_SourceType, iff(ProviderName == 'Microsoft', 'ReservationRecommendations', ''))
     | extend x_SourceVersion  = coalesce(x_SourceVersion, iff(ProviderName == 'Microsoft', '2023-05-01', ''))
     //
-    // Handle duplicated columns with spaces
-    | extend CostWithNoReservedInstances =    coalesce(CostWithNoReservedInstances, CostWithNoReservedInstances2)
-    | extend FirstUsageDate =                 coalesce(FirstUsageDate, FirstUsageDate2)
-    | extend InstanceFlexibilityGroup =       coalesce(InstanceFlexibilityGroup, InstanceFlexibilityGroup2)
-    | extend InstanceFlexibilityRatio =       coalesce(InstanceFlexibilityRatio, InstanceFlexibilityRatio2)
-    | extend NetSavings =                     coalesce(NetSavings, NetSavings2)
-    | extend NormalizedSize =                 coalesce(NormalizedSize, NormalizedSize2)
-    | extend RecommendedQuantity =            coalesce(RecommendedQuantity, RecommendedQuantity2)
-    | extend RecommendedQuantityNormalized =  coalesce(RecommendedQuantityNormalized, RecommendedQuantityNormalized2)
-    | extend SkuProperties =                  coalesce(SkuProperties, SkuProperties2)
-    | extend TotalCostWithReservedInstances = coalesce(TotalCostWithReservedInstances, TotalCostWithReservedInstances2)
+    // Convert JSON cost columns to decimal
+    | extend CostWithNoReservedInstances    = case(isnotempty(CostWithNoReservedInstances),    CostWithNoReservedInstances,    isnotempty(CostWithNoReservedInstancesJson),    todecimal(extract(@'"value":([0-9\.]+)', 1, CostWithNoReservedInstancesJson)),    CostWithNoReservedInstances)
+    | extend NetSavings                     = case(isnotempty(NetSavings),                     NetSavings,                     isnotempty(NetSavingsJson),                     todecimal(extract(@'"value":([0-9\.]+)', 1, NetSavingsJson)),                     NetSavings)
+    | extend TotalCostWithReservedInstances = case(isnotempty(TotalCostWithReservedInstances), TotalCostWithReservedInstances, isnotempty(TotalCostWithReservedInstancesJson), todecimal(extract(@'"value":([0-9\.]+)', 1, TotalCostWithReservedInstancesJson)), TotalCostWithReservedInstances)
     //
     // Build recommendation details
-    | lookup kind=leftouter (database('Ingestion').Regions | distinct Location = RegionId, RegionName) on Location
+    | lookup kind=leftouter (database('Ingestion').Regions | summarize RegionName = make_set(RegionName)[0] by Location = RegionId) on Location
     | extend x_RecommendationDetails = case(
       x_SourceType == 'ReservationRecommendations', bag_pack(
         'CommitmentDiscountNormalizedGroup', InstanceFlexibilityGroup,
@@ -1484,6 +1475,7 @@ Recommendations_transform_v1_0()
         'CommitmentDiscountScope', coalesce(Scope, scope),
         'LookbackPeriodDuration', case(
             LookBackPeriod matches regex @'^Last([0-9]+)Days$', replace_regex(LookBackPeriod, @'^Last([0-9]+)Days$', @'P\1D'),
+            LookBackPeriod matches regex @'^[0-9]+$',           strcat('P', LookBackPeriod, 'D'),
             ''
         ),
         'LookbackPeriodStart', FirstUsageDate,
@@ -1500,19 +1492,21 @@ Recommendations_transform_v1_0()
     )
     //
     // Sort columns and apply final transforms
+    | extend x_RecommendationDate = FirstUsageDate + (toint(extract(@'^P([0-9]+)D$', 1, tostring(x_RecommendationDetails.LookbackPeriodDuration))) * 1d)
+    | extend x_RecommendationDate = iff(x_RecommendationDate > now(), startofday(now()), x_RecommendationDate)
     | project
-      ProviderName,
-      SubAccountId = iff(isnotempty(SubscriptionId), strcat('/subscriptions/', SubscriptionId), ''),
-      x_IngestionTime = ingestion_time(),
-      x_EffectiveCostAfter = TotalCostWithReservedInstances,
-      x_EffectiveCostBefore = CostWithNoReservedInstances,
-      x_EffectiveCostSavings = NetSavings,
-      x_RecommendationDate = FirstUsageDate + (toint(extract(@'^Last([0-9]+)Days$', 1, LookBackPeriod)) * 1d),
-      x_RecommendationDetails,
-      x_SourceName,
-      x_SourceProvider,
-      x_SourceType,
-      x_SourceVersion
+        ProviderName,
+        SubAccountId = iff(isnotempty(SubscriptionId), strcat('/subscriptions/', SubscriptionId), ''),
+      x_IngestionTime,
+        x_EffectiveCostAfter = TotalCostWithReservedInstances,
+        x_EffectiveCostBefore = CostWithNoReservedInstances,
+        x_EffectiveCostSavings = NetSavings,
+        x_RecommendationDate,
+        x_RecommendationDetails,
+        x_SourceName,
+        x_SourceProvider,
+        x_SourceType,
+        x_SourceVersion
 }
 
 //----------------------------------------------------------------------------------------------------------------------
