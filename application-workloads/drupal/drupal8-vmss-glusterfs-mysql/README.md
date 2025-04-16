@@ -8,7 +8,7 @@ urlFragment: drupal8-vmss-glusterfs-mysql
 languages:
 - json
 ---
-# Deploy Drupal with VM Scale Set, Azure Files and Mysql
+# Deploy Drupal with VM Scale Set, Azure Files and MySQL
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/drupal/drupal8-vmss-glusterfs-mysql/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/drupal/drupal8-vmss-glusterfs-mysql/PublicDeployment.svg)

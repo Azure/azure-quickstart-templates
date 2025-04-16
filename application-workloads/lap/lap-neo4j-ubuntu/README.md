@@ -56,7 +56,7 @@ Only support one Neo4j node for now.
 
 - The template does not currently configure SSL on the nodes.
 - The template uses username/password for provisioning and would ideally use an SSH key.
-- The template only support one LAP node and one Mysql node now.
+- The template only support one LAP node and one MySQL node now.
 - The deployment scripts are not currently idempotent and this template should only be used for provisioning new.
 - The Password for neo4j server must be changed from default, but the only way to do so could be is to open the Neo4J interface on browser using http://<serverip>:7474 which may not be as straight forward as the only means to access this server could be is from the LAP node, possible LYNX browser could be used to do so.
 

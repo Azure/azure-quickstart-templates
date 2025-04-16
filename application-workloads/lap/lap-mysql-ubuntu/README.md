@@ -1,5 +1,5 @@
 ---
-description: This template deploys a Lap(linux+apache2+php5) node and a configurable number of Mysql(mysql server 5.5) nodes on Ubuntu virtual machines
+description: This template deploys a Lap(linux+apache2+php5) node and a configurable number of MySQL(MySQL server 5.5) nodes on Ubuntu virtual machines
 page_type: sample
 products:
 - azure
@@ -29,13 +29,13 @@ This template deploys a LAP node and a MYSQL node, will create simple info.php, 
 
 The LAP node is exposed on a public IP address that you can access through a browser on port :80 as well as SSH on the standard port.
 The MYSQL node only has private ip address, and it's static ip address, the mysql database only allows to be accessed from LAP node.
-The Mysql server user root has empty password, you can set the password later.
+The MySQL server user root has empty password, you can set the password later.
 Only support one MYSQL node now.
 
 ##Known Issues and Limitations
 - The template does not currently configure SSL on the nodes.
 - The template uses username/password for provisioning and would ideally use an SSH key.
-- The template only support one LAP node and one Mysql node now.
+- The template only support one LAP node and one MySQL node now.
 - The deployment scripts are not currently idempotent and this template should only be used for provisioning new.
 
 `Tags: Microsoft.Resources/deployments, Microsoft.Network/networkSecurityGroups, Microsoft.Network/publicIPAddresses, Microsoft.Compute/availabilitySets, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, CustomScript, Microsoft.Storage/storageAccounts, Microsoft.Network/virtualNetworks`
