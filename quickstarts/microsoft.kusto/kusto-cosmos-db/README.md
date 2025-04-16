@@ -27,7 +27,7 @@ languages:
 
 https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.kusto/kusto-cosmos-db/BicepVersion.svg
 
-This template allows you to deploy an Azure Data Explorer cluster with System Assigned Identity, a database, an Azure Cosmos DB account (NoSql), an Azure Cosmos DB database, an Azure Cosmos DB container and a data connection between the Cosmos DB container and the Kusto database (using the system assigned identity).
+This template allows you to deploy an Azure Data Explorer cluster with System Assigned Identity, a database, an Azure Cosmos DB account (NoSQL), an Azure Cosmos DB database, an Azure Cosmos DB container and a data connection between the Cosmos DB container and the Kusto database (using the system assigned identity).
 
 This template was authored in bicep (see [bicep template](main.bicep)), referring a [KQL script](script.kql) and then transpiled into [JSON template](azuredeploy.json).
 
