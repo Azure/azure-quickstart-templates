@@ -1,4 +1,4 @@
-// Creates Azure dependent resources for Azure AI studio
+// Creates Azure dependent resources for Azure AI Foundry
 
 @description('Azure region of the deployment')
 param location string = resourceGroup().location
