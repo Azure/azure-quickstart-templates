@@ -9,7 +9,7 @@ languages:
 - bicep
 - json
 ---
-# Create MySqlFlex server & enable protection via Backup Vault
+# Create MySQL Flexible Server & enable protection via Backup Vault
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.dataprotection/backup-create-mysqlflex-enable-protection/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.dataprotection/backup-create-mysqlflex-enable-protection/PublicDeployment.svg)
