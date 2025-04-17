@@ -48,7 +48,6 @@ param vnetName string = 'databricks-vnet'
 @description('The name of the Azure Databricks workspace to create.')
 param workspaceName string
 
-var loadBalancerId = loadBalancer.id
 var loadBalancerBackendPoolId = resourceId('Microsoft.Network/loadBalancers/backendAddressPools', loadBalancerName, loadBalancerBackendPoolName)
 var loadBalancerFrontendConfigId = resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', loadBalancerName, loadBalancerFrontendConfigName)
 var managedResourceGroupName = 'databricks-rg-${workspaceName}-${uniqueString(workspaceName, resourceGroup().id)}'
@@ -188,13 +187,7 @@ resource workspace 'Microsoft.Databricks/workspaces@2024-05-01' = {
       }
       enableNoPublicIp: {
         value: disablePublicIp
-      }
-      loadBalancerId: {
-        value: loadBalancerId
-      }
-      loadBalancerBackendPoolName: {
-        value: loadBalancerBackendPoolName
-      }
+      }     
     }
   }
   dependsOn: [
