@@ -42,6 +42,13 @@ foreach ($imageTemplate in $imageTemplates) {
     }
 }
 
+if ($Env:SHOULD_PRESERVE_IMAGE_TEMPLATES -ne 'true') {
+    foreach ($imageTemplate in $imageTemplates) {
+        Write-Host "=== Deleting image template $($imageTemplate.id)"
+        az image builder delete --ids $($imageTemplate.id)
+    }
+}
+
 if (($failuresCount -gt 0) -or ($imageTemplates.Count -eq 0)) {
     Write-Error "!!! [ERROR] $failuresCount image build(s) failed"
 }
