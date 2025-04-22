@@ -64,7 +64,7 @@ The Bicep deploys the following resources:
 - A private endpoint to to Azure Container Registry (ACR)
 - A private endpoint to Key Vault
 - When you opt for a private AKS cluster, a private endpoint to the control plane / API server hosted by an AKS-managed Azure subscription. In this case, the cluster can communicate with the API server exposed via a Private Link Service using a private endpoint.
-- When you choose Premium as SKU for ACR, a Private Endpoint is created to allow the private AKS cluster to access ACR via a private IP address. For more information, see [Connect privately to an Azure container registry using Azure Private Link](https://docs.microsoft.com/azure/container-registry/container-registry-private-link).
+- When you choose Premium as SKU for ACR, a Private Endpoint is created to allow the private AKS cluster to access ACR via a private IP address. For more information, see [Connect privately to an Azure Container Registry using Azure Private Link](https://docs.microsoft.com/azure/container-registry/container-registry-private-link).
 - A Private DNS Zone for the name resolution of the private endpoint to the Blob Storage Account
 - A Private DNS Zone for the name resolution of the private endpoint to Azure Container Registry (ACR)
 - A Private DNS Zone for the name resolution of the private endpoint to Key Vault
