@@ -286,11 +286,11 @@ param vmSharePointSize string = 'Standard_B4as_v2'
 ])
 param vmSharePointStorage string = 'StandardSSD_LRS'
 
-@description('The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated.')
+@description('The base URI where artifacts required by this template are located including a trailing \'/\'')
 param _artifactsLocation string = deployment().properties.templateLink.uri
 
-@description('The sasToken required to access _artifactsLocation. When the template is deployed using the accompanying scripts, a sasToken will be automatically generated.')
 @secure()
+@description('The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured.')
 param _artifactsLocationSasToken string = ''
 
 // Local variables
