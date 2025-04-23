@@ -458,286 +458,286 @@ var firewall_runCommandProperties = {
   treatFailureAsDeploymentFailure: false
 }
 
-var baseVirtualMachines = [
-  {
-    virtualMachineSettings: {
-      adminUsername: adminUsername
-      virtualMachineName: templateSettings.vmDCName
-      virtualMachineSize: vmDcSize
-      virtualMachineStorage: vmDcStorage
-      virtualMachineDiskSizeGB: 32
-      virtualMachineSecurityType: 'TrustedLaunch'
-      imageReference: {
-        publisher: split(templateSettings.vmDCImage, ':')[0]
-        offer: split(templateSettings.vmDCImage, ':')[1]
-        sku: split(templateSettings.vmDCImage, ':')[2]
-        version: split(templateSettings.vmDCImage, ':')[3]
-      }
-      privateIPAddress: environmentSettings.dcPrivateIPAddress
-      pipConfiguration: outboundAccessMethod == 'PublicIPAddress'
-        ? {
-            publicIpNameSuffix: '-pip-01'
-            publicIpSku: 'Standard'
-            publicIPAllocationMethod: 'Static'
-            zones: []
-            dnsSettings: addNameToPublicIpAddresses == 'Yes'
-              ? {
-                  domainNameLabel: toLower('${resourceGroupNameFormatted}-${templateSettings.vmDCName}')
-                  domainNameLabelScope: templateSettings.domainNameLabelScope
-                }
-              : null
-          }
-        : {}
-    }
-    dscSettings: {
-      wmfVersion: 'latest'
-      configuration: {
-        url: uri(_artifactsLocation, 'dsc/ConfigureDCVM.zip${_artifactsLocationSasToken}')
-        script: 'ConfigureDCVM.ps1'
-        function: 'ConfigureDCVM'
-      }
-      configurationArguments: {
-        domainFQDN: domainFqdn
-        PrivateIP: environmentSettings.dcPrivateIPAddress
-        SPServerName: templateSettings.vmSPName
-        SharePointSitesAuthority: environmentSettings.sharePointSitesAuthority
-        SharePointCentralAdminPort: environmentSettings.sharePointCentralAdminPort
-        ApplyBrowserPolicies: environmentSettings.applyBrowserPolicies
-      }
-      privacy: {
-        dataCollection: 'enable'
-      }
-    }
-    dscProtectedSettings: {
-      configurationArguments: {
-        AdminCreds: {
-          UserName: adminUsername
-          Password: adminPassword
-        }
-        AdfsSvcCreds: {
-          UserName: environmentSettings.adfsSvcUserName
-          Password: otherAccountsPassword
-        }
-      }
-    }
-  }
-  {
-    virtualMachineSettings: {
-      adminUsername: environmentSettings.localAdminUserName
-      virtualMachineName: templateSettings.vmSQLName
-      virtualMachineSize: vmSqlSize
-      virtualMachineStorage: vmSqlStorage
-      virtualMachineDiskSizeGB: 128
-      virtualMachineSecurityType: 'TrustedLaunch'
-      imageReference: {
-        publisher: split(templateSettings.vmSQLImage, ':')[0]
-        offer: split(templateSettings.vmSQLImage, ':')[1]
-        sku: split(templateSettings.vmSQLImage, ':')[2]
-        version: split(templateSettings.vmSQLImage, ':')[3]
-      }
-      privateIPAddress: null
-      pipConfiguration: outboundAccessMethod == 'PublicIPAddress'
-        ? {
-            publicIpNameSuffix: '-pip-01'
-            publicIpSku: 'Standard'
-            publicIPAllocationMethod: 'Static'
-            zones: []
-            dnsSettings: addNameToPublicIpAddresses == 'Yes'
-              ? {
-                  domainNameLabel: toLower('${resourceGroupNameFormatted}-${templateSettings.vmSQLName}')
-                  domainNameLabelScope: templateSettings.domainNameLabelScope
-                }
-              : null
-          }
-        : {}
-    }
-    dscSettings: {
-      wmfVersion: 'latest'
-      configuration: {
-        url: uri(_artifactsLocation, 'dsc/ConfigureSQLVM.zip${_artifactsLocationSasToken}')
-        script: 'ConfigureSQLVM.ps1'
-        function: 'ConfigureSQLVM'
-      }
-      configurationArguments: {
-        DNSServerIP: environmentSettings.dcPrivateIPAddress
-        DomainFQDN: domainFqdn
-      }
-      privacy: {
-        dataCollection: 'enable'
-      }
-    }
-    dscProtectedSettings: {
-      configurationArguments: {
-        DomainAdminCreds: {
-          UserName: adminUsername
-          Password: adminPassword
-        }
-        SqlSvcCreds: {
-          UserName: environmentSettings.sqlSvcUserName
-          Password: otherAccountsPassword
-        }
-        SPSetupCreds: {
-          UserName: environmentSettings.spSetupUserName
-          Password: otherAccountsPassword
-        }
-      }
-    }
-  }
-  {
-    virtualMachineSettings: {
-      adminUsername: environmentSettings.localAdminUserName
-      virtualMachineName: templateSettings.vmSPName
-      virtualMachineSize: vmSharePointSize
-      virtualMachineStorage: vmSharePointStorage
-      virtualMachineDiskSizeGB: 128
-      virtualMachineSecurityType: sharePointVersion == '2016' ? null : 'TrustedLaunch'
-      imageReference: {
-        publisher: split(templateSettings.vmSharePointImage, ':')[0]
-        offer: split(templateSettings.vmSharePointImage, ':')[1]
-        sku: split(templateSettings.vmSharePointImage, ':')[2]
-        version: split(templateSettings.vmSharePointImage, ':')[3]
-      }
-      privateIPAddress: null
-      pipConfiguration: outboundAccessMethod == 'PublicIPAddress'
-        ? {
-            publicIpNameSuffix: '-pip-01'
-            publicIpSku: 'Standard'
-            publicIPAllocationMethod: 'Static'
-            zones: []
-            dnsSettings: addNameToPublicIpAddresses == 'Yes' || addNameToPublicIpAddresses == 'SharePointVMsOnly'
-              ? {
-                  domainNameLabel: toLower('${resourceGroupNameFormatted}-${templateSettings.vmSPName}')
-                  domainNameLabelScope: templateSettings.domainNameLabelScope
-                }
-              : null
-          }
-        : {}
-    }
-    dscSettings: {
-      wmfVersion: 'latest'
-      configuration: {
-        url: uri(_artifactsLocation, 'dsc/ConfigureSPSE.zip${_artifactsLocationSasToken}')
-        script: (sharePointSettings.isSharePointSubscription ? 'ConfigureSPSE.ps1' : 'ConfigureSPLegacy.ps1')
-        function: 'ConfigureSPVM'
-      }
-      configurationArguments: {
-        DNSServerIP: environmentSettings.dcPrivateIPAddress
-        DomainFQDN: domainFqdn
-        DCServerName: templateSettings.vmDCName
-        SQLServerName: templateSettings.vmSQLName
-        SQLAlias: environmentSettings.sqlAlias
-        SharePointVersion: sharePointVersion
-        SharePointSitesAuthority: environmentSettings.sharePointSitesAuthority
-        SharePointCentralAdminPort: environmentSettings.sharePointCentralAdminPort
-        EnableAnalysis: environmentSettings.enableAnalysis
-        SharePointBits: environmentSettings.sharePointBitsSelected
-      }
-      privacy: {
-        dataCollection: 'enable'
-      }
-    }
-    dscProtectedSettings: {
-      configurationArguments: {
-        DomainAdminCreds: {
-          UserName: adminUsername
-          Password: adminPassword
-        }
-        SPSetupCreds: {
-          UserName: environmentSettings.spSetupUserName
-          Password: otherAccountsPassword
-        }
-        SPFarmCreds: {
-          UserName: environmentSettings.spFarmUserName
-          Password: otherAccountsPassword
-        }
-        SPSvcCreds: {
-          UserName: environmentSettings.spSvcUserName
-          Password: otherAccountsPassword
-        }
-        SPAppPoolCreds: {
-          UserName: environmentSettings.spAppPoolUserName
-          Password: otherAccountsPassword
-        }
-        SPADDirSyncCreds: {
-          UserName: environmentSettings.spADDirSyncUserName
-          Password: otherAccountsPassword
-        }
-        SPPassphraseCreds: {
-          UserName: 'Passphrase'
-          Password: otherAccountsPassword
-        }
-        SPSuperUserCreds: {
-          UserName: environmentSettings.spSuperUserName
-          Password: otherAccountsPassword
-        }
-        SPSuperReaderCreds: {
-          UserName: environmentSettings.spSuperReaderName
-          Password: otherAccountsPassword
-        }
-      }
-    }
-  }
-]
+// var baseVirtualMachines = [
+//   {
+//     virtualMachineSettings: {
+//       adminUsername: adminUsername
+//       virtualMachineName: templateSettings.vmDCName
+//       virtualMachineSize: vmDcSize
+//       virtualMachineStorage: vmDcStorage
+//       virtualMachineDiskSizeGB: 32
+//       virtualMachineSecurityType: 'TrustedLaunch'
+//       imageReference: {
+//         publisher: split(templateSettings.vmDCImage, ':')[0]
+//         offer: split(templateSettings.vmDCImage, ':')[1]
+//         sku: split(templateSettings.vmDCImage, ':')[2]
+//         version: split(templateSettings.vmDCImage, ':')[3]
+//       }
+//       privateIPAddress: environmentSettings.dcPrivateIPAddress
+//       pipConfiguration: outboundAccessMethod == 'PublicIPAddress'
+//         ? {
+//             publicIpNameSuffix: '-pip-01'
+//             publicIpSku: 'Standard'
+//             publicIPAllocationMethod: 'Static'
+//             zones: []
+//             dnsSettings: addNameToPublicIpAddresses == 'Yes'
+//               ? {
+//                   domainNameLabel: toLower('${resourceGroupNameFormatted}-${templateSettings.vmDCName}')
+//                   domainNameLabelScope: templateSettings.domainNameLabelScope
+//                 }
+//               : null
+//           }
+//         : {}
+//     }
+//     dscSettings: {
+//       wmfVersion: 'latest'
+//       configuration: {
+//         url: uri(_artifactsLocation, 'dsc/ConfigureDCVM.zip${_artifactsLocationSasToken}')
+//         script: 'ConfigureDCVM.ps1'
+//         function: 'ConfigureDCVM'
+//       }
+//       configurationArguments: {
+//         domainFQDN: domainFqdn
+//         PrivateIP: environmentSettings.dcPrivateIPAddress
+//         SPServerName: templateSettings.vmSPName
+//         SharePointSitesAuthority: environmentSettings.sharePointSitesAuthority
+//         SharePointCentralAdminPort: environmentSettings.sharePointCentralAdminPort
+//         ApplyBrowserPolicies: environmentSettings.applyBrowserPolicies
+//       }
+//       privacy: {
+//         dataCollection: 'enable'
+//       }
+//     }
+//     dscProtectedSettings: {
+//       configurationArguments: {
+//         AdminCreds: {
+//           UserName: adminUsername
+//           Password: adminPassword
+//         }
+//         AdfsSvcCreds: {
+//           UserName: environmentSettings.adfsSvcUserName
+//           Password: otherAccountsPassword
+//         }
+//       }
+//     }
+//   }
+//   {
+//     virtualMachineSettings: {
+//       adminUsername: environmentSettings.localAdminUserName
+//       virtualMachineName: templateSettings.vmSQLName
+//       virtualMachineSize: vmSqlSize
+//       virtualMachineStorage: vmSqlStorage
+//       virtualMachineDiskSizeGB: 128
+//       virtualMachineSecurityType: 'TrustedLaunch'
+//       imageReference: {
+//         publisher: split(templateSettings.vmSQLImage, ':')[0]
+//         offer: split(templateSettings.vmSQLImage, ':')[1]
+//         sku: split(templateSettings.vmSQLImage, ':')[2]
+//         version: split(templateSettings.vmSQLImage, ':')[3]
+//       }
+//       privateIPAddress: null
+//       pipConfiguration: outboundAccessMethod == 'PublicIPAddress'
+//         ? {
+//             publicIpNameSuffix: '-pip-01'
+//             publicIpSku: 'Standard'
+//             publicIPAllocationMethod: 'Static'
+//             zones: []
+//             dnsSettings: addNameToPublicIpAddresses == 'Yes'
+//               ? {
+//                   domainNameLabel: toLower('${resourceGroupNameFormatted}-${templateSettings.vmSQLName}')
+//                   domainNameLabelScope: templateSettings.domainNameLabelScope
+//                 }
+//               : null
+//           }
+//         : {}
+//     }
+//     dscSettings: {
+//       wmfVersion: 'latest'
+//       configuration: {
+//         url: uri(_artifactsLocation, 'dsc/ConfigureSQLVM.zip${_artifactsLocationSasToken}')
+//         script: 'ConfigureSQLVM.ps1'
+//         function: 'ConfigureSQLVM'
+//       }
+//       configurationArguments: {
+//         DNSServerIP: environmentSettings.dcPrivateIPAddress
+//         DomainFQDN: domainFqdn
+//       }
+//       privacy: {
+//         dataCollection: 'enable'
+//       }
+//     }
+//     dscProtectedSettings: {
+//       configurationArguments: {
+//         DomainAdminCreds: {
+//           UserName: adminUsername
+//           Password: adminPassword
+//         }
+//         SqlSvcCreds: {
+//           UserName: environmentSettings.sqlSvcUserName
+//           Password: otherAccountsPassword
+//         }
+//         SPSetupCreds: {
+//           UserName: environmentSettings.spSetupUserName
+//           Password: otherAccountsPassword
+//         }
+//       }
+//     }
+//   }
+//   {
+//     virtualMachineSettings: {
+//       adminUsername: environmentSettings.localAdminUserName
+//       virtualMachineName: templateSettings.vmSPName
+//       virtualMachineSize: vmSharePointSize
+//       virtualMachineStorage: vmSharePointStorage
+//       virtualMachineDiskSizeGB: 128
+//       virtualMachineSecurityType: sharePointVersion == '2016' ? null : 'TrustedLaunch'
+//       imageReference: {
+//         publisher: split(templateSettings.vmSharePointImage, ':')[0]
+//         offer: split(templateSettings.vmSharePointImage, ':')[1]
+//         sku: split(templateSettings.vmSharePointImage, ':')[2]
+//         version: split(templateSettings.vmSharePointImage, ':')[3]
+//       }
+//       privateIPAddress: null
+//       pipConfiguration: outboundAccessMethod == 'PublicIPAddress'
+//         ? {
+//             publicIpNameSuffix: '-pip-01'
+//             publicIpSku: 'Standard'
+//             publicIPAllocationMethod: 'Static'
+//             zones: []
+//             dnsSettings: addNameToPublicIpAddresses == 'Yes' || addNameToPublicIpAddresses == 'SharePointVMsOnly'
+//               ? {
+//                   domainNameLabel: toLower('${resourceGroupNameFormatted}-${templateSettings.vmSPName}')
+//                   domainNameLabelScope: templateSettings.domainNameLabelScope
+//                 }
+//               : null
+//           }
+//         : {}
+//     }
+//     dscSettings: {
+//       wmfVersion: 'latest'
+//       configuration: {
+//         url: uri(_artifactsLocation, 'dsc/ConfigureSPSE.zip${_artifactsLocationSasToken}')
+//         script: (sharePointSettings.isSharePointSubscription ? 'ConfigureSPSE.ps1' : 'ConfigureSPLegacy.ps1')
+//         function: 'ConfigureSPVM'
+//       }
+//       configurationArguments: {
+//         DNSServerIP: environmentSettings.dcPrivateIPAddress
+//         DomainFQDN: domainFqdn
+//         DCServerName: templateSettings.vmDCName
+//         SQLServerName: templateSettings.vmSQLName
+//         SQLAlias: environmentSettings.sqlAlias
+//         SharePointVersion: sharePointVersion
+//         SharePointSitesAuthority: environmentSettings.sharePointSitesAuthority
+//         SharePointCentralAdminPort: environmentSettings.sharePointCentralAdminPort
+//         EnableAnalysis: environmentSettings.enableAnalysis
+//         SharePointBits: environmentSettings.sharePointBitsSelected
+//       }
+//       privacy: {
+//         dataCollection: 'enable'
+//       }
+//     }
+//     dscProtectedSettings: {
+//       configurationArguments: {
+//         DomainAdminCreds: {
+//           UserName: adminUsername
+//           Password: adminPassword
+//         }
+//         SPSetupCreds: {
+//           UserName: environmentSettings.spSetupUserName
+//           Password: otherAccountsPassword
+//         }
+//         SPFarmCreds: {
+//           UserName: environmentSettings.spFarmUserName
+//           Password: otherAccountsPassword
+//         }
+//         SPSvcCreds: {
+//           UserName: environmentSettings.spSvcUserName
+//           Password: otherAccountsPassword
+//         }
+//         SPAppPoolCreds: {
+//           UserName: environmentSettings.spAppPoolUserName
+//           Password: otherAccountsPassword
+//         }
+//         SPADDirSyncCreds: {
+//           UserName: environmentSettings.spADDirSyncUserName
+//           Password: otherAccountsPassword
+//         }
+//         SPPassphraseCreds: {
+//           UserName: 'Passphrase'
+//           Password: otherAccountsPassword
+//         }
+//         SPSuperUserCreds: {
+//           UserName: environmentSettings.spSuperUserName
+//           Password: otherAccountsPassword
+//         }
+//         SPSuperReaderCreds: {
+//           UserName: environmentSettings.spSuperReaderName
+//           Password: otherAccountsPassword
+//         }
+//       }
+//     }
+//   }
+// ]
 
-var frontendVirtualMachinesSettings = {
-  virtualMachineSettings: {
-    adminUsername: environmentSettings.localAdminUserName
-    virtualMachineName: templateSettings.vmFEName
-    virtualMachineSize: vmSharePointSize
-    virtualMachineStorage: vmSharePointStorage
-    virtualMachineDiskSizeGB: 128
-    virtualMachineSecurityType: sharePointVersion == '2016' ? null : 'TrustedLaunch'
-    imageReference: {
-      publisher: split(templateSettings.vmSharePointImage, ':')[0]
-      offer: split(templateSettings.vmSharePointImage, ':')[1]
-      sku: split(templateSettings.vmSharePointImage, ':')[2]
-      version: split(templateSettings.vmSharePointImage, ':')[3]
-    }
-    privateIPAddress: null
-  }
-  dscSettings: {
-    wmfVersion: 'latest'
-    configuration: {
-      url: uri(_artifactsLocation, 'dsc/ConfigureFESE.zip${_artifactsLocationSasToken}')
-      script: (sharePointSettings.isSharePointSubscription ? 'ConfigureFESE.ps1' : 'ConfigureFELegacy.ps1')
-      function: 'ConfigureFEVM'
-    }
-    configurationArguments: {
-      DNSServerIP: environmentSettings.dcPrivateIPAddress
-      DomainFQDN: domainFqdn
-      DCServerName: templateSettings.vmDCName
-      SQLServerName: templateSettings.vmSQLName
-      SQLAlias: environmentSettings.sqlAlias
-      SharePointVersion: sharePointVersion
-      SharePointSitesAuthority: environmentSettings.sharePointSitesAuthority
-      EnableAnalysis: environmentSettings.enableAnalysis
-      SharePointBits: environmentSettings.sharePointBitsSelected
-    }
-    privacy: {
-      dataCollection: 'enable'
-    }
-  }
-  dscProtectedSettings: {
-    configurationArguments: {
-      DomainAdminCreds: {
-        UserName: adminUsername
-        Password: adminPassword
-      }
-      SPSetupCreds: {
-        UserName: environmentSettings.spSetupUserName
-        Password: otherAccountsPassword
-      }
-      SPFarmCreds: {
-        UserName: environmentSettings.spFarmUserName
-        Password: otherAccountsPassword
-      }
-      SPPassphraseCreds: {
-        UserName: 'Passphrase'
-        Password: otherAccountsPassword
-      }
-    }
-  }
-}
+// var frontendVirtualMachinesSettings = {
+//   virtualMachineSettings: {
+//     adminUsername: environmentSettings.localAdminUserName
+//     virtualMachineName: templateSettings.vmFEName
+//     virtualMachineSize: vmSharePointSize
+//     virtualMachineStorage: vmSharePointStorage
+//     virtualMachineDiskSizeGB: 128
+//     virtualMachineSecurityType: sharePointVersion == '2016' ? null : 'TrustedLaunch'
+//     imageReference: {
+//       publisher: split(templateSettings.vmSharePointImage, ':')[0]
+//       offer: split(templateSettings.vmSharePointImage, ':')[1]
+//       sku: split(templateSettings.vmSharePointImage, ':')[2]
+//       version: split(templateSettings.vmSharePointImage, ':')[3]
+//     }
+//     privateIPAddress: null
+//   }
+//   dscSettings: {
+//     wmfVersion: 'latest'
+//     configuration: {
+//       url: uri(_artifactsLocation, 'dsc/ConfigureFESE.zip${_artifactsLocationSasToken}')
+//       script: (sharePointSettings.isSharePointSubscription ? 'ConfigureFESE.ps1' : 'ConfigureFELegacy.ps1')
+//       function: 'ConfigureFEVM'
+//     }
+//     configurationArguments: {
+//       DNSServerIP: environmentSettings.dcPrivateIPAddress
+//       DomainFQDN: domainFqdn
+//       DCServerName: templateSettings.vmDCName
+//       SQLServerName: templateSettings.vmSQLName
+//       SQLAlias: environmentSettings.sqlAlias
+//       SharePointVersion: sharePointVersion
+//       SharePointSitesAuthority: environmentSettings.sharePointSitesAuthority
+//       EnableAnalysis: environmentSettings.enableAnalysis
+//       SharePointBits: environmentSettings.sharePointBitsSelected
+//     }
+//     privacy: {
+//       dataCollection: 'enable'
+//     }
+//   }
+//   dscProtectedSettings: {
+//     configurationArguments: {
+//       DomainAdminCreds: {
+//         UserName: adminUsername
+//         Password: adminPassword
+//       }
+//       SPSetupCreds: {
+//         UserName: environmentSettings.spSetupUserName
+//         Password: otherAccountsPassword
+//       }
+//       SPFarmCreds: {
+//         UserName: environmentSettings.spFarmUserName
+//         Password: otherAccountsPassword
+//       }
+//       SPPassphraseCreds: {
+//         UserName: 'Passphrase'
+//         Password: otherAccountsPassword
+//       }
+//     }
+//   }
+// }
 
 module resourceGroupModule 'br/public:avm/res/resources/resource-group:0.4.1' = {
   name: 'resourceGroupDeployment'
@@ -783,73 +783,73 @@ module virtualNetwork 'virtualNetwork.bicep' = {
   }
 }
 
-//@sys.batchSize(3)
-module baseVirtualMachinesModule 'virtualMachine.bicep' = [
-  for baseVirtualMachine in baseVirtualMachines: {
-    scope: resourceGroup
-    name: 'virtualMachine-${baseVirtualMachine.virtualMachineSettings.virtualMachineName}-module'
-    params: {
-      location: location
-      adminPassword: adminPassword
-      subnetResourceId: virtualNetwork.outputs.mainSubnetResourceId
-      licenseType: enableHybridBenefitServerLicenses ? 'Windows_Server' : null
-      timeZone: timeZone
-      autoShutdownTime: autoShutdownTime
-      adminUsername: baseVirtualMachine.virtualMachineSettings.adminUsername
-      virtualMachineName: baseVirtualMachine.virtualMachineSettings.virtualMachineName
-      virtualMachineDiskSizeGB: baseVirtualMachine.virtualMachineSettings.virtualMachineDiskSizeGB
-      virtualMachineImageReference: baseVirtualMachine.virtualMachineSettings.imageReference
-      virtualMachineSize: baseVirtualMachine.virtualMachineSettings.virtualMachineSize
-      virtualMachineStorageAccountType: baseVirtualMachine.virtualMachineSettings.virtualMachineStorage
-      virtualMachineSecurityType: baseVirtualMachine.virtualMachineSettings.virtualMachineSecurityType
-      pipConfiguration: baseVirtualMachine.virtualMachineSettings.?pipConfiguration
-      privateIPAddress: baseVirtualMachine.virtualMachineSettings.privateIPAddress
-      dscSettings: baseVirtualMachine.dscSettings
-      dscProtectedSettings: baseVirtualMachine.dscProtectedSettings
-      runCommandProperties: outboundAccessMethod == 'AzureFirewallProxy' ? firewall_runCommandProperties : null
-    }
-  }
-]
+// //@sys.batchSize(3)
+// module baseVirtualMachinesModule 'virtualMachine.bicep' = [
+//   for baseVirtualMachine in baseVirtualMachines: {
+//     scope: resourceGroup
+//     name: 'virtualMachine-${baseVirtualMachine.virtualMachineSettings.virtualMachineName}-module'
+//     params: {
+//       location: location
+//       adminPassword: adminPassword
+//       subnetResourceId: virtualNetwork.outputs.mainSubnetResourceId
+//       licenseType: enableHybridBenefitServerLicenses ? 'Windows_Server' : null
+//       timeZone: timeZone
+//       autoShutdownTime: autoShutdownTime
+//       adminUsername: baseVirtualMachine.virtualMachineSettings.adminUsername
+//       virtualMachineName: baseVirtualMachine.virtualMachineSettings.virtualMachineName
+//       virtualMachineDiskSizeGB: baseVirtualMachine.virtualMachineSettings.virtualMachineDiskSizeGB
+//       virtualMachineImageReference: baseVirtualMachine.virtualMachineSettings.imageReference
+//       virtualMachineSize: baseVirtualMachine.virtualMachineSettings.virtualMachineSize
+//       virtualMachineStorageAccountType: baseVirtualMachine.virtualMachineSettings.virtualMachineStorage
+//       virtualMachineSecurityType: baseVirtualMachine.virtualMachineSettings.virtualMachineSecurityType
+//       pipConfiguration: baseVirtualMachine.virtualMachineSettings.?pipConfiguration
+//       privateIPAddress: baseVirtualMachine.virtualMachineSettings.privateIPAddress
+//       dscSettings: baseVirtualMachine.dscSettings
+//       dscProtectedSettings: baseVirtualMachine.dscProtectedSettings
+//       runCommandProperties: outboundAccessMethod == 'AzureFirewallProxy' ? firewall_runCommandProperties : null
+//     }
+//   }
+// ]
 
-module frontends 'virtualMachine.bicep' = [
-  for index in range(0, frontEndServersCount): {
-    scope: resourceGroup
-    name: 'virtualMachine-FE-${index}-module'
-    params: {
-      location: location
-      adminPassword: adminPassword
-      subnetResourceId: virtualNetwork.outputs.mainSubnetResourceId
-      licenseType: enableHybridBenefitServerLicenses ? 'Windows_Server' : null
-      timeZone: timeZone
-      autoShutdownTime: autoShutdownTime
-      adminUsername: frontendVirtualMachinesSettings.virtualMachineSettings.adminUsername
-      virtualMachineName: '${frontendVirtualMachinesSettings.virtualMachineSettings.virtualMachineName}-${index}'
-      virtualMachineDiskSizeGB: frontendVirtualMachinesSettings.virtualMachineSettings.virtualMachineDiskSizeGB
-      virtualMachineImageReference: frontendVirtualMachinesSettings.virtualMachineSettings.imageReference
-      virtualMachineSize: frontendVirtualMachinesSettings.virtualMachineSettings.virtualMachineSize
-      virtualMachineStorageAccountType: frontendVirtualMachinesSettings.virtualMachineSettings.virtualMachineStorage
-      virtualMachineSecurityType: frontendVirtualMachinesSettings.virtualMachineSettings.?virtualMachineSecurityType
-      pipConfiguration: outboundAccessMethod == 'PublicIPAddress'
-        ? {
-            publicIpNameSuffix: '-pip-01'
-            publicIpSku: 'Standard'
-            publicIPAllocationMethod: 'Static'
-            zones: []
-            dnsSettings: addNameToPublicIpAddresses == 'Yes' || addNameToPublicIpAddresses == 'SharePointVMsOnly'
-              ? {
-                  domainNameLabel: toLower('${resourceGroupNameFormatted}-${templateSettings.vmFEName}-${index}')
-                  domainNameLabelScope: templateSettings.domainNameLabelScope
-                }
-              : null
-          }
-        : {}
-      privateIPAddress: frontendVirtualMachinesSettings.virtualMachineSettings.privateIPAddress
-      dscSettings: frontendVirtualMachinesSettings.dscSettings
-      dscProtectedSettings: frontendVirtualMachinesSettings.dscProtectedSettings
-      runCommandProperties: outboundAccessMethod == 'AzureFirewallProxy' ? firewall_runCommandProperties : null
-    }
-  }
-]
+// module frontends 'virtualMachine.bicep' = [
+//   for index in range(0, frontEndServersCount): {
+//     scope: resourceGroup
+//     name: 'virtualMachine-FE-${index}-module'
+//     params: {
+//       location: location
+//       adminPassword: adminPassword
+//       subnetResourceId: virtualNetwork.outputs.mainSubnetResourceId
+//       licenseType: enableHybridBenefitServerLicenses ? 'Windows_Server' : null
+//       timeZone: timeZone
+//       autoShutdownTime: autoShutdownTime
+//       adminUsername: frontendVirtualMachinesSettings.virtualMachineSettings.adminUsername
+//       virtualMachineName: '${frontendVirtualMachinesSettings.virtualMachineSettings.virtualMachineName}-${index}'
+//       virtualMachineDiskSizeGB: frontendVirtualMachinesSettings.virtualMachineSettings.virtualMachineDiskSizeGB
+//       virtualMachineImageReference: frontendVirtualMachinesSettings.virtualMachineSettings.imageReference
+//       virtualMachineSize: frontendVirtualMachinesSettings.virtualMachineSettings.virtualMachineSize
+//       virtualMachineStorageAccountType: frontendVirtualMachinesSettings.virtualMachineSettings.virtualMachineStorage
+//       virtualMachineSecurityType: frontendVirtualMachinesSettings.virtualMachineSettings.?virtualMachineSecurityType
+//       pipConfiguration: outboundAccessMethod == 'PublicIPAddress'
+//         ? {
+//             publicIpNameSuffix: '-pip-01'
+//             publicIpSku: 'Standard'
+//             publicIPAllocationMethod: 'Static'
+//             zones: []
+//             dnsSettings: addNameToPublicIpAddresses == 'Yes' || addNameToPublicIpAddresses == 'SharePointVMsOnly'
+//               ? {
+//                   domainNameLabel: toLower('${resourceGroupNameFormatted}-${templateSettings.vmFEName}-${index}')
+//                   domainNameLabelScope: templateSettings.domainNameLabelScope
+//                 }
+//               : null
+//           }
+//         : {}
+//       privateIPAddress: frontendVirtualMachinesSettings.virtualMachineSettings.privateIPAddress
+//       dscSettings: frontendVirtualMachinesSettings.dscSettings
+//       dscProtectedSettings: frontendVirtualMachinesSettings.dscProtectedSettings
+//       runCommandProperties: outboundAccessMethod == 'AzureFirewallProxy' ? firewall_runCommandProperties : null
+//     }
+//   }
+// ]
 
 module bastion 'bastion.bicep' = if (enableAzureBastion == true) {
   scope: resourceGroup
