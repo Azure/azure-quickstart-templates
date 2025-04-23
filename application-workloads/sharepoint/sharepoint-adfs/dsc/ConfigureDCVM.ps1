@@ -12,7 +12,7 @@
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$AdfsSvcCreds
     )
 
-    Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion 6.6.0 # Custom workaround on ADObjectPermissionEntry
+    Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion 6.6.2
     Import-DscResource -ModuleName NetworkingDsc -ModuleVersion 9.0.0
     Import-DscResource -ModuleName ActiveDirectoryCSDsc -ModuleVersion 5.0.0
     Import-DscResource -ModuleName CertificateDsc -ModuleVersion 6.0.0
@@ -626,10 +626,7 @@
 
         WindowsFeature AddADTools {
             Name = "RSAT-AD-Tools"; Ensure = "Present"; 
-        }
-        WindowsFeature AddADPowerShell {
-            Name = "RSAT-AD-PowerShell"; Ensure = "Present"; 
-        }
+        }        
         WindowsFeature AddDnsTools {
             Name = "RSAT-DNS-Server"; Ensure = "Present"; 
         }
