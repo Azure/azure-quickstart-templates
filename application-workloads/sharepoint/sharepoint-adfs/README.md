@@ -74,16 +74,16 @@ The remote access to the virtual machines depends on the following parameters:
     - `No` (default): No rule is created, RDP traffic is blocked.
     - `*` or `Internet`: RDP traffic is allowed from everywhere.
     - CIDR notation (e.g. `192.168.99.0/24` or `2001:1234::/64`) or an IP address (e.g. `192.168.99.0` or `2001:1234::`): RDP traffic is allowed from the IP address / pattern specified.
-- Parameter `enable_azure_bastion`:
-  - if `true`: Configure service [Azure Bastion](https://azure.microsoft.com/services/azure-bastion/) with Basic SKU, to allow a secure remote access to virtual machines.
-  - if `false` (default): Service [Azure Bastion](https://azure.microsoft.com/services/azure-bastion/) is not created.
+- Parameter `enableAzureBastion`:
+  - if `true`: Deploy [Azure Bastion Developer](https://learn.microsoft.com/azure/bastion/quickstart-developer), to allow a secure remote access to virtual machines, at no extra cost.
+  - if `false` (default): [Azure Bastion Developer](https://learn.microsoft.com/azure/bastion/quickstart-developer) is not deployed.
 
 IMPORTANT: If you set parameter `outboundAccessMethod` to `AzureFirewallProxy`, you have to either enable Azure Bastion, or manually add a public IP address later, to be able to connect to a virtual machine.
 
 ## Input parameters
 
 - Parameter `sharePointVersion` lets you choose which version of SharePoint to install:
-  - `Subscription-Latest` (default): Same as `Subscription-RTM`, then installs the latest cumulative update available at the time of publishing this version: March 2025 ([KB5002698](https://support.microsoft.com/help/5002698)).
+  - `Subscription-Latest` (default): Same as `Subscription-RTM`, then installs the latest cumulative update available at the time of publishing this version: April 2025 ([KB5002705](https://support.microsoft.com/help/5002705)).
   - `Subscription-25H1`: Same as `Subscription-RTM`, then installs the [Feature Update 25H1](https://learn.microsoft.com/en-us/sharepoint/what-s-new/new-and-improved-features-in-sharepoint-server-subscription-edition-25h1-release) (March 2025 CU / [KB5002698](https://support.microsoft.com/help/5002698)).
   - `Subscription-24H2`: Same as `Subscription-RTM`, then installs the [Feature Update 24H2](https://learn.microsoft.com/en-us/sharepoint/what-s-new/new-and-improved-features-in-sharepoint-server-subscription-edition-24h2-release) (September 2024 CU / [kb5002640](https://support.microsoft.com/help/5002640)).
   - `Subscription-24H1`: Same as `Subscription-RTM`, then installs the [Feature Update 24H1](https://learn.microsoft.com/en-us/sharepoint/what-s-new/new-and-improved-features-in-sharepoint-server-subscription-edition-24h1-release) (March 2024 CU / [KB5002564](https://support.microsoft.com/help/5002564)).

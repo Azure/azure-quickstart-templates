@@ -1,5 +1,18 @@
 # Change log for Azure template SharePoint-ADFS
 
+## Enhancements & bug-fixes - Unreleased
+
+### Changed
+
+- Template
+  - Rewrite the entire template to create all the resources using [Azure Verified Modules](https://azure.github.io/Azure-Verified-Modules/}
+  - Parameter `enableAzureBastion` now deploys Azure Bastion Developer, which is available at no extra cost
+  - Value `Subscription-Latest` for parameter `sharePointVersion` now installs the April 2025 CU for SharePoint Subscription
+- DSC Configuration for all VMs
+  - Updated DSC module ActiveDirectoryDsc to 6.6.2 and remove all customizations on this module
+- DSC Configuration for SharePoint SE
+  - Move script that runs GrantOwnerAccessToDatabaseAccount, to run it just after the farm is created
+
 ## Enhancements & bug-fixes - Published in March 14, 2025
 
 ### Changed
