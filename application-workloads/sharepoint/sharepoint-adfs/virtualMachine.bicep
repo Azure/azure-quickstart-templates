@@ -91,6 +91,7 @@ module vm_definition 'br/public:avm/res/compute/virtual-machine:0.13.1' = {
           }
         ]
         nicSuffix: '-nic-01'
+        enableAcceleratedNetworking: false
       }
     ]
     osDisk: {
