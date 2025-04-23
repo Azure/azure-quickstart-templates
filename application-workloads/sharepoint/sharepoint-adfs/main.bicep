@@ -616,10 +616,7 @@ var baseVirtualMachines = [
     dscSettings: {
       wmfVersion: 'latest'
       configuration: {
-        url: uri(
-          _artifactsLocation,
-          '${sharePointSettings.isSharePointSubscription ? 'dsc/ConfigureSPSE.zip' : 'dsc/ConfigureSPLegacy.zip'}${_artifactsLocationSasToken}'
-        )
+        url: uri(_artifactsLocation, 'dsc/ConfigureSPSE.zip${_artifactsLocationSasToken}')
         script: (sharePointSettings.isSharePointSubscription ? 'ConfigureSPSE.ps1' : 'ConfigureSPLegacy.ps1')
         function: 'ConfigureSPVM'
       }
@@ -701,10 +698,7 @@ var frontendVirtualMachinesSettings = {
   dscSettings: {
     wmfVersion: 'latest'
     configuration: {
-      url: uri(
-        _artifactsLocation,
-        '${sharePointSettings.isSharePointSubscription ? 'dsc/ConfigureFESE.zip' : 'dsc/ConfigureFELegacy.zip'}${_artifactsLocationSasToken}'
-      )
+      url: uri(_artifactsLocation, 'dsc/ConfigureFESE.zip${_artifactsLocationSasToken}')
       script: (sharePointSettings.isSharePointSubscription ? 'ConfigureFESE.ps1' : 'ConfigureFELegacy.ps1')
       function: 'ConfigureFEVM'
     }
