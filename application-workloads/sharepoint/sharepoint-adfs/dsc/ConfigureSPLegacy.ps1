@@ -25,7 +25,7 @@ configuration ConfigureSPVM
 
     Import-DscResource -ModuleName ComputerManagementDsc -ModuleVersion 10.0.0 # Custom
     Import-DscResource -ModuleName NetworkingDsc -ModuleVersion 9.0.0
-    Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion 6.6.0 # Custom workaround on ADObjectPermissionEntry
+    Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion 6.6.2
     Import-DscResource -ModuleName xCredSSP -ModuleVersion 1.4.0
     Import-DscResource -ModuleName WebAdministrationDsc -ModuleVersion 4.2.1
     Import-DscResource -ModuleName SharePointDsc -ModuleVersion 5.6.1 # custom
@@ -874,7 +874,14 @@ configuration ConfigureSPVM
             Name                         = $DomainFQDN
             Description                  = "Federation with $DomainFQDN"
             Realm                        = "urn:sharepoint:$($SharePointSitesAuthority)"
+            # MetadataEndPoint not set for SAML because it causes this error when user tries to sign-in: "The issuer of the token is not a trusted issuer."
+            # Most likely because it sets property RegisteredIssuerName to: http://adfs.contoso.local/adfs/services/trust@*
+            # MetadataEndPoint             = "https://adfs.$DomainFQDN/FederationMetadata/2007-06/FederationMetadata.xml"
             SignInUrl                    = "https://adfs.$DomainFQDN/adfs/ls/"
+            SigningCertificateFilePath   = "$SetupPath\Certificates\ADFS Signing.cer"
+            ProviderSignOutUri          = "https://adfs.$DomainFQDN/adfs/ls/"
+            UseWReplyParameter           = $true
+
             IdentifierClaim              = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/upn"
             ClaimsMappings               = @(
                 MSFT_SPClaimTypeMapping{
@@ -886,10 +893,7 @@ configuration ConfigureSPVM
                     IncomingClaimType = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
                 }
             )
-            SigningCertificateFilePath   = "$SetupPath\Certificates\ADFS Signing.cer"
             ClaimProviderName            = $LdapcpSolutionName
-            ProviderSignOutUri          = "https://adfs.$DomainFQDN/adfs/ls/"
-            UseWReplyParameter           = $true
             Ensure                       = "Present"
             DependsOn                    = "[Script]InstallLdapcpFeatures"
             PsDscRunAsCredential         = $DomainAdminCredsQualified
