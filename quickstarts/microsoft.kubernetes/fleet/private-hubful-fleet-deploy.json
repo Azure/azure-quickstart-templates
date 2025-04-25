@@ -1,0 +1,97 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "vnet_name": {
+            "type": "String"
+        },
+        "fleets_priv_fleet_name": {
+            "type": "String"
+        },
+        "fleets_sp_object_id": {
+            "type": "String"
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "type": "Microsoft.Network/virtualNetworks",
+            "apiVersion": "2024-05-01",
+            "name": "[parameters('vnet_name')]",
+            "location": "eastus",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "192.168.0.0/16"
+                    ]
+                },
+                "privateEndpointVNetPolicies": "Disabled",
+                "subnets": [
+                    {
+                        "name": "subnet",
+                        "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnet_name'), 'subnet')]",
+                        "properties": {
+                            "addressPrefix": "192.168.0.0/24",
+                            "delegations": [],
+                            "privateEndpointNetworkPolicies": "Disabled",
+                            "privateLinkServiceNetworkPolicies": "Enabled"
+                        },
+                        "type": "Microsoft.Network/virtualNetworks/subnets"
+                    }
+                ],
+                "virtualNetworkPeerings": [],
+                "enableDdosProtection": false
+            }
+        },
+        {
+            "type": "Microsoft.ContainerService/fleets",
+            "apiVersion": "2025-03-01",
+            "name": "[parameters('fleets_priv_fleet_name')]",
+            "location": "eastus",
+            "dependsOn": [
+                "[guid(resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnet_name'), 'subnet'), parameters('fleets_sp_object_id'))]"
+            ],
+            "identity": {
+                "type": "None"
+            },
+            "properties": {
+                "hubProfile": {
+                    "agentProfile": {
+                        "subnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnet_name'), 'subnet')]"
+                    },
+                    "apiServerAccessProfile": {
+                        "enablePrivateCluster": true,
+                        "enableVnetIntegration": false
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworks/subnets",
+            "apiVersion": "2024-05-01",
+            "name": "[concat(parameters('vnet_name'), '/subnet')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnet_name'))]"
+            ],
+            "properties": {
+                "addressPrefix": "192.168.0.0/24",
+                "delegations": [],
+                "privateEndpointNetworkPolicies": "Disabled",
+                "privateLinkServiceNetworkPolicies": "Enabled"
+            }
+        },
+        {
+            "type": "Microsoft.Authorization/roleAssignments",
+            "apiVersion": "2022-04-01",
+            "name": "[guid(resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnet_name'), 'subnet'), parameters('fleets_sp_object_id'))]",
+            "scope": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnet_name'), 'subnet')]",
+            "properties": {
+                "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '4d97b98b-1d4f-4787-a291-c67834d212e7')]",
+                "principalId": "[parameters('fleets_sp_object_id')]"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnet_name'), 'subnet')]"
+            ]
+        }
+    ]
+}
