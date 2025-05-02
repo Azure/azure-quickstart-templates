@@ -1896,7 +1896,7 @@
                               "id": "68a77162-06c2-4648-83e0-f8f41c4fbda7",
                               "cellValue": "SelectedSubTab",
                               "linkTarget": "parameter",
-                              "linkLabel": "Express Route",
+                              "linkLabel": "ExpressRoute",
                               "subTarget": "ER",
                               "style": "link"
                             },
@@ -2775,7 +2775,7 @@
                                       "json": "# Recommendations for NAT Gateways\r\nReview idle NAT Gateways that have no subnet defined, as they may represent additional cost.\r\n",
                                       "style": "upsell"
                                     },
-                                    "name": "Recommendations for idle virtualNetworkGateways"
+                                    "name": "Recommendations for idle NAT Gateway"
                                   },
                                   {
                                     "type": 3,
@@ -3318,10 +3318,10 @@
                                   {
                                     "type": 1,
                                     "content": {
-                                      "json": "# Recommendations for Express Route\r\n\r\n## Express Route Gateways without a completed circuit (ISP has not completed the connection)\r\nThis table identifies Express Route circutis that have not been completed. ",
+                                      "json": "# Recommendations for ExpressRoute\r\n\r\nReview idle ExpressRoute circuits that has not been provisioned (service provider has not completed provisioning or has deprovisioned), as they may represent additional cost.",
                                       "style": "upsell"
                                     },
-                                    "name": "Recommendations for premium Firewall"
+                                    "name": "Recommendations for ExpressRoute"
                                   },
                                   {
                                     "type": 3,
@@ -3329,8 +3329,8 @@
                                       "version": "KqlItem/1.0",
                                       "query": "resources\r\n| where type =~ 'Microsoft.Network/expressRouteCircuits' and properties.serviceProviderProvisioningState == \"NotProvisioned\"\r\n| extend ServiceLocation=tostring(properties.serviceProviderProperties.peeringLocation), ServiceProvider=tostring(properties.serviceProviderProperties.serviceProviderName), BandwidthInMbps=tostring(properties.serviceProviderProperties.bandwidthInMbps)\r\n| project   ERId=id,ERName = name, ERRG = resourceGroup, SKUName=tostring(sku.name), SKUTier=tostring(sku.tier), SKUFamily=tostring(sku.family), ERLocation = location, ServiceLocation, ServiceProvider, BandwidthInMbps\r\n| join kind = innerunique(\r\n    resources\r\n    | extend replaced_tags = replace('{}', 'null', tostring(tags))\r\n    | extend replaced_tags = parse_json(replaced_tags)\r\n    | mv-expand replaced_tags\r\n    | extend tagName = tostring(bag_keys(replaced_tags)[0])\r\n    | extend tagValue = tostring(replaced_tags['{TagName}'])\r\n    | where tagName has '{TagName}' and tagValue has '{TagValue}'\r\n    | extend ERId=id\r\n    | distinct ERId\r\n    )\r\n    on ERId\r\n\r\n",
                                       "size": 0,
-                                      "title": "Idle Express Route circuits",
-                                      "noDataMessage": "No idle Express Route circuit found",
+                                      "title": "Idle ExpressRoute circuits",
+                                      "noDataMessage": "No idle ExpressRoute circuits found",
                                       "noDataMessageStyle": 3,
                                       "showExportToExcel": true,
                                       "queryType": 1,
@@ -3348,11 +3348,11 @@
                                         "labelSettings": [
                                           {
                                             "columnId": "ERId",
-                                            "label": "Express Route ID"
+                                            "label": "ExpressRoute ID"
                                           },
                                           {
                                             "columnId": "ERName",
-                                            "label": "E.R. Name"
+                                            "label": "ER Name"
                                           },
                                           {
                                             "columnId": "ERRG",
@@ -3389,7 +3389,7 @@
                                         ]
                                       }
                                     },
-                                    "name": "Idle Express Route circuits"
+                                    "name": "Idle ExpressRoute circuits"
                                   }
                                 ]
                               },
@@ -3398,7 +3398,7 @@
                                 "comparison": "isEqualTo",
                                 "value": "ER"
                               },
-                              "name": "Express Route Group"
+                              "name": "ExpressRoute Group"
                             }
                           ]
                         },
@@ -3714,6 +3714,7 @@
                                 "query": "recoveryservicesresources\r\n| where type =~ 'microsoft.recoveryservices/vaults/backupfabrics/protectioncontainers/protecteditems'\r\n| extend vaultId = tostring(properties.vaultId),resourceId = tostring(properties.sourceResourceId),idleBackup= datetime_diff('day', now(), todatetime(properties.lastBackupTime)) > 90, resourceType=tostring(properties.workloadType), protectionState=tostring(properties.protectionState),lastBackupTime=tostring(properties.lastBackupTime), resourceGroup=strcat('/subscriptions/',subscriptionId,'/resourceGroups/',resourceGroup),lastBackupDate=todatetime(properties.lastBackupTime)\r\n| where idleBackup != 0\r\n| project resourceId,vaultId,idleBackup,lastBackupDate,resourceType,protectionState,lastBackupTime,location,resourceGroup,subscriptionId\r\n| join kind = inner(\r\n    resources\r\n    | extend replaced_tags = replace('{}', 'null', tostring(tags))\r\n    | extend replaced_tags = parse_json(replaced_tags)\r\n    | mv-expand replaced_tags\r\n    | extend tagName = tostring(bag_keys(replaced_tags)[0])\r\n    | extend tagValue = tostring(replaced_tags['{TagName}'])\r\n    | extend vaultId = id\r\n    | where tagName has '{TagName}' and tagValue has '{TagValue}'\r\n    | project vaultId\r\n    )\r\n    on vaultId\r\n    | project-away vaultId1",
                                 "size": 0,
                                 "title": "Idle backups",
+                                "showExportToExcel": true,
                                 "queryType": 1,
                                 "resourceType": "microsoft.resourcegraph/resources",
                                 "crossComponentResources": [
@@ -4049,7 +4050,7 @@
                                     "type": 3,
                                     "content": {
                                       "version": "KqlItem/1.0",
-                                      "query": "resources \r\n| where type =~ 'microsoft.compute/disks' and managedBy == \"\"\r\n| extend diskState = tostring(properties.diskState)\r\n| where (tags !contains \"kubernetes.io-created-for-pvc\") and tags !contains \"ASR-ReplicaDisk\" and tags !contains \"asrseeddisk\"\r\n| where (managedBy == \"\" and diskState != 'ActiveSAS')\r\nor (diskState == 'Unattached' and diskState != 'ActiveSAS')\r\n| extend DiskId=id, DiskIDfull=id, DiskName=name, SKUName=sku.name, SKUTier=sku.tier, DiskSizeGB=tostring(properties.diskSizeGB), Location=location, TimeCreated=tostring(properties.timeCreated), QuickFix=id, SubId=subscriptionId\r\n| order by DiskId asc \r\n| project DiskId,DiskIDfull, DiskName, DiskSizeGB, SKUName, SKUTier, resourceGroup, QuickFix, Location, TimeCreated, subscriptionId,SubId\r\n| join kind = innerunique(\r\n    resources\r\n    | extend replaced_tags = replace('{}', 'null', tostring(tags))\r\n    | extend replaced_tags = parse_json(replaced_tags)\r\n    | mv-expand replaced_tags\r\n    | extend tagName = tostring(bag_keys(replaced_tags)[0])\r\n    | extend tagValue = tostring(replaced_tags['{TagName}'])\r\n    | extend DiskId = id\r\n    | where tagName has '{TagName}' and tagValue has '{TagValue}'\r\n    | distinct DiskId\r\n    )\r\n    on DiskId",
+                                      "query": "resources \r\n| where type =~ 'microsoft.compute/disks' and managedBy == \"\"\r\n| extend diskState = tostring(properties.diskState)\r\n| where (tags !contains \"kubernetes.io-created-for-pvc\") and tags !contains \"ASR-ReplicaDisk\" and tags !contains \"asrseeddisk\" and tags !contains \"RSVaultBackup\"\r\n| where (managedBy == \"\" and diskState != 'ActiveSAS')\r\nor (diskState == 'Unattached' and diskState != 'ActiveSAS')\r\n| extend DiskId=id, DiskIDfull=id, DiskName=name, SKUName=sku.name, SKUTier=sku.tier, DiskSizeGB=tostring(properties.diskSizeGB), Location=location, TimeCreated=tostring(properties.timeCreated), QuickFix=id, SubId=subscriptionId\r\n| order by DiskId asc \r\n| project DiskId,DiskIDfull, DiskName, DiskSizeGB, SKUName, SKUTier, resourceGroup, QuickFix, Location, TimeCreated, subscriptionId,SubId\r\n| join kind = innerunique(\r\n    resources\r\n    | extend replaced_tags = replace('{}', 'null', tostring(tags))\r\n    | extend replaced_tags = parse_json(replaced_tags)\r\n    | mv-expand replaced_tags\r\n    | extend tagName = tostring(bag_keys(replaced_tags)[0])\r\n    | extend tagValue = tostring(replaced_tags['{TagName}'])\r\n    | extend DiskId = id\r\n    | where tagName has '{TagName}' and tagValue has '{TagValue}'\r\n    | distinct DiskId\r\n    )\r\n    on DiskId",
                                       "size": 0,
                                       "title": "Unattached disks",
                                       "noDataMessage": "There aren't any unattached disks!",
@@ -4398,7 +4399,7 @@
                               "type": 3,
                               "content": {
                                 "version": "KqlItem/1.0",
-                                "query": "resources\r\n| where type == 'microsoft.compute/snapshots'\r\n| where resourceGroup in ({ResourceGroup})\r\n| extend StorageSku = tostring(sku.tier), resourceGroup=strcat('/subscriptions/',subscriptionId,'/resourceGroups/',resourceGroup),diskSize=tostring(properties.diskSizeGB)\r\n| where StorageSku == \"Premium\"\r\n| project id,name,StorageSku,diskSize,location,resourceGroup,subscriptionId\r\n| join kind = innerunique(\r\n    resources\r\n    | extend replaced_tags = replace('{}', 'null', tostring(tags))\r\n    | extend replaced_tags = parse_json(replaced_tags)\r\n    | mv-expand replaced_tags\r\n    | extend tagName = tostring(bag_keys(replaced_tags)[0])\r\n    | extend tagValue = tostring(replaced_tags['{TagName}'])\r\n    | where tagName has '{TagName}' and tagValue has '{TagValue}'\r\n    | distinct id\r\n    )\r\n    on id\r\n",
+                                "query": "resources\r\n| where type == 'microsoft.compute/snapshots'\r\n| where resourceGroup in ({ResourceGroup})\r\n| extend StorageSku = tostring(sku.tier), resourceGroup=strcat('/subscriptions/',subscriptionId,'/resourceGroups/',resourceGroup),diskSize=tostring(properties.diskSizeGB)\r\n| where StorageSku == \"Premium\"\r\n| project id,name,StorageSku,diskSize,location,resourceGroup,subscriptionId\r\n| join kind = innerunique(\r\n    resources\r\n    | extend replaced_tags = replace('{}', 'null', tostring(tags))\r\n    | extend replaced_tags = parse_json(replaced_tags)\r\n    | mv-expand replaced_tags\r\n    | extend tagName = tostring(bag_keys(replaced_tags)[0])\r\n    | extend tagValue = tostring(replaced_tags['{TagName}'])\r\n    | where tagName has '{TagName}' and tagValue has '{TagValue}'\r\n    | distinct id\r\n    )\r\n    on id\r\n",
                                 "size": 0,
                                 "title": "Snapshots using premium storage",
                                 "noDataMessage": "No snapshots are using Premium storage",
@@ -4477,7 +4478,7 @@
                               "type": 3,
                               "content": {
                                 "version": "KqlItem/1.0",
-                                "query": "resources\r\n| where type == 'microsoft.compute/snapshots'\r\n| where resourceGroup in ({ResourceGroup})\r\n| extend parentDisk = properties.creationData.sourceResourceId, diskSize=tostring(properties.diskSizeGB),resourceGroup=strcat('/subscriptions/',subscriptionId,'/resourceGroups/',resourceGroup)\r\n| project id,parentDisk,diskSize,location,resourceGroup,subscriptionId\r\n| join kind = innerunique(\r\n    resources\r\n    | extend replaced_tags = replace('{}', 'null', tostring(tags))\r\n    | extend replaced_tags = parse_json(replaced_tags)\r\n    | mv-expand replaced_tags\r\n    | extend tagName = tostring(bag_keys(replaced_tags)[0])\r\n    | extend tagValue = tostring(replaced_tags['{TagName}'])\r\n    | where tagName has '{TagName}' and tagValue has '{TagValue}'\r\n    | distinct id\r\n    )\r\n    on id\r\n",
+                                "query": "resources\r\n| where type == 'microsoft.compute/snapshots'\r\n| where resourceGroup in ({ResourceGroup})\r\n| extend parentDisk = properties.creationData.sourceResourceId, diskSize=tostring(properties.diskSizeGB),resourceGroup=strcat('/subscriptions/',subscriptionId,'/resourceGroups/',resourceGroup)\r\n| project id,parentDisk,diskSize,location,resourceGroup,subscriptionId\r\n| join kind = innerunique(\r\n    resources\r\n    | extend replaced_tags = replace('{}', 'null', tostring(tags))\r\n    | extend replaced_tags = parse_json(replaced_tags)\r\n    | mv-expand replaced_tags\r\n    | extend tagName = tostring(bag_keys(replaced_tags)[0])\r\n    | extend tagValue = tostring(replaced_tags['{TagName}'])\r\n    | where tagName has '{TagName}' and tagValue has '{TagValue}'\r\n    | distinct id\r\n    )\r\n    on id\r\n",
                                 "size": 0,
                                 "title": "All Managed Disks snapshots",
                                 "noDataMessage": "No snapshots found",
@@ -4526,7 +4527,7 @@
                               "type": 3,
                               "content": {
                                 "version": "KqlItem/1.0",
-                                "query": "resources\r\n| where type == 'microsoft.compute/disks'\r\n| project id\r\n",
+                                "query": "resources\r\n| where type == 'microsoft.compute/disks'\r\n| project id\r\n",
                                 "size": 0,
                                 "title": "All managed disks",
                                 "queryType": 1,
@@ -5169,7 +5170,7 @@
                                     "type": 3,
                                     "content": {
                                       "version": "KqlItem/1.0",
-                                      "query": "resources\r\n| where type == 'microsoft.compute/virtualmachines'\r\n| extend vmSize = properties.hardwareProfile.vmSize\r\n| extend processorType = case(\r\n    // ARM Processors\r\n    vmSize has \"Epsv5\" or vmSize has \"Epdsv5\" or vmSize has \"Dpsv5\" or vmSize has \"Dpdsv\", \"ARM\",\r\n    // AMD Processors\r\n    vmSize has \"Standard_D2a\" or vmSize has \"Standard_D4a\" or vmSize has \"Standard_D8a\" or vmSize has \"Standard_D16a\" or vmSize has \"Standard_D32a\" or vmSize has \"Standard_D48a\" or vmSize has \"Standard_D64a\" or vmSize has \"Standard_D96a\" or vmSize has \"Standard_D2as\" or vmSize has \"Standard_D4as\" or vmSize has \"Standard_D8as\" or vmSize has \"Standard_D16as\" or vmSize has \"Standard_D32as\" or vmSize has \"Standard_D48as\" or vmSize has \"Standard_D64as\" or vmSize has \"Standard_D96as\", \"AMD\",\r\n    \"Intel\"\r\n)\r\n| project vmName = name, processorType, vmSize, resourceGroup\r\n",
+                                      "query": "resources\r\n| where type == 'microsoft.compute/virtualmachines'\r\n| extend vmSize = properties.hardwareProfile.vmSize\r\n| extend processorType = case(\r\n    // ARM Processors\r\n    vmSize has \"Epsv5\" or vmSize has \"Epdsv5\" or vmSize has \"Dpsv5\" or vmSize has \"Dpdsv\", \"ARM\",\r\n    // AMD Processors\r\n    vmSize has \"Standard_D2a\" or vmSize has \"Standard_D4a\" or vmSize has \"Standard_D8a\" or vmSize has \"Standard_D16a\" or vmSize has \"Standard_D32a\" or vmSize has \"Standard_D48a\" or vmSize has \"Standard_D64a\" or vmSize has \"Standard_D96a\" or vmSize has \"Standard_D2as\" or vmSize has \"Standard_D4as\" or vmSize has \"Standard_D8as\" or vmSize has \"Standard_D16as\" or vmSize has \"Standard_D32as\" or vmSize has \"Standard_D48as\" or vmSize has \"Standard_D64as\" or vmSize has \"Standard_D96as\" or vmSize has \"Standard_D2ads\" or vmSize has \"Standard_D4ads\"or vmSize has \"Standard_D8ads\" or vmSize has \"Standard_D16ads\" or vmSize has \"Standard_D32ads\"or vmSize has \"Standard_D48ads\"or vmSize has \"Standard_D64ads\"or vmSize has \"Standard_D96ads\", \"AMD\",\r\n    \"Intel\"\r\n)\r\n| project vmName = name, processorType, vmSize, resourceGroup\r\n",
                                       "size": 0,
                                       "title": "List of VMs per processor type",
                                       "showExportToExcel": true,
@@ -6548,6 +6549,22 @@
                         "linkLabel": "VM Scale Set",
                         "subTarget": "VMSS",
                         "style": "link"
+                      },
+                      {
+                        "id": "be820ada-a0f4-4c51-b17b-3e506edd1410",
+                        "cellValue": "SelectedSubTab",
+                        "linkTarget": "parameter",
+                        "linkLabel": "Custom Images",
+                        "subTarget": "CustomImages",
+                        "style": "link"
+                      },
+                      {
+                        "id": "1dda3cc4-59ba-4758-9c51-d6c9fab18647",
+                        "cellValue": "SelectedSubTab",
+                        "linkTarget": "parameter",
+                        "linkLabel": "Azure Arc",
+                        "subTarget": "arc",
+                        "style": "link"
                       }
                     ]
                   },
@@ -6557,6 +6574,1070 @@
                     "value": "VM"
                   },
                   "name": "links - 4"
+                },
+                {
+                  "type": 12,
+                  "content": {
+                    "version": "NotebookGroup/1.0",
+                    "groupType": "editable",
+                    "items": [
+                      {
+                        "type": 3,
+                        "content": {
+                          "version": "KqlItem/1.0",
+                          "query": "ResourceContainers | where type =~ 'Microsoft.Resources/subscriptions' | where tostring (properties.subscriptionPolicies.quotaId) !has \"MSDNDevTest_2014-09-01\"  | extend SubscriptionName=name \r\n| join (\r\nresources \r\n| where resourceGroup in ({ResourceGroup})\r\n| where type has \"microsoft.compute/virtualmachines\"  or type =~ 'microsoft.compute/virtualMachineScaleSets'\r\n| where properties.storageProfile.osDisk.osType == \"Windows\"\r\n| extend OS=properties.storageProfile.imageReference.id\r\n| where isnotnull(OS)\r\n| extend ActualCores = toint(extract(\".[A-Z]([0-9]+)\", 1, tostring(properties.hardwareProfile.vmSize)))\r\n| where tostring(properties.['licenseType']) has 'Windows'\r\n| extend WindowsId=id, VMIDFull=id, VMName=name, VMLocation=location, VMRG=resourceGroup, OSType=tostring(properties.storageProfile.osDisk.osType), VMSize=tostring (properties.hardwareProfile.vmSize), ActualCores, LicenseType = tostring(properties.['licenseType']), VMSSize=tostring(sku.name), QuickFix=id\r\n    ) on subscriptionId \r\n| order by type asc \r\n| project WindowsId,VMName,VMRG,VMSize, ActualCores,VMLocation,OSType, LicenseType, subscriptionId, QuickFix, VMIDFull\r\n| join kind = innerunique(\r\n    resources\r\n    | extend replaced_tags = replace('{}', 'null', tostring(tags))\r\n    | extend replaced_tags = parse_json(replaced_tags)\r\n    | mv-expand replaced_tags\r\n    | extend tagName = tostring(bag_keys(replaced_tags)[0])\r\n    | extend tagValue = tostring(replaced_tags['{TagName}']), WindowsId=id\r\n    | where tagName has '{TagName}' and tagValue has '{TagValue}'\r\n    | distinct WindowsId\r\n    )\r\n    on WindowsId",
+                          "size": 0,
+                          "queryType": 1,
+                          "resourceType": "microsoft.resourcegraph/resources",
+                          "crossComponentResources": [
+                            "{Subscription}"
+                          ]
+                        },
+                        "conditionalVisibility": {
+                          "parameterName": "AlwaysHidden",
+                          "comparison": "isEqualTo",
+                          "value": "true"
+                        },
+                        "name": "CustomImageAHBEnabled"
+                      },
+                      {
+                        "type": 3,
+                        "content": {
+                          "version": "KqlItem/1.0",
+                          "query": "ResourceContainers | where type =~ 'Microsoft.Resources/subscriptions' | where tostring (properties.subscriptionPolicies.quotaId) !has \"MSDNDevTest_2014-09-01\"  | extend SubscriptionName=name \r\n| join (\r\nresources \r\n| where resourceGroup in ({ResourceGroup})\r\n| where type has \"microsoft.compute/virtualmachines\"  or type =~ 'microsoft.compute/virtualMachineScaleSets'\r\n| where properties.storageProfile.osDisk.osType != \"Windows\"\r\n| extend ActualCores = toint(extract(\".[A-Z]([0-9]+)\", 1, tostring(properties.hardwareProfile.vmSize)))\r\n| extend OS=properties.storageProfile.imageReference.id\r\n| where isnotnull(OS)\r\n| where tostring(properties.['licenseType']) has 'Windows'\r\n| extend WindowsId=id, VMIDFull=id, VMName=name, VMLocation=location, VMRG=resourceGroup, OSType=tostring(properties.storageProfile.osDisk.osType), VMSize=tostring (properties.hardwareProfile.vmSize), ActualCores, LicenseType = tostring(properties.['licenseType']), VMSSize=tostring(sku.name), QuickFix=id\r\n    ) on subscriptionId \r\n| order by type asc \r\n| project WindowsId,VMName,VMRG,VMSize, ActualCores,VMLocation,OSType, LicenseType, subscriptionId, QuickFix, VMIDFull\r\n| join kind = innerunique(\r\n    resources\r\n    | extend replaced_tags = replace('{}', 'null', tostring(tags))\r\n    | extend replaced_tags = parse_json(replaced_tags)\r\n    | mv-expand replaced_tags\r\n    | extend tagName = tostring(bag_keys(replaced_tags)[0])\r\n    | extend tagValue = tostring(replaced_tags['{TagName}']), WindowsId=id\r\n    | where tagName has '{TagName}' and tagValue has '{TagValue}'\r\n    | distinct WindowsId\r\n    )\r\n    on WindowsId",
+                          "size": 0,
+                          "queryType": 1,
+                          "resourceType": "microsoft.resourcegraph/resources",
+                          "crossComponentResources": [
+                            "{Subscription}"
+                          ]
+                        },
+                        "conditionalVisibility": {
+                          "parameterName": "AlwaysHidden",
+                          "comparison": "isEqualTo",
+                          "value": "True"
+                        },
+                        "name": "CustomImageAHBDisabled"
+                      },
+                      {
+                        "type": 1,
+                        "content": {
+                          "json": "## Custom Images - Windows Azure Hybrid Benefit (AHB) Overview\r\n#### Note: This tab contains information only about Custom Images where the OS is Windows."
+                        },
+                        "name": "AHB Overview"
+                      },
+                      {
+                        "type": 1,
+                        "content": {
+                          "json": "Each two-processor license or each set of 16-core licenses, either Datacenter or Standard editions, are entitled to two instances of up to 8 cores, or one instance of up to 16 cores.\r\n\r\nThe virtual machines (VMs) with less than 8 cores are categorized as **Low Priority**, while those with 8 or more cores are classified as **High Priority**. In situations where there are insufficient Azure Hybrid benefit licenses to cover all the VMs in the environment, it is recommended to prioritize the High Priority VMs.",
+                          "style": "info"
+                        },
+                        "name": "NUmber of Processors-CustomImages",
+                        "styleSettings": {
+                          "margin": "10px",
+                          "showBorder": true
+                        }
+                      },
+                      {
+                        "type": 3,
+                        "content": {
+                          "version": "KqlItem/1.0",
+                          "query": "ResourceContainers | where type =~ 'Microsoft.Resources/subscriptions' | where tostring (properties.subscriptionPolicies.quotaId) !has \"MSDNDevTest_2014-09-01\" | extend SubscriptionName=name, SubId=id\r\n| join (\r\nresources \r\n| where resourceGroup in ({ResourceGroup})\r\n| where type has \"microsoft.compute/virtualmachines\"  or type =~ 'microsoft.compute/virtualMachineScaleSets'\r\n| where properties.storageProfile.osDisk.osType == \"Windows\"\r\n| extend OS=properties.storageProfile.imageReference.id\r\n| where isnotnull(OS)\r\n| extend WindowsId=id\r\n| join kind = innerunique(\r\n    resources\r\n    | extend replaced_tags = replace('{}', 'null', tostring(tags))\r\n    | extend replaced_tags = parse_json(replaced_tags)\r\n    | mv-expand replaced_tags\r\n    | extend tagName = tostring(bag_keys(replaced_tags)[0])\r\n    | extend tagValue = tostring(replaced_tags['{TagName}']), WindowsId=id\r\n    | where tagName has '{TagName}' and tagValue has '{TagValue}'\r\n    | distinct WindowsId\r\n    )\r\n    on WindowsId\r\n| extend LicenseType = tostring(properties.['licenseType'])\r\n| extend CheckAHBWindows = case(\r\n     type == 'microsoft.compute/virtualmachines' or type =~ 'microsoft.compute/virtualMachineScaleSets', iif((properties.['licenseType'])\r\n     !has 'Windows' and (properties.virtualMachineProfile.['licenseType']) !has 'Windows' , \"AHB Not Enabled\", \"AHB Enabled\"),\r\n     \"Not Windows\"\r\n     )\r\n) on subscriptionId \r\n| summarize count() by CheckAHBWindows, SubId, SubscriptionName\r\n",
+                          "size": 0,
+                          "title": "Summary of Windows VMs with or without AHB per Subscription",
+                          "showRefreshButton": true,
+                          "showExportToExcel": true,
+                          "queryType": 1,
+                          "resourceType": "microsoft.resourcegraph/resources",
+                          "crossComponentResources": [
+                            "{Subscription}"
+                          ],
+                          "visualization": "table",
+                          "gridSettings": {
+                            "formatters": [
+                              {
+                                "columnMatch": "SubId",
+                                "formatter": 5
+                              },
+                              {
+                                "columnMatch": "SubscriptionName",
+                                "formatter": 5
+                              }
+                            ],
+                            "hierarchySettings": {
+                              "treeType": 1,
+                              "groupBy": [
+                                "SubscriptionName"
+                              ],
+                              "finalBy": "SubscriptionName"
+                            },
+                            "labelSettings": [
+                              {
+                                "columnId": "CheckAHBWindows",
+                                "label": "Is AHB enabled?"
+                              },
+                              {
+                                "columnId": "SubscriptionName",
+                                "label": "Subscription Name"
+                              },
+                              {
+                                "columnId": "count_",
+                                "label": "Number of resources"
+                              }
+                            ]
+                          },
+                          "sortBy": [],
+                          "tileSettings": {
+                            "titleContent": {
+                              "columnMatch": "CheckAHBWindows",
+                              "formatter": 1
+                            },
+                            "subtitleContent": {
+                              "columnMatch": "SubscriptionName",
+                              "formatter": 1
+                            },
+                            "leftContent": {
+                              "columnMatch": "count_",
+                              "formatter": 12,
+                              "formatOptions": {
+                                "palette": "auto"
+                              }
+                            },
+                            "showBorder": false,
+                            "size": "auto"
+                          },
+                          "chartSettings": {
+                            "xAxis": "SubscriptionName"
+                          }
+                        },
+                        "customWidth": "50",
+                        "name": "Summary of Windows VMs with or without AHB per Subscription - Custom Images"
+                      },
+                      {
+                        "type": 3,
+                        "content": {
+                          "version": "KqlItem/1.0",
+                          "query": "ResourceContainers | where type =~ 'Microsoft.Resources/subscriptions' | where tostring (properties.subscriptionPolicies.quotaId) !has \"MSDNDevTest_2014-09-01\" | extend SubscriptionName=name \r\n| join (\r\nresources \r\n| where resourceGroup in ({ResourceGroup})\r\n| where type has \"microsoft.compute/virtualmachines\"  or type =~ 'microsoft.compute/virtualMachineScaleSets'\r\n| where properties.storageProfile.osDisk.osType == \"Windows\"\r\n| extend OS=properties.storageProfile.imageReference.id\r\n| where isnotnull(OS)\r\n| extend WindowsId=id\r\n| join kind = innerunique(\r\n    resources\r\n    | extend replaced_tags = replace('{}', 'null', tostring(tags))\r\n    | extend replaced_tags = parse_json(replaced_tags)\r\n    | mv-expand replaced_tags\r\n    | extend tagName = tostring(bag_keys(replaced_tags)[0])\r\n    | extend tagValue = tostring(replaced_tags['{TagName}']), WindowsId=id\r\n    | where tagName has '{TagName}' and tagValue has '{TagValue}'\r\n    | distinct WindowsId\r\n    )\r\n    on WindowsId\r\n| extend LicenseType = tostring(properties.['licenseType'])\r\n| extend CheckAHBWindows = case(\r\n     type == 'microsoft.compute/virtualmachines' or type =~ 'microsoft.compute/virtualMachineScaleSets', iif((properties.['licenseType'])\r\n     !has 'Windows' and (properties.virtualMachineProfile.['licenseType']) !has 'Windows' , \"AHB Not Enabled\", \"AHB Enabled\"),\r\n     \"Not Windows\"\r\n     )\r\n) on subscriptionId \r\n| summarize count() by CheckAHBWindows",
+                          "size": 0,
+                          "title": "Summary of Windows VMs with or without AHB",
+                          "showRefreshButton": true,
+                          "queryType": 1,
+                          "resourceType": "microsoft.resourcegraph/resources",
+                          "crossComponentResources": [
+                            "{Subscription}"
+                          ],
+                          "visualization": "piechart"
+                        },
+                        "customWidth": "50",
+                        "name": "Summary of Windows VMs with or without AHB-CustomImages"
+                      },
+                      {
+                        "type": 1,
+                        "content": {
+                          "json": "### Consumed Licenses\r\nTotal number of Windows licenses cores consumed by all Windows virtual machines.\r\n",
+                          "style": "info"
+                        },
+                        "customWidth": "50",
+                        "name": "Consumed Licenses-CustomImages"
+                      },
+                      {
+                        "type": 1,
+                        "content": {
+                          "json": "### Number of required Cores to enable Windows Azure Hybrid Benefit\r\nNumber of cores required to enable AHB across the entire environment.",
+                          "style": "info"
+                        },
+                        "customWidth": "50",
+                        "name": "Number of required Cores-CustomImages"
+                      },
+                      {
+                        "type": 3,
+                        "content": {
+                          "version": "KqlItem/1.0",
+                          "query": "{\"version\":\"Merge/1.0\",\"merges\":[{\"id\":\"0b494d5e-27b1-4cf6-bcd5-3e4e813a02ac\",\"mergeType\":\"table\",\"leftTable\":\"CustomImageAHBEnabled\"}],\"projectRename\":[{\"originalName\":\"[CustomImageAHBEnabled].WindowsId\",\"mergedName\":\"WindowsId\",\"fromId\":\"0b494d5e-27b1-4cf6-bcd5-3e4e813a02ac\"},{\"originalName\":\"[CustomImageAHBEnabled].VMName\",\"mergedName\":\"VMName\",\"fromId\":\"0b494d5e-27b1-4cf6-bcd5-3e4e813a02ac\"},{\"originalName\":\"[CustomImageAHBEnabled].VMRG\",\"mergedName\":\"VMRG\",\"fromId\":\"0b494d5e-27b1-4cf6-bcd5-3e4e813a02ac\"},{\"originalName\":\"[CustomImageAHBEnabled].VMSize\",\"mergedName\":\"VMSize\",\"fromId\":\"0b494d5e-27b1-4cf6-bcd5-3e4e813a02ac\"},{\"originalName\":\"[CustomImageAHBEnabled].ActualCores\",\"mergedName\":\"ActualCores\",\"fromId\":\"0b494d5e-27b1-4cf6-bcd5-3e4e813a02ac\"},{\"originalName\":\"[CustomImageAHBEnabled].VMLocation\",\"mergedName\":\"VMLocation\",\"fromId\":\"0b494d5e-27b1-4cf6-bcd5-3e4e813a02ac\"},{\"originalName\":\"[CustomImageAHBEnabled].OSType\",\"mergedName\":\"OSType\",\"fromId\":\"0b494d5e-27b1-4cf6-bcd5-3e4e813a02ac\"},{\"originalName\":\"[CustomImageAHBEnabled].LicenseType\",\"mergedName\":\"LicenseType\",\"fromId\":\"0b494d5e-27b1-4cf6-bcd5-3e4e813a02ac\"},{\"originalName\":\"[CustomImageAHBEnabled].subscriptionId\",\"mergedName\":\"subscriptionId\",\"fromId\":\"0b494d5e-27b1-4cf6-bcd5-3e4e813a02ac\"},{\"originalName\":\"[CustomImageAHBEnabled].QuickFix\",\"mergedName\":\"QuickFix\",\"fromId\":\"0b494d5e-27b1-4cf6-bcd5-3e4e813a02ac\"},{\"originalName\":\"[CustomImageAHBEnabled].VMIDFull\",\"mergedName\":\"VMIDFull\",\"fromId\":\"0b494d5e-27b1-4cf6-bcd5-3e4e813a02ac\"},{\"originalName\":\"[CustomImageAHBEnabled].WindowsId1\",\"mergedName\":\"WindowsId1\",\"fromId\":\"0b494d5e-27b1-4cf6-bcd5-3e4e813a02ac\"},{\"originalName\":\"[Added column]\",\"mergedName\":\"Prioritize AHB\",\"fromId\":null,\"isNewItem\":true,\"newItemData\":[{\"criteriaContext\":{\"leftOperand\":\"ActualCores\",\"operator\":\"<=\",\"rightValType\":\"static\",\"rightVal\":\"8\",\"resultValType\":\"static\",\"resultVal\":\"Low Priority\"}},{\"criteriaContext\":{\"operator\":\"Default\",\"rightValType\":\"column\",\"resultValType\":\"static\",\"resultVal\":\"High Priority\"}}]},{\"originalName\":\"[Added column]\",\"mergedName\":\"ConsumedCores\",\"fromId\":null,\"isNewItem\":true,\"newItemData\":[{\"criteriaContext\":{\"leftOperand\":\"ActualCores\",\"operator\":\"<=\",\"rightValType\":\"static\",\"rightVal\":\"8\",\"resultValType\":\"expression\",\"resultVal\":\"8\"}},{\"criteriaContext\":{\"operator\":\"Default\",\"rightValType\":\"column\",\"resultValType\":\"column\",\"resultVal\":\"ActualCores\"}}]}]}",
+                          "size": 0,
+                          "title": "Consumed Cores per AHB Priority",
+                          "showRefreshButton": true,
+                          "showExportToExcel": true,
+                          "queryType": 7,
+                          "visualization": "piechart",
+                          "chartSettings": {
+                            "yAxis": [
+                              "ConsumedCores"
+                            ],
+                            "group": "Prioritize AHB",
+                            "createOtherGroup": null
+                          }
+                        },
+                        "customWidth": "33",
+                        "showPin": false,
+                        "name": "ConsumedCoresPerAhubpriority-CustomImages"
+                      },
+                      {
+                        "type": 3,
+                        "content": {
+                          "version": "KqlItem/1.0",
+                          "query": "{\"version\":\"Merge/1.0\",\"merges\":[{\"id\":\"0b494d5e-27b1-4cf6-bcd5-3e4e813a02ac\",\"mergeType\":\"table\",\"leftTable\":\"CustomImageAHBEnabled\"}],\"projectRename\":[{\"originalName\":\"[CustomImageAHBEnabled].WindowsId\",\"mergedName\":\"WindowsId\",\"fromId\":\"0b494d5e-27b1-4cf6-bcd5-3e4e813a02ac\"},{\"originalName\":\"[CustomImageAHBEnabled].VMName\",\"mergedName\":\"VMName\",\"fromId\":\"0b494d5e-27b1-4cf6-bcd5-3e4e813a02ac\"},{\"originalName\":\"[CustomImageAHBEnabled].VMRG\",\"mergedName\":\"VMRG\",\"fromId\":\"0b494d5e-27b1-4cf6-bcd5-3e4e813a02ac\"},{\"originalName\":\"[CustomImageAHBEnabled].VMSize\",\"mergedName\":\"VMSize\",\"fromId\":\"0b494d5e-27b1-4cf6-bcd5-3e4e813a02ac\"},{\"originalName\":\"[CustomImageAHBEnabled].ActualCores\",\"mergedName\":\"ActualCores\",\"fromId\":\"0b494d5e-27b1-4cf6-bcd5-3e4e813a02ac\"},{\"originalName\":\"[CustomImageAHBEnabled].VMLocation\",\"mergedName\":\"VMLocation\",\"fromId\":\"0b494d5e-27b1-4cf6-bcd5-3e4e813a02ac\"},{\"originalName\":\"[CustomImageAHBEnabled].OSType\",\"mergedName\":\"OSType\",\"fromId\":\"0b494d5e-27b1-4cf6-bcd5-3e4e813a02ac\"},{\"originalName\":\"[CustomImageAHBEnabled].LicenseType\",\"mergedName\":\"LicenseType\",\"fromId\":\"0b494d5e-27b1-4cf6-bcd5-3e4e813a02ac\"},{\"originalName\":\"[CustomImageAHBEnabled].subscriptionId\",\"mergedName\":\"subscriptionId\",\"fromId\":\"0b494d5e-27b1-4cf6-bcd5-3e4e813a02ac\"},{\"originalName\":\"[CustomImageAHBEnabled].QuickFix\",\"mergedName\":\"QuickFix\",\"fromId\":\"0b494d5e-27b1-4cf6-bcd5-3e4e813a02ac\"},{\"originalName\":\"[CustomImageAHBEnabled].VMIDFull\",\"mergedName\":\"VMIDFull\",\"fromId\":\"0b494d5e-27b1-4cf6-bcd5-3e4e813a02ac\"},{\"originalName\":\"[CustomImageAHBEnabled].WindowsId1\",\"mergedName\":\"WindowsId1\",\"fromId\":\"0b494d5e-27b1-4cf6-bcd5-3e4e813a02ac\"},{\"originalName\":\"[Added column]\",\"mergedName\":\"Prioritize AHB\",\"fromId\":null,\"isNewItem\":true,\"newItemData\":[{\"criteriaContext\":{\"leftOperand\":\"ActualCores\",\"operator\":\"<=\",\"rightValType\":\"static\",\"rightVal\":\"8\",\"resultValType\":\"static\",\"resultVal\":\"Low Priority\"}},{\"criteriaContext\":{\"operator\":\"Default\",\"rightValType\":\"column\",\"resultValType\":\"static\",\"resultVal\":\"High Priority\"}}]},{\"originalName\":\"[Added column]\",\"mergedName\":\"ConsumedCores\",\"fromId\":null,\"isNewItem\":true,\"newItemData\":[{\"criteriaContext\":{\"leftOperand\":\"ActualCores\",\"operator\":\"<=\",\"rightValType\":\"static\",\"rightVal\":\"8\",\"resultValType\":\"expression\",\"resultVal\":\"8\"}},{\"criteriaContext\":{\"operator\":\"Default\",\"rightValType\":\"column\",\"resultValType\":\"column\",\"resultVal\":\"ActualCores\"}}]}]}",
+                          "size": 0,
+                          "title": "Consumed Cores per VM",
+                          "showRefreshButton": true,
+                          "showExportToExcel": true,
+                          "queryType": 7,
+                          "visualization": "piechart",
+                          "chartSettings": {
+                            "yAxis": [
+                              "ConsumedCores"
+                            ],
+                            "group": "VMName",
+                            "createOtherGroup": null
+                          }
+                        },
+                        "customWidth": "30",
+                        "showPin": false,
+                        "name": "ConsumedCoresPerVM-CustomImages"
+                      },
+                      {
+                        "type": 3,
+                        "content": {
+                          "version": "KqlItem/1.0",
+                          "query": "{\"version\":\"Merge/1.0\",\"merges\":[{\"id\":\"0b494d5e-27b1-4cf6-bcd5-3e4e813a02ac\",\"mergeType\":\"table\",\"leftTable\":\"CustomImageAHBDisabled\"}],\"projectRename\":[{\"originalName\":\"[Added column]\",\"mergedName\":\"Prioritize AHB\",\"fromId\":null,\"isNewItem\":true,\"newItemData\":[{\"criteriaContext\":{\"leftOperand\":\"ActualCores\",\"operator\":\"<=\",\"rightValType\":\"static\",\"rightVal\":\"8\",\"resultValType\":\"static\",\"resultVal\":\"Low Priority\"}},{\"criteriaContext\":{\"operator\":\"Default\",\"rightValType\":\"column\",\"resultValType\":\"static\",\"resultVal\":\"High Priority\"}}]},{\"originalName\":\"[Added column]\",\"mergedName\":\"ConsumedCores\",\"fromId\":null,\"isNewItem\":true,\"newItemData\":[{\"criteriaContext\":{\"leftOperand\":\"ActualCores\",\"operator\":\"<=\",\"rightValType\":\"static\",\"rightVal\":\"8\",\"resultValType\":\"expression\",\"resultVal\":\"8\"}},{\"criteriaContext\":{\"operator\":\"Default\",\"rightValType\":\"column\",\"resultValType\":\"column\",\"resultVal\":\"ActualCores\"}}]},{\"originalName\":\"[CustomImageAHBDisabled].WindowsId\",\"mergedName\":\"WindowsId\",\"fromId\":\"0b494d5e-27b1-4cf6-bcd5-3e4e813a02ac\"},{\"originalName\":\"[CustomImageAHBDisabled].VMName\",\"mergedName\":\"VMName\",\"fromId\":\"0b494d5e-27b1-4cf6-bcd5-3e4e813a02ac\"},{\"originalName\":\"[CustomImageAHBDisabled].VMRG\",\"mergedName\":\"VMRG\",\"fromId\":\"0b494d5e-27b1-4cf6-bcd5-3e4e813a02ac\"},{\"originalName\":\"[CustomImageAHBDisabled].VMSize\",\"mergedName\":\"VMSize\",\"fromId\":\"0b494d5e-27b1-4cf6-bcd5-3e4e813a02ac\"},{\"originalName\":\"[CustomImageAHBDisabled].ActualCores\",\"mergedName\":\"ActualCores\",\"fromId\":\"0b494d5e-27b1-4cf6-bcd5-3e4e813a02ac\"},{\"originalName\":\"[CustomImageAHBDisabled].VMLocation\",\"mergedName\":\"VMLocation\",\"fromId\":\"0b494d5e-27b1-4cf6-bcd5-3e4e813a02ac\"},{\"originalName\":\"[CustomImageAHBDisabled].OSType\",\"mergedName\":\"OSType\",\"fromId\":\"0b494d5e-27b1-4cf6-bcd5-3e4e813a02ac\"},{\"originalName\":\"[CustomImageAHBDisabled].LicenseType\",\"mergedName\":\"LicenseType\",\"fromId\":\"0b494d5e-27b1-4cf6-bcd5-3e4e813a02ac\"},{\"originalName\":\"[CustomImageAHBDisabled].subscriptionId\",\"mergedName\":\"subscriptionId\",\"fromId\":\"0b494d5e-27b1-4cf6-bcd5-3e4e813a02ac\"},{\"originalName\":\"[CustomImageAHBDisabled].QuickFix\",\"mergedName\":\"QuickFix\",\"fromId\":\"0b494d5e-27b1-4cf6-bcd5-3e4e813a02ac\"},{\"originalName\":\"[CustomImageAHBDisabled].VMIDFull\",\"mergedName\":\"VMIDFull\",\"fromId\":\"0b494d5e-27b1-4cf6-bcd5-3e4e813a02ac\"},{\"originalName\":\"[CustomImageAHBDisabled].WindowsId1\",\"mergedName\":\"WindowsId1\",\"fromId\":\"0b494d5e-27b1-4cf6-bcd5-3e4e813a02ac\"}]}",
+                          "size": 0,
+                          "title": "Required CPU cores for AHB activation on remaining VMs",
+                          "noDataMessage": "All VMs within the current scope have AHB enabled",
+                          "noDataMessageStyle": 3,
+                          "showRefreshButton": true,
+                          "showExportToExcel": true,
+                          "queryType": 7,
+                          "visualization": "piechart",
+                          "chartSettings": {
+                            "yAxis": [
+                              "ConsumedCores"
+                            ],
+                            "group": "VMName",
+                            "createOtherGroup": null
+                          }
+                        },
+                        "customWidth": "36",
+                        "showPin": false,
+                        "name": "CoresNotEnabledperAHBPriority-CustomImages"
+                      },
+                      {
+                        "type": 9,
+                        "content": {
+                          "version": "KqlParameterItem/1.0",
+                          "parameters": [
+                            {
+                              "id": "ae5e8765-47ef-46a6-803b-6b7124c098d2",
+                              "version": "KqlParameterItem/1.0",
+                              "name": "AHBEnabled",
+                              "label": "See VMs with AHB",
+                              "type": 2,
+                              "isRequired": true,
+                              "typeSettings": {
+                                "additionalResourceOptions": [],
+                                "showDefault": false
+                              },
+                              "jsonData": "[\r\n    {\"value\":\"Yes\"},\r\n    {\"value\":\"No\", \"selected\":true}\r\n]\r\n\r\n",
+                              "timeContext": {
+                                "durationMs": 86400000
+                              }
+                            },
+                            {
+                              "id": "f1ac5e53-253c-4afb-8bc5-b1ba2efea3eb",
+                              "version": "KqlParameterItem/1.0",
+                              "name": "AHBDisabled",
+                              "label": "See VMs without AHB",
+                              "type": 2,
+                              "isRequired": true,
+                              "typeSettings": {
+                                "additionalResourceOptions": [],
+                                "showDefault": false
+                              },
+                              "jsonData": "[\r\n    {\"value\":\"Yes\"},\r\n    {\"value\":\"No\", \"selected\":true}\r\n]\r\n\r\n"
+                            }
+                          ],
+                          "style": "pills",
+                          "queryType": 0,
+                          "resourceType": "microsoft.operationalinsights/workspaces"
+                        },
+                        "name": "VM AHB Enabled - CustomImages"
+                      },
+                      {
+                        "type": 3,
+                        "content": {
+                          "version": "KqlItem/1.0",
+                          "query": "{\"version\":\"Merge/1.0\",\"merges\":[{\"id\":\"0b494d5e-27b1-4cf6-bcd5-3e4e813a02e8\",\"mergeType\":\"table\",\"leftTable\":\"ConsumedCoresPerAhubpriority-CustomImages\"}],\"projectRename\":[{\"originalName\":\"[ConsumedCoresPerAhubpriority-CustomImages].WindowsId\",\"mergedName\":\"WindowsId\",\"fromId\":\"0b494d5e-27b1-4cf6-bcd5-3e4e813a02e8\"},{\"originalName\":\"[ConsumedCoresPerAhubpriority-CustomImages].VMName\",\"mergedName\":\"VMName\",\"fromId\":\"0b494d5e-27b1-4cf6-bcd5-3e4e813a02e8\"},{\"originalName\":\"[ConsumedCoresPerAhubpriority-CustomImages].VMRG\",\"mergedName\":\"VMRG\",\"fromId\":\"0b494d5e-27b1-4cf6-bcd5-3e4e813a02e8\"},{\"originalName\":\"[ConsumedCoresPerAhubpriority-CustomImages].VMSize\",\"mergedName\":\"VMSize\",\"fromId\":\"0b494d5e-27b1-4cf6-bcd5-3e4e813a02e8\"},{\"originalName\":\"[ConsumedCoresPerAhubpriority-CustomImages].ActualCores\",\"mergedName\":\"ActualCores\",\"fromId\":\"0b494d5e-27b1-4cf6-bcd5-3e4e813a02e8\"},{\"originalName\":\"[ConsumedCoresPerAhubpriority-CustomImages].ConsumedCores\",\"mergedName\":\"ConsumedCores\",\"fromId\":\"0b494d5e-27b1-4cf6-bcd5-3e4e813a02e8\"},{\"originalName\":\"[ConsumedCoresPerAhubpriority-CustomImages].Prioritize AHB\",\"mergedName\":\"Prioritize AHB\",\"fromId\":\"0b494d5e-27b1-4cf6-bcd5-3e4e813a02e8\"},{\"originalName\":\"[ConsumedCoresPerAhubpriority-CustomImages].VMLocation\",\"mergedName\":\"VMLocation\",\"fromId\":\"0b494d5e-27b1-4cf6-bcd5-3e4e813a02e8\"},{\"originalName\":\"[ConsumedCoresPerAhubpriority-CustomImages].OSType\",\"mergedName\":\"OSType\",\"fromId\":\"0b494d5e-27b1-4cf6-bcd5-3e4e813a02e8\"},{\"originalName\":\"[ConsumedCoresPerAhubpriority-CustomImages].LicenseType\",\"mergedName\":\"LicenseType\",\"fromId\":\"0b494d5e-27b1-4cf6-bcd5-3e4e813a02e8\"},{\"originalName\":\"[ConsumedCoresPerAhubpriority-CustomImages].subscriptionId\",\"mergedName\":\"subscriptionId\",\"fromId\":\"0b494d5e-27b1-4cf6-bcd5-3e4e813a02e8\"},{\"originalName\":\"[ConsumedCoresPerAhubpriority-CustomImages].QuickFix\",\"mergedName\":\"QuickFix\",\"fromId\":\"0b494d5e-27b1-4cf6-bcd5-3e4e813a02e8\"},{\"originalName\":\"[ConsumedCoresPerAhubpriority-CustomImages].VMIDFull\",\"mergedName\":\"VMIDFull\",\"fromId\":\"0b494d5e-27b1-4cf6-bcd5-3e4e813a02e8\"},{\"originalName\":\"[ConsumedCoresPerAhubpriority-CustomImages].WindowsId1\",\"mergedName\":\"WindowsId1\",\"fromId\":\"0b494d5e-27b1-4cf6-bcd5-3e4e813a02e8\"}]}",
+                          "size": 0,
+                          "title": "VMs with Azure Hybrid Benefit enabled",
+                          "showRefreshButton": true,
+                          "showExportToExcel": true,
+                          "queryType": 7,
+                          "gridSettings": {
+                            "formatters": [
+                              {
+                                "columnMatch": "WindowsId",
+                                "formatter": 13,
+                                "formatOptions": {
+                                  "linkTarget": null,
+                                  "showIcon": true
+                                }
+                              },
+                              {
+                                "columnMatch": "Prioritize AHB",
+                                "formatter": 18,
+                                "formatOptions": {
+                                  "thresholdsOptions": "icons",
+                                  "thresholdsGrid": [
+                                    {
+                                      "operator": "==",
+                                      "thresholdValue": "Low Priority",
+                                      "representation": "2",
+                                      "text": "{0}{1}"
+                                    },
+                                    {
+                                      "operator": "==",
+                                      "thresholdValue": "High Priority",
+                                      "representation": "success",
+                                      "text": "{0}{1}"
+                                    },
+                                    {
+                                      "operator": "Default",
+                                      "thresholdValue": null,
+                                      "representation": "unknown",
+                                      "text": "{0}{1}"
+                                    }
+                                  ]
+                                }
+                              },
+                              {
+                                "columnMatch": "subscriptionId",
+                                "formatter": 5
+                              },
+                              {
+                                "columnMatch": "QuickFix",
+                                "formatter": 5
+                              },
+                              {
+                                "columnMatch": "VMIDFull",
+                                "formatter": 5
+                              },
+                              {
+                                "columnMatch": "WindowsId1",
+                                "formatter": 5
+                              }
+                            ],
+                            "labelSettings": [
+                              {
+                                "columnId": "WindowsId",
+                                "label": "ResourceId"
+                              },
+                              {
+                                "columnId": "VMName",
+                                "label": "VM name"
+                              },
+                              {
+                                "columnId": "VMRG",
+                                "label": "Resource group"
+                              },
+                              {
+                                "columnId": "VMSize",
+                                "label": "SKU"
+                              },
+                              {
+                                "columnId": "ActualCores",
+                                "label": "Number of cores"
+                              },
+                              {
+                                "columnId": "ConsumedCores",
+                                "label": "Consumed cores"
+                              },
+                              {
+                                "columnId": "Prioritize AHB",
+                                "label": "AHB priority"
+                              },
+                              {
+                                "columnId": "VMLocation",
+                                "label": "Location"
+                              },
+                              {
+                                "columnId": "OSType",
+                                "label": "OS"
+                              },
+                              {
+                                "columnId": "LicenseType",
+                                "label": "License"
+                              }
+                            ]
+                          }
+                        },
+                        "conditionalVisibility": {
+                          "parameterName": "AHBEnabled",
+                          "comparison": "isEqualTo",
+                          "value": "Yes"
+                        },
+                        "showPin": false,
+                        "name": "VmsAHBEnabeld-CustomImages"
+                      },
+                      {
+                        "type": 3,
+                        "content": {
+                          "version": "KqlItem/1.0",
+                          "query": "{\"version\":\"Merge/1.0\",\"merges\":[{\"id\":\"0b494d5e-27b1-4cf6-bcd5-3e4e813a02e8\",\"mergeType\":\"table\",\"leftTable\":\"CoresNotEnabledperAHBPriority-CustomImages\"}],\"projectRename\":[{\"originalName\":\"[CoresNotEnabledperAHBPriority-CustomImages].WindowsId\",\"mergedName\":\"WindowsId\",\"fromId\":\"0b494d5e-27b1-4cf6-bcd5-3e4e813a02e8\"},{\"originalName\":\"[CoresNotEnabledperAHBPriority-CustomImages].VMName\",\"mergedName\":\"VMName\",\"fromId\":\"0b494d5e-27b1-4cf6-bcd5-3e4e813a02e8\"},{\"originalName\":\"[CoresNotEnabledperAHBPriority-CustomImages].VMRG\",\"mergedName\":\"VMRG\",\"fromId\":\"0b494d5e-27b1-4cf6-bcd5-3e4e813a02e8\"},{\"originalName\":\"[CoresNotEnabledperAHBPriority-CustomImages].VMSize\",\"mergedName\":\"VMSize\",\"fromId\":\"0b494d5e-27b1-4cf6-bcd5-3e4e813a02e8\"},{\"originalName\":\"[CoresNotEnabledperAHBPriority-CustomImages].ActualCores\",\"mergedName\":\"ActualCores\",\"fromId\":\"0b494d5e-27b1-4cf6-bcd5-3e4e813a02e8\"},{\"originalName\":\"[CoresNotEnabledperAHBPriority-CustomImages].ConsumedCores\",\"mergedName\":\"ConsumedCores\",\"fromId\":\"0b494d5e-27b1-4cf6-bcd5-3e4e813a02e8\"},{\"originalName\":\"[CoresNotEnabledperAHBPriority-CustomImages].Prioritize AHB\",\"mergedName\":\"Prioritize AHB\",\"fromId\":\"0b494d5e-27b1-4cf6-bcd5-3e4e813a02e8\"},{\"originalName\":\"[CoresNotEnabledperAHBPriority-CustomImages].VMLocation\",\"mergedName\":\"VMLocation\",\"fromId\":\"0b494d5e-27b1-4cf6-bcd5-3e4e813a02e8\"},{\"originalName\":\"[CoresNotEnabledperAHBPriority-CustomImages].OSType\",\"mergedName\":\"OSType\",\"fromId\":\"0b494d5e-27b1-4cf6-bcd5-3e4e813a02e8\"},{\"originalName\":\"[CoresNotEnabledperAHBPriority-CustomImages].LicenseType\",\"mergedName\":\"LicenseType\",\"fromId\":\"0b494d5e-27b1-4cf6-bcd5-3e4e813a02e8\"},{\"originalName\":\"[CoresNotEnabledperAHBPriority-CustomImages].subscriptionId\",\"mergedName\":\"subscriptionId\",\"fromId\":\"0b494d5e-27b1-4cf6-bcd5-3e4e813a02e8\"},{\"originalName\":\"[CoresNotEnabledperAHBPriority-CustomImages].QuickFix\",\"mergedName\":\"QuickFix\",\"fromId\":\"0b494d5e-27b1-4cf6-bcd5-3e4e813a02e8\"},{\"originalName\":\"[CoresNotEnabledperAHBPriority-CustomImages].VMIDFull\",\"mergedName\":\"VMIDFull\",\"fromId\":\"0b494d5e-27b1-4cf6-bcd5-3e4e813a02e8\"},{\"originalName\":\"[CoresNotEnabledperAHBPriority-CustomImages].WindowsId1\",\"mergedName\":\"WindowsId1\",\"fromId\":\"0b494d5e-27b1-4cf6-bcd5-3e4e813a02e8\"}]}",
+                          "size": 0,
+                          "title": "VMs with Azure Hybrid Benefit not enabled",
+                          "showRefreshButton": true,
+                          "showExportToExcel": true,
+                          "queryType": 7,
+                          "gridSettings": {
+                            "formatters": [
+                              {
+                                "columnMatch": "WindowsId",
+                                "formatter": 13,
+                                "formatOptions": {
+                                  "linkTarget": null,
+                                  "showIcon": true
+                                }
+                              },
+                              {
+                                "columnMatch": "Prioritize AHB",
+                                "formatter": 18,
+                                "formatOptions": {
+                                  "thresholdsOptions": "icons",
+                                  "thresholdsGrid": [
+                                    {
+                                      "operator": "==",
+                                      "thresholdValue": "Low Priority",
+                                      "representation": "2",
+                                      "text": "{0}{1}"
+                                    },
+                                    {
+                                      "operator": "==",
+                                      "thresholdValue": "High Priority",
+                                      "representation": "success",
+                                      "text": "{0}{1}"
+                                    },
+                                    {
+                                      "operator": "Default",
+                                      "thresholdValue": null,
+                                      "representation": "unknown",
+                                      "text": "{0}{1}"
+                                    }
+                                  ]
+                                }
+                              },
+                              {
+                                "columnMatch": "subscriptionId",
+                                "formatter": 5
+                              },
+                              {
+                                "columnMatch": "QuickFix",
+                                "formatter": 5
+                              },
+                              {
+                                "columnMatch": "VMIDFull",
+                                "formatter": 5
+                              },
+                              {
+                                "columnMatch": "WindowsId1",
+                                "formatter": 5
+                              }
+                            ],
+                            "labelSettings": [
+                              {
+                                "columnId": "WindowsId",
+                                "label": "ResourceId"
+                              },
+                              {
+                                "columnId": "VMName",
+                                "label": "VM name"
+                              },
+                              {
+                                "columnId": "VMRG",
+                                "label": "Resource group"
+                              },
+                              {
+                                "columnId": "VMSize",
+                                "label": "SKU"
+                              },
+                              {
+                                "columnId": "ActualCores",
+                                "label": "Number of cores"
+                              },
+                              {
+                                "columnId": "ConsumedCores",
+                                "label": "Consumed cores"
+                              },
+                              {
+                                "columnId": "Prioritize AHB",
+                                "label": "AHB priority"
+                              },
+                              {
+                                "columnId": "VMLocation",
+                                "label": "Location"
+                              },
+                              {
+                                "columnId": "OSType",
+                                "label": "OS"
+                              },
+                              {
+                                "columnId": "LicenseType",
+                                "label": "License"
+                              }
+                            ]
+                          }
+                        },
+                        "conditionalVisibility": {
+                          "parameterName": "AHBDisabled",
+                          "comparison": "isEqualTo",
+                          "value": "Yes"
+                        },
+                        "showPin": false,
+                        "name": "VmsAHBDisabled-CustomImages"
+                      }
+                    ]
+                  },
+                  "conditionalVisibility": {
+                    "parameterName": "SelectedSubTab",
+                    "comparison": "isEqualTo",
+                    "value": "CustomImages"
+                  },
+                  "name": "CustomImages"
+                },
+                {
+                  "type": 12,
+                  "content": {
+                    "version": "NotebookGroup/1.0",
+                    "groupType": "editable",
+                    "items": [
+                      {
+                        "type": 11,
+                        "content": {
+                          "version": "LinkItem/1.0",
+                          "style": "tabs",
+                          "links": [
+                            {
+                              "id": "3f12a4b6-b18d-4191-8c1c-6045a7edcb6b",
+                              "cellValue": "SelectedSubTab",
+                              "linkTarget": "parameter",
+                              "linkLabel": "Windows Server ESU licenses",
+                              "subTarget": "windowsEsu",
+                              "style": "link"
+                            },
+                            {
+                              "id": "0ca197b7-6f96-4def-9be4-dc26bb09538a",
+                              "cellValue": "SelectedSubTab",
+                              "linkTarget": "parameter",
+                              "linkLabel": "Windows Server Management enabled by Azure Arc",
+                              "subTarget": "arcAHB",
+                              "style": "link"
+                            }
+                          ]
+                        },
+                        "name": "links - 1"
+                      },
+                      {
+                        "type": 12,
+                        "content": {
+                          "version": "NotebookGroup/1.0",
+                          "groupType": "editable",
+                          "title": "Windows Server ESU licenses",
+                          "items": [
+                            {
+                              "type": 3,
+                              "content": {
+                                "version": "KqlItem/1.0",
+                                "query": "// Run query to see results.\r\nresources\r\n| where type =~ 'microsoft.hybridcompute/machines'\r\n| extend esuEligibility = properties.licenseProfile.esuProfile.esuEligibility\r\n| where esuEligibility =~ \"Eligible\"\r\n| extend agentVersion = tostring(properties.agentVersion)\r\n| extend parsedAgentVersion = parse_version(agentVersion)\r\n| where parsedAgentVersion >= parse_version(\"1.34\")\r\n| extend machineId = tolower(id)\r\n| join kind=leftouter(\r\n    resources\r\n    | where type =~ \"microsoft.hybridcompute/machines/licenseProfiles\"\r\n    | extend machineId = tolower(tostring(trim_end(@\"\\/\\w+\\/(\\w|\\.)+\", id)))\r\n    | extend licenseId = tolower(tostring(properties.esuProfile.assignedLicense))\r\n) on $left.machineId == $right.machineId\r\n| join kind=leftouter (\r\n    resources\r\n    | where type =~ \"microsoft.hybridcompute/licenses\"\r\n    | extend licenseId = tolower(id)\r\n) on licenseId\r\n| extend status = case(\r\n    properties.status =~ 'Connected', 'Connected',\r\n    properties.status =~ 'Disconnected', 'Offline',\r\n    properties.status =~ 'Error', 'Error',\r\n    properties.status =~ 'Expired', 'Expired',\r\n    'Unknown')\r\n| extend operatingSystem = properties.osSku\r\n| extend esuStatus = case(\r\n    (properties.licenseProfile.esuProfile.licenseAssignmentState =~ 'Assigned' and properties2.licenseDetails.state =~ 'Activated'), 'Enabled',\r\n    properties.licenseProfile.esuProfile.licenseAssignmentState =~ 'NotAssigned' and properties.licenseProfile.esuProfile.esuKeyState =~ 'Active', 'Enabled by Volume License',\r\n    properties.licenseProfile.esuProfile.licenseAssignmentState =~ 'Assigned' and properties2.licenseDetails.state =~ 'Deactivated' and properties.licenseProfile.esuProfile.esuKeyState =~ 'Inactive', 'License deactivated',\r\n    properties.licenseProfile.esuProfile.licenseAssignmentState =~ 'NotAssigned' and properties.licenseProfile.esuProfile.esuKeyState =~ 'Inactive', 'Not enabled',\r\n    'Unknown'\r\n)\r\n| project name, status, operatingSystem, esuStatus\r\n| summarize count() by esuStatus",
+                                "size": 0,
+                                "title": "Coverage Summary",
+                                "showRefreshButton": true,
+                                "queryType": 1,
+                                "resourceType": "microsoft.resourcegraph/resources",
+                                "crossComponentResources": [
+                                  "{Subscription}"
+                                ],
+                                "visualization": "piechart",
+                                "chartSettings": {
+                                  "yAxis": [
+                                    "count_"
+                                  ],
+                                  "showLegend": true,
+                                  "seriesLabelSettings": [
+                                    {
+                                      "seriesName": "Not enabled",
+                                      "color": "red"
+                                    },
+                                    {
+                                      "seriesName": "Enabled",
+                                      "color": "green"
+                                    },
+                                    {
+                                      "seriesName": "Enabled by Volume License",
+                                      "color": "greenDarkDark"
+                                    },
+                                    {
+                                      "seriesName": "License deactivated",
+                                      "color": "yellow"
+                                    }
+                                  ]
+                                }
+                              },
+                              "name": "coverageSummary"
+                            },
+                            {
+                              "type": 1,
+                              "content": {
+                                "json": "## Review Your Current License Usage\r\n\r\nTo review your current license usage, go to the [Azure Arc](https://ms.portal.azure.com/#view/Microsoft_Azure_ArcCenterUX/ArcCenterMenuBlade/~/usageOverview) resource blade.\r\n\r\n",
+                                "style": "info"
+                              },
+                              "name": "text - 5"
+                            },
+                            {
+                              "type": 9,
+                              "content": {
+                                "version": "KqlParameterItem/1.0",
+                                "parameters": [
+                                  {
+                                    "id": "16791a28-f78e-4b26-a2e9-a9fbbda915df",
+                                    "version": "KqlParameterItem/1.0",
+                                    "name": "eligibleResources",
+                                    "label": "View eligible resources?",
+                                    "type": 2,
+                                    "isRequired": true,
+                                    "typeSettings": {
+                                      "additionalResourceOptions": [],
+                                      "showDefault": false
+                                    },
+                                    "jsonData": "[\r\n    {\"value\":\"Yes\"},\r\n    {\"value\":\"No\", \"selected\":true}\r\n]\r\n\r\n",
+                                    "timeContext": {
+                                      "durationMs": 86400000
+                                    }
+                                  },
+                                  {
+                                    "id": "e24ddae0-37c5-46a7-b52f-b307baaa6f51",
+                                    "version": "KqlParameterItem/1.0",
+                                    "name": "eligibleLicenses",
+                                    "label": "View eligible licenses?",
+                                    "type": 2,
+                                    "isRequired": true,
+                                    "typeSettings": {
+                                      "additionalResourceOptions": [],
+                                      "showDefault": false
+                                    },
+                                    "jsonData": "[\r\n    {\"value\":\"Yes\"},\r\n    {\"value\":\"No\", \"selected\":true}\r\n]\r\n\r\n",
+                                    "timeContext": {
+                                      "durationMs": 86400000
+                                    }
+                                  }
+                                ],
+                                "style": "pills",
+                                "queryType": 0,
+                                "resourceType": "microsoft.operationalinsights/workspaces"
+                              },
+                              "name": "parameters - 5"
+                            },
+                            {
+                              "type": 12,
+                              "content": {
+                                "version": "NotebookGroup/1.0",
+                                "groupType": "editable",
+                                "title": "Eligible Resources",
+                                "items": [
+                                  {
+                                    "type": 1,
+                                    "content": {
+                                      "json": "Windows Server 2012 or 2012 R2 machines running Arc agent version below 1.34 are ineligible for Extended Security Updates (ESUs). Upgrade to the latest version of the Azure Arc agent to allow enabling ESU on these machines.\r\n\r\n",
+                                      "style": "info"
+                                    },
+                                    "name": "txtEligibleResources"
+                                  },
+                                  {
+                                    "type": 3,
+                                    "content": {
+                                      "version": "KqlItem/1.0",
+                                      "query": "// Run query to see results.\r\nresources\r\n| where type =~ 'microsoft.hybridcompute/machines'\r\n| extend esuEligibility = properties.licenseProfile.esuProfile.esuEligibility\r\n| where esuEligibility =~ \"Eligible\"\r\n| extend agentVersion = tostring(properties.agentVersion)\r\n| extend parsedAgentVersion = parse_version(agentVersion)\r\n| where parsedAgentVersion >= parse_version(\"1.34\")\r\n| extend machineId = tolower(id)\r\n| join kind=leftouter(\r\n    resources\r\n    | where type =~ \"microsoft.hybridcompute/machines/licenseProfiles\"\r\n    | extend machineId = tolower(tostring(trim_end(@\"\\/\\w+\\/(\\w|\\.)+\", id)))\r\n    | extend licenseId = tolower(tostring(properties.esuProfile.assignedLicense))\r\n) on $left.machineId == $right.machineId\r\n| join kind=leftouter (\r\n    resources\r\n    | where type =~ \"microsoft.hybridcompute/licenses\"\r\n    | extend licenseId = tolower(id)\r\n) on licenseId\r\n| extend status = case(\r\n    properties.status =~ 'Connected', 'Connected',\r\n    properties.status =~ 'Disconnected', 'Offline',\r\n    properties.status =~ 'Error', 'Error',\r\n    properties.status =~ 'Expired', 'Expired',\r\n    'Unknown')\r\n| extend operatingSystem = properties.osSku\r\n| extend esuStatus = case(\r\n    (properties.licenseProfile.esuProfile.licenseAssignmentState =~ 'Assigned' and properties2.licenseDetails.state =~ 'Activated'), 'Enabled',\r\n    properties.licenseProfile.esuProfile.licenseAssignmentState =~ 'NotAssigned' and properties.licenseProfile.esuProfile.esuKeyState =~ 'Active', 'Enabled by Volume License',\r\n    properties.licenseProfile.esuProfile.licenseAssignmentState =~ 'Assigned' and properties2.licenseDetails.state =~ 'Deactivated' and properties.licenseProfile.esuProfile.esuKeyState =~ 'Inactive', 'License deactivated',\r\n    properties.licenseProfile.esuProfile.licenseAssignmentState =~ 'NotAssigned' and properties.licenseProfile.esuProfile.esuKeyState =~ 'Inactive', 'Not enabled',\r\n    'Unknown'\r\n)\r\n| extend esuStatusIcon = case(\r\n    (properties.licenseProfile.esuProfile.licenseAssignmentState =~ 'Assigned' and properties2.licenseDetails.state =~ 'Activated'), '8',\r\n    properties.licenseProfile.esuProfile.licenseAssignmentState =~ 'NotAssigned' and properties.licenseProfile.esuProfile.esuKeyState =~ 'Active', '9',\r\n    properties.licenseProfile.esuProfile.licenseAssignmentState =~ 'Assigned' and properties2.licenseDetails.state =~ 'Deactivated' and properties.licenseProfile.esuProfile.esuKeyState =~ 'Inactive', '9',\r\n    properties.licenseProfile.esuProfile.licenseAssignmentState =~ 'NotAssigned' or properties.licenseProfile.esuProfile.esuKeyState =~ 'Inactive', '7',\r\n    '91'\r\n)\r\n| project name, status, resourceGroup, subscriptionId, operatingSystem, id, type, location, kind, tags, esuStatus, esuStatusIcon, agentVersion\r\n| extend subscriptionDisplayName=case(subscriptionId =~ 'e75c95f3-27b4-410f-a40e-2b9153a807dd','AEther Dev',subscriptionId =~ '823ca539-d44d-43ee-8dc8-023fd4f27396','AIOps_FailureSimulation_DevTest',subscriptionId =~ 'b2a328a7-ffff-4c09-b643-a4758cf170bc','AISC-DEV-02',subscriptionId =~ 'eef8b6d5-94da-4b36-9327-a662f2674efb','AISC-EngSys-01',subscriptionId =~ 'e0fd569c-e34a-4249-8c24-e8d723c7f054','AML - Responsible AI R&D',subscriptionId =~ 'f1d79e73-f8e3-4b10-bfdb-4207ca0723ed','AML Infra - Engineering System',subscriptionId =~ 'dad45786-32e5-4ef3-b90e-8e0838fbadb6','AnE.ExP.NonProduction',subscriptionId =~ '017ad81c-b730-4564-9109-9b763243a9a6','Anomaly Real Time-DevTest',subscriptionId =~ 'e686ef8c-d35d-4e9b-92f8-caaaa7948c0a','Applied Sciences Group Dev',subscriptionId =~ '6e967edb-425b-4a33-ae98-f1d2c509dda3','Arc enabled Infrastructure - Demo',subscriptionId =~ '710c6ed8-d8d9-4c51-b100-dc4d9e10dd18','ARC-ESU-TESTING-03',subscriptionId =~ '2145a411-d149-4010-84d4-40fe8a55db44','ARM Test Environment',subscriptionId =~ 'e2a8a7b3-cb7a-4930-9c79-2b0eb7bf843c','ASZ_Lab_Hardware_Dev_1',subscriptionId =~ '4c33a6bb-d566-4d0b-8951-00b55a91fba8','AzPIESecurity-DEV-Apple',subscriptionId =~ 'b65b516b-415b-4c68-a254-bfa7411275f8','Azure CloudES CDP ER - Test',subscriptionId =~ '6785ea1f-ac40-4244-a9ce-94b12fd832ca','Azure Migrate Demo Subscription',subscriptionId =~ '8c3c936a-c09b-4de3-830b-3f5f244d72e9','Azure Migrate Program Management Team',subscriptionId =~ '432a7068-99ae-4975-ad38-d96b71172cdf','Azure Profiler - Testing',subscriptionId =~ 'caffe3c0-acbd-4d01-af76-a45f421bfb64','Azure_Base_LivesiteArmory_test',subscriptionId =~ 'a1920ebd-59b7-4f19-af9f-5e80599e88e4','Babel',subscriptionId =~ 'b43a6159-1bea-4fa2-9407-e875fdc0ff55','BAP IA EU Schrems (P)',subscriptionId =~ 'ae71ef11-a03f-4b4f-a0e6-ef144727c711','Bing MM Measurement',subscriptionId =~ '8ef80208-601f-4c83-802e-751d211745f9','CloudAnalytics_Prod1',subscriptionId =~ 'f7b4a5ce-d3bd-4a03-84fe-8bcad772c8c1','Cog Services Computer Vision',subscriptionId =~ '38dbd059-bd26-4172-af17-bcc5a00744de','Core-ES-STREAM-DeXDI',subscriptionId =~ '87e8a61c-4832-4cfe-8b72-c12554f2309a','Cosmos_C&E_Azure_Azure Resource Manager_100424',subscriptionId =~ '8c4b5b03-3b24-4ed0-91f5-a703cd91b412','Cosmos_C&E_Azure_AzureEngineeringSystems_100200',subscriptionId =~ 'b988efc7-1bc8-4a73-b4a2-5ad864580250','Cosmos_C&E_DPG_Big Data_100036',subscriptionId =~ '6121bf73-2dc9-47ac-8b6a-c6ae4b88ef39','Cost Management PM',subscriptionId =~ '44074499-ad9f-45b9-9b0b-f594f8736a45','CSX-WSD-CFE-TNT-QPP',subscriptionId =~ '3cd01953-be46-4f9b-a4e0-26f19f428765','CSX-WSD-CFE-TNT-TOOLKITHUB',subscriptionId =~ '60214a3c-65a2-46f8-8b32-f959f2454106','Data Pillar Security Tooling',subscriptionId =~ 'f7c445af-a4de-4264-9e87-3196d6bc384d','Efficiency Pack Services (MSIT)',subscriptionId =~ '86f010b8-6473-4cb9-90c1-671c74faa4ee','emilyzhu dev subscription',subscriptionId =~ 'f3326bfd-5406-4136-a835-f64ccbfd9050','FTK @ MS',subscriptionId =~ 'd2c9544f-4329-4642-b73d-020e7fef844f','HPCScrub1',subscriptionId =~ 'bac420ed-c6fc-4a05-8ac1-8c0c52da1d6e','IDEAs MS Reporting',subscriptionId =~ '3cd95ff9-ac62-4b5c-8240-0cd046687ea0','Internal App Insights Resources for Perflens',subscriptionId =~ 'a386d5ea-ea90-441a-8263-d816368c84a1','IOT_PLATFORM_UPX_TEST',subscriptionId =~ '6a0ab98c-24d4-4131-8cd7-0a78bfce58f5','ITSM Integration - Production - New',subscriptionId =~ '13723929-6644-4060-a50a-cc38ebc5e8b1','LinuxMdsd Test',subscriptionId =~ '98b02a69-28a5-4ee7-a622-cd69c7a59c4e','Marvel Intelligence Model Training Subscription',subscriptionId =~ '1278a874-89fc-418c-b6b9-ac763b000415','Microsoft Azure Internal Consumption (nbrady)',subscriptionId =~ '29de2cfc-f00a-43bb-bdc8-3108795bd282','MSFT-Modern Device-Modern Mgmt-Imaging00',subscriptionId =~ '54b875cc-a81a-4914-8bfd-1a36bc7ddf4d','MSFT-WindowsVirtualDesktop-01',subscriptionId =~ '4dc2cd39-7a89-43d8-bebe-8bb501359891','Observability_AzMon_Grafana_Dev',subscriptionId =~ 'a471d615-ff98-4e80-b375-a19543d4691e','ODC-OneBox-Resources',subscriptionId =~ '1163fbbe-27e7-4b0f-8466-195fe5417043','Python_AI_Tools_PM_Team_Sub (jbinder)',subscriptionId =~ '3905431d-c062-4c17-8fd9-c51f89f334c4','Pytorch Build',subscriptionId =~ '3f577935-3138-4d07-86b3-75651b696483','Responsible & OpenAi Research',subscriptionId =~ '0f301386-8979-4981-acca-973d553078e7','Scope Team Test Subscription',subscriptionId =~ '1b0a5c20-7373-41a2-8fec-7364cceb7bbf','Services Hub Demo Open',subscriptionId =~ 'e72e5254-f265-4e95-9bd2-9ee8e7329051','Speech Services - DEV - SDK (carbon)',subscriptionId =~ 'a1c3dc6b-8630-4bb7-a29e-4ed4407c329b','Speech Services - EXP2',subscriptionId =~ '736af2bf-9fcb-4145-a19b-5b30b2b8949d','Trey International UK',subscriptionId =~ '51f73f67-1f29-4120-863e-dd315f743fc1','Trey Partner Lab 2',subscriptionId =~ '9ec51cfd-5ca7-4d76-8101-dd0a4abc5674','Trey Research Corporate',subscriptionId =~ '73c0021f-a37d-433f-8baa-7450cb54eea6','Trey Research Finance',subscriptionId =~ 'ed570627-0265-4620-bb42-bae06bcfa914','Trey Research IT',subscriptionId =~ '64e355d7-997c-491d-b0c1-8414dccfcf42','Trey Research R&D Playground',subscriptionId =~ '586f1d47-9dd9-43d5-b196-6e28f8405ff8','Trey Research R&D Production',subscriptionId =~ '9ec1d932-0f3f-486c-acc6-e7d78b358f9b','TScience',subscriptionId =~ '79f57c16-00fe-48da-87d4-5192e86cd047','TScienceGPU',subscriptionId =~ 'bac044cf-49e1-4843-8dda-1ce9662606c8','UI Fabric',subscriptionId =~ '6760347d-9ffe-41a9-ba11-c139dcea5ce6','xt-teams-migration-dev',subscriptionId =~ '45f9252d-e27e-4ed8-ab4e-dc5054de13fa','Contoso IT - Retail - Prod',subscriptionId)\r\n| where (type !~ ('dell.storage/filesystems'))\r\n| where (type !~ ('arizeai.observabilityeval/organizations'))\r\n| where (type !~ ('lambdatest.hyperexecute/organizations'))\r\n| where (type !~ ('pinecone.vectordb/organizations'))\r\n| where (type !~ ('microsoft.weightsandbiases/instances'))\r\n| where (type !~ ('purestorage.block/storagepools/avsstoragecontainers'))\r\n| where (type !~ ('purestorage.block/reservations'))\r\n| where (type !~ ('purestorage.block/storagepools'))\r\n| where (type !~ ('solarwinds.observability/organizations'))\r\n| where (type !~ ('splitio.experimentation/experimentationworkspaces'))\r\n| where (type !~ ('microsoft.agfoodplatform/farmbeats'))\r\n| where (type !~ ('microsoft.appsecurity/policies'))\r\n| where (type !~ ('microsoft.arc/all'))\r\n| where (type !~ ('microsoft.arc/allfairfax'))\r\n| where (type !~ ('microsoft.cdn/profiles/customdomains'))\r\n| where (type !~ ('microsoft.cdn/profiles/afdendpoints'))\r\n| where (type !~ ('microsoft.cdn/profiles/origingroups/origins'))\r\n| where (type !~ ('microsoft.cdn/profiles/origingroups'))\r\n| where (type !~ ('microsoft.cdn/profiles/afdendpoints/routes'))\r\n| where (type !~ ('microsoft.cdn/profiles/rulesets/rules'))\r\n| where (type !~ ('microsoft.cdn/profiles/rulesets'))\r\n| where (type !~ ('microsoft.cdn/profiles/secrets'))\r\n| where (type !~ ('microsoft.cdn/profiles/securitypolicies'))\r\n| where (type !~ ('microsoft.chaos/privateaccesses'))\r\n| where (type !~ ('microsoft.sovereign/transparencylogs'))\r\n| where (type !~ ('microsoft.sovereign/landingzoneconfigurations'))\r\n| where (type !~ ('microsoft.hardwaresecuritymodules/cloudhsmclusters'))\r\n| where (type !~ ('microsoft.compute/computefleetinstances'))\r\n| where (type !~ ('microsoft.compute/standbypoolinstance'))\r\n| where (type !~ ('microsoft.compute/virtualmachineflexinstances'))\r\n| where (type !~ ('microsoft.kubernetesconfiguration/extensions'))\r\n| where (type !~ ('microsoft.containerservice/managedclusters/microsoft.kubernetesconfiguration/extensions'))\r\n| where (type !~ ('microsoft.kubernetes/connectedclusters/microsoft.kubernetesconfiguration/namespaces'))\r\n| where (type !~ ('microsoft.containerservice/managedclusters/microsoft.kubernetesconfiguration/namespaces'))\r\n| where (type !~ ('microsoft.kubernetes/connectedclusters/microsoft.kubernetesconfiguration/fluxconfigurations'))\r\n| where (type !~ ('microsoft.containerservice/managedclusters/microsoft.kubernetesconfiguration/fluxconfigurations'))\r\n| where (type !~ ('microsoft.portalservices/extensions/deployments'))\r\n| where (type !~ ('microsoft.portalservices/extensions'))\r\n| where (type !~ ('microsoft.portalservices/extensions/slots'))\r\n| where (type !~ ('microsoft.portalservices/extensions/versions'))\r\n| where (type !~ ('microsoft.datacollaboration/workspaces'))\r\n| where (type !~ ('microsoft.deviceregistry/devices'))\r\n| where (type !~ ('microsoft.deviceupdate/updateaccounts/activedeployments'))\r\n| where (type !~ ('microsoft.deviceupdate/updateaccounts/agents'))\r\n| where (type !~ ('microsoft.deviceupdate/updateaccounts/deployments'))\r\n| where (type !~ ('microsoft.deviceupdate/updateaccounts/deviceclasses'))\r\n| where (type !~ ('microsoft.deviceupdate/updateaccounts/updates'))\r\n| where (type !~ ('microsoft.deviceupdate/updateaccounts'))\r\n| where (type !~ ('private.devtunnels/tunnelplans'))\r\n| where (type !~ ('private.easm/workspaces'))\r\n| where (type !~ ('microsoft.edgeorder/virtual_orderitems'))\r\n| where (type !~ ('microsoft.workloads/epicvirtualinstances'))\r\n| where (type !~ ('microsoft.fairfieldgardens/provisioningresources/provisioningpolicies'))\r\n| where (type !~ ('microsoft.fairfieldgardens/provisioningresources'))\r\n| where (type !~ ('microsoft.healthmodel/healthmodels'))\r\n| where (type !~ ('microsoft.hybridcompute/arcserverwithwac'))\r\n| where (type !~ ('microsoft.hybridcompute/machinessovereign'))\r\n| where (type !~ ('microsoft.hybridcompute/machinespaygo'))\r\n| where (type !~ ('microsoft.hybridcompute/machinessoftwareassurance'))\r\n| where (type !~ ('microsoft.network/virtualhubs')) or ((kind =~ ('routeserver')))\r\n| where (type !~ ('microsoft.network/networkvirtualappliances'))\r\n| where (type !~ ('microsoft.devhub/iacprofiles'))\r\n| where (type !~ ('microsoft.modsimworkbench/workbenches/chambers'))\r\n| where (type !~ ('microsoft.modsimworkbench/workbenches/chambers/files'))\r\n| where (type !~ ('microsoft.modsimworkbench/workbenches/chambers/filerequests'))\r\n| where (type !~ ('microsoft.modsimworkbench/workbenches/chambers/licenses'))\r\n| where (type !~ ('microsoft.modsimworkbench/workbenches/chambers/connectors'))\r\n| where (type !~ ('microsoft.modsimworkbench/workbenches/sharedstorages'))\r\n| where (type !~ ('microsoft.modsimworkbench/workbenches/chambers/storages'))\r\n| where (type !~ ('microsoft.modsimworkbench/workbenches/chambers/workloads'))\r\n| where (type !~ ('microsoft.insights/diagnosticsettings'))\r\n| where not((type =~ ('microsoft.network/serviceendpointpolicies')) and ((kind =~ ('internal'))))\r\n| where (type !~ ('microsoft.resources/resourcegraphvisualizer'))\r\n| where (type !~ ('microsoft.iotoperationsmq/mq'))\r\n| where (type !~ ('microsoft.orbital/cloudaccessrouters'))\r\n| where (type !~ ('microsoft.orbital/terminals'))\r\n| where (type !~ ('microsoft.orbital/sdwancontrollers'))\r\n| where (type !~ ('microsoft.orbital/geocatalogs'))\r\n| where (type !~ ('microsoft.recommendationsservice/accounts/modeling'))\r\n| where (type !~ ('microsoft.recommendationsservice/accounts/serviceendpoints'))\r\n| where (type !~ ('microsoft.recoveryservicesbvtd/vaults'))\r\n| where (type !~ ('microsoft.recoveryservicesbvtd2/vaults'))\r\n| where (type !~ ('microsoft.recoveryservicesintd/vaults'))\r\n| where (type !~ ('microsoft.recoveryservicesintd2/vaults'))\r\n| where (type !~ ('microsoft.resources/deletedresources'))\r\n| where (type !~ ('microsoft.deploymentmanager/rollouts'))\r\n| where (type !~ ('microsoft.features/featureprovidernamespaces/featureconfigurations'))\r\n| where (type !~ ('microsoft.saashub/cloudservices/hidden'))\r\n| where (type !~ ('microsoft.providerhub/providerregistrations'))\r\n| where (type !~ ('microsoft.providerhub/providerregistrations/customrollouts'))\r\n| where (type !~ ('microsoft.providerhub/providerregistrations/defaultrollouts'))\r\n| where (type !~ ('microsoft.edge/configurations'))\r\n| where not((type =~ ('microsoft.synapse/workspaces/sqlpools')) and ((kind =~ ('v3'))))\r\n| where (type !~ ('microsoft.mission/approvals'))\r\n| where (type !~ ('microsoft.mission/catalogs'))\r\n| where (type !~ ('microsoft.mission/communities'))\r\n| where (type !~ ('microsoft.mission/communities/communityendpoints'))\r\n| where (type !~ ('microsoft.mission/enclaveconnections'))\r\n| where (type !~ ('microsoft.mission/virtualenclaves/enclaveendpoints'))\r\n| where (type !~ ('microsoft.mission/communities/transithubs'))\r\n| where (type !~ ('microsoft.mission/virtualenclaves'))\r\n| where (type !~ ('microsoft.mission/virtualenclaves/workloads'))\r\n| where (type !~ ('microsoft.workloads/insights'))\r\n| where (type !~ ('microsoft.hanaonazure/sapmonitors'))\r\n| where (type !~ ('microsoft.cloudhealth/healthmodels'))\r\n| where (type !~ ('microsoft.connectedcache/enterprisemcccustomers/enterprisemcccachenodes'))\r\n| where not((type =~ ('microsoft.sql/servers/databases')) and ((kind in~ ('system','v2.0,system','v12.0,system','v12.0,system,serverless','v12.0,user,datawarehouse,gen2,analytics'))))\r\n| where not((type =~ ('microsoft.sql/servers')) and ((kind =~ ('v12.0,analytics'))))\r\n| where (type in~ ('Microsoft.HybridCompute/machinesEsu','Microsoft.HybridCompute/machines'))\r\n| project name,esuStatus,esuStatusIcon,operatingSystem,resourceGroup,subscriptionDisplayName,status,type,id,kind,location,subscriptionId,tags\r\n| sort by (tolower(tostring(name))) asc",
+                                      "size": 0,
+                                      "title": "Eligible resources",
+                                      "noDataMessage": "There are no eligible resources.",
+                                      "showExportToExcel": true,
+                                      "queryType": 1,
+                                      "resourceType": "microsoft.resourcegraph/resources",
+                                      "crossComponentResources": [
+                                        "{Subscription}"
+                                      ],
+                                      "gridSettings": {
+                                        "formatters": [
+                                          {
+                                            "columnMatch": "esuStatusIcon",
+                                            "formatter": 18,
+                                            "formatOptions": {
+                                              "thresholdsOptions": "icons",
+                                              "thresholdsGrid": [
+                                                {
+                                                  "operator": "==",
+                                                  "thresholdValue": "7",
+                                                  "representation": "4",
+                                                  "text": ""
+                                                },
+                                                {
+                                                  "operator": "==",
+                                                  "thresholdValue": "9",
+                                                  "representation": "warning",
+                                                  "text": ""
+                                                },
+                                                {
+                                                  "operator": "==",
+                                                  "thresholdValue": "8",
+                                                  "representation": "success",
+                                                  "text": ""
+                                                },
+                                                {
+                                                  "operator": "==",
+                                                  "thresholdValue": "91",
+                                                  "representation": "unknown",
+                                                  "text": "{0}{1}"
+                                                },
+                                                {
+                                                  "sourceColumn": "esuStatus",
+                                                  "operator": "Default",
+                                                  "thresholdValue": null,
+                                                  "representation": "unknown",
+                                                  "text": ""
+                                                }
+                                              ]
+                                            }
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    "conditionalVisibility": {
+                                      "parameterName": "eligibleResources",
+                                      "comparison": "isEqualTo",
+                                      "value": "Yes"
+                                    },
+                                    "name": "arcResources"
+                                  }
+                                ]
+                              },
+                              "conditionalVisibility": {
+                                "parameterName": "eligibleResources",
+                                "comparison": "isEqualTo",
+                                "value": "Yes"
+                              },
+                              "name": "group-eligibleResources"
+                            },
+                            {
+                              "type": 12,
+                              "content": {
+                                "version": "NotebookGroup/1.0",
+                                "groupType": "editable",
+                                "title": "Eligible licenses",
+                                "items": [
+                                  {
+                                    "type": 1,
+                                    "content": {
+                                      "json": "Keep in mind, subscription read permissions are required to give accurate core count and usage information for your ESU licenses. Physical core based licenses are subject to different licensing guidelines and are excluded from this view.[Learn more.](https://learn.microsoft.com/azure/azure-arc/servers/license-extended-security-updates)",
+                                      "style": "info"
+                                    },
+                                    "name": "txtLearnMoreLicense"
+                                  },
+                                  {
+                                    "type": 3,
+                                    "content": {
+                                      "version": "KqlItem/1.0",
+                                      "query": "// Run query to see results.\r\nresources\r\n| where type =~ \"microsoft.hybridcompute/licenses\"\r\n| extend sku = properties.licenseDetails.edition\r\n| extend totalCores = properties.licenseDetails.processors\r\n| extend coreType = case(\r\n    properties.licenseDetails.type =~ 'vCore','Virtual core',\r\n    properties.licenseDetails.type =~ 'pCore','Physical core',\r\n    'Unknown'\r\n)\r\n| extend statusIcon = case(\r\n    properties.licenseDetails.state =~ 'Activated', '8',\r\n    properties.licenseDetails.state =~ 'Deactivated', '7',\r\n    '91'\r\n)\r\n| extend status = case(\r\n    properties.licenseDetails.state =~ 'Activated', 'Activated',\r\n    properties.licenseDetails.state =~ 'Deactivated','Deactivated',\r\n    'Unknown'\r\n)\r\n| extend licenseId = tolower(tostring(id)) // Depending on what is stored in license profile, might have to get the immutableId instead\r\n| join kind=leftouter(\r\n    resources\r\n    | where type =~ \"microsoft.hybridcompute/machines/licenseProfiles\"\r\n    | extend machineId = tolower(tostring(trim_end(@\"\\/\\w+\\/(\\w|\\.)+\", id)))\r\n    | extend licenseId = tolower(tostring(properties.esuProfile.assignedLicense))\r\n    | summarize resources = count() by licenseId\r\n) on licenseId // Get count of license profile per license, a license profile is created for each machine that is assigned a license\r\n| extend resources = iff(isnull(resources), 0, resources)\r\n| project id, name, type, location, subscriptionId, resourceGroup, kind, tags, extendedLocation, sku, totalCores, coreType, status, statusIcon, resources\r\n| extend subscriptionDisplayName=case(subscriptionId =~ 'e75c95f3-27b4-410f-a40e-2b9153a807dd','AEther Dev',subscriptionId =~ '823ca539-d44d-43ee-8dc8-023fd4f27396','AIOps_FailureSimulation_DevTest',subscriptionId =~ 'b2a328a7-ffff-4c09-b643-a4758cf170bc','AISC-DEV-02',subscriptionId =~ 'eef8b6d5-94da-4b36-9327-a662f2674efb','AISC-EngSys-01',subscriptionId =~ 'e0fd569c-e34a-4249-8c24-e8d723c7f054','AML - Responsible AI R&D',subscriptionId =~ 'f1d79e73-f8e3-4b10-bfdb-4207ca0723ed','AML Infra - Engineering System',subscriptionId =~ 'dad45786-32e5-4ef3-b90e-8e0838fbadb6','AnE.ExP.NonProduction',subscriptionId =~ '017ad81c-b730-4564-9109-9b763243a9a6','Anomaly Real Time-DevTest',subscriptionId =~ 'e686ef8c-d35d-4e9b-92f8-caaaa7948c0a','Applied Sciences Group Dev',subscriptionId =~ '6e967edb-425b-4a33-ae98-f1d2c509dda3','Arc enabled Infrastructure - Demo',subscriptionId =~ '710c6ed8-d8d9-4c51-b100-dc4d9e10dd18','ARC-ESU-TESTING-03',subscriptionId =~ '2145a411-d149-4010-84d4-40fe8a55db44','ARM Test Environment',subscriptionId =~ 'e2a8a7b3-cb7a-4930-9c79-2b0eb7bf843c','ASZ_Lab_Hardware_Dev_1',subscriptionId =~ '4c33a6bb-d566-4d0b-8951-00b55a91fba8','AzPIESecurity-DEV-Apple',subscriptionId =~ 'b65b516b-415b-4c68-a254-bfa7411275f8','Azure CloudES CDP ER - Test',subscriptionId =~ '6785ea1f-ac40-4244-a9ce-94b12fd832ca','Azure Migrate Demo Subscription',subscriptionId =~ '8c3c936a-c09b-4de3-830b-3f5f244d72e9','Azure Migrate Program Management Team',subscriptionId =~ '432a7068-99ae-4975-ad38-d96b71172cdf','Azure Profiler - Testing',subscriptionId =~ 'caffe3c0-acbd-4d01-af76-a45f421bfb64','Azure_Base_LivesiteArmory_test',subscriptionId =~ 'a1920ebd-59b7-4f19-af9f-5e80599e88e4','Babel',subscriptionId =~ 'b43a6159-1bea-4fa2-9407-e875fdc0ff55','BAP IA EU Schrems (P)',subscriptionId =~ 'ae71ef11-a03f-4b4f-a0e6-ef144727c711','Bing MM Measurement',subscriptionId =~ '8ef80208-601f-4c83-802e-751d211745f9','CloudAnalytics_Prod1',subscriptionId =~ 'f7b4a5ce-d3bd-4a03-84fe-8bcad772c8c1','Cog Services Computer Vision',subscriptionId =~ '38dbd059-bd26-4172-af17-bcc5a00744de','Core-ES-STREAM-DeXDI',subscriptionId =~ '87e8a61c-4832-4cfe-8b72-c12554f2309a','Cosmos_C&E_Azure_Azure Resource Manager_100424',subscriptionId =~ '8c4b5b03-3b24-4ed0-91f5-a703cd91b412','Cosmos_C&E_Azure_AzureEngineeringSystems_100200',subscriptionId =~ 'b988efc7-1bc8-4a73-b4a2-5ad864580250','Cosmos_C&E_DPG_Big Data_100036',subscriptionId =~ '6121bf73-2dc9-47ac-8b6a-c6ae4b88ef39','Cost Management PM',subscriptionId =~ '44074499-ad9f-45b9-9b0b-f594f8736a45','CSX-WSD-CFE-TNT-QPP',subscriptionId =~ '3cd01953-be46-4f9b-a4e0-26f19f428765','CSX-WSD-CFE-TNT-TOOLKITHUB',subscriptionId =~ '60214a3c-65a2-46f8-8b32-f959f2454106','Data Pillar Security Tooling',subscriptionId =~ 'f7c445af-a4de-4264-9e87-3196d6bc384d','Efficiency Pack Services (MSIT)',subscriptionId =~ '86f010b8-6473-4cb9-90c1-671c74faa4ee','emilyzhu dev subscription',subscriptionId =~ 'f3326bfd-5406-4136-a835-f64ccbfd9050','FTK @ MS',subscriptionId =~ 'd2c9544f-4329-4642-b73d-020e7fef844f','HPCScrub1',subscriptionId =~ 'bac420ed-c6fc-4a05-8ac1-8c0c52da1d6e','IDEAs MS Reporting',subscriptionId =~ '3cd95ff9-ac62-4b5c-8240-0cd046687ea0','Internal App Insights Resources for Perflens',subscriptionId =~ 'a386d5ea-ea90-441a-8263-d816368c84a1','IOT_PLATFORM_UPX_TEST',subscriptionId =~ '6a0ab98c-24d4-4131-8cd7-0a78bfce58f5','ITSM Integration - Production - New',subscriptionId =~ '13723929-6644-4060-a50a-cc38ebc5e8b1','LinuxMdsd Test',subscriptionId =~ '98b02a69-28a5-4ee7-a622-cd69c7a59c4e','Marvel Intelligence Model Training Subscription',subscriptionId =~ '1278a874-89fc-418c-b6b9-ac763b000415','Microsoft Azure Internal Consumption (nbrady)',subscriptionId =~ '29de2cfc-f00a-43bb-bdc8-3108795bd282','MSFT-Modern Device-Modern Mgmt-Imaging00',subscriptionId =~ '54b875cc-a81a-4914-8bfd-1a36bc7ddf4d','MSFT-WindowsVirtualDesktop-01',subscriptionId =~ '4dc2cd39-7a89-43d8-bebe-8bb501359891','Observability_AzMon_Grafana_Dev',subscriptionId =~ 'a471d615-ff98-4e80-b375-a19543d4691e','ODC-OneBox-Resources',subscriptionId =~ '1163fbbe-27e7-4b0f-8466-195fe5417043','Python_AI_Tools_PM_Team_Sub (jbinder)',subscriptionId =~ '3905431d-c062-4c17-8fd9-c51f89f334c4','Pytorch Build',subscriptionId =~ '3f577935-3138-4d07-86b3-75651b696483','Responsible & OpenAi Research',subscriptionId =~ '0f301386-8979-4981-acca-973d553078e7','Scope Team Test Subscription',subscriptionId =~ '1b0a5c20-7373-41a2-8fec-7364cceb7bbf','Services Hub Demo Open',subscriptionId =~ 'e72e5254-f265-4e95-9bd2-9ee8e7329051','Speech Services - DEV - SDK (carbon)',subscriptionId =~ 'a1c3dc6b-8630-4bb7-a29e-4ed4407c329b','Speech Services - EXP2',subscriptionId =~ '736af2bf-9fcb-4145-a19b-5b30b2b8949d','Trey International UK',subscriptionId =~ '51f73f67-1f29-4120-863e-dd315f743fc1','Trey Partner Lab 2',subscriptionId =~ '9ec51cfd-5ca7-4d76-8101-dd0a4abc5674','Trey Research Corporate',subscriptionId =~ '73c0021f-a37d-433f-8baa-7450cb54eea6','Trey Research Finance',subscriptionId =~ 'ed570627-0265-4620-bb42-bae06bcfa914','Trey Research IT',subscriptionId =~ '64e355d7-997c-491d-b0c1-8414dccfcf42','Trey Research R&D Playground',subscriptionId =~ '586f1d47-9dd9-43d5-b196-6e28f8405ff8','Trey Research R&D Production',subscriptionId =~ '9ec1d932-0f3f-486c-acc6-e7d78b358f9b','TScience',subscriptionId =~ '79f57c16-00fe-48da-87d4-5192e86cd047','TScienceGPU',subscriptionId =~ 'bac044cf-49e1-4843-8dda-1ce9662606c8','UI Fabric',subscriptionId =~ '6760347d-9ffe-41a9-ba11-c139dcea5ce6','xt-teams-migration-dev',subscriptionId =~ '45f9252d-e27e-4ed8-ab4e-dc5054de13fa','Contoso IT - Retail - Prod',subscriptionId)\r\n| where (type !~ ('dell.storage/filesystems'))\r\n| where (type !~ ('arizeai.observabilityeval/organizations'))\r\n| where (type !~ ('lambdatest.hyperexecute/organizations'))\r\n| where (type !~ ('pinecone.vectordb/organizations'))\r\n| where (type !~ ('microsoft.weightsandbiases/instances'))\r\n| where (type !~ ('purestorage.block/storagepools/avsstoragecontainers'))\r\n| where (type !~ ('purestorage.block/reservations'))\r\n| where (type !~ ('purestorage.block/storagepools'))\r\n| where (type !~ ('solarwinds.observability/organizations'))\r\n| where (type !~ ('splitio.experimentation/experimentationworkspaces'))\r\n| where (type !~ ('microsoft.agfoodplatform/farmbeats'))\r\n| where (type !~ ('microsoft.appsecurity/policies'))\r\n| where (type !~ ('microsoft.arc/all'))\r\n| where (type !~ ('microsoft.arc/allfairfax'))\r\n| where (type !~ ('microsoft.cdn/profiles/customdomains'))\r\n| where (type !~ ('microsoft.cdn/profiles/afdendpoints'))\r\n| where (type !~ ('microsoft.cdn/profiles/origingroups/origins'))\r\n| where (type !~ ('microsoft.cdn/profiles/origingroups'))\r\n| where (type !~ ('microsoft.cdn/profiles/afdendpoints/routes'))\r\n| where (type !~ ('microsoft.cdn/profiles/rulesets/rules'))\r\n| where (type !~ ('microsoft.cdn/profiles/rulesets'))\r\n| where (type !~ ('microsoft.cdn/profiles/secrets'))\r\n| where (type !~ ('microsoft.cdn/profiles/securitypolicies'))\r\n| where (type !~ ('microsoft.chaos/privateaccesses'))\r\n| where (type !~ ('microsoft.sovereign/transparencylogs'))\r\n| where (type !~ ('microsoft.sovereign/landingzoneconfigurations'))\r\n| where (type !~ ('microsoft.hardwaresecuritymodules/cloudhsmclusters'))\r\n| where (type !~ ('microsoft.compute/computefleetinstances'))\r\n| where (type !~ ('microsoft.compute/standbypoolinstance'))\r\n| where (type !~ ('microsoft.compute/virtualmachineflexinstances'))\r\n| where (type !~ ('microsoft.kubernetesconfiguration/extensions'))\r\n| where (type !~ ('microsoft.containerservice/managedclusters/microsoft.kubernetesconfiguration/extensions'))\r\n| where (type !~ ('microsoft.kubernetes/connectedclusters/microsoft.kubernetesconfiguration/namespaces'))\r\n| where (type !~ ('microsoft.containerservice/managedclusters/microsoft.kubernetesconfiguration/namespaces'))\r\n| where (type !~ ('microsoft.kubernetes/connectedclusters/microsoft.kubernetesconfiguration/fluxconfigurations'))\r\n| where (type !~ ('microsoft.containerservice/managedclusters/microsoft.kubernetesconfiguration/fluxconfigurations'))\r\n| where (type !~ ('microsoft.portalservices/extensions/deployments'))\r\n| where (type !~ ('microsoft.portalservices/extensions'))\r\n| where (type !~ ('microsoft.portalservices/extensions/slots'))\r\n| where (type !~ ('microsoft.portalservices/extensions/versions'))\r\n| where (type !~ ('microsoft.datacollaboration/workspaces'))\r\n| where (type !~ ('microsoft.deviceregistry/devices'))\r\n| where (type !~ ('microsoft.deviceupdate/updateaccounts/activedeployments'))\r\n| where (type !~ ('microsoft.deviceupdate/updateaccounts/agents'))\r\n| where (type !~ ('microsoft.deviceupdate/updateaccounts/deployments'))\r\n| where (type !~ ('microsoft.deviceupdate/updateaccounts/deviceclasses'))\r\n| where (type !~ ('microsoft.deviceupdate/updateaccounts/updates'))\r\n| where (type !~ ('microsoft.deviceupdate/updateaccounts'))\r\n| where (type !~ ('private.devtunnels/tunnelplans'))\r\n| where (type !~ ('private.easm/workspaces'))\r\n| where (type !~ ('microsoft.edgeorder/virtual_orderitems'))\r\n| where (type !~ ('microsoft.workloads/epicvirtualinstances'))\r\n| where (type !~ ('microsoft.fairfieldgardens/provisioningresources/provisioningpolicies'))\r\n| where (type !~ ('microsoft.fairfieldgardens/provisioningresources'))\r\n| where (type !~ ('microsoft.healthmodel/healthmodels'))\r\n| where (type !~ ('microsoft.hybridcompute/arcserverwithwac'))\r\n| where (type !~ ('microsoft.hybridcompute/machinessovereign'))\r\n| where (type !~ ('microsoft.hybridcompute/machinesesu'))\r\n| where (type !~ ('microsoft.hybridcompute/machinespaygo'))\r\n| where (type !~ ('microsoft.hybridcompute/machinessoftwareassurance'))\r\n| where (type !~ ('microsoft.network/virtualhubs')) or ((kind =~ ('routeserver')))\r\n| where (type !~ ('microsoft.network/networkvirtualappliances'))\r\n| where (type !~ ('microsoft.devhub/iacprofiles'))\r\n| where (type !~ ('microsoft.modsimworkbench/workbenches/chambers'))\r\n| where (type !~ ('microsoft.modsimworkbench/workbenches/chambers/files'))\r\n| where (type !~ ('microsoft.modsimworkbench/workbenches/chambers/filerequests'))\r\n| where (type !~ ('microsoft.modsimworkbench/workbenches/chambers/licenses'))\r\n| where (type !~ ('microsoft.modsimworkbench/workbenches/chambers/connectors'))\r\n| where (type !~ ('microsoft.modsimworkbench/workbenches/sharedstorages'))\r\n| where (type !~ ('microsoft.modsimworkbench/workbenches/chambers/storages'))\r\n| where (type !~ ('microsoft.modsimworkbench/workbenches/chambers/workloads'))\r\n| where (type !~ ('microsoft.insights/diagnosticsettings'))\r\n| where not((type =~ ('microsoft.network/serviceendpointpolicies')) and ((kind =~ ('internal'))))\r\n| where (type !~ ('microsoft.resources/resourcegraphvisualizer'))\r\n| where (type !~ ('microsoft.iotoperationsmq/mq'))\r\n| where (type !~ ('microsoft.orbital/cloudaccessrouters'))\r\n| where (type !~ ('microsoft.orbital/terminals'))\r\n| where (type !~ ('microsoft.orbital/sdwancontrollers'))\r\n| where (type !~ ('microsoft.orbital/geocatalogs'))\r\n| where (type !~ ('microsoft.recommendationsservice/accounts/modeling'))\r\n| where (type !~ ('microsoft.recommendationsservice/accounts/serviceendpoints'))\r\n| where (type !~ ('microsoft.recoveryservicesbvtd/vaults'))\r\n| where (type !~ ('microsoft.recoveryservicesbvtd2/vaults'))\r\n| where (type !~ ('microsoft.recoveryservicesintd/vaults'))\r\n| where (type !~ ('microsoft.recoveryservicesintd2/vaults'))\r\n| where (type !~ ('microsoft.resources/deletedresources'))\r\n| where (type !~ ('microsoft.deploymentmanager/rollouts'))\r\n| where (type !~ ('microsoft.features/featureprovidernamespaces/featureconfigurations'))\r\n| where (type !~ ('microsoft.saashub/cloudservices/hidden'))\r\n| where (type !~ ('microsoft.providerhub/providerregistrations'))\r\n| where (type !~ ('microsoft.providerhub/providerregistrations/customrollouts'))\r\n| where (type !~ ('microsoft.providerhub/providerregistrations/defaultrollouts'))\r\n| where (type !~ ('microsoft.edge/configurations'))\r\n| where not((type =~ ('microsoft.synapse/workspaces/sqlpools')) and ((kind =~ ('v3'))))\r\n| where (type !~ ('microsoft.mission/approvals'))\r\n| where (type !~ ('microsoft.mission/catalogs'))\r\n| where (type !~ ('microsoft.mission/communities'))\r\n| where (type !~ ('microsoft.mission/communities/communityendpoints'))\r\n| where (type !~ ('microsoft.mission/enclaveconnections'))\r\n| where (type !~ ('microsoft.mission/virtualenclaves/enclaveendpoints'))\r\n| where (type !~ ('microsoft.mission/communities/transithubs'))\r\n| where (type !~ ('microsoft.mission/virtualenclaves'))\r\n| where (type !~ ('microsoft.mission/virtualenclaves/workloads'))\r\n| where (type !~ ('microsoft.workloads/insights'))\r\n| where (type !~ ('microsoft.hanaonazure/sapmonitors'))\r\n| where (type !~ ('microsoft.cloudhealth/healthmodels'))\r\n| where (type !~ ('microsoft.connectedcache/enterprisemcccustomers/enterprisemcccachenodes'))\r\n| where not((type =~ ('microsoft.sql/servers/databases')) and ((kind in~ ('system','v2.0,system','v12.0,system','v12.0,system,serverless','v12.0,user,datawarehouse,gen2,analytics'))))\r\n| where not((type =~ ('microsoft.sql/servers')) and ((kind =~ ('v12.0,analytics'))))\r\n| project name,sku,totalCores,coreType,status,statusIcon,resources,id,resourceGroup,subscriptionDisplayName,type,kind,location,subscriptionId,tags\r\n| sort by (tolower(tostring(name))) asc",
+                                      "size": 0,
+                                      "title": "Eligible licenses",
+                                      "noDataMessage": "There are no eligible licenses.",
+                                      "queryType": 1,
+                                      "resourceType": "microsoft.resourcegraph/resources",
+                                      "crossComponentResources": [
+                                        "{Subscription}"
+                                      ]
+                                    },
+                                    "conditionalVisibility": {
+                                      "parameterName": "eligibleLicenses",
+                                      "comparison": "isEqualTo",
+                                      "value": "Yes"
+                                    },
+                                    "name": "arclicenses"
+                                  }
+                                ]
+                              },
+                              "conditionalVisibility": {
+                                "parameterName": "eligibleLicenses",
+                                "comparison": "isEqualTo",
+                                "value": "Yes"
+                              },
+                              "name": "group-eligibleLicenses"
+                            }
+                          ]
+                        },
+                        "conditionalVisibility": {
+                          "parameterName": "SelectedSubTab",
+                          "comparison": "isEqualTo",
+                          "value": "windowsEsu"
+                        },
+                        "name": "group-Esu"
+                      },
+                      {
+                        "type": 12,
+                        "content": {
+                          "version": "NotebookGroup/1.0",
+                          "groupType": "editable",
+                          "title": "Windows Server Management enabled by Azure Arc",
+                          "items": [
+                            {
+                              "type": 1,
+                              "content": {
+                                "json": "## Benefits of Windows Server Management with Azure Arc\r\n\r\nWindows Server Management enabled by Azure Arc offers customers with Windows Server licenses that have active Software Assurances or Windows Server licenses that are active subscription licenses a few benefits, including access to Azure Update Management, Azure Change Tracking and Inventory and Windwos best practices assessment. FOr the full list of benefits, visit [Windows Server Management enabled by Azure Arc.](https://learn.microsoft.com/azure/azure-arc/servers/windows-server-management-overview?tabs=portal)\r\n\r\n",
+                                "style": "info"
+                              },
+                              "name": "text - 5"
+                            },
+                            {
+                              "type": 3,
+                              "content": {
+                                "version": "KqlItem/1.0",
+                                "query": "// Run query to see results.\r\nresources\r\n| where type =~ \"microsoft.hybridcompute/machines\" and isempty(kind)\r\n| extend status = properties.status\r\n| extend operatingSystem = properties.osSku\r\n| where properties.osType =~ 'windows'\r\n| extend licenseProfile = properties.licenseProfile\r\n| extend licenseStatus = tostring(licenseProfile.licenseStatus)\r\n| extend licenseChannel = tostring(licenseProfile.licenseChannel)\r\n| extend productSubscriptionStatus = tostring(licenseProfile.productProfile.subscriptionStatus)\r\n| extend softwareAssurance = licenseProfile.softwareAssurance\r\n| extend softwareAssuranceCustomer = licenseProfile.softwareAssurance.softwareAssuranceCustomer\r\n| extend benefitsStatus = case(\r\n    softwareAssuranceCustomer == true, \"Activated\",\r\n    (licenseStatus =~ \"Licensed\" and licenseChannel =~ \"PGS:TB\") or productSubscriptionStatus =~ \"Enabled\", \"Activated via Pay-as-you-go\",\r\n    isnull(softwareAssurance) or isnull(softwareAssuranceCustomer) or softwareAssuranceCustomer == false, \"Not activated\",\r\n    \"Not activated\")\r\n| extend benefitsStatusIcon = case(\r\n softwareAssuranceCustomer == true, \"8\",\r\n    softwareAssuranceCustomer == true, \"8\",\r\n    (licenseStatus =~ \"Licensed\" and licenseChannel =~ \"PGS:TB\") or productSubscriptionStatus =~ \"Enabled\", \"8\",\r\n    isnull(softwareAssurance) or isnull(softwareAssuranceCustomer) or softwareAssuranceCustomer == false, \"7\",\r\n    \"7\")\r\n| project name, status, benefitsStatus, benefitsStatusIcon, resourceGroup, subscriptionId, operatingSystem, id, type, location, kind, tags\r\n| where (type !~ ('dell.storage/filesystems'))\r\n| where (type !~ ('arizeai.observabilityeval/organizations'))\r\n| where (type !~ ('lambdatest.hyperexecute/organizations'))\r\n| where (type !~ ('pinecone.vectordb/organizations'))\r\n| where (type !~ ('microsoft.weightsandbiases/instances'))\r\n| where (type !~ ('purestorage.block/storagepools/avsstoragecontainers'))\r\n| where (type !~ ('purestorage.block/reservations'))\r\n| where (type !~ ('purestorage.block/storagepools'))\r\n| where (type !~ ('solarwinds.observability/organizations'))\r\n| where (type !~ ('splitio.experimentation/experimentationworkspaces'))\r\n| where (type !~ ('microsoft.agfoodplatform/farmbeats'))\r\n| where (type !~ ('microsoft.appsecurity/policies'))\r\n| where (type !~ ('microsoft.arc/all'))\r\n| where (type !~ ('microsoft.arc/allfairfax'))\r\n| where (type !~ ('microsoft.cdn/profiles/customdomains'))\r\n| where (type !~ ('microsoft.cdn/profiles/afdendpoints'))\r\n| where (type !~ ('microsoft.cdn/profiles/origingroups/origins'))\r\n| where (type !~ ('microsoft.cdn/profiles/origingroups'))\r\n| where (type !~ ('microsoft.cdn/profiles/afdendpoints/routes'))\r\n| where (type !~ ('microsoft.cdn/profiles/rulesets/rules'))\r\n| where (type !~ ('microsoft.cdn/profiles/rulesets'))\r\n| where (type !~ ('microsoft.cdn/profiles/secrets'))\r\n| where (type !~ ('microsoft.cdn/profiles/securitypolicies'))\r\n| where (type !~ ('microsoft.chaos/privateaccesses'))\r\n| where (type !~ ('microsoft.sovereign/transparencylogs'))\r\n| where (type !~ ('microsoft.sovereign/landingzoneconfigurations'))\r\n| where (type !~ ('microsoft.hardwaresecuritymodules/cloudhsmclusters'))\r\n| where (type !~ ('microsoft.compute/computefleetinstances'))\r\n| where (type !~ ('microsoft.compute/standbypoolinstance'))\r\n| where (type !~ ('microsoft.compute/virtualmachineflexinstances'))\r\n| where (type !~ ('microsoft.kubernetesconfiguration/extensions'))\r\n| where (type !~ ('microsoft.containerservice/managedclusters/microsoft.kubernetesconfiguration/extensions'))\r\n| where (type !~ ('microsoft.kubernetes/connectedclusters/microsoft.kubernetesconfiguration/namespaces'))\r\n| where (type !~ ('microsoft.containerservice/managedclusters/microsoft.kubernetesconfiguration/namespaces'))\r\n| where (type !~ ('microsoft.kubernetes/connectedclusters/microsoft.kubernetesconfiguration/fluxconfigurations'))\r\n| where (type !~ ('microsoft.containerservice/managedclusters/microsoft.kubernetesconfiguration/fluxconfigurations'))\r\n| where (type !~ ('microsoft.portalservices/extensions/deployments'))\r\n| where (type !~ ('microsoft.portalservices/extensions'))\r\n| where (type !~ ('microsoft.portalservices/extensions/slots'))\r\n| where (type !~ ('microsoft.portalservices/extensions/versions'))\r\n| where (type !~ ('microsoft.datacollaboration/workspaces'))\r\n| where (type !~ ('microsoft.deviceregistry/devices'))\r\n| where (type !~ ('microsoft.deviceupdate/updateaccounts/activedeployments'))\r\n| where (type !~ ('microsoft.deviceupdate/updateaccounts/agents'))\r\n| where (type !~ ('microsoft.deviceupdate/updateaccounts/deployments'))\r\n| where (type !~ ('microsoft.deviceupdate/updateaccounts/deviceclasses'))\r\n| where (type !~ ('microsoft.deviceupdate/updateaccounts/updates'))\r\n| where (type !~ ('microsoft.deviceupdate/updateaccounts'))\r\n| where (type !~ ('private.devtunnels/tunnelplans'))\r\n| where (type !~ ('private.easm/workspaces'))\r\n| where (type !~ ('microsoft.edgeorder/virtual_orderitems'))\r\n| where (type !~ ('microsoft.workloads/epicvirtualinstances'))\r\n| where (type !~ ('microsoft.fairfieldgardens/provisioningresources/provisioningpolicies'))\r\n| where (type !~ ('microsoft.fairfieldgardens/provisioningresources'))\r\n| where (type !~ ('microsoft.healthmodel/healthmodels'))\r\n| where (type !~ ('microsoft.hybridcompute/arcserverwithwac'))\r\n| where (type !~ ('microsoft.hybridcompute/machinessovereign'))\r\n| where (type !~ ('microsoft.hybridcompute/machinesesu'))\r\n| where (type !~ ('microsoft.hybridcompute/machinespaygo'))\r\n| where (type !~ ('microsoft.network/virtualhubs')) or ((kind =~ ('routeserver')))\r\n| where (type !~ ('microsoft.network/networkvirtualappliances'))\r\n| where (type !~ ('microsoft.devhub/iacprofiles'))\r\n| where (type !~ ('microsoft.modsimworkbench/workbenches/chambers'))\r\n| where (type !~ ('microsoft.modsimworkbench/workbenches/chambers/files'))\r\n| where (type !~ ('microsoft.modsimworkbench/workbenches/chambers/filerequests'))\r\n| where (type !~ ('microsoft.modsimworkbench/workbenches/chambers/licenses'))\r\n| where (type !~ ('microsoft.modsimworkbench/workbenches/chambers/connectors'))\r\n| where (type !~ ('microsoft.modsimworkbench/workbenches/sharedstorages'))\r\n| where (type !~ ('microsoft.modsimworkbench/workbenches/chambers/storages'))\r\n| where (type !~ ('microsoft.modsimworkbench/workbenches/chambers/workloads'))\r\n| where (type !~ ('microsoft.insights/diagnosticsettings'))\r\n| where not((type =~ ('microsoft.network/serviceendpointpolicies')) and ((kind =~ ('internal'))))\r\n| where (type !~ ('microsoft.resources/resourcegraphvisualizer'))\r\n| where (type !~ ('microsoft.iotoperationsmq/mq'))\r\n| where (type !~ ('microsoft.orbital/cloudaccessrouters'))\r\n| where (type !~ ('microsoft.orbital/terminals'))\r\n| where (type !~ ('microsoft.orbital/sdwancontrollers'))\r\n| where (type !~ ('microsoft.orbital/geocatalogs'))\r\n| where (type !~ ('microsoft.recommendationsservice/accounts/modeling'))\r\n| where (type !~ ('microsoft.recommendationsservice/accounts/serviceendpoints'))\r\n| where (type !~ ('microsoft.recoveryservicesbvtd/vaults'))\r\n| where (type !~ ('microsoft.recoveryservicesbvtd2/vaults'))\r\n| where (type !~ ('microsoft.recoveryservicesintd/vaults'))\r\n| where (type !~ ('microsoft.recoveryservicesintd2/vaults'))\r\n| where (type !~ ('microsoft.resources/deletedresources'))\r\n| where (type !~ ('microsoft.deploymentmanager/rollouts'))\r\n| where (type !~ ('microsoft.features/featureprovidernamespaces/featureconfigurations'))\r\n| where (type !~ ('microsoft.saashub/cloudservices/hidden'))\r\n| where (type !~ ('microsoft.providerhub/providerregistrations'))\r\n| where (type !~ ('microsoft.providerhub/providerregistrations/customrollouts'))\r\n| where (type !~ ('microsoft.providerhub/providerregistrations/defaultrollouts'))\r\n| where (type !~ ('microsoft.edge/configurations'))\r\n| where not((type =~ ('microsoft.synapse/workspaces/sqlpools')) and ((kind =~ ('v3'))))\r\n| where (type !~ ('microsoft.mission/approvals'))\r\n| where (type !~ ('microsoft.mission/catalogs'))\r\n| where (type !~ ('microsoft.mission/communities'))\r\n| where (type !~ ('microsoft.mission/communities/communityendpoints'))\r\n| where (type !~ ('microsoft.mission/enclaveconnections'))\r\n| where (type !~ ('microsoft.mission/virtualenclaves/enclaveendpoints'))\r\n| where (type !~ ('microsoft.mission/communities/transithubs'))\r\n| where (type !~ ('microsoft.mission/virtualenclaves'))\r\n| where (type !~ ('microsoft.mission/virtualenclaves/workloads'))\r\n| where (type !~ ('microsoft.workloads/insights'))\r\n| where (type !~ ('microsoft.hanaonazure/sapmonitors'))\r\n| where (type !~ ('microsoft.cloudhealth/healthmodels'))\r\n| where (type !~ ('microsoft.connectedcache/enterprisemcccustomers/enterprisemcccachenodes'))\r\n| where not((type =~ ('microsoft.sql/servers/databases')) and ((kind in~ ('system','v2.0,system','v12.0,system','v12.0,system,serverless','v12.0,user,datawarehouse,gen2,analytics'))))\r\n| where not((type =~ ('microsoft.sql/servers')) and ((kind =~ ('v12.0,analytics'))))\r\n| where (type in~ ('Microsoft.HybridCompute/machinesSoftwareAssurance','Microsoft.HybridCompute/machines'))\r\n| project name,benefitsStatus,benefitsStatusIcon,status,resourceGroup,operatingSystem,id,type,kind,location,subscriptionId\r\n| summarize count() by benefitsStatus",
+                                "size": 0,
+                                "title": "Coverage Summary",
+                                "showRefreshButton": true,
+                                "queryType": 1,
+                                "resourceType": "microsoft.resourcegraph/resources",
+                                "crossComponentResources": [
+                                  "{Subscription}"
+                                ],
+                                "visualization": "piechart",
+                                "chartSettings": {
+                                  "yAxis": [
+                                    "count_"
+                                  ],
+                                  "showLegend": true,
+                                  "seriesLabelSettings": [
+                                    {
+                                      "seriesName": "Not activated",
+                                      "color": "red"
+                                    },
+                                    {
+                                      "seriesName": "Activated",
+                                      "color": "green"
+                                    },
+                                    {
+                                      "seriesName": "Activated via Pay-as-you-go",
+                                      "color": "greenDarkDark"
+                                    }
+                                  ]
+                                }
+                              },
+                              "name": "coverageSummary"
+                            },
+                            {
+                              "type": 9,
+                              "content": {
+                                "version": "KqlParameterItem/1.0",
+                                "parameters": [
+                                  {
+                                    "id": "16791a28-f78e-4b26-a2e9-a9fbbda915df",
+                                    "version": "KqlParameterItem/1.0",
+                                    "name": "eligibleResources",
+                                    "label": "View eligible resources?",
+                                    "type": 2,
+                                    "isRequired": true,
+                                    "typeSettings": {
+                                      "additionalResourceOptions": [],
+                                      "showDefault": false
+                                    },
+                                    "jsonData": "[\r\n    {\"value\":\"Yes\"},\r\n    {\"value\":\"No\", \"selected\":true}\r\n]\r\n\r\n",
+                                    "timeContext": {
+                                      "durationMs": 86400000
+                                    },
+                                    "value": "Yes"
+                                  }
+                                ],
+                                "style": "pills",
+                                "queryType": 0,
+                                "resourceType": "microsoft.operationalinsights/workspaces"
+                              },
+                              "name": "parameters - 5"
+                            },
+                            {
+                              "type": 12,
+                              "content": {
+                                "version": "NotebookGroup/1.0",
+                                "groupType": "editable",
+                                "title": "Eligible Resources",
+                                "items": [
+                                  {
+                                    "type": 1,
+                                    "content": {
+                                      "json": "To enable Windows Server Management with Azure Arc, visit the [Arc service blade.](https://ms.portal.azure.com/#view/Microsoft_Azure_ArcCenterUX/ArcCenterMenuBlade/~/softwareAssurance)\r\n\r\n",
+                                      "style": "info"
+                                    },
+                                    "name": "txtEligibleAHBResources"
+                                  },
+                                  {
+                                    "type": 3,
+                                    "content": {
+                                      "version": "KqlItem/1.0",
+                                      "query": "// Run query to see results.\r\nresources\r\n| where type =~ \"microsoft.hybridcompute/machines\" and isempty(kind)\r\n| extend status = properties.status\r\n| extend operatingSystem = properties.osSku\r\n| where properties.osType =~ 'windows'\r\n| extend licenseProfile = properties.licenseProfile\r\n| extend licenseStatus = tostring(licenseProfile.licenseStatus)\r\n| extend licenseChannel = tostring(licenseProfile.licenseChannel)\r\n| extend productSubscriptionStatus = tostring(licenseProfile.productProfile.subscriptionStatus)\r\n| extend softwareAssurance = licenseProfile.softwareAssurance\r\n| extend softwareAssuranceCustomer = licenseProfile.softwareAssurance.softwareAssuranceCustomer\r\n| extend benefitsStatus = case(\r\n    softwareAssuranceCustomer == true, \"Activated\",\r\n    (licenseStatus =~ \"Licensed\" and licenseChannel =~ \"PGS:TB\") or productSubscriptionStatus =~ \"Enabled\", \"Activated via Pay-as-you-go\",\r\n    isnull(softwareAssurance) or isnull(softwareAssuranceCustomer) or softwareAssuranceCustomer == false, \"Not activated\",\r\n    \"Not activated\")\r\n| extend benefitsStatusIcon = case(\r\n softwareAssuranceCustomer == true, \"8\",\r\n    softwareAssuranceCustomer == true, \"8\",\r\n    (licenseStatus =~ \"Licensed\" and licenseChannel =~ \"PGS:TB\") or productSubscriptionStatus =~ \"Enabled\", \"8\",\r\n    isnull(softwareAssurance) or isnull(softwareAssuranceCustomer) or softwareAssuranceCustomer == false, \"7\",\r\n    \"7\")\r\n| project name, status, benefitsStatus, benefitsStatusIcon, resourceGroup, subscriptionId, operatingSystem, id, type, location, kind, tags\r\n| where (type !~ ('dell.storage/filesystems'))\r\n| where (type !~ ('arizeai.observabilityeval/organizations'))\r\n| where (type !~ ('lambdatest.hyperexecute/organizations'))\r\n| where (type !~ ('pinecone.vectordb/organizations'))\r\n| where (type !~ ('microsoft.weightsandbiases/instances'))\r\n| where (type !~ ('purestorage.block/storagepools/avsstoragecontainers'))\r\n| where (type !~ ('purestorage.block/reservations'))\r\n| where (type !~ ('purestorage.block/storagepools'))\r\n| where (type !~ ('solarwinds.observability/organizations'))\r\n| where (type !~ ('splitio.experimentation/experimentationworkspaces'))\r\n| where (type !~ ('microsoft.agfoodplatform/farmbeats'))\r\n| where (type !~ ('microsoft.appsecurity/policies'))\r\n| where (type !~ ('microsoft.arc/all'))\r\n| where (type !~ ('microsoft.arc/allfairfax'))\r\n| where (type !~ ('microsoft.cdn/profiles/customdomains'))\r\n| where (type !~ ('microsoft.cdn/profiles/afdendpoints'))\r\n| where (type !~ ('microsoft.cdn/profiles/origingroups/origins'))\r\n| where (type !~ ('microsoft.cdn/profiles/origingroups'))\r\n| where (type !~ ('microsoft.cdn/profiles/afdendpoints/routes'))\r\n| where (type !~ ('microsoft.cdn/profiles/rulesets/rules'))\r\n| where (type !~ ('microsoft.cdn/profiles/rulesets'))\r\n| where (type !~ ('microsoft.cdn/profiles/secrets'))\r\n| where (type !~ ('microsoft.cdn/profiles/securitypolicies'))\r\n| where (type !~ ('microsoft.chaos/privateaccesses'))\r\n| where (type !~ ('microsoft.sovereign/transparencylogs'))\r\n| where (type !~ ('microsoft.sovereign/landingzoneconfigurations'))\r\n| where (type !~ ('microsoft.hardwaresecuritymodules/cloudhsmclusters'))\r\n| where (type !~ ('microsoft.compute/computefleetinstances'))\r\n| where (type !~ ('microsoft.compute/standbypoolinstance'))\r\n| where (type !~ ('microsoft.compute/virtualmachineflexinstances'))\r\n| where (type !~ ('microsoft.kubernetesconfiguration/extensions'))\r\n| where (type !~ ('microsoft.containerservice/managedclusters/microsoft.kubernetesconfiguration/extensions'))\r\n| where (type !~ ('microsoft.kubernetes/connectedclusters/microsoft.kubernetesconfiguration/namespaces'))\r\n| where (type !~ ('microsoft.containerservice/managedclusters/microsoft.kubernetesconfiguration/namespaces'))\r\n| where (type !~ ('microsoft.kubernetes/connectedclusters/microsoft.kubernetesconfiguration/fluxconfigurations'))\r\n| where (type !~ ('microsoft.containerservice/managedclusters/microsoft.kubernetesconfiguration/fluxconfigurations'))\r\n| where (type !~ ('microsoft.portalservices/extensions/deployments'))\r\n| where (type !~ ('microsoft.portalservices/extensions'))\r\n| where (type !~ ('microsoft.portalservices/extensions/slots'))\r\n| where (type !~ ('microsoft.portalservices/extensions/versions'))\r\n| where (type !~ ('microsoft.datacollaboration/workspaces'))\r\n| where (type !~ ('microsoft.deviceregistry/devices'))\r\n| where (type !~ ('microsoft.deviceupdate/updateaccounts/activedeployments'))\r\n| where (type !~ ('microsoft.deviceupdate/updateaccounts/agents'))\r\n| where (type !~ ('microsoft.deviceupdate/updateaccounts/deployments'))\r\n| where (type !~ ('microsoft.deviceupdate/updateaccounts/deviceclasses'))\r\n| where (type !~ ('microsoft.deviceupdate/updateaccounts/updates'))\r\n| where (type !~ ('microsoft.deviceupdate/updateaccounts'))\r\n| where (type !~ ('private.devtunnels/tunnelplans'))\r\n| where (type !~ ('private.easm/workspaces'))\r\n| where (type !~ ('microsoft.edgeorder/virtual_orderitems'))\r\n| where (type !~ ('microsoft.workloads/epicvirtualinstances'))\r\n| where (type !~ ('microsoft.fairfieldgardens/provisioningresources/provisioningpolicies'))\r\n| where (type !~ ('microsoft.fairfieldgardens/provisioningresources'))\r\n| where (type !~ ('microsoft.healthmodel/healthmodels'))\r\n| where (type !~ ('microsoft.hybridcompute/arcserverwithwac'))\r\n| where (type !~ ('microsoft.hybridcompute/machinessovereign'))\r\n| where (type !~ ('microsoft.hybridcompute/machinesesu'))\r\n| where (type !~ ('microsoft.hybridcompute/machinespaygo'))\r\n| where (type !~ ('microsoft.network/virtualhubs')) or ((kind =~ ('routeserver')))\r\n| where (type !~ ('microsoft.network/networkvirtualappliances'))\r\n| where (type !~ ('microsoft.devhub/iacprofiles'))\r\n| where (type !~ ('microsoft.modsimworkbench/workbenches/chambers'))\r\n| where (type !~ ('microsoft.modsimworkbench/workbenches/chambers/files'))\r\n| where (type !~ ('microsoft.modsimworkbench/workbenches/chambers/filerequests'))\r\n| where (type !~ ('microsoft.modsimworkbench/workbenches/chambers/licenses'))\r\n| where (type !~ ('microsoft.modsimworkbench/workbenches/chambers/connectors'))\r\n| where (type !~ ('microsoft.modsimworkbench/workbenches/sharedstorages'))\r\n| where (type !~ ('microsoft.modsimworkbench/workbenches/chambers/storages'))\r\n| where (type !~ ('microsoft.modsimworkbench/workbenches/chambers/workloads'))\r\n| where (type !~ ('microsoft.insights/diagnosticsettings'))\r\n| where not((type =~ ('microsoft.network/serviceendpointpolicies')) and ((kind =~ ('internal'))))\r\n| where (type !~ ('microsoft.resources/resourcegraphvisualizer'))\r\n| where (type !~ ('microsoft.iotoperationsmq/mq'))\r\n| where (type !~ ('microsoft.orbital/cloudaccessrouters'))\r\n| where (type !~ ('microsoft.orbital/terminals'))\r\n| where (type !~ ('microsoft.orbital/sdwancontrollers'))\r\n| where (type !~ ('microsoft.orbital/geocatalogs'))\r\n| where (type !~ ('microsoft.recommendationsservice/accounts/modeling'))\r\n| where (type !~ ('microsoft.recommendationsservice/accounts/serviceendpoints'))\r\n| where (type !~ ('microsoft.recoveryservicesbvtd/vaults'))\r\n| where (type !~ ('microsoft.recoveryservicesbvtd2/vaults'))\r\n| where (type !~ ('microsoft.recoveryservicesintd/vaults'))\r\n| where (type !~ ('microsoft.recoveryservicesintd2/vaults'))\r\n| where (type !~ ('microsoft.resources/deletedresources'))\r\n| where (type !~ ('microsoft.deploymentmanager/rollouts'))\r\n| where (type !~ ('microsoft.features/featureprovidernamespaces/featureconfigurations'))\r\n| where (type !~ ('microsoft.saashub/cloudservices/hidden'))\r\n| where (type !~ ('microsoft.providerhub/providerregistrations'))\r\n| where (type !~ ('microsoft.providerhub/providerregistrations/customrollouts'))\r\n| where (type !~ ('microsoft.providerhub/providerregistrations/defaultrollouts'))\r\n| where (type !~ ('microsoft.edge/configurations'))\r\n| where not((type =~ ('microsoft.synapse/workspaces/sqlpools')) and ((kind =~ ('v3'))))\r\n| where (type !~ ('microsoft.mission/approvals'))\r\n| where (type !~ ('microsoft.mission/catalogs'))\r\n| where (type !~ ('microsoft.mission/communities'))\r\n| where (type !~ ('microsoft.mission/communities/communityendpoints'))\r\n| where (type !~ ('microsoft.mission/enclaveconnections'))\r\n| where (type !~ ('microsoft.mission/virtualenclaves/enclaveendpoints'))\r\n| where (type !~ ('microsoft.mission/communities/transithubs'))\r\n| where (type !~ ('microsoft.mission/virtualenclaves'))\r\n| where (type !~ ('microsoft.mission/virtualenclaves/workloads'))\r\n| where (type !~ ('microsoft.workloads/insights'))\r\n| where (type !~ ('microsoft.hanaonazure/sapmonitors'))\r\n| where (type !~ ('microsoft.cloudhealth/healthmodels'))\r\n| where (type !~ ('microsoft.connectedcache/enterprisemcccustomers/enterprisemcccachenodes'))\r\n| where not((type =~ ('microsoft.sql/servers/databases')) and ((kind in~ ('system','v2.0,system','v12.0,system','v12.0,system,serverless','v12.0,user,datawarehouse,gen2,analytics'))))\r\n| where not((type =~ ('microsoft.sql/servers')) and ((kind =~ ('v12.0,analytics'))))\r\n| where (type in~ ('Microsoft.HybridCompute/machinesSoftwareAssurance','Microsoft.HybridCompute/machines'))\r\n| project name,benefitsStatus,benefitsStatusIcon,status,resourceGroup,operatingSystem,id,type,kind,location,subscriptionId\r\n| sort by (tolower(tostring(name))) asc",
+                                      "size": 0,
+                                      "title": "Eligible resources",
+                                      "noDataMessage": "There are no eligible resources.",
+                                      "showExportToExcel": true,
+                                      "queryType": 1,
+                                      "resourceType": "microsoft.resourcegraph/resources",
+                                      "crossComponentResources": [
+                                        "{Subscription}"
+                                      ],
+                                      "gridSettings": {
+                                        "formatters": [
+                                          {
+                                            "columnMatch": "benefitsStatusIcon",
+                                            "formatter": 18,
+                                            "formatOptions": {
+                                              "thresholdsOptions": "icons",
+                                              "thresholdsGrid": [
+                                                {
+                                                  "operator": "==",
+                                                  "thresholdValue": "7",
+                                                  "representation": "3",
+                                                  "text": ""
+                                                },
+                                                {
+                                                  "operator": "==",
+                                                  "thresholdValue": "8",
+                                                  "representation": "success",
+                                                  "text": ""
+                                                },
+                                                {
+                                                  "operator": "Default",
+                                                  "thresholdValue": null,
+                                                  "representation": "unknown",
+                                                  "text": ""
+                                                }
+                                              ]
+                                            }
+                                          },
+                                          {
+                                            "columnMatch": "esuStatusIcon",
+                                            "formatter": 18,
+                                            "formatOptions": {
+                                              "thresholdsOptions": "icons",
+                                              "thresholdsGrid": [
+                                                {
+                                                  "operator": "==",
+                                                  "thresholdValue": "7",
+                                                  "representation": "4",
+                                                  "text": ""
+                                                },
+                                                {
+                                                  "operator": "==",
+                                                  "thresholdValue": "9",
+                                                  "representation": "warning",
+                                                  "text": ""
+                                                },
+                                                {
+                                                  "operator": "==",
+                                                  "thresholdValue": "8",
+                                                  "representation": "success",
+                                                  "text": ""
+                                                },
+                                                {
+                                                  "operator": "==",
+                                                  "thresholdValue": "91",
+                                                  "representation": "unknown",
+                                                  "text": "{0}{1}"
+                                                },
+                                                {
+                                                  "sourceColumn": "esuStatus",
+                                                  "operator": "Default",
+                                                  "thresholdValue": null,
+                                                  "representation": "unknown",
+                                                  "text": ""
+                                                }
+                                              ]
+                                            }
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    "conditionalVisibility": {
+                                      "parameterName": "eligibleResources",
+                                      "comparison": "isEqualTo",
+                                      "value": "Yes"
+                                    },
+                                    "name": "arcAHBResources"
+                                  }
+                                ]
+                              },
+                              "conditionalVisibility": {
+                                "parameterName": "eligibleResources",
+                                "comparison": "isEqualTo",
+                                "value": "Yes"
+                              },
+                              "name": "group-eligibleResources"
+                            },
+                            {
+                              "type": 12,
+                              "content": {
+                                "version": "NotebookGroup/1.0",
+                                "groupType": "editable",
+                                "title": "Eligible licenses",
+                                "items": [
+                                  {
+                                    "type": 1,
+                                    "content": {
+                                      "json": "Keep in mind, subscription read permissions are required to give accurate core count and usage information for your ESU licenses. Physical core based licenses are subject to different licensing guidelines and are excluded from this view.[Learn more.](https://learn.microsoft.com/azure/azure-arc/servers/license-extended-security-updates)",
+                                      "style": "info"
+                                    },
+                                    "name": "txtLearnMoreLicense"
+                                  },
+                                  {
+                                    "type": 3,
+                                    "content": {
+                                      "version": "KqlItem/1.0",
+                                      "query": "// Run query to see results.\r\nresources\r\n| where type =~ \"microsoft.hybridcompute/licenses\"\r\n| extend sku = properties.licenseDetails.edition\r\n| extend totalCores = properties.licenseDetails.processors\r\n| extend coreType = case(\r\n    properties.licenseDetails.type =~ 'vCore','Virtual core',\r\n    properties.licenseDetails.type =~ 'pCore','Physical core',\r\n    'Unknown'\r\n)\r\n| extend statusIcon = case(\r\n    properties.licenseDetails.state =~ 'Activated', '8',\r\n    properties.licenseDetails.state =~ 'Deactivated', '7',\r\n    '91'\r\n)\r\n| extend status = case(\r\n    properties.licenseDetails.state =~ 'Activated', 'Activated',\r\n    properties.licenseDetails.state =~ 'Deactivated','Deactivated',\r\n    'Unknown'\r\n)\r\n| extend licenseId = tolower(tostring(id)) // Depending on what is stored in license profile, might have to get the immutableId instead\r\n| join kind=leftouter(\r\n    resources\r\n    | where type =~ \"microsoft.hybridcompute/machines/licenseProfiles\"\r\n    | extend machineId = tolower(tostring(trim_end(@\"\\/\\w+\\/(\\w|\\.)+\", id)))\r\n    | extend licenseId = tolower(tostring(properties.esuProfile.assignedLicense))\r\n    | summarize resources = count() by licenseId\r\n) on licenseId // Get count of license profile per license, a license profile is created for each machine that is assigned a license\r\n| extend resources = iff(isnull(resources), 0, resources)\r\n| project id, name, type, location, subscriptionId, resourceGroup, kind, tags, extendedLocation, sku, totalCores, coreType, status, statusIcon, resources\r\n| extend subscriptionDisplayName=case(subscriptionId =~ 'e75c95f3-27b4-410f-a40e-2b9153a807dd','AEther Dev',subscriptionId =~ '823ca539-d44d-43ee-8dc8-023fd4f27396','AIOps_FailureSimulation_DevTest',subscriptionId =~ 'b2a328a7-ffff-4c09-b643-a4758cf170bc','AISC-DEV-02',subscriptionId =~ 'eef8b6d5-94da-4b36-9327-a662f2674efb','AISC-EngSys-01',subscriptionId =~ 'e0fd569c-e34a-4249-8c24-e8d723c7f054','AML - Responsible AI R&D',subscriptionId =~ 'f1d79e73-f8e3-4b10-bfdb-4207ca0723ed','AML Infra - Engineering System',subscriptionId =~ 'dad45786-32e5-4ef3-b90e-8e0838fbadb6','AnE.ExP.NonProduction',subscriptionId =~ '017ad81c-b730-4564-9109-9b763243a9a6','Anomaly Real Time-DevTest',subscriptionId =~ 'e686ef8c-d35d-4e9b-92f8-caaaa7948c0a','Applied Sciences Group Dev',subscriptionId =~ '6e967edb-425b-4a33-ae98-f1d2c509dda3','Arc enabled Infrastructure - Demo',subscriptionId =~ '710c6ed8-d8d9-4c51-b100-dc4d9e10dd18','ARC-ESU-TESTING-03',subscriptionId =~ '2145a411-d149-4010-84d4-40fe8a55db44','ARM Test Environment',subscriptionId =~ 'e2a8a7b3-cb7a-4930-9c79-2b0eb7bf843c','ASZ_Lab_Hardware_Dev_1',subscriptionId =~ '4c33a6bb-d566-4d0b-8951-00b55a91fba8','AzPIESecurity-DEV-Apple',subscriptionId =~ 'b65b516b-415b-4c68-a254-bfa7411275f8','Azure CloudES CDP ER - Test',subscriptionId =~ '6785ea1f-ac40-4244-a9ce-94b12fd832ca','Azure Migrate Demo Subscription',subscriptionId =~ '8c3c936a-c09b-4de3-830b-3f5f244d72e9','Azure Migrate Program Management Team',subscriptionId =~ '432a7068-99ae-4975-ad38-d96b71172cdf','Azure Profiler - Testing',subscriptionId =~ 'caffe3c0-acbd-4d01-af76-a45f421bfb64','Azure_Base_LivesiteArmory_test',subscriptionId =~ 'a1920ebd-59b7-4f19-af9f-5e80599e88e4','Babel',subscriptionId =~ 'b43a6159-1bea-4fa2-9407-e875fdc0ff55','BAP IA EU Schrems (P)',subscriptionId =~ 'ae71ef11-a03f-4b4f-a0e6-ef144727c711','Bing MM Measurement',subscriptionId =~ '8ef80208-601f-4c83-802e-751d211745f9','CloudAnalytics_Prod1',subscriptionId =~ 'f7b4a5ce-d3bd-4a03-84fe-8bcad772c8c1','Cog Services Computer Vision',subscriptionId =~ '38dbd059-bd26-4172-af17-bcc5a00744de','Core-ES-STREAM-DeXDI',subscriptionId =~ '87e8a61c-4832-4cfe-8b72-c12554f2309a','Cosmos_C&E_Azure_Azure Resource Manager_100424',subscriptionId =~ '8c4b5b03-3b24-4ed0-91f5-a703cd91b412','Cosmos_C&E_Azure_AzureEngineeringSystems_100200',subscriptionId =~ 'b988efc7-1bc8-4a73-b4a2-5ad864580250','Cosmos_C&E_DPG_Big Data_100036',subscriptionId =~ '6121bf73-2dc9-47ac-8b6a-c6ae4b88ef39','Cost Management PM',subscriptionId =~ '44074499-ad9f-45b9-9b0b-f594f8736a45','CSX-WSD-CFE-TNT-QPP',subscriptionId =~ '3cd01953-be46-4f9b-a4e0-26f19f428765','CSX-WSD-CFE-TNT-TOOLKITHUB',subscriptionId =~ '60214a3c-65a2-46f8-8b32-f959f2454106','Data Pillar Security Tooling',subscriptionId =~ 'f7c445af-a4de-4264-9e87-3196d6bc384d','Efficiency Pack Services (MSIT)',subscriptionId =~ '86f010b8-6473-4cb9-90c1-671c74faa4ee','emilyzhu dev subscription',subscriptionId =~ 'f3326bfd-5406-4136-a835-f64ccbfd9050','FTK @ MS',subscriptionId =~ 'd2c9544f-4329-4642-b73d-020e7fef844f','HPCScrub1',subscriptionId =~ 'bac420ed-c6fc-4a05-8ac1-8c0c52da1d6e','IDEAs MS Reporting',subscriptionId =~ '3cd95ff9-ac62-4b5c-8240-0cd046687ea0','Internal App Insights Resources for Perflens',subscriptionId =~ 'a386d5ea-ea90-441a-8263-d816368c84a1','IOT_PLATFORM_UPX_TEST',subscriptionId =~ '6a0ab98c-24d4-4131-8cd7-0a78bfce58f5','ITSM Integration - Production - New',subscriptionId =~ '13723929-6644-4060-a50a-cc38ebc5e8b1','LinuxMdsd Test',subscriptionId =~ '98b02a69-28a5-4ee7-a622-cd69c7a59c4e','Marvel Intelligence Model Training Subscription',subscriptionId =~ '1278a874-89fc-418c-b6b9-ac763b000415','Microsoft Azure Internal Consumption (nbrady)',subscriptionId =~ '29de2cfc-f00a-43bb-bdc8-3108795bd282','MSFT-Modern Device-Modern Mgmt-Imaging00',subscriptionId =~ '54b875cc-a81a-4914-8bfd-1a36bc7ddf4d','MSFT-WindowsVirtualDesktop-01',subscriptionId =~ '4dc2cd39-7a89-43d8-bebe-8bb501359891','Observability_AzMon_Grafana_Dev',subscriptionId =~ 'a471d615-ff98-4e80-b375-a19543d4691e','ODC-OneBox-Resources',subscriptionId =~ '1163fbbe-27e7-4b0f-8466-195fe5417043','Python_AI_Tools_PM_Team_Sub (jbinder)',subscriptionId =~ '3905431d-c062-4c17-8fd9-c51f89f334c4','Pytorch Build',subscriptionId =~ '3f577935-3138-4d07-86b3-75651b696483','Responsible & OpenAi Research',subscriptionId =~ '0f301386-8979-4981-acca-973d553078e7','Scope Team Test Subscription',subscriptionId =~ '1b0a5c20-7373-41a2-8fec-7364cceb7bbf','Services Hub Demo Open',subscriptionId =~ 'e72e5254-f265-4e95-9bd2-9ee8e7329051','Speech Services - DEV - SDK (carbon)',subscriptionId =~ 'a1c3dc6b-8630-4bb7-a29e-4ed4407c329b','Speech Services - EXP2',subscriptionId =~ '736af2bf-9fcb-4145-a19b-5b30b2b8949d','Trey International UK',subscriptionId =~ '51f73f67-1f29-4120-863e-dd315f743fc1','Trey Partner Lab 2',subscriptionId =~ '9ec51cfd-5ca7-4d76-8101-dd0a4abc5674','Trey Research Corporate',subscriptionId =~ '73c0021f-a37d-433f-8baa-7450cb54eea6','Trey Research Finance',subscriptionId =~ 'ed570627-0265-4620-bb42-bae06bcfa914','Trey Research IT',subscriptionId =~ '64e355d7-997c-491d-b0c1-8414dccfcf42','Trey Research R&D Playground',subscriptionId =~ '586f1d47-9dd9-43d5-b196-6e28f8405ff8','Trey Research R&D Production',subscriptionId =~ '9ec1d932-0f3f-486c-acc6-e7d78b358f9b','TScience',subscriptionId =~ '79f57c16-00fe-48da-87d4-5192e86cd047','TScienceGPU',subscriptionId =~ 'bac044cf-49e1-4843-8dda-1ce9662606c8','UI Fabric',subscriptionId =~ '6760347d-9ffe-41a9-ba11-c139dcea5ce6','xt-teams-migration-dev',subscriptionId =~ '45f9252d-e27e-4ed8-ab4e-dc5054de13fa','Contoso IT - Retail - Prod',subscriptionId)\r\n| where (type !~ ('dell.storage/filesystems'))\r\n| where (type !~ ('arizeai.observabilityeval/organizations'))\r\n| where (type !~ ('lambdatest.hyperexecute/organizations'))\r\n| where (type !~ ('pinecone.vectordb/organizations'))\r\n| where (type !~ ('microsoft.weightsandbiases/instances'))\r\n| where (type !~ ('purestorage.block/storagepools/avsstoragecontainers'))\r\n| where (type !~ ('purestorage.block/reservations'))\r\n| where (type !~ ('purestorage.block/storagepools'))\r\n| where (type !~ ('solarwinds.observability/organizations'))\r\n| where (type !~ ('splitio.experimentation/experimentationworkspaces'))\r\n| where (type !~ ('microsoft.agfoodplatform/farmbeats'))\r\n| where (type !~ ('microsoft.appsecurity/policies'))\r\n| where (type !~ ('microsoft.arc/all'))\r\n| where (type !~ ('microsoft.arc/allfairfax'))\r\n| where (type !~ ('microsoft.cdn/profiles/customdomains'))\r\n| where (type !~ ('microsoft.cdn/profiles/afdendpoints'))\r\n| where (type !~ ('microsoft.cdn/profiles/origingroups/origins'))\r\n| where (type !~ ('microsoft.cdn/profiles/origingroups'))\r\n| where (type !~ ('microsoft.cdn/profiles/afdendpoints/routes'))\r\n| where (type !~ ('microsoft.cdn/profiles/rulesets/rules'))\r\n| where (type !~ ('microsoft.cdn/profiles/rulesets'))\r\n| where (type !~ ('microsoft.cdn/profiles/secrets'))\r\n| where (type !~ ('microsoft.cdn/profiles/securitypolicies'))\r\n| where (type !~ ('microsoft.chaos/privateaccesses'))\r\n| where (type !~ ('microsoft.sovereign/transparencylogs'))\r\n| where (type !~ ('microsoft.sovereign/landingzoneconfigurations'))\r\n| where (type !~ ('microsoft.hardwaresecuritymodules/cloudhsmclusters'))\r\n| where (type !~ ('microsoft.compute/computefleetinstances'))\r\n| where (type !~ ('microsoft.compute/standbypoolinstance'))\r\n| where (type !~ ('microsoft.compute/virtualmachineflexinstances'))\r\n| where (type !~ ('microsoft.kubernetesconfiguration/extensions'))\r\n| where (type !~ ('microsoft.containerservice/managedclusters/microsoft.kubernetesconfiguration/extensions'))\r\n| where (type !~ ('microsoft.kubernetes/connectedclusters/microsoft.kubernetesconfiguration/namespaces'))\r\n| where (type !~ ('microsoft.containerservice/managedclusters/microsoft.kubernetesconfiguration/namespaces'))\r\n| where (type !~ ('microsoft.kubernetes/connectedclusters/microsoft.kubernetesconfiguration/fluxconfigurations'))\r\n| where (type !~ ('microsoft.containerservice/managedclusters/microsoft.kubernetesconfiguration/fluxconfigurations'))\r\n| where (type !~ ('microsoft.portalservices/extensions/deployments'))\r\n| where (type !~ ('microsoft.portalservices/extensions'))\r\n| where (type !~ ('microsoft.portalservices/extensions/slots'))\r\n| where (type !~ ('microsoft.portalservices/extensions/versions'))\r\n| where (type !~ ('microsoft.datacollaboration/workspaces'))\r\n| where (type !~ ('microsoft.deviceregistry/devices'))\r\n| where (type !~ ('microsoft.deviceupdate/updateaccounts/activedeployments'))\r\n| where (type !~ ('microsoft.deviceupdate/updateaccounts/agents'))\r\n| where (type !~ ('microsoft.deviceupdate/updateaccounts/deployments'))\r\n| where (type !~ ('microsoft.deviceupdate/updateaccounts/deviceclasses'))\r\n| where (type !~ ('microsoft.deviceupdate/updateaccounts/updates'))\r\n| where (type !~ ('microsoft.deviceupdate/updateaccounts'))\r\n| where (type !~ ('private.devtunnels/tunnelplans'))\r\n| where (type !~ ('private.easm/workspaces'))\r\n| where (type !~ ('microsoft.edgeorder/virtual_orderitems'))\r\n| where (type !~ ('microsoft.workloads/epicvirtualinstances'))\r\n| where (type !~ ('microsoft.fairfieldgardens/provisioningresources/provisioningpolicies'))\r\n| where (type !~ ('microsoft.fairfieldgardens/provisioningresources'))\r\n| where (type !~ ('microsoft.healthmodel/healthmodels'))\r\n| where (type !~ ('microsoft.hybridcompute/arcserverwithwac'))\r\n| where (type !~ ('microsoft.hybridcompute/machinessovereign'))\r\n| where (type !~ ('microsoft.hybridcompute/machinesesu'))\r\n| where (type !~ ('microsoft.hybridcompute/machinespaygo'))\r\n| where (type !~ ('microsoft.hybridcompute/machinessoftwareassurance'))\r\n| where (type !~ ('microsoft.network/virtualhubs')) or ((kind =~ ('routeserver')))\r\n| where (type !~ ('microsoft.network/networkvirtualappliances'))\r\n| where (type !~ ('microsoft.devhub/iacprofiles'))\r\n| where (type !~ ('microsoft.modsimworkbench/workbenches/chambers'))\r\n| where (type !~ ('microsoft.modsimworkbench/workbenches/chambers/files'))\r\n| where (type !~ ('microsoft.modsimworkbench/workbenches/chambers/filerequests'))\r\n| where (type !~ ('microsoft.modsimworkbench/workbenches/chambers/licenses'))\r\n| where (type !~ ('microsoft.modsimworkbench/workbenches/chambers/connectors'))\r\n| where (type !~ ('microsoft.modsimworkbench/workbenches/sharedstorages'))\r\n| where (type !~ ('microsoft.modsimworkbench/workbenches/chambers/storages'))\r\n| where (type !~ ('microsoft.modsimworkbench/workbenches/chambers/workloads'))\r\n| where (type !~ ('microsoft.insights/diagnosticsettings'))\r\n| where not((type =~ ('microsoft.network/serviceendpointpolicies')) and ((kind =~ ('internal'))))\r\n| where (type !~ ('microsoft.resources/resourcegraphvisualizer'))\r\n| where (type !~ ('microsoft.iotoperationsmq/mq'))\r\n| where (type !~ ('microsoft.orbital/cloudaccessrouters'))\r\n| where (type !~ ('microsoft.orbital/terminals'))\r\n| where (type !~ ('microsoft.orbital/sdwancontrollers'))\r\n| where (type !~ ('microsoft.orbital/geocatalogs'))\r\n| where (type !~ ('microsoft.recommendationsservice/accounts/modeling'))\r\n| where (type !~ ('microsoft.recommendationsservice/accounts/serviceendpoints'))\r\n| where (type !~ ('microsoft.recoveryservicesbvtd/vaults'))\r\n| where (type !~ ('microsoft.recoveryservicesbvtd2/vaults'))\r\n| where (type !~ ('microsoft.recoveryservicesintd/vaults'))\r\n| where (type !~ ('microsoft.recoveryservicesintd2/vaults'))\r\n| where (type !~ ('microsoft.resources/deletedresources'))\r\n| where (type !~ ('microsoft.deploymentmanager/rollouts'))\r\n| where (type !~ ('microsoft.features/featureprovidernamespaces/featureconfigurations'))\r\n| where (type !~ ('microsoft.saashub/cloudservices/hidden'))\r\n| where (type !~ ('microsoft.providerhub/providerregistrations'))\r\n| where (type !~ ('microsoft.providerhub/providerregistrations/customrollouts'))\r\n| where (type !~ ('microsoft.providerhub/providerregistrations/defaultrollouts'))\r\n| where (type !~ ('microsoft.edge/configurations'))\r\n| where not((type =~ ('microsoft.synapse/workspaces/sqlpools')) and ((kind =~ ('v3'))))\r\n| where (type !~ ('microsoft.mission/approvals'))\r\n| where (type !~ ('microsoft.mission/catalogs'))\r\n| where (type !~ ('microsoft.mission/communities'))\r\n| where (type !~ ('microsoft.mission/communities/communityendpoints'))\r\n| where (type !~ ('microsoft.mission/enclaveconnections'))\r\n| where (type !~ ('microsoft.mission/virtualenclaves/enclaveendpoints'))\r\n| where (type !~ ('microsoft.mission/communities/transithubs'))\r\n| where (type !~ ('microsoft.mission/virtualenclaves'))\r\n| where (type !~ ('microsoft.mission/virtualenclaves/workloads'))\r\n| where (type !~ ('microsoft.workloads/insights'))\r\n| where (type !~ ('microsoft.hanaonazure/sapmonitors'))\r\n| where (type !~ ('microsoft.cloudhealth/healthmodels'))\r\n| where (type !~ ('microsoft.connectedcache/enterprisemcccustomers/enterprisemcccachenodes'))\r\n| where not((type =~ ('microsoft.sql/servers/databases')) and ((kind in~ ('system','v2.0,system','v12.0,system','v12.0,system,serverless','v12.0,user,datawarehouse,gen2,analytics'))))\r\n| where not((type =~ ('microsoft.sql/servers')) and ((kind =~ ('v12.0,analytics'))))\r\n| project name,sku,totalCores,coreType,status,statusIcon,resources,id,resourceGroup,subscriptionDisplayName,type,kind,location,subscriptionId,tags\r\n| sort by (tolower(tostring(name))) asc",
+                                      "size": 0,
+                                      "title": "Eligible licenses",
+                                      "noDataMessage": "There are no eligible licenses.",
+                                      "queryType": 1,
+                                      "resourceType": "microsoft.resourcegraph/resources",
+                                      "crossComponentResources": [
+                                        "{Subscription}"
+                                      ]
+                                    },
+                                    "conditionalVisibility": {
+                                      "parameterName": "eligibleLicenses",
+                                      "comparison": "isEqualTo",
+                                      "value": "Yes"
+                                    },
+                                    "name": "arclicenses"
+                                  }
+                                ]
+                              },
+                              "conditionalVisibility": {
+                                "parameterName": "eligibleLicenses",
+                                "comparison": "isEqualTo",
+                                "value": "Yes"
+                              },
+                              "name": "group-eligibleLicenses"
+                            }
+                          ]
+                        },
+                        "conditionalVisibility": {
+                          "parameterName": "SelectedSubTab",
+                          "comparison": "isEqualTo",
+                          "value": "arcAHB"
+                        },
+                        "name": "group-ahbArc"
+                      }
+                    ]
+                  },
+                  "conditionalVisibility": {
+                    "parameterName": "SelectedSubTab",
+                    "comparison": "isEqualTo",
+                    "value": "arc"
+                  },
+                  "name": "Arc"
                 },
                 {
                   "type": 12,
@@ -6577,7 +7658,7 @@
                               "type": 3,
                               "content": {
                                 "version": "KqlItem/1.0",
-                                "query": "ResourceContainers | where type =~ 'Microsoft.Resources/subscriptions' | where tostring (properties.subscriptionPolicies.quotaId) !has \"MSDNDevTest_2014-09-01\"  | extend SubscriptionName=name \r\n| join (\r\nresources \r\n| where resourceGroup in ({ResourceGroup})\r\n| where type =~ 'microsoft.compute/virtualmachines' or type =~ 'microsoft.compute/virtualMachineScaleSets'\r\n| where tostring(properties.storageProfile.imageReference.publisher ) == \"MicrosoftWindowsServer\" or tostring(properties.virtualMachineProfile.storageProfile.osDisk.osType) == 'Windows' or tostring(properties.storageProfile.imageReference.publisher ) == \"microsoftsqlserver\"\r\n| where tostring(properties.['licenseType']) !has 'Windows' and tostring(properties.virtualMachineProfile.['licenseType']) != 'Windows_Server'\r\n| extend WindowsId=id, VMIDFull=id, VMName=name, VMLocation=location, VMRG=resourceGroup, OSType=tostring(properties.storageProfile.imageReference.offer), OsVersion = tostring(properties.storageProfile.imageReference.sku), VMSize=tostring (properties.hardwareProfile.vmSize), LicenseType = tostring(properties.['licenseType']), VMSSize=tostring(sku.name), QuickFix=id\r\n    ) on subscriptionId \r\n| order by type asc \r\n| project WindowsId,VMName,VMRG,VMSize, VMSSize, VMLocation,OSType, OsVersion,LicenseType, subscriptionId, QuickFix, VMIDFull\r\n| join kind = innerunique(\r\n    resources\r\n    | extend replaced_tags = replace('{}', 'null', tostring(tags))\r\n    | extend replaced_tags = parse_json(replaced_tags)\r\n    | mv-expand replaced_tags\r\n    | extend tagName = tostring(bag_keys(replaced_tags)[0])\r\n    | extend tagValue = tostring(replaced_tags['{TagName}']), WindowsId=id\r\n    | where tagName has '{TagName}' and tagValue has '{TagValue}'\r\n    | distinct WindowsId\r\n    )\r\n    on WindowsId",
+                                "query": "ResourceContainers | where type =~ 'Microsoft.Resources/subscriptions' | where tostring (properties.subscriptionPolicies.quotaId) !has \"MSDNDevTest_2014-09-01\"  | extend SubscriptionName=name \r\n| join (\r\nresources \r\n| where resourceGroup in ({ResourceGroup})\r\n| where type =~ 'microsoft.compute/virtualmachines' or type =~ 'microsoft.compute/virtualMachineScaleSets'\r\n| where tostring(properties.storageProfile.imageReference.publisher ) == \"MicrosoftWindowsServer\" or tostring(properties.virtualMachineProfile.storageProfile.osDisk.osType) == 'Windows' or tostring(properties.storageProfile.imageReference.publisher ) == \"microsoftsqlserver\"\r\n| extend OS=properties.storageProfile.imageReference.id \r\n| where isnull(OS)\r\n| where tostring(properties.['licenseType']) !has 'Windows' and tostring(properties.virtualMachineProfile.['licenseType']) != 'Windows_Server'\r\n| extend WindowsId=id, VMIDFull=id, VMName=name, VMLocation=location, VMRG=resourceGroup, OSType=tostring(properties.storageProfile.imageReference.offer), OsVersion = tostring(properties.storageProfile.imageReference.sku), VMSize=tostring (properties.hardwareProfile.vmSize), LicenseType = tostring(properties.['licenseType']), VMSSize=tostring(sku.name), QuickFix=id\r\n    ) on subscriptionId \r\n| order by type asc \r\n| project WindowsId,VMName,VMRG,VMSize, VMSSize, VMLocation,OSType, OsVersion,LicenseType, subscriptionId, QuickFix, VMIDFull\r\n| join kind = innerunique(\r\n    resources\r\n    | extend replaced_tags = replace('{}', 'null', tostring(tags))\r\n    | extend replaced_tags = parse_json(replaced_tags)\r\n    | mv-expand replaced_tags\r\n    | extend tagName = tostring(bag_keys(replaced_tags)[0])\r\n    | extend tagValue = tostring(replaced_tags['{TagName}']), WindowsId=id\r\n    | where tagName has '{TagName}' and tagValue has '{TagValue}'\r\n    | distinct WindowsId\r\n    )\r\n    on WindowsId",
                                 "size": 0,
                                 "title": "AHB Disabled",
                                 "noDataMessage": "All of your VMs have AHB enabled.",
@@ -6611,7 +7692,7 @@
                               "type": 3,
                               "content": {
                                 "version": "KqlItem/1.0",
-                                "query": "ResourceContainers | where type =~ 'Microsoft.Resources/subscriptions' | where tostring (properties.subscriptionPolicies.quotaId) !has \"MSDNDevTest_2014-09-01\"  | extend SubscriptionName=name \r\n| join (\r\nresources \r\n| where resourceGroup in ({ResourceGroup})\r\n| where type =~ 'microsoft.compute/virtualmachines'\r\n| where tostring(properties.storageProfile.imageReference.publisher ) == \"MicrosoftWindowsServer\"  or tostring(properties.virtualMachineProfile.storageProfile.osDisk.osType) == 'Windows' or tostring(properties.storageProfile.imageReference.publisher ) == \"microsoftsqlserver\"\r\n| where tostring(properties.['licenseType']) has \"Windows\"\r\n| extend WindowsId=id, VMName=name, VMLocation=location, VMRG=resourceGroup, OSType=tostring(properties.storageProfile.imageReference.offer), OsVersion = tostring(properties.storageProfile.imageReference.sku), VMSize=tostring (properties.hardwareProfile.vmSize), LicenseType = tostring(properties.['licenseType']), VMSSize=tostring(sku.name)\r\n) on subscriptionId \r\n| order by type asc \r\n| project WindowsId,VMName,VMRG,VMSize, VMSSize, VMLocation,OSType, OsVersion,LicenseType, subscriptionId\r\n| join kind = innerunique(\r\n    resources\r\n    | extend replaced_tags = replace('{}', 'null', tostring(tags))\r\n    | extend replaced_tags = parse_json(replaced_tags)\r\n    | mv-expand replaced_tags\r\n    | extend tagName = tostring(bag_keys(replaced_tags)[0])\r\n    | extend tagValue = tostring(replaced_tags['{TagName}']), WindowsId=id\r\n    | where tagName has '{TagName}' and tagValue has '{TagValue}'\r\n    | distinct WindowsId\r\n    )\r\n    on WindowsId",
+                                "query": "ResourceContainers | where type =~ 'Microsoft.Resources/subscriptions' | where tostring (properties.subscriptionPolicies.quotaId) !has \"MSDNDevTest_2014-09-01\"  | extend SubscriptionName=name \r\n| join (\r\nresources \r\n| where resourceGroup in ({ResourceGroup})\r\n| where type =~ 'microsoft.compute/virtualmachines'\r\n| where tostring(properties.storageProfile.imageReference.publisher ) == \"MicrosoftWindowsServer\"  or tostring(properties.virtualMachineProfile.storageProfile.osDisk.osType) == 'Windows' or tostring(properties.storageProfile.imageReference.publisher ) == \"microsoftsqlserver\"\r\n| extend OS=properties.storageProfile.imageReference.id \r\n| where isnull(OS)\r\n| where tostring(properties.['licenseType']) has \"Windows\"\r\n| extend WindowsId=id, VMName=name, VMLocation=location, VMRG=resourceGroup, OSType=tostring(properties.storageProfile.imageReference.offer), OsVersion = tostring(properties.storageProfile.imageReference.sku), VMSize=tostring (properties.hardwareProfile.vmSize), LicenseType = tostring(properties.['licenseType']), VMSSize=tostring(sku.name)\r\n) on subscriptionId \r\n| order by type asc \r\n| project WindowsId,VMName,VMRG,VMSize, VMSSize, VMLocation,OSType, OsVersion,LicenseType, subscriptionId\r\n| join kind = innerunique(\r\n    resources\r\n    | extend replaced_tags = replace('{}', 'null', tostring(tags))\r\n    | extend replaced_tags = parse_json(replaced_tags)\r\n    | mv-expand replaced_tags\r\n    | extend tagName = tostring(bag_keys(replaced_tags)[0])\r\n    | extend tagValue = tostring(replaced_tags['{TagName}']), WindowsId=id\r\n    | where tagName has '{TagName}' and tagValue has '{TagValue}'\r\n    | distinct WindowsId\r\n    )\r\n    on WindowsId",
                                 "size": 0,
                                 "title": "AHB Enabled",
                                 "noDataMessage": "None of your VMs have AHB enabled.",
@@ -6713,7 +7794,7 @@
                               "type": 3,
                               "content": {
                                 "version": "KqlItem/1.0",
-                                "query": "ResourceContainers | where type =~ 'Microsoft.Resources/subscriptions' | where tostring (properties.subscriptionPolicies.quotaId) !has \"MSDNDevTest_2014-09-01\" | extend SubscriptionName=name \r\n| join (\r\nresources \r\n| where resourceGroup in ({ResourceGroup})\r\n| where type =~ 'microsoft.compute/virtualmachines'\r\n| where tostring(properties.storageProfile.osDisk.osType) == 'Windows'\r\n| extend WindowsId=id\r\n| join kind = innerunique(\r\n    resources\r\n    | extend replaced_tags = replace('{}', 'null', tostring(tags))\r\n    | extend replaced_tags = parse_json(replaced_tags)\r\n    | mv-expand replaced_tags\r\n    | extend tagName = tostring(bag_keys(replaced_tags)[0])\r\n    | extend tagValue = tostring(replaced_tags['{TagName}']), WindowsId=id\r\n    | where tagName has '{TagName}' and tagValue has '{TagValue}'\r\n    | distinct WindowsId\r\n    )\r\n    on WindowsId\r\n| extend LicenseType = tostring(properties.['licenseType'])\r\n| extend CheckAHBWindows = case(\r\n     type == 'microsoft.compute/virtualmachines' or type =~ 'microsoft.compute/virtualMachineScaleSets', iif((properties.['licenseType'])\r\n     !has 'Windows' and (properties.virtualMachineProfile.['licenseType']) !has 'Windows' , \"AHB Not Enabled\", \"AHB Enabled\"),\r\n     \"Not Windows\"\r\n     )\r\n) on subscriptionId \r\n| summarize count() by SubscriptionName, CheckAHBWindows\r\n",
+                                "query": "ResourceContainers | where type =~ 'Microsoft.Resources/subscriptions' | where tostring (properties.subscriptionPolicies.quotaId) !has \"MSDNDevTest_2014-09-01\" | extend SubscriptionName=name \r\n| join (\r\nresources \r\n| where resourceGroup in ({ResourceGroup})\r\n| where type =~ 'microsoft.compute/virtualmachines'\r\n| where tostring(properties.storageProfile.imageReference.publisher ) == \"MicrosoftWindowsServer\"  or tostring(properties.virtualMachineProfile.storageProfile.osDisk.osType) == 'Windows' or tostring(properties.storageProfile.imageReference.publisher ) == \"microsoftsqlserver\"\r\n| extend OS=properties.storageProfile.imageReference.id \r\n| where isnull(OS)\r\n| extend WindowsId=id\r\n| join kind = innerunique(\r\n    resources\r\n    | extend replaced_tags = replace('{}', 'null', tostring(tags))\r\n    | extend replaced_tags = parse_json(replaced_tags)\r\n    | mv-expand replaced_tags\r\n    | extend tagName = tostring(bag_keys(replaced_tags)[0])\r\n    | extend tagValue = tostring(replaced_tags['{TagName}']), WindowsId=id\r\n    | where tagName has '{TagName}' and tagValue has '{TagValue}'\r\n    | distinct WindowsId\r\n    )\r\n    on WindowsId\r\n| extend LicenseType = tostring(properties.['licenseType'])\r\n| extend CheckAHBWindows = case(\r\n     type == 'microsoft.compute/virtualmachines' or type =~ 'microsoft.compute/virtualMachineScaleSets', iif((properties.['licenseType'])\r\n     !has 'Windows' and (properties.virtualMachineProfile.['licenseType']) !has 'Windows' , \"AHB Not Enabled\", \"AHB Enabled\"),\r\n     \"Not Windows\"\r\n     )\r\n) on subscriptionId \r\n| summarize count() by SubscriptionName, CheckAHBWindows\r\n",
                                 "size": 0,
                                 "title": "Summary of Windows VMs with or without AHB per Subscription",
                                 "showRefreshButton": true,
@@ -6782,7 +7863,7 @@
                               "type": 3,
                               "content": {
                                 "version": "KqlItem/1.0",
-                                "query": "ResourceContainers | where type =~ 'Microsoft.Resources/subscriptions' | where tostring (properties.subscriptionPolicies.quotaId) !has \"MSDNDevTest_2014-09-01\" | extend SubscriptionName=name \r\n| join (\r\nresources \r\n| where resourceGroup in ({ResourceGroup})\r\n| where type =~ 'microsoft.compute/virtualmachines'\r\n| where tostring(properties.storageProfile.osDisk.osType) == 'Windows'\r\n| extend WindowsId=id\r\n| join kind = innerunique(\r\n    resources\r\n    | extend replaced_tags = replace('{}', 'null', tostring(tags))\r\n    | extend replaced_tags = parse_json(replaced_tags)\r\n    | mv-expand replaced_tags\r\n    | extend tagName = tostring(bag_keys(replaced_tags)[0])\r\n    | extend tagValue = tostring(replaced_tags['{TagName}']), WindowsId=id\r\n    | where tagName has '{TagName}' and tagValue has '{TagValue}'\r\n    | distinct WindowsId\r\n    )\r\n    on WindowsId\r\n| extend LicenseType = tostring(properties.['licenseType'])\r\n| extend CheckAHBWindows = case(\r\n     type == 'microsoft.compute/virtualmachines' or type =~ 'microsoft.compute/virtualMachineScaleSets', iif((properties.['licenseType'])\r\n     !has 'Windows' and (properties.virtualMachineProfile.['licenseType']) !has 'Windows' , \"AHB Not Enabled\", \"AHB Enabled\"),\r\n     \"Not Windows\"\r\n     )\r\n) on subscriptionId \r\n| summarize count() by CheckAHBWindows",
+                                "query": "ResourceContainers | where type =~ 'Microsoft.Resources/subscriptions' | where tostring (properties.subscriptionPolicies.quotaId) !has \"MSDNDevTest_2014-09-01\" | extend SubscriptionName=name \r\n| join (\r\nresources \r\n| where resourceGroup in ({ResourceGroup})\r\n| where tostring(properties.storageProfile.imageReference.publisher ) == \"MicrosoftWindowsServer\"  or tostring(properties.virtualMachineProfile.storageProfile.osDisk.osType) == 'Windows' or tostring(properties.storageProfile.imageReference.publisher ) == \"microsoftsqlserver\"\r\n| where tostring(properties.storageProfile.osDisk.osType) == 'Windows'\r\n| extend OS=properties.storageProfile.imageReference.id \r\n| where isnull(OS)\r\n| extend WindowsId=id\r\n| join kind = innerunique(\r\n    resources\r\n    | extend replaced_tags = replace('{}', 'null', tostring(tags))\r\n    | extend replaced_tags = parse_json(replaced_tags)\r\n    | mv-expand replaced_tags\r\n    | extend tagName = tostring(bag_keys(replaced_tags)[0])\r\n    | extend tagValue = tostring(replaced_tags['{TagName}']), WindowsId=id\r\n    | where tagName has '{TagName}' and tagValue has '{TagValue}'\r\n    | distinct WindowsId\r\n    )\r\n    on WindowsId\r\n| extend LicenseType = tostring(properties.['licenseType'])\r\n| extend CheckAHBWindows = case(\r\n     type == 'microsoft.compute/virtualmachines' or type =~ 'microsoft.compute/virtualMachineScaleSets', iif((properties.['licenseType'])\r\n     !has 'Windows' and (properties.virtualMachineProfile.['licenseType']) !has 'Windows' , \"AHB Not Enabled\", \"AHB Enabled\"),\r\n     \"Not Windows\"\r\n     )\r\n) on subscriptionId \r\n| summarize count() by CheckAHBWindows",
                                 "size": 0,
                                 "title": "Summary of Windows VMs with or without AHB",
                                 "showRefreshButton": true,
@@ -6987,8 +8068,7 @@
                                     "jsonData": "[\r\n    {\"value\":\"Yes\"},\r\n    {\"value\":\"No\", \"selected\":true}\r\n]\r\n\r\n",
                                     "timeContext": {
                                       "durationMs": 86400000
-                                    },
-                                    "value": "Yes"
+                                    }
                                   },
                                   {
                                     "id": "f1ac5e53-253c-4afb-8bc5-b1ba2efea3eb",
@@ -7001,8 +8081,7 @@
                                       "additionalResourceOptions": [],
                                       "showDefault": false
                                     },
-                                    "jsonData": "[\r\n    {\"value\":\"Yes\"},\r\n    {\"value\":\"No\", \"selected\":true}\r\n]\r\n\r\n",
-                                    "value": "Yes"
+                                    "jsonData": "[\r\n    {\"value\":\"Yes\"},\r\n    {\"value\":\"No\", \"selected\":true}\r\n]\r\n\r\n"
                                   },
                                   {
                                     "id": "20a00706-a89b-42aa-8dea-9c44c93e8014",
