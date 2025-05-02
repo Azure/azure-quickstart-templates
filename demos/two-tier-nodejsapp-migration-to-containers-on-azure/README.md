@@ -25,7 +25,7 @@ languages:
 
 <!-- TOC -->
 
-- [Two-tier Nodejs app migration to Azure Container and PaaS DB](#two-tier-nodejs-app-migration-to-azure-container-and-paas-db)
+- [Two-tier Node.js app migration to Azure Container and PaaS DB](#two-tier-nodejs-app-migration-to-azure-container-and-paas-db)
   - [Solution Overview](#solution-overview)
   - [Template Solution Architecture](#template-solution-architecture)
   - [Licenses and Costs](#licenses-and-costs)
@@ -37,8 +37,8 @@ languages:
 <!-- /TOC -->
 
 ## Solution Overview
-This Azure QuickStart template deploys the simulation infrastructure for on-premises two-tier Nodejs application and MongoDb on a single Ububtu server virtual machine.
-Once deployment finishes, you can connect to deployed VM and verify the Mongo database as well as Nodejs application and test application by launching the same in browser.
+This Azure QuickStart template deploys the simulation infrastructure for on-premises two-tier Node.js application and MongoDb on a single Ububtu server virtual machine.
+Once deployment finishes, you can connect to deployed VM and verify the Mongo database as well as Node.js application and test application by launching the same in browser.
 
 ## Template Solution Architecture
 This template will deploy:
@@ -47,7 +47,7 @@ This template will deploy:
 *	One Network Security Group
 *	One Public IP
 *	One Ubuntu Server VM
-*   Installation and configuration of Mongo database and Nodejs application
+*   Installation and configuration of Mongo database and Node.js application
 
 <img src="images/onPremApp.jpg"/>
 
@@ -63,7 +63,7 @@ Build your Two-tier on-premises app simulation on Azure in a few simple steps:
 *	Launch the Template by click on Deploy to Azure button.
 *	Fill in all the required parameter values. Accept the terms and condition on click Purchase.
 *	Access the deployment job once it is successful. In deployment job output, you will find the Public IP Address of VMs which can be used connect to the VMs.
-*	Start the Nodejs (ToDo) application and launch the same in browser
+*	Start the Node.js (ToDo) application and launch the same in browser
 *	Populate the application by entering some records
 *	Open Mongo console and verify the database is successfully created.
 *	Follow the post deployment configuration document [here](https://github.com/SpektraSystems/2-Tier-nodejsapp-migration-to-containers-on-Azure/raw/master/Two-tier%20Nodejs%20App%20migration%20on%20Azure%20Container%20v0.1.pdf) to learn about further configuration.
