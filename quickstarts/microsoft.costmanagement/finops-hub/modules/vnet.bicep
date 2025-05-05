@@ -29,9 +29,15 @@ var safeHubName = replace(replace(toLower(hubName), '-', ''), '_', '')
 // cSpell:ignore vnet
 var vNetName = '${safeHubName}-vnet-${location}'
 var nsgName = '${vNetName}-nsg'
+
+// Workaround https://github.com/Azure/bicep/issues/1853
+var finopsHubSubnetName = 'private-endpoint-subnet'
+var scriptSubnetName = 'script-subnet'
+var dataExplorerSubnetName = 'dataExplorer-subnet'
+
 var subnets = [
   {
-    name: 'private-endpoint-subnet'
+    name: finopsHubSubnetName
     properties: {
       addressPrefix: cidrSubnet(virtualNetworkAddressPrefix, 28, 0)
       networkSecurityGroup: {
@@ -45,7 +51,7 @@ var subnets = [
     }
   }
   {
-    name: 'script-subnet'
+    name: scriptSubnetName
     properties: {
       addressPrefix: cidrSubnet(virtualNetworkAddressPrefix, 28, 1)
       networkSecurityGroup: {
@@ -67,7 +73,7 @@ var subnets = [
     }
   }
   {
-    name: 'dataExplorer-subnet'
+    name: dataExplorerSubnetName
     properties: {
       addressPrefix: cidrSubnet(virtualNetworkAddressPrefix, 27, 1)
       networkSecurityGroup: {
@@ -179,6 +185,15 @@ resource vNet 'Microsoft.Network/virtualNetworks@2023-11-01' = {
     }
     subnets: subnets
   }
+  resource finopsHubSubnet 'subnets' existing = {
+    name: finopsHubSubnetName
+  }
+  resource scriptSubnet 'subnets' existing = {
+    name: scriptSubnetName
+  }
+  resource dataExplorerSubnet 'subnets' existing = {
+    name: dataExplorerSubnetName
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -189,6 +204,6 @@ output vNetId string = vNet.id
 output vNetName string = vNet.name
 output vNetAddressSpace array = vNet.properties.addressSpace.addressPrefixes
 output vNetSubnets array = vNet.properties.subnets
-output finopsHubSubnetId string = vNet.properties.subnets[0].id
-output scriptSubnetId string = vNet.properties.subnets[1].id
-output dataExplorerSubnetId string = vNet.properties.subnets[2].id
+output finopsHubSubnetId string = vNet::finopsHubSubnet.id
+output scriptSubnetId string = vNet::scriptSubnet.id
+output dataExplorerSubnetId string = vNet::dataExplorerSubnet.id
