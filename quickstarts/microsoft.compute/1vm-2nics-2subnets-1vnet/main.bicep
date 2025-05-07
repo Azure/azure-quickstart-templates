@@ -33,7 +33,7 @@ var bastionHostName = 'bastionHost'
 var bastionPublicIPName = 'bastionPublicIP'
 
 // This is the virtual machine that you're building.
-resource vm 'Microsoft.Compute/virtualMachines@2020-06-01' = {
+resource vm 'Microsoft.Compute/virtualMachines@2022-11-01' = {
   name: virtualMachineName
   location: location
   properties: {
@@ -84,7 +84,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2020-06-01' = {
   }
 }
 
-resource diagsAccount 'Microsoft.Storage/storageAccounts@2019-06-01' = {
+resource diagsAccount 'Microsoft.Storage/storageAccounts@2022-09-01' = {
   name: diagStorageAccountName
   location: location
   sku: {
@@ -94,13 +94,13 @@ resource diagsAccount 'Microsoft.Storage/storageAccounts@2019-06-01' = {
 }
 
 // Simple Network Security Group for subnet2
-resource nsg2 'Microsoft.Network/networkSecurityGroups@2020-06-01' = {
+resource nsg2 'Microsoft.Network/networkSecurityGroups@2022-07-01' = {
   name: networkSecurityGroupName2
   location: location
 }
 
 // NAT gateway resource
-resource natGateway'Microsoft.Network/natGateways@2021-05-01' = {
+resource natGateway'Microsoft.Network/natGateways@2022-07-01' = {
   name: natGatewayName
   location: location
   sku: {
@@ -117,7 +117,7 @@ resource natGateway'Microsoft.Network/natGateways@2021-05-01' = {
 }
 
 // Add a public IP address for the NAT Gateway
-resource natGatewayPublicIP 'Microsoft.Network/publicIPAddresses@2020-06-01' = {
+resource natGatewayPublicIP 'Microsoft.Network/publicIPAddresses@2022-07-01' = {
   name: natGatewayPublicIPName
   location: location
   sku: {
@@ -130,7 +130,7 @@ resource natGatewayPublicIP 'Microsoft.Network/publicIPAddresses@2020-06-01' = {
 }
 
 // Add a public IP address for Azure Bastion
-resource bastionPublicIP 'Microsoft.Network/publicIPAddresses@2020-06-01' = {
+resource bastionPublicIP 'Microsoft.Network/publicIPAddresses@2022-07-01' = {
   name: bastionPublicIPName
   location: location
   sku: {
@@ -143,7 +143,7 @@ resource bastionPublicIP 'Microsoft.Network/publicIPAddresses@2020-06-01' = {
 }
 
 // Add an Azure Bastion resource
-resource bastionHost 'Microsoft.Network/bastionHosts@2020-06-01' = {
+resource bastionHost 'Microsoft.Network/bastionHosts@2022-07-01' = {
   name: bastionHostName
   location: location
   properties: {
@@ -164,7 +164,7 @@ resource bastionHost 'Microsoft.Network/bastionHosts@2020-06-01' = {
 }
 
 // This will build a Virtual Network.
-resource vnet 'Microsoft.Network/virtualNetworks@2020-06-01' = {
+resource vnet 'Microsoft.Network/virtualNetworks@2022-07-01' = {
   name: virtualNetworkName
   location: location
   properties: {
@@ -206,7 +206,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2020-06-01' = {
 }
 
 // This will be your Primary NIC
-resource nic1 'Microsoft.Network/networkInterfaces@2020-06-01' = {
+resource nic1 'Microsoft.Network/networkInterfaces@2022-07-01' = {
   name: nic1Name
   location: location
   properties: {
@@ -228,7 +228,7 @@ resource nic1 'Microsoft.Network/networkInterfaces@2020-06-01' = {
 }
 
 // This will be your Secondary NIC
-resource nic2 'Microsoft.Network/networkInterfaces@2020-06-01' = {
+resource nic2 'Microsoft.Network/networkInterfaces@2022-07-01' = {
   name: nic2Name
   location: location
   properties: {
@@ -247,7 +247,7 @@ resource nic2 'Microsoft.Network/networkInterfaces@2020-06-01' = {
 }
 
 // Network Security Group (NSG) for your Primary NIC
-resource nsg 'Microsoft.Network/networkSecurityGroups@2020-06-01' = {
+resource nsg 'Microsoft.Network/networkSecurityGroups@2022-07-01' = {
   name: networkSecurityGroupName
   location: location
   properties: {
