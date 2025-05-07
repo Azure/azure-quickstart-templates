@@ -24,10 +24,13 @@ var nic2Name = 'nic-2'
 var virtualNetworkName = 'virtualNetwork'
 var subnet1Name = 'subnet-1'
 var subnet2Name = 'subnet-2'
-var publicIPAddressName = 'publicIp'
 var diagStorageAccountName = 'diags${uniqueString(resourceGroup().id)}'
-var networkSecurityGroupName = 'NSG'
+var networkSecurityGroupName = '${nic1Name}-nsg'
 var networkSecurityGroupName2 = '${subnet2Name}-nsg'
+var natGatewayName = 'natGateway'
+var natGatewayPublicIPName = 'natGatewayPublicIP'
+var bastionHostName = 'bastionHost'
+var bastionPublicIPName = 'bastionPublicIP'
 
 // This is the virtual machine that you're building.
 resource vm 'Microsoft.Compute/virtualMachines@2020-06-01' = {
@@ -96,6 +99,70 @@ resource nsg2 'Microsoft.Network/networkSecurityGroups@2020-06-01' = {
   location: location
 }
 
+// NAT gateway resource
+resource natGateway'Microsoft.Network/natGateways@2021-05-01' = {
+  name: natGatewayName
+  location: location
+  sku: {
+    name: 'Standard'
+  }
+  properties: {
+    idleTimeoutInMinutes: 4
+    publicIpAddresses: [
+      {
+        id: natGatewayPublicIP.id
+      }
+    ]
+  }
+}
+
+// Add a public IP address for the NAT Gateway
+resource natGatewayPublicIP 'Microsoft.Network/publicIPAddresses@2020-06-01' = {
+  name: natGatewayPublicIPName
+  location: location
+  sku: {
+    name: 'Standard'
+  }
+  properties: {
+    publicIPAllocationMethod: 'Static'
+    publicIPAddressVersion: 'IPv4'
+  }
+}
+
+// Add a public IP address for Azure Bastion
+resource bastionPublicIP 'Microsoft.Network/publicIPAddresses@2020-06-01' = {
+  name: bastionPublicIPName
+  location: location
+  sku: {
+    name: 'Standard'
+  }
+  properties: {
+    publicIPAllocationMethod: 'Static'
+    publicIPAddressVersion: 'IPv4'
+  }
+}
+
+// Add an Azure Bastion resource
+resource bastionHost 'Microsoft.Network/bastionHosts@2020-06-01' = {
+  name: bastionHostName
+  location: location
+  properties: {
+    ipConfigurations: [
+      {
+        name: 'bastionIPConfig'
+        properties: {
+          subnet: {
+            id: resourceId('Microsoft.Network/virtualNetworks/subnets', vnet.name, 'AzureBastionSubnet')
+          }
+          publicIPAddress: {
+            id: bastionPublicIP.id
+          }
+        }
+      }
+    ]
+  }
+}
+
 // This will build a Virtual Network.
 resource vnet 'Microsoft.Network/virtualNetworks@2020-06-01' = {
   name: virtualNetworkName
@@ -111,6 +178,9 @@ resource vnet 'Microsoft.Network/virtualNetworks@2020-06-01' = {
         name: subnet1Name
         properties: {
           addressPrefix: '10.0.0.0/24'
+          natGateway: {
+            id: natGateway.id
+          }
         }
       }
       {
@@ -120,6 +190,15 @@ resource vnet 'Microsoft.Network/virtualNetworks@2020-06-01' = {
           networkSecurityGroup: {
             id: nsg2.id
           }
+          natGateway: {
+            id: natGateway.id
+          }
+        }
+      }
+      {
+        name: 'AzureBastionSubnet'
+        properties: {
+          addressPrefix: '10.0.2.0/26'
         }
       }
     ]
@@ -139,9 +218,6 @@ resource nic1 'Microsoft.Network/networkInterfaces@2020-06-01' = {
             id: resourceId('Microsoft.Network/virtualNetworks/subnets', vnet.name, subnet1Name)
           }
           privateIPAllocationMethod: 'Dynamic'
-          publicIPAddress: {
-            id: pip.id
-          }
         }
       }
     ]
@@ -167,15 +243,6 @@ resource nic2 'Microsoft.Network/networkInterfaces@2020-06-01' = {
         }
       }
     ]
-  }
-}
-
-// Public IP for your Primary NIC
-resource pip 'Microsoft.Network/publicIPAddresses@2020-06-01' = {
-  name: publicIPAddressName
-  location: location
-  properties: {
-    publicIPAllocationMethod: 'Dynamic'
   }
 }
 
