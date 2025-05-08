@@ -12,7 +12,7 @@ param adminPassword string
 param dnsNameforLBIP string
 
 @description('Prefix to use for VM names')
-param vmNamePrefix string = 'myVM'
+param vmNamePrefix string = 'vm-'
 
 @description('Image Publisher')
 param imagePublisher string = 'MicrosoftWindowsServer'
@@ -24,16 +24,16 @@ param imageOffer string = 'WindowsServer'
 param imageSKU string = '2019-Datacenter'
 
 @description('Load Balancer name')
-param lbName string = 'myLB'
+param lbName string = 'load-balancer'
 
 @description('Network Interface name prefix')
-param nicNamePrefix string = 'nic'
+param nicNamePrefix string = 'nic-'
 
 @description('Public IP Name')
-param publicIPAddressName string = 'myPublicIP'
+param publicIPAddressName string = 'public-ip-lb'
 
-@description('VNET name')
-param vnetName string = 'myVNET'
+@description('Virtual network name')
+param vnetName string = 'vnet-1'
 
 @description('Size of the VM')
 param vmSize string = 'Standard_D2s_v3'
@@ -42,23 +42,22 @@ param vmSize string = 'Standard_D2s_v3'
 param location string = resourceGroup().location
 
 @description('NAT Gateway name')
-param natGatewayName string = 'myNatGateway'
+param natGatewayName string = 'nat-gateway'
 
 @description('NAT Gateway Public IP name')
-param natGatewayPublicIPName string = 'myNatGatewayPublicIP'
+param natGatewayPublicIPName string = 'public-ip-nat-gateway'
 
 @description('Azure Bastion name')
-param bastionName string = 'myBastion'
+param bastionName string = 'bastion'
 
 @description('Azure Bastion Public IP name')
-param bastionPublicIPName string = 'myBastionPublicIP'
+param bastionPublicIPName string = 'public-ip-bastion'
 
 var storageAccountType = 'Standard_LRS'
-var availabilitySetName = 'myAvSet'
+var availabilitySetName = 'availability-set'
 var addressPrefix = '10.0.0.0/16'
-var subnetName = 'Subnet-1'
+var subnetName = 'subnet-1'
 var subnetPrefix = '10.0.0.0/24'
-var publicIPAddressType = 'Dynamic'
 var subnetRef = resourceId('Microsoft.Network/virtualNetworks/subnets', vnetName, subnetName)
 var publicIPAddressID = publicIPAddress.id
 var numberOfInstances = 2
@@ -87,8 +86,12 @@ resource availabilitySet 'Microsoft.Compute/availabilitySets@2022-03-01' = {
 resource publicIPAddress 'Microsoft.Network/publicIPAddresses@2023-02-01' = {
   name: publicIPAddressName
   location: location
+  sku: {
+    name: 'Standard'
+  }
   properties: {
-    publicIPAllocationMethod: publicIPAddressType
+    publicIPAllocationMethod: 'static'
+    publicIPAddressVersion: 'IPv4'
     dnsSettings: {
       domainNameLabel: dnsNameforLBIP
     }
@@ -135,27 +138,6 @@ resource bastionPublicIP 'Microsoft.Network/publicIPAddresses@2023-02-01' = {
   properties: {
     publicIPAllocationMethod: 'Static'
     publicIPAddressVersion: 'IPv4'
-  }
-}
-
-// Add an Azure Bastion resource
-resource bastionHost 'Microsoft.Network/bastionHosts@2023-02-01' = {
-  name: bastionName
-  location: location
-  properties: {
-    ipConfigurations: [
-      {
-        name: 'bastionIPConfig'
-        properties: {
-          subnet: {
-            id: resourceId('Microsoft.Network/virtualNetworks/subnets', vnetName, 'AzureBastionSubnet')
-          }
-          publicIPAddress: {
-            id: bastionPublicIP.id
-          }
-        }
-      }
-    ]
   }
 }
 
@@ -206,11 +188,6 @@ resource networkInterfaces 'Microsoft.Network/networkInterfaces@2023-02-01' = [
                 id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', lbName, 'BackendPool1')
               }
             ]
-            loadBalancerInboundNatRules: [
-              {
-                id: resourceId('Microsoft.Network/loadBalancers/inboundNatRules', lbName, 'RDP-VM${i}')
-              }
-            ]
           }
         }
       ]
@@ -225,6 +202,9 @@ resource networkInterfaces 'Microsoft.Network/networkInterfaces@2023-02-01' = [
 resource lb 'Microsoft.Network/loadBalancers@2023-02-01' = {
   name: lbName
   location: location
+  sku: {
+    name: 'Standard'
+  }
   properties: {
     frontendIPConfigurations: [
       {
@@ -239,32 +219,6 @@ resource lb 'Microsoft.Network/loadBalancers@2023-02-01' = {
     backendAddressPools: [
       {
         name: 'BackendPool1'
-      }
-    ]
-    inboundNatRules: [
-      {
-        name: 'RDP-VM0'
-        properties: {
-          frontendIPConfiguration: {
-            id: resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', lbName, 'LoadBalancerFrontEnd')
-          }
-          protocol: 'Tcp'
-          frontendPort: 50001
-          backendPort: 3389
-          enableFloatingIP: false
-        }
-      }
-      {
-        name: 'RDP-VM1'
-        properties: {
-          frontendIPConfiguration: {
-            id: resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', lbName, 'LoadBalancerFrontEnd')
-          }
-          protocol: 'Tcp'
-          frontendPort: 50002
-          backendPort: 3389
-          enableFloatingIP: false
-        }
       }
     ]
     loadBalancingRules: [
@@ -300,6 +254,30 @@ resource lb 'Microsoft.Network/loadBalancers@2023-02-01' = {
       }
     ]
   }
+}
+
+// Add an Azure Bastion resource
+resource bastionHost 'Microsoft.Network/bastionHosts@2023-02-01' = {
+  name: bastionName
+  location: location
+  properties: {
+    ipConfigurations: [
+      {
+        name: 'bastionIPConfig'
+        properties: {
+          subnet: {
+            id: resourceId('Microsoft.Network/virtualNetworks/subnets', vnetName, 'AzureBastionSubnet')
+          }
+          publicIPAddress: {
+            id: bastionPublicIP.id
+          }
+        }
+      }
+    ]
+  }
+  dependsOn: [
+    vnet
+  ]
 }
 
 resource virtualMachines 'Microsoft.Compute/virtualMachines@2022-08-01' = [
