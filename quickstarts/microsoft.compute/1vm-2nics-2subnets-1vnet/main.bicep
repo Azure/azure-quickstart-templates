@@ -8,13 +8,6 @@ param adminUsername string
 @secure()
 param adminPassword string
 
-@description('Storage Account type for the VM and VM diagnostic storage')
-@allowed([
-  'Standard_LRS'
-  'Premium_LRS'
-])
-param storageAccountType string = 'Standard_LRS'
-
 @description('Location for all resources.')
 param location string = resourceGroup().location
 
@@ -78,19 +71,9 @@ resource vm 'Microsoft.Compute/virtualMachines@2022-11-01' = {
     diagnosticsProfile: {
       bootDiagnostics: {
         enabled: true
-        storageUri: diagsAccount.properties.primaryEndpoints.blob
       }
     }
   }
-}
-
-resource diagsAccount 'Microsoft.Storage/storageAccounts@2022-09-01' = {
-  name: diagStorageAccountName
-  location: location
-  sku: {
-    name: storageAccountType
-  }
-  kind: 'StorageV2'
 }
 
 // Simple Network Security Group for subnet2
