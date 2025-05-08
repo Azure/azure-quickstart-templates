@@ -70,7 +70,7 @@ resource availabilitySet 'Microsoft.Compute/availabilitySets@2022-11-01' = {
   }
 }
 
-resource publicIPAddress 'Microsoft.Network/publicIPAddresses@2021-02-01' = {
+resource publicIPAddress 'Microsoft.Network/publicIPAddresses@2022-07-01' = {
   name: publicIPAddressName
   location: location
   sku: {
@@ -86,7 +86,7 @@ resource publicIPAddress 'Microsoft.Network/publicIPAddresses@2021-02-01' = {
 }
 
 // Add a NAT Gateway Public IP resource
-resource natGatewayPublicIP 'Microsoft.Network/publicIPAddresses@2021-02-01' = {
+resource natGatewayPublicIP 'Microsoft.Network/publicIPAddresses@2022-07-01' = {
   name: natGatewayPublicIPName
   location: location
   sku: {
@@ -99,7 +99,7 @@ resource natGatewayPublicIP 'Microsoft.Network/publicIPAddresses@2021-02-01' = {
 }
 
 // Add a NAT Gateway resource
-resource natGateway 'Microsoft.Network/natGateways@2021-02-01' = {
+resource natGateway 'Microsoft.Network/natGateways@2022-07-01' = {
   name: natGatewayName
   location: location
   sku: {
@@ -116,7 +116,7 @@ resource natGateway 'Microsoft.Network/natGateways@2021-02-01' = {
 }
 
 // Add a public IP address for Azure Bastion
-resource bastionPublicIP 'Microsoft.Network/publicIPAddresses@2021-02-01' = {
+resource bastionPublicIP 'Microsoft.Network/publicIPAddresses@2022-07-01' = {
   name: bastionPublicIPName
   location: location
   sku: {
@@ -128,7 +128,7 @@ resource bastionPublicIP 'Microsoft.Network/publicIPAddresses@2021-02-01' = {
   }
 }
 
-resource vnet 'Microsoft.Network/virtualNetworks@2021-02-01' = {
+resource vnet 'Microsoft.Network/virtualNetworks@2022-07-01' = {
   name: vnetName
   location: location
   properties: {
@@ -157,7 +157,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2021-02-01' = {
   }
 }
 
-resource networkInterfaces 'Microsoft.Network/networkInterfaces@2021-02-01' = [
+resource networkInterfaces 'Microsoft.Network/networkInterfaces@2022-07-01' = [
   for i in range(0, numberOfInstances): {
     name: '${nicNamePrefix}${i}'
     location: location
@@ -186,7 +186,7 @@ resource networkInterfaces 'Microsoft.Network/networkInterfaces@2021-02-01' = [
   }
 ]
 
-resource lb 'Microsoft.Network/loadBalancers@2021-02-01' = {
+resource lb 'Microsoft.Network/loadBalancers@2022-07-01' = {
   name: lbName
   location: location
   sku: {
@@ -244,7 +244,7 @@ resource lb 'Microsoft.Network/loadBalancers@2021-02-01' = {
 }
 
 // Add an Azure Bastion resource
-resource bastionHost 'Microsoft.Network/bastionHosts@2021-02-01' = {
+resource bastionHost 'Microsoft.Network/bastionHosts@2022-07-01' = {
   name: bastionName
   location: location
   properties: {
@@ -267,7 +267,7 @@ resource bastionHost 'Microsoft.Network/bastionHosts@2021-02-01' = {
   ]
 }
 
-resource virtualMachines 'Microsoft.Compute/virtualMachines@2022-08-01' = [
+resource virtualMachines 'Microsoft.Compute/virtualMachines@2022-11-01' = [
   for i in range(0, numberOfInstances): {
     name: '${vmNamePrefix}${i}'
     location: location
