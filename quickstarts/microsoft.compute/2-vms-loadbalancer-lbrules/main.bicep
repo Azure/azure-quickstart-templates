@@ -1,6 +1,3 @@
-@description('Name of storage account')
-param storageAccountName string
-
 @description('Admin username')
 param adminUsername string
 
@@ -53,7 +50,6 @@ param bastionName string = 'bastion'
 @description('Azure Bastion Public IP name')
 param bastionPublicIPName string = 'public-ip-bastion'
 
-var storageAccountType = 'Standard_LRS'
 var availabilitySetName = 'availability-set'
 var addressPrefix = '10.0.0.0/16'
 var subnetName = 'subnet-1'
@@ -61,15 +57,6 @@ var subnetPrefix = '10.0.0.0/24'
 var subnetRef = resourceId('Microsoft.Network/virtualNetworks/subnets', vnetName, subnetName)
 var publicIPAddressID = publicIPAddress.id
 var numberOfInstances = 2
-
-resource storageAccount 'Microsoft.Storage/storageAccounts@2022-09-01' = {
-  name: storageAccountName
-  location: location
-  sku: {
-    name: storageAccountType
-  }
-  kind: 'StorageV2'
-}
 
 resource availabilitySet 'Microsoft.Compute/availabilitySets@2022-11-01' = {
   name: availabilitySetName
@@ -317,12 +304,10 @@ resource virtualMachines 'Microsoft.Compute/virtualMachines@2022-08-01' = [
       diagnosticsProfile: {
         bootDiagnostics: {
           enabled: true
-          storageUri: reference(storageAccountName, '2019-06-01').primaryEndpoints.blob
         }
       }
     }
     dependsOn: [
-      storageAccount
       networkInterfaces[i]
     ]
   }
