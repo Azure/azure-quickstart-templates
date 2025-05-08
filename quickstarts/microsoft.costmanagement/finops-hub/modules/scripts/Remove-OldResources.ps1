@@ -4,7 +4,7 @@
 # Init outputs
 $DeploymentScriptOutputs = @{}
 
-# 
+#
 $adfParams = @{
     ResourceGroupName = $env:DataFactoryResourceGroup
     DataFactoryName   = $env:DataFactoryName

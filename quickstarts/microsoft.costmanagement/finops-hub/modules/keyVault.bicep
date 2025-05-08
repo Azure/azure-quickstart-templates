@@ -66,6 +66,7 @@ var formattedAccessPolicies = [for accessPolicy in accessPolicies: {
 // Resources
 //==============================================================================
 
+// TODO: Move vault creation to the hub-app module
 resource keyVault 'Microsoft.KeyVault/vaults@2023-02-01' = {
   name: keyVaultName
   location: location
@@ -100,16 +101,14 @@ resource keyVault_accessPolicies 'Microsoft.KeyVault/vaults/accessPolicies@2023-
   }
 }
 
-resource keyVault_secret 'Microsoft.KeyVault/vaults/secrets@2023-02-01' = if (!empty(storageAccountKey)) {
-  name: keyVaultSecretName
-  parent: keyVault
-  properties: {
-    attributes: {
-      enabled: true
-      exp: 1702648632
-      nbf: 10000
-    }
-    value: storageAccountKey
+module keyVault_secret 'hub-vault.bicep' = if (!empty(storageAccountKey)) {
+  name: 'keyVault_secret'
+  params: {
+    vaultName: keyVault.name
+    secretName: keyVaultSecretName
+    secretValue: storageAccountKey
+    secretExpirationInSeconds: 1702648632
+    secretNotBeforeInSeconds: 10000
   }
 }
 

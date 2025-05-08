@@ -111,6 +111,15 @@ param dataExplorerSku string = 'Dev(No SLA)_Standard_D11_v2'
 @maxValue(1000)
 param dataExplorerCapacity int = 1
 
+// cSpell:ignore eventhouse
+@description('Optional. Microsoft Fabric eventhouse query URI. Default: "" (do not use).')
+param fabricQueryUri string = ''
+
+@description('Optional. Number of capacity units for the Microsoft Fabric capacity. This is the number in your Fabric SKU (e.g., Trial = 1, F2 = 2, F64 = 64). This is used to manage parallelization in data pipelines. If you change capacity, please redeploy the template. Allowed values: 1 for the Fabric trial and 2-2048 based on the assigned Fabric capacity (e.g., F2-F2048). Default: 2.')
+@minValue(1)
+@maxValue(2048)
+param fabricCapacityUnits int = 2
+
 @description('Optional. Tags to apply to all resources. We will also add the cm-resource-parent tag for improved cost roll-ups in Cost Management.')
 param tags object = {}
 
@@ -154,6 +163,8 @@ module hub 'modules/hub.bicep' = {
     dataExplorerName: dataExplorerName
     dataExplorerSku: dataExplorerSku
     dataExplorerCapacity: dataExplorerCapacity
+    fabricQueryUri: fabricQueryUri
+    fabricCapacityUnits: fabricCapacityUnits
     tags: tags
     tagsByResource: tagsByResource
     scopesToMonitor: scopesToMonitor
