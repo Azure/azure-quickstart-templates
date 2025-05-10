@@ -58,7 +58,7 @@ resource availabilitySet 'Microsoft.Compute/availabilitySets@2016-04-30-preview'
   }
 }
 
-resource publicIPAddress 'Microsoft.Network/publicIPAddresses@2020-11-01' = {
+resource publicIPAddress 'Microsoft.Network/publicIPAddresses@2022-07-01' = {
   name: publicIPAddressName
   location: location
   sku: {
@@ -70,7 +70,7 @@ resource publicIPAddress 'Microsoft.Network/publicIPAddresses@2020-11-01' = {
   }
 }
 
-resource natPublicIP 'Microsoft.Network/publicIPAddresses@2020-11-01' = {
+resource natPublicIP 'Microsoft.Network/publicIPAddresses@2022-07-01' = {
   name: natGatewayPublicIPName
   location: location
   sku: {
@@ -82,7 +82,7 @@ resource natPublicIP 'Microsoft.Network/publicIPAddresses@2020-11-01' = {
   }
 }
 
-resource natGateway 'Microsoft.Network/natGateways@2020-11-01' = {
+resource natGateway 'Microsoft.Network/natGateways@2022-07-01' = {
   name: natGatewayName
   location: location
   sku: {
@@ -97,13 +97,13 @@ resource natGateway 'Microsoft.Network/natGateways@2020-11-01' = {
   }
 }
 
-resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2019-08-01' = {
+resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2022-07-01' = {
   name: networkSecurityGroupName
   location: location
   properties: {}
 }
 
-resource vnet 'Microsoft.Network/virtualNetworks@2020-11-01' = {
+resource vnet 'Microsoft.Network/virtualNetworks@2022-07-01' = {
   name: vnetName
   location: location
   properties: {
@@ -129,7 +129,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2020-11-01' = {
   }
 }
 
-resource networkInterfaces 'Microsoft.Network/networkInterfaces@2020-11-01' = [
+resource networkInterfaces 'Microsoft.Network/networkInterfaces@2022-07-01' = [
   for i in range(0, numberOfInstances): {
     name: '${nicNamePrefix}${i}'
     location: location
@@ -164,7 +164,7 @@ resource networkInterfaces 'Microsoft.Network/networkInterfaces@2020-11-01' = [
   }
 ]
 
-resource lb 'Microsoft.Network/loadBalancers@2020-11-01' = {
+resource lb 'Microsoft.Network/loadBalancers@2022-07-01' = {
   name: lbName
   location: location
   sku: {
@@ -189,7 +189,7 @@ resource lb 'Microsoft.Network/loadBalancers@2020-11-01' = {
   }
 }
 
-resource lbName_RDP_VM 'Microsoft.Network/loadBalancers/inboundNatRules@2020-11-01' = [
+resource lbName_RDP_VM 'Microsoft.Network/loadBalancers/inboundNatRules@2022-07-01' = [
   for i in range(0, numberOfInstances): {
     parent: lb
     name: 'RDP-VM${i}'
@@ -205,7 +205,7 @@ resource lbName_RDP_VM 'Microsoft.Network/loadBalancers/inboundNatRules@2020-11-
   }
 ]
 
-resource virtualMachines 'Microsoft.Compute/virtualMachines@2020-12-01' = [
+resource virtualMachines 'Microsoft.Compute/virtualMachines@2022-11-01' = [
   for i in range(0, numberOfInstances): {
     name: '${vmNamePrefix}${i}'
     location: location
