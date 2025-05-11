@@ -48,7 +48,7 @@ var subnetPrefix = '10.0.0.0/24'
 var numberOfInstances = 2
 var networkSecurityGroupName = '${subnetName}-nsg'
 
-resource availabilitySet 'Microsoft.Compute/availabilitySets@2016-04-30-preview' = {
+resource availabilitySet 'Microsoft.Compute/availabilitySets@2022-11-01' = {
   name: availabilitySetName
   location: location
   properties: {
