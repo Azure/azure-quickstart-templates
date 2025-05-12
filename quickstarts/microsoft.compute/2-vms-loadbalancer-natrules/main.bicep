@@ -54,7 +54,6 @@ resource availabilitySet 'Microsoft.Compute/availabilitySets@2022-11-01' = {
   properties: {
     platformFaultDomainCount: 2
     platformUpdateDomainCount: 2
-    managed: true
   }
 }
 
