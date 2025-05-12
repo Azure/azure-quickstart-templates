@@ -31,7 +31,7 @@ The goal is to demonstrate the use of Azure Bastion in the hub-n-spoke architect
 
 ## Prerequisites
 
-There are no prerequistes for this deployment
+There are no prerequisites for this deployment
 
 ## Deployment steps
 

@@ -60,7 +60,7 @@ Description Resource Provider 3
 
 ## Prerequisites
 
-Decscription of the prerequistes for the deployment
+Decscription of the prerequisites for the deployment
 
 ## Deployment steps
 
