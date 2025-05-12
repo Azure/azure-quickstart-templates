@@ -1,4 +1,4 @@
-// Execute this main file to depoy Azure AI studio resources in the basic security configuraiton
+// Execute this main file to depoy Azure AI studio resources in the basic security configuration
 
 // Parameters
 @minLength(2)
