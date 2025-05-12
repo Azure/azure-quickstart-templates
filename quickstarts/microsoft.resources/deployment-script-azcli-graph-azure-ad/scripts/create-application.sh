@@ -7,7 +7,7 @@ applicationClientId=$(jq -r '.appId' <<< "$application")
 servicePrincipal=$(az ad sp create --id $applicationObjectId)
 servicePrincipalObjectId=$(jq -r '.id' <<< "$servicePrincipal")
 
-# Save the important properties as depoyment script outputs.
+# Save the important properties as deployment script outputs.
 outputJson=$(jq -n \
                 --arg applicationObjectId "$applicationObjectId" \
                 --arg applicationClientId "$applicationClientId" \
