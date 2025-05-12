@@ -48,9 +48,13 @@ var subnetPrefix = '10.0.0.0/24'
 var numberOfInstances = 2
 var networkSecurityGroupName = '${subnetName}-nsg'
 
+
 resource availabilitySet 'Microsoft.Compute/availabilitySets@2022-11-01' = {
   name: availabilitySetName
   location: location
+  sku: {
+    name: 'Aligned'
+  }
   properties: {
     platformFaultDomainCount: 2
     platformUpdateDomainCount: 2
