@@ -54,7 +54,7 @@ Inside your Active directory domain controller server, run the powershell script
 
 ### Steps
 1. Install AZ PowerShell module inside your domain controller server. Click the link for the installation steps. [**Install Azure PowerShell on Windows**](https://learn.microsoft.com/en-us/powershell/azure/install-azps-windows?view=azps-12.4.0&tabs=windowspowershell&pivots=windows-psgallery)
-2. Once deployment is completed, run the '***postconfiguration.ps1***' inside your domain controller server. Please follow the instruction in the file and provide the appropriate paramters before the script is executed.
+2. Once deployment is completed, run the '***postconfiguration.ps1***' inside your domain controller server. Please follow the instruction in the file and provide the appropriate parameters before the script is executed.
 3. Please restart all the virtual machine session hosts for FSLogix to take effect with profile container.
 
 ## Architecture
