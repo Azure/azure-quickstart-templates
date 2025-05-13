@@ -163,6 +163,8 @@ Note: all parameters are necessary.
 | updateKey | Darktrace Update Key needed to install the vSensor package. Contact your Darktrace representative for more information. |
 | pushToken | The push token that vSensor will use to connect and register on the Darktrace master instance. Should be generated on the Darktrace master instance. |
 | osSensorHMACToken | The osSensor HMAC Token. |
+| resourceTags | Specify tags as JSON key-pairs to apply to all compatible resources deployed by this template. |
+
 
 There is an example in **[Appendix A](#appendix-a-examples)**.
 
