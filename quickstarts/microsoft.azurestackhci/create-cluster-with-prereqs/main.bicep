@@ -276,9 +276,9 @@ resource deploymentSettings 'Microsoft.AzureStackHCI/clusters/deploymentSettings
               name: reference(hciNode,'2022-12-27','Full').properties.displayName
               // Getting the IP from the first management NIC of the node based on the first NIC name in the managementIntentAdapterNames array parameter
               //
-              // During deployment, a management vNIC will be created with the name 'vManagement(managment)' and the IP config will be moved to the new vNIC--
+              // During deployment, a management vNIC will be created with the name 'vManagement(management)' and the IP config will be moved to the new vNIC--
               // this causes a null-index error when re-running the template mid-deployment, after net intents have applied. To workaround, change the name of
-              // the management NIC in parameter file to 'vManagement(managment)' 
+              // the management NIC in parameter file to 'vManagement(management)' 
               ipv4Address: (filter(reference('${hciNode}/providers/microsoft.azurestackhci/edgeDevices/default','2024-01-01','Full').properties.deviceConfiguration.nicDetails, nic => nic.adapterName == managementIntentAdapterNames[0]))[0].ip4Address
             }
             ]
@@ -286,7 +286,7 @@ resource deploymentSettings 'Microsoft.AzureStackHCI/clusters/deploymentSettings
               intents: [
                 {
                   adapter: managementIntentAdapterNames
-                  name: 'managment'
+                  name: 'management'
                   overrideAdapterProperty: false
                   adapterPropertyOverrides: {
                     jumboPacket: '9014'
