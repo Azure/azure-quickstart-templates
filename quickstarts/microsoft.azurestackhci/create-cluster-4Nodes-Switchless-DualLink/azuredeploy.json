@@ -115,27 +115,6 @@
         "description": "Deployment user password"
       }
     },
-    "arbDeploymentAppID": {
-      "type": "string",
-      "minLength": 1,
-      "metadata": {
-        "description": "ARB SPN's AppID"
-      }
-    },
-    "arbDeploymentAppSecret": {
-      "type": "securestring",
-      "minLength": 1,
-      "metadata": {
-        "description": "ARB SPN's Password"
-      }
-    },
-    "arbDeploymentSPNObjectID": {
-      "type": "string",
-      "minLength": 1,
-      "metadata": {
-        "description": "ARB SPN's ObjectID"
-      }
-    },
     "hciResourceProviderObjectID": {
       "type": "string",
       "minLength": 1,
@@ -490,14 +469,12 @@
     "storageWitnessNameVar": "WitnessStorageKey",
     "LocalAdminCredentialSecretName": "LocalAdminCredential",
     "domainAdminSecretName": "AzureStackLCMUserCredential",
-    "arbDeploymentSpnSecretName": "DefaultARBApplication",
     "secretsLocationVar": "[concat('https://',parameters('keyVaultName'), '.vault.azure.net')]",
     "witnessTypeVar": "[if(equals(parameters('witnessType'), 'No Witness'), '','Cloud')]",
     "clusterWitnessStorageAccountNameVar": "[if(equals(parameters('witnessType'), 'No Witness'), '', parameters('clusterWitnessStorageAccountName'))]",
     "AzureServiceEndpointVar": "[if(equals(parameters('witnessType'), 'No Witness'), '', 'core.windows.net')]",
     "localAdminSecretValue": "[base64(concat(parameters('localAdminUserName'),':',parameters('localAdminPassword')))]",
     "domainAdminSecretValueVar": "[base64(concat(parameters('AzureStackLCMAdminUsername'),':',parameters('AzureStackLCMAdminPasssword')))]",
-    "arbDeploymentSpnValueVar": "[base64(concat(parameters('arbDeploymentAppID'),':',parameters('arbDeploymentAppSecret')))]",
     "CloudWithnessStorageAccountIdVar": "[resourceId('Microsoft.Storage/storageAccounts', parameters('clusterWitnessStorageAccountName'))]",
     "copy": [
       {
@@ -527,53 +504,43 @@
          "minimumTlsVersion": "TLS1_2"
       }
     },
-    "ARBSPNRoleAssignment": {
+    "hcirproleassignment": {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2021-04-01",
-      "name": "[concat('MOC-ARB-Role-Assignment',guid(concat('MOCARB-SPN-Subscription-Scope-Role-Assignment',resourceGroup().id,parameters('location'), parameters('arbDeploymentSPNObjectID'))))]",
-      "location": "[parameters('location')]",
+      "name": "AzureConnectedMachineResourceManager-RoleAssignment",
       "subscriptionId": "[subscription().subscriptionId]",
+      "resourceGroup": "[resourceGroup().name]",
       "properties": {
         "mode": "Incremental",
         "template": {
           "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
           "contentVersion": "1.0.0.0",
           "parameters": {
-            "arbDeploymentSPNObjectID1": {
+            "hciResourceProviderObjectID1": {
               "type": "string"
-            } 
+            }
           },
           "variables": {},
           "resources": [
             {
               "type": "Microsoft.Authorization/roleAssignments",
               "apiVersion": "2022-04-01",
-              "name": "[guid(concat('ARB-', parameters('arbDeploymentSPNObjectID1')))]",
+              "name": "[guid(concat('HCIRP-',resourceGroup().id, parameters('hciResourceProviderObjectID1')))]",
               "properties": {
                 "mode": "Incremental",
-                "roleDefinitionId": "[concat(subscription().id, '/providers/Microsoft.Authorization/roleDefinitions/', '7b1f81f9-4196-4058-8aae-762e593270df')]",
-                "principalId": "[parameters('arbDeploymentSPNObjectID1')]"
+                "roleDefinitionId": "[concat(subscription().id, '/providers/Microsoft.Authorization/roleDefinitions/', 'f5819b54-e033-4d82-ac66-4fec3cbf3f4c')]",
+                "principalId": "[parameters('hciResourceProviderObjectID1')]",
+                "scope": "[resourceGroup().id]",
+                "description": "Azure Connected Machine Resource Manager role assignment to HCI Resource Provider"
               }
             }
           ]
         },
         "parameters": {
-          "arbDeploymentSPNObjectID1": {
-            "value": "[parameters('arbDeploymentSPNObjectID')]"
+          "hciResourceProviderObjectID1": {
+            "value": "[parameters('hciResourceProviderObjectID')]"
           }
         }
-      }
-    },
-    "hcirproleassignment": {
-      "type": "Microsoft.Authorization/roleAssignments",
-      "apiVersion": "2022-04-01",
-      "name": "[guid(concat('HCIRP-',resourceGroup().id, parameters('hciResourceProviderObjectID')))]",
-      "properties": {
-        "mode": "Incremental",
-        "roleDefinitionId": "[concat(subscription().id, '/providers/Microsoft.Authorization/roleDefinitions/', 'f5819b54-e033-4d82-ac66-4fec3cbf3f4c')]",
-        "principalId": "[parameters('hciResourceProviderObjectID')]",
-        "scope": "[resourceGroup().id]",
-        "description": "Azure Connected Machine Resource Manager role assignment to HCI Resource Provider"
       }
     },
     "edgeDevices": {
@@ -751,23 +718,6 @@
       "properties": {
         "contentType": "Secret",
         "value": "[variables('localAdminSecretValue')]",
-        "attributes": {
-          "enabled": true
-        }
-      }
-    },
-    "KVARBSPNSecret": {
-      "type": "Microsoft.KeyVault/vaults/secrets",
-      "apiVersion": "2021-06-01-preview",
-      "name": "[concat(parameters('keyVaultName'), '/', variables('arbDeploymentSpnSecretName'))]",
-      "dependsOn": [
-        "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]"
-      ],
-      "location": "[parameters('location')]",
-      "scale": null,
-      "properties": {
-        "contentType": "Secret",
-        "value": "[variables('arbDeploymentSpnValueVar')]",
         "attributes": {
           "enabled": true
         }
