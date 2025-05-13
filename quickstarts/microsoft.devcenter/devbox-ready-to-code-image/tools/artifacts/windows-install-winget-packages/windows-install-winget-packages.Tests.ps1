@@ -1,4 +1,4 @@
-# Run the tests from VSCode after installing ms-vscode.powershell extension and Pester (https://pester.dev/docs/quick-start).
+# Run the tests from VS Code after installing ms-vscode.powershell extension and Pester (https://pester.dev/docs/quick-start).
 # To execute the tests from PowerShell run: Invoke-Pester -Output Detailed <path_to_this_file>
 
 $ErrorActionPreference = "Stop"
