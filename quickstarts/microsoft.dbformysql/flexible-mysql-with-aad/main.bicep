@@ -10,14 +10,8 @@ param entraAdminUserName string
 @description('Object id of Microsoft Entra ID user or group. You can obtain it using az ad user show --id <user>')
 param entraAdminObjectID string
 
-@description('Name of the user-assigned managed identity')
-param userAssignedManagedIdentityName string
-
-// user managed identity must exist with proper permissions 
-// https://learn.microsoft.com/en-us/azure/mysql/flexible-server/how-to-azure-ad#grant-permissions-to-user-assigned-managed-identity
-resource umi 'Microsoft.ManagedIdentity/userAssignedIdentities@2022-01-31-preview' existing = {
-  name: userAssignedManagedIdentityName
-}
+@description('ResourceId of the user-assigned managed identity')
+param umiResourceId string
 
 resource server 'Microsoft.DBforMySQL/flexibleServers@2024-06-01-preview' = {
   location: location
@@ -29,7 +23,7 @@ resource server 'Microsoft.DBforMySQL/flexibleServers@2024-06-01-preview' = {
   identity: {
     type:'UserAssigned'
     userAssignedIdentities: {
-      '${umi.id}' :{
+      umiResourceId :{
         tenantId: subscription().tenantId
       }
     }
@@ -74,6 +68,6 @@ resource serverAdmin 'Microsoft.DBforMySQL/flexibleServers/administrators@2023-1
     login: entraAdminUserName
     sid: entraAdminObjectID
     tenantId: subscription().tenantId
-    identityResourceId: umi.id
+    identityResourceId: umiResourceId
   }
 }
