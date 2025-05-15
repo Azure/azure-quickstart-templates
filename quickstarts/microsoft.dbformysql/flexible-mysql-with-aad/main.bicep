@@ -1,6 +1,15 @@
 @description('Server Name for Azure database for MySQL')
 param serverName string
 
+@description('MySQL administrator login name')
+@minLength(1)
+param mysqlAdminLogin string
+
+@description('MySQL administrator password')
+@minLength(8)
+@secure()
+param mysqlAdminPassword string
+
 @description('Provide the location for all the resources.')
 param location string = resourceGroup().location
 
@@ -10,8 +19,21 @@ param entraAdminUserName string
 @description('Object id of Microsoft Entra ID user or group. You can obtain it using az ad user show --id <user>')
 param entraAdminObjectID string
 
-@description('ResourceId of the user-assigned managed identity')
-param umiResourceId string
+@description('Name of the user-assigned managed identity')
+param userManagedIdentityName string
+
+@description('ResourceGroupName of the user-assigned managed identity')
+param userManagedIdentityResourceGroupName string
+
+@description('SubscriptionId of the user-assigned managed identity')
+param userManagedIdentitySubscriptionId string
+
+// User assigned managed identity should have proper permissions listed in the link below
+// https://learn.microsoft.com/en-us/azure/mysql/flexible-server/how-to-azure-ad#grant-permissions-to-user-assigned-managed-identity
+resource umi 'Microsoft.ManagedIdentity/userAssignedIdentities@2022-01-31-preview' existing = {
+  name: userManagedIdentityName
+  scope: resourceGroup(userManagedIdentitySubscriptionId, userManagedIdentityResourceGroupName)
+}
 
 resource server 'Microsoft.DBforMySQL/flexibleServers@2024-06-01-preview' = {
   location: location
@@ -23,12 +45,12 @@ resource server 'Microsoft.DBforMySQL/flexibleServers@2024-06-01-preview' = {
   identity: {
     type:'UserAssigned'
     userAssignedIdentities: {
-      umiResourceId :{
-        tenantId: subscription().tenantId
-      }
+      '${umi.id}' : { }
     }
   }
   properties: {
+    administratorLogin: mysqlAdminLogin
+    administratorLoginPassword: mysqlAdminPassword
     version: '8.0.21'
     storage: {
       storageSizeGB: 20
@@ -68,6 +90,6 @@ resource serverAdmin 'Microsoft.DBforMySQL/flexibleServers/administrators@2023-1
     login: entraAdminUserName
     sid: entraAdminObjectID
     tenantId: subscription().tenantId
-    identityResourceId: umiResourceId
+    identityResourceId: umi.id
   }
 }
