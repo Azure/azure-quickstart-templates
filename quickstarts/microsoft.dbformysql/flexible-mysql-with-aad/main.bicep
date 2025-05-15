@@ -23,10 +23,10 @@ param entraAdminObjectID string
 param userManagedIdentityName string
 
 @description('ResourceGroupName of the user-assigned managed identity')
-param userManagedIdentityResourceGroupName string
+param userManagedIdentityResourceGroupName string = resourceGroup().name
 
 @description('SubscriptionId of the user-assigned managed identity')
-param userManagedIdentitySubscriptionId string
+param userManagedIdentitySubscriptionId string = subscription().subscriptionId
 
 // User assigned managed identity should have proper permissions listed in the link below
 // https://learn.microsoft.com/en-us/azure/mysql/flexible-server/how-to-azure-ad#grant-permissions-to-user-assigned-managed-identity
