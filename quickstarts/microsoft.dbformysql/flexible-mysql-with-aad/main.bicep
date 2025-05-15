@@ -30,12 +30,12 @@ param userManagedIdentitySubscriptionId string = subscription().subscriptionId
 
 // User assigned managed identity should have proper permissions listed in the link below
 // https://learn.microsoft.com/en-us/azure/mysql/flexible-server/how-to-azure-ad#grant-permissions-to-user-assigned-managed-identity
-resource umi 'Microsoft.ManagedIdentity/userAssignedIdentities@2022-01-31-preview' existing = {
+resource umi 'Microsoft.ManagedIdentity/userAssignedIdentities@2025-01-31-preview' existing = {
   name: userManagedIdentityName
   scope: resourceGroup(userManagedIdentitySubscriptionId, userManagedIdentityResourceGroupName)
 }
 
-resource server 'Microsoft.DBforMySQL/flexibleServers@2024-06-01-preview' = {
+resource server 'Microsoft.DBforMySQL/flexibleServers@2024-10-01-preview' = {
   location: location
   name: serverName
   sku: {
