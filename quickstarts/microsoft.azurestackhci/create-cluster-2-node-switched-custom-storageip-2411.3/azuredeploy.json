@@ -20,6 +20,13 @@
         "description": "The KeyVault name used to store the secrets."
       }
     },
+    "createNewKeyVault": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Set this value as false, if you are re-using a Keyvault"
+      }
+    },
     "softDeleteRetentionDays": {
       "type": "int",
       "defaultValue": 30
@@ -343,6 +350,10 @@
     },
     "useDhcp": {
       "type": "bool",
+      "allowedValues": [
+        true,
+        false
+      ],
       "defaultValue": false,
       "metadata": {
         "description": "Allows customers to use DHCP for Hosts and Cluster IPs. If not declared, the deployment will default to static IPs. When true, GW and DNS servers are not required"
@@ -475,11 +486,14 @@
     }
   },
   "variables": {
-    "storageWitnessNameVar": "WitnessStorageKey",
-    "LocalAdminCredentialSecretName": "LocalAdminCredential",
-    "domainAdminSecretName": "AzureStackLCMUserCredential",
-    "arbDeploymentSpnSecretName": "DefaultARBApplication",
-    "secretsLocationVar": "[concat('https://',parameters('keyVaultName'), '.vault.azure.net')]",
+    "storageWitnessECEName": "WitnessStorageKey",
+    "LocalAdminCredentialECEName": "LocalAdminCredential",
+    "domainAdminCredentialECEName": "AzureStackLCMUserCredential",
+    "arbDeploymentSpnCredentialECEName": "DefaultARBApplication",
+    "storageWitnessSecretName": "[concat( parameters('clusterName'), '-', 'WitnessStorageKey')]",
+    "LocalAdminCredentialSecretName": "[concat( parameters('clusterName'), '-', 'LocalAdminCredential')]",
+    "domainAdminSecretName": "[concat( parameters('clusterName'), '-', 'AzureStackLCMUserCredential')]",
+    "arbDeploymentSpnSecretName": "[concat( parameters('clusterName'), '-', 'DefaultARBApplication')]",
     "witnessTypeVar": "[if(equals(parameters('witnessType'), 'No Witness'), '','Cloud')]",
     "clusterWitnessStorageAccountNameVar": "[if(equals(parameters('witnessType'), 'No Witness'), '', parameters('clusterWitnessStorageAccountName'))]",
     "AzureServiceEndpointVar": "[if(equals(parameters('witnessType'), 'No Witness'), '', 'core.windows.net')]",
@@ -502,9 +516,31 @@
           "count": "[length(parameters('physicalNodesSettings'))]",
           "input": "[if(equals(parameters('clusterName'), parameters('physicalNodesSettings')[copyIndex('isNodeNameValid')].name), 'false', 'true')]"
       }
+    ],
+    "deploymentSecretsList":[
+      {
+        "secretName": "[variables('storageWitnessSecretName')]",
+        "eceSecretName" : "[variables('storageWitnessECEName')]",
+        "secretLocation": "[concat('https://', parameters('keyVaultName'), '.vault.azure.net/secrets/', variables('storageWitnessSecretName'))]"
+      },
+      {
+        "secretName":  "[variables('LocalAdminCredentialSecretName')]",
+        "eceSecretName" :  "[variables('LocalAdminCredentialECEName')]",
+         "secretLocation": "[concat('https://', parameters('keyVaultName'), '.vault.azure.net/secrets/', variables('LocalAdminCredentialSecretName'))]"
+      },
+      {
+        "secretName":  "[variables('domainAdminSecretName')]",
+        "eceSecretName" :  "[variables('domainAdminCredentialECEName')]",
+        "secretLocation": "[concat('https://', parameters('keyVaultName'), '.vault.azure.net/secrets/', variables('domainAdminSecretName'))]"
+      },
+      {
+        "secretName":  "[variables('arbDeploymentSpnSecretName')]",
+        "eceSecretName" :  "[variables('arbDeploymentSpnCredentialECEName')]",
+        "secretLocation": "[concat('https://', parameters('keyVaultName'), '.vault.azure.net/secrets/', variables('arbDeploymentSpnSecretName'))]"
+      }
     ]
   },
-  "resources": {
+  "resources":{
     "witnessStorageAcc" : {
       "type": "Microsoft.Storage/storageAccounts",
       "apiVersion": "2023-01-01",
@@ -520,7 +556,7 @@
          "minimumTlsVersion": "TLS1_2"
       }
     },
-    "ARBSPNRoleAssignment": {
+    "ARBSPNRoleAssignment":{
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2021-04-01",
       "name": "[concat('MOC-ARB-Role-Assignment',guid(concat('MOCARB-SPN-Subscription-Scope-Role-Assignment',resourceGroup().id,parameters('location'), parameters('arbDeploymentSPNObjectID'))))]",
@@ -531,20 +567,29 @@
         "template": {
           "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
           "contentVersion": "1.0.0.0",
-          "parameters": {},
+          "parameters": {
+            "arbDeploymentSPNObjectID1": {
+              "type": "string"
+            } 
+          },
           "variables": {},
           "resources": [
             {
               "type": "Microsoft.Authorization/roleAssignments",
               "apiVersion": "2022-04-01",
-              "name": "[guid(concat('ARB-', parameters('arbDeploymentSPNObjectID')))]",
+              "name": "[guid(concat('ARB-', parameters('arbDeploymentSPNObjectID1')))]",
               "properties": {
                 "mode": "Incremental",
                 "roleDefinitionId": "[concat(subscription().id, '/providers/Microsoft.Authorization/roleDefinitions/', '7b1f81f9-4196-4058-8aae-762e593270df')]",
-                "principalId": "[parameters('arbDeploymentSPNObjectID')]"
+                "principalId": "[parameters('arbDeploymentSPNObjectID1')]"
               }
             }
           ]
+        },
+        "parameters": {
+          "arbDeploymentSPNObjectID1": {
+            "value": "[parameters('arbDeploymentSPNObjectID')]"
+          }
         }
       }
     },
@@ -588,21 +633,21 @@
       }
     },
     "edgeDevices" : {
-      "condition": "[equals(parameters('deploymentMode'), 'Validate')]",
-      "dependsOn": [
+        "condition": "[equals(parameters('deploymentMode'), 'Validate')]",
+        "dependsOn": [
         "hcirproleassignment"
-      ],
-      "copy": {
-        "name": "edgeDeviceCopy",
-        "count": "[length(parameters('arcNodeResourceIds'))]"
+       ],
+        "copy": {
+          "name": "edgeDeviceCopy",
+          "count": "[length(parameters('arcNodeResourceIds'))]"
+        },
+        "type": "Microsoft.AzureStackHCI/edgeDevices",
+        "apiVersion": "2024-09-01-preview",
+        "name": "default",
+        "scope": "[concat('Microsoft.HybridCompute/machines', '/', last(split(parameters('arcNodeResourceIds')[copyindex()], '/')))]",
+        "kind": "HCI",
+        "properties": {}
       },
-      "type": "Microsoft.AzureStackHCI/edgeDevices",
-      "apiVersion": "2024-09-01-preview",
-      "name": "default",
-      "scope": "[concat('Microsoft.HybridCompute/machines', '/', last(split(parameters('arcNodeResourceIds')[copyindex()], '/')))]",
-      "kind": "HCI",
-      "properties": {}
-    },
     "arcMachineRoleAssignment": {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2021-04-01",
@@ -732,11 +777,12 @@
         }
       }
     },
-    "StorageAccountConfigurations": {
+    "StorageAccountConfigurations":{
       "type": "Microsoft.Storage/storageAccounts",
       "apiVersion": "2023-01-01",
       "name": "[parameters('diagnosticStorageAccountName')]",
       "location": "[parameters('location')]",
+      "condition": "[parameters('createNewKeyVault')]",
       "sku": {
         "name": "[parameters('storageAccountType')]",
         "tier": "Standard"
@@ -751,11 +797,12 @@
          }
       }
     },
-    "KVConfigurations": {
+    "KVConfigurations":{
       "type": "Microsoft.KeyVault/vaults",
       "apiVersion": "2021-06-01-preview",
       "name": "[parameters('keyVaultName')]",
       "location": "[parameters('location')]",
+      "condition": "[parameters('createNewKeyVault')]",
       "dependsOn": [
         "[resourceId('Microsoft.Storage/storageAccounts', parameters('clusterWitnessStorageAccountName'))]",
         "[resourceId('Microsoft.Storage/storageAccounts', parameters('diagnosticStorageAccountName'))]"
@@ -776,11 +823,12 @@
         }
       }
     },
-    "KVDiagnosticsConfig": {
+    "KVDiagnosticsConfig":{
       "type": "Microsoft.KeyVault/vaults/providers/diagnosticsettings",
       "name": "[concat(parameters('keyVaultName'), '/Microsoft.Insights/service')]",
       "apiVersion": "2016-09-01",
       "Location": "[resourceGroup().location]",
+      "condition": "[parameters('createNewKeyVault')]",
       "dependsOn": [
         "[concat('Microsoft.KeyVault/vaults/', parameters('keyVaultName'))]",
         "[concat('Microsoft.Storage/storageAccounts/', parameters('diagnosticStorageAccountName'))]"
@@ -812,7 +860,7 @@
         }
       }
     },
-    "HCICluster": {
+    "HCICluster":{
       "condition": "[equals(parameters('deploymentMode'), 'Validate')]",
       "type": "Microsoft.AzureStackHCI/clusters",
       "apiVersion": "2024-09-01-preview",
@@ -828,7 +876,7 @@
       "location": "[parameters('location')]",
       "properties": {}
     },
-    "KVDomainAdminSecret": {
+    "KVDomainAdminSecret":{
       "type": "Microsoft.KeyVault/vaults/secrets",
       "apiVersion": "2021-06-01-preview",
       "name": "[concat(parameters('keyVaultName'), '/', variables('domainAdminSecretName'))]",
@@ -845,7 +893,7 @@
         }
       }
     },
-    "KVLocalAdminSecret": {
+    "KVLocalAdminSecret":{
       "type": "Microsoft.KeyVault/vaults/secrets",
       "apiVersion": "2021-06-01-preview",
       "name": "[concat(parameters('keyVaultName'), '/', variables('LocalAdminCredentialSecretName'))]",
@@ -879,10 +927,10 @@
         }
       }
     },
-    "KVWitnessSecret": {
+    "KVWitnessSecret":{
       "type": "Microsoft.KeyVault/vaults/secrets",
       "apiVersion": "2021-06-01-preview",
-      "name": "[concat(parameters('keyVaultName'), '/', variables('storageWitnessNameVar'))]",
+      "name": "[concat(parameters('keyVaultName'), '/', variables('storageWitnessSecretName'))]",
       "dependsOn": [
         "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]"
       ],
@@ -896,7 +944,7 @@
         }
       }
     },
-    "KVPartnerCreds": {
+    "KVPartnerCreds":{
       "type": "Microsoft.KeyVault/vaults/secrets",
       "apiVersion": "2021-06-01-preview",
       "name": "[concat(parameters('keyVaultName'), '/', parameters('partnerCredentialList')[copyIndex()].secretName)]",
@@ -983,7 +1031,7 @@
                   "enableStorageAutoIp": "[parameters('enableStorageAutoIp')]"
                 },
                 "adouPath": "[parameters('adouPath')]",
-                "secretsLocation": "[variables('secretsLocationVar')]",
+                "secrets": "[variables('deploymentSecretsList')]",
                 "optionalServices": {
                   "customLocation": "[parameters('customLocation')]"
                 }
@@ -1004,5 +1052,5 @@
         }
       }
     }
-  }
+}
 }
