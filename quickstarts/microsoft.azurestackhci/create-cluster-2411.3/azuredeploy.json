@@ -66,7 +66,10 @@
     "clusterName": {
       "type": "string",
       "minLength": 3,
-      "maxLength": 24
+      "maxLength": 24,
+      "metadata": {
+        "description": "This name must be unique from physical node names"
+      }
     },
     "location": {
       "type": "string",
@@ -512,6 +515,11 @@
               "eceSecretName": "[parameters('partnerCredentialList')[copyIndex('answerfileSBESecrets')].secretName]",
               "secretLocation": "[concat('https://', parameters('keyVaultName'), '.vault.azure.net/secrets/', parameters('partnerCredentialList')[copyIndex('answerfileSBESecrets')].secretName)]"
           }
+      },
+      {
+          "name": "isNodeNameValid",
+          "count": "[length(parameters('physicalNodesSettings'))]",
+          "input": "[if(equals(parameters('clusterName'), parameters('physicalNodesSettings')[copyIndex('isNodeNameValid')].name), 'false', 'true')]"
       }
     ],
     "deploymentSecretsList":[
@@ -845,6 +853,19 @@
         ]
       }
     },
+    "nodeNameValidation":{
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2021-04-01",
+      "name": "[if(contains(variables('isNodeNameValid'), 'false'), '##ClusterNameIsSameAsNodeName##', 'NodeNameIsValid')]",
+      "properties":{
+        "mode": "Incremental",
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "resources": []
+        }
+      }
+    },
     "HCICluster":{
       "condition": "[equals(parameters('deploymentMode'), 'Validate')]",
       "type": "Microsoft.AzureStackHCI/clusters",
@@ -852,7 +873,8 @@
       "name": "[parameters('clusterName')]",
       "dependsOn": [
         "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]",
-        "edgeDevices"
+        "edgeDevices",
+        "nodeNameValidation"
       ],
       "identity": {
         "type": "SystemAssigned"
