@@ -67,11 +67,11 @@ param DomainName string = 'contoso.com.'
 @description('the list of target DNS servers ip address and the port number for conditional forwarding')
 param targetDNS array = [
   {
-    ipaddress: '10.0.0.4'
+    ipAddress: '10.0.0.4'
     port: 53
   }
   {
-    ipaddress: '10.0.0.5'
+    ipAddress: '10.0.0.5'
     port: 53
   }
 ]
