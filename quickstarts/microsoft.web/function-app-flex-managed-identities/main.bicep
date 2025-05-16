@@ -225,7 +225,7 @@ resource functionApp 'Microsoft.Web/sites@2024-04-01' = {
         AzureWebJobsStorage__accountName: storage.name
         AzureWebJobsStorage__credential : 'managedidentity'
         AzureWebJobsStorage__clientId: userAssignedIdentity.properties.clientId
-        APPLICATIONINSIGHTS_INSTRUMENTATIONKEY: applicationInsights.properties.InstrumentationKey
+        APPINSIGHTS_INSTRUMENTATIONKEY: applicationInsights.properties.InstrumentationKey
         APPLICATIONINSIGHTS_AUTHENTICATION_STRING: 'ClientId=${userAssignedIdentity.properties.clientId};Authorization=AAD'
       }
   }
