@@ -24,8 +24,8 @@ param vNetSubnetAddressPrefix string = '10.0.0.0/24'
 @description('Bastion subnet address prefix')
 param vNetBastionSubnetAddressPrefix string = '10.0.2.0/24'
 
-@description('Public IP address of load balancer')
-param lbPublicIPAddress string = '10.0.0.6'
+@description('Frontend IP address of load balancer')
+param lbFrontendIPAddress string = '10.0.0.6'
 
 var natGatewayName = 'lb-nat-gateway'
 var natGatewayPublicIPAddressName = 'lb-nat-gateway-ip'
