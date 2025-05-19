@@ -25,7 +25,7 @@ param vNetSubnetAddressPrefix string = '10.0.0.0/24'
 param vNetBastionSubnetAddressPrefix string = '10.0.2.0/24'
 
 @description('Frontend IP address of load balancer')
-param lbFrontEndIPAddress string = '10.0.0.6'
+param lbFrontendIPAddress string = '10.0.0.6'
 
 var natGatewayName = 'lb-nat-gateway'
 var natGatewayPublicIPAddressName = 'lb-nat-gateway-ip'
@@ -174,7 +174,7 @@ resource loadBalancer 'Microsoft.Network/loadBalancers@2023-09-01' = {
           subnet: {
             id: vNetName_vNetSubnetName.id
           }
-          privateIPAddress: lbFrontEndIPAddress
+          privateIPAddress: lbFrontendIPAddress
           privateIPAllocationMethod: 'Static'
         }
         name: 'LoadBalancerFrontend'
