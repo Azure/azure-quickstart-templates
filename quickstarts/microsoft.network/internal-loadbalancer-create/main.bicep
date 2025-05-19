@@ -174,7 +174,7 @@ resource loadBalancer 'Microsoft.Network/loadBalancers@2023-09-01' = {
           subnet: {
             id: vNetName_vNetSubnetName.id
           }
-          privateIPAddress: lbPublicIPAddress
+          privateIPAddress: lbFrontendIPAddress
           privateIPAllocationMethod: 'Static'
         }
         name: 'LoadBalancerFrontend'
