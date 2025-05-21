@@ -110,6 +110,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2023-09-01' = {
               }
             }
           ]
+          defaultOutboundAccess: false
         }
       }
       {
@@ -130,6 +131,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2023-09-01' = {
               }
             }
           ]
+          defaultOutboundAccess: false
         }
       }
     ]
