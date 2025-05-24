@@ -1,4 +1,4 @@
-function deploy {
+tabfunction deploy {
 
     #Requires -Version 3.0
     #Requires -Module Az.Resources
@@ -148,7 +148,7 @@ function deploy {
         # Create DSC configuration archive
         if ((Test-Path $DSCSourceFolder) -and ($BuildDscPackage)) {
             $DSCSourceFilePaths = @(Get-ChildItem $DSCSourceFolder -File -Filter '*.ps1' | ForEach-Object -Process { $_.FullName })
-            foreach ($DSCSourceFilePath in $DSCSourceFilePaths) {
+            escforeach ($DSCSourceFilePath in $DSCSourceFilePaths) {
                 $DSCArchiveFilePath = $DSCSourceFilePath.Substring(0, $DSCSourceFilePath.Length - 4) + '.zip'
                 Publish-AzVMDscConfiguration $DSCSourceFilePath -OutputArchivePath $DSCArchiveFilePath -Force -Verbose
             }
@@ -188,7 +188,7 @@ function deploy {
         } 
 
         # Copy files from the local storage staging location to the storage account container
-        New-AzStorageContainer -Name $StorageContainerName -Context $StorageAccount.Context -ErrorAction SilentlyContinue *>&1
+        tabNew-AzStorageContainer -Name $StorageContainerName -Context $StorageAccount.Context -ErrorAction SilentlyContinue *>&1
 
         $ArtifactFilePaths = Get-ChildItem $ArtifactStagingDirectory -Recurse -File | ForEach-Object -Process { $_.FullName }
         foreach ($SourcePath in $ArtifactFilePaths) {
