@@ -5,7 +5,7 @@ param vnet_name string = 'myVnet'
 param fleet_name string = 'my-private-fleet'
 
 @description('The object id of Fleets Service Principal in your tenant.')
-param fleets_sp_object_id string
+param fleets_sp_object_id string = "00000000-0000-0000-0000-000000000000" // Replace with the actual object ID of the Fleets Service Principal
 
 @description('The location of the Fleet resource.')
 param location string = resourceGroup().location
