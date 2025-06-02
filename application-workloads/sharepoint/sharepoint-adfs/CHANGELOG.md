@@ -1,6 +1,14 @@
 # Change log for Azure template SharePoint-ADFS
 
-## Enhancements & bug-fixes - Unreleased
+## Enhancements & bug-fixes - Published in June 2, 2025
+
+### Changed
+
+- Template
+  - Bump versions of Bicep resources and [Azure Verified Modules](https://azure.github.io/Azure-Verified-Modules/}
+  - Value `Subscription-Latest` for parameter `sharePointVersion` now installs the May 2025 CU for SharePoint Subscription
+
+## Enhancements & bug-fixes - Published in April 24, 2025
 
 ### Changed
 
