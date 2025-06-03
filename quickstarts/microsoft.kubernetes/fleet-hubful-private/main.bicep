@@ -1,17 +1,17 @@
 @description('The name of the vnet.')
-param vnet_name string = 'myVnet'
+param vnetName string = 'myVnet'
 
 @description('The name of the Fleet resource.')
-param fleet_name string = 'my-private-fleet'
+param fleetName string = 'my-private-fleet'
 
 @description('The object id of Fleets Service Principal in your tenant.')
-param fleets_sp_object_id string = '00000000-0000-0000-0000-000000000000' // Replace with the actual object ID of the Fleets Service Principal
+param fleetSpObjectId string = '00000000-0000-0000-0000-000000000000' // Replace with the actual object ID of the Fleets Service Principal
 
 @description('The location of the Fleet resource.')
 param location string = resourceGroup().location
 
 resource vnet 'Microsoft.Network/virtualNetworks@2024-05-01' = {
-  name: vnet_name
+  name: vnetName
   location: location
   properties: {
     addressSpace: {
@@ -23,7 +23,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2024-05-01' = {
 }
 
 resource hubful_private_fleet 'Microsoft.ContainerService/fleets@2025-03-01' = {
-  name: fleet_name
+  name: fleetName
   location: location
   properties: {
     hubProfile: {
@@ -42,27 +42,25 @@ resource hubful_private_fleet 'Microsoft.ContainerService/fleets@2025-03-01' = {
 }
 
 resource vnet_subnet 'Microsoft.Network/virtualNetworks/subnets@2024-05-01' = {
-  name: '${vnet_name}/subnet'
+  name: 'subnet'
   properties: {
     addressPrefix: '192.168.0.0/24'
     delegations: []
     privateEndpointNetworkPolicies: 'Disabled'
     privateLinkServiceNetworkPolicies: 'Enabled'
   }
-  dependsOn: [
-    vnet
-  ]
+  parent: vnet
 }
 
 resource roleassignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   scope: vnet_subnet
-  name: guid(vnet_subnet.id, fleets_sp_object_id)
+  name: guid(vnet_subnet.id, fleetSpObjectId)
   properties: {
     roleDefinitionId: subscriptionResourceId(
       'Microsoft.Authorization/roleDefinitions',
       '4d97b98b-1d4f-4787-a291-c67834d212e7'
     )
-    principalId: fleets_sp_object_id
+    principalId: fleetSpObjectId
     principalType: 'ServicePrincipal'
   }
 }
