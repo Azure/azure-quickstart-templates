@@ -156,9 +156,9 @@ resource vm 'Microsoft.Compute/virtualMachines@2022-08-01' = [for i in range(0, 
         deleteOption: 'delete'
       }
       imageReference: {
-        publisher: 'canonical'
-        offer: '0001-com-ubuntu-server-focal'
-        sku: '20_04-lts-gen2'
+        publisher: 'Canonical'
+        offer: 'ubuntu-24_04-lts'
+        sku: 'server'
         version: 'latest'
       }
     }
@@ -189,7 +189,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2022-08-01' = [for i in range(0, 
           patchMode: 'ImageDefault'
         }
       }
-      customData: base64('#!/bin/bash\nbash <(wget https://packages.darktrace.com/install -O -) --updateKey "${updateKey}"\n sleep 5\n/usr/sbin/set_pushtoken.sh "${pushToken}" ${applianceHostName}:${appliancePort}\nsleep 5\nset_ossensor_hmac.sh "${osSensorHMACToken}"')
+      customData: base64('#!/bin/bash\nbash <(wget https://packages-cdn.darktrace.com/install -O -) --updateKey "${updateKey}"\n sleep 5\n/usr/sbin/set_pushtoken.sh "${pushToken}" ${applianceHostName}:${appliancePort}\nsleep 5\nset_ossensor_hmac.sh "${osSensorHMACToken}"')
     }
     diagnosticsProfile: {
       bootDiagnostics: {
