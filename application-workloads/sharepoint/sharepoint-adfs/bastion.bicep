@@ -1,6 +1,6 @@
 param virtualNetworkName string
 
-resource virtualNetwork 'Microsoft.Network/virtualNetworks@2024-05-01' existing = {
+resource virtualNetwork 'Microsoft.Network/virtualNetworks@2024-07-01' existing = {
   scope: resourceGroup()
   name: virtualNetworkName
 }
