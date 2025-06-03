@@ -42,7 +42,7 @@ resource hubful_private_fleet 'Microsoft.ContainerService/fleets@2025-03-01' = {
 }
 
 resource vnet_subnet 'Microsoft.Network/virtualNetworks/subnets@2024-05-01' = {
-  name: '${vnet_name}/subnet'
+  name: 'subnet'
   properties: {
     addressPrefix: '192.168.0.0/24'
     delegations: []
