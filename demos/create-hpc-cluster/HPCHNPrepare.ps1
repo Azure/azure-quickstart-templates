@@ -227,7 +227,7 @@ try
         }
     }
 
-    # Custom actions after Start-Serivce
+    # Custom actions after Start-Service
     $retry = 0
     while($retry -lt 100)
     {
