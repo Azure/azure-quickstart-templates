@@ -61,7 +61,7 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@2023-09-01' = {
   name: nsgName
 }
 
-resource loadBalancerPublicIp 'Microsoft.Network/publicIPAddresses@2023-09-01' = {
+resource loadBalancerPublicIp 'Microsoft.Network/publicIPAddresses@2024-05-01' = {
   name: loadBalancerPublicIpName
   location: location
   sku: {
@@ -144,6 +144,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2023-09-01' = {
               }
             }
           ]
+          defaultOutboundAccess: false
         }
       }
       {
@@ -161,6 +162,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2023-09-01' = {
               }
             }
           ]
+          defaultOutboundAccess: false
         }
       }
     ]
