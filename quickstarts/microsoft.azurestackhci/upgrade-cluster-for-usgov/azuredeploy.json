@@ -68,6 +68,9 @@
       // "minLength": 3,
       // "maxLength": 24
     },
+    "failoverClusterName": {
+      "type": "string"
+    },
     "location": {
       "type": "string",
       "defaultValue": "[resourceGroup().location]"
@@ -178,6 +181,19 @@
     ]
   },
   "resources": {
+    "edgeDevices" : {
+        "condition": "[equals(parameters('deploymentMode'), 'Validate')]",
+        "copy": {
+          "name": "edgeDeviceCopy",
+          "count": "[length(parameters('arcNodeResourceIds'))]"
+        },
+        "type": "Microsoft.AzureStackHCI/edgeDevices",
+        "apiVersion": "2024-09-01-preview",
+        "name": "default",
+        "scope": "[concat('Microsoft.HybridCompute/machines', '/', last(split(parameters('arcNodeResourceIds')[copyindex()], '/')))]",
+        "kind": "HCI",
+        "properties": {}
+      },
     "arcMachineRoleAssignment": {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2021-04-01",
@@ -398,7 +414,8 @@
       "apiVersion": "2024-09-01-preview",
       "name": "[format('{0}/default', parameters('clusterName'))]",
       "dependsOn": [
-        "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]"
+        "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]",
+        "edgeDevices"
       ],
       "properties": {
         "arcNodeResourceIds": "[parameters('arcNodeResourceIds')]",
@@ -415,7 +432,7 @@
                   "episodicDataUpload": true
                 },
                 "cluster": {
-                  "name": "[parameters('clusterName')]"
+                  "name": "[parameters('failoverClusterName')]"
                 },
                 "storage": {
                   "configurationMode": "InfraOnly"
