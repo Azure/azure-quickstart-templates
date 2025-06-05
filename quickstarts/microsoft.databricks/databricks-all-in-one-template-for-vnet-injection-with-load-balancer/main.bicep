@@ -192,7 +192,4 @@ resource workspace 'Microsoft.Databricks/workspaces@2024-05-01' = {
       }     
     }
   }
-  dependsOn: [
-    nsg
-  ]
 }
