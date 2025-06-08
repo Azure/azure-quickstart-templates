@@ -208,10 +208,10 @@ resource vnet 'Microsoft.Network/virtualNetworks@2024-05-01' = {
           networkSecurityGroup: {
             id: nsg.id
           }
-          defaultOutboundAccess: false
-          natGateway: {
-            id: natGateway.id
-          }
+          defaultOutboundAccess: false
+          natGateway: {
+            id: natGateway.id
+          }
           delegations: [
             {
               name: 'databricks-del-public'
@@ -229,10 +229,10 @@ resource vnet 'Microsoft.Network/virtualNetworks@2024-05-01' = {
           networkSecurityGroup: {
             id: nsg.id
           }
-          defaultOutboundAccess: false
-          natGateway: {
-            id: natGateway.id
-          }
+          defaultOutboundAccess: false
+          natGateway: {
+            id: natGateway.id
+          }
           delegations: [
             {
               name: 'databricks-del-private'
