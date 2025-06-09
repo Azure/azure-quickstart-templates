@@ -242,6 +242,6 @@ try
 }
 catch
 {
-	"An error ocurred: $_" | Out-File "c:\$scriptName.txt" -Append
+	"An error occurred: $_" | Out-File "c:\$scriptName.txt" -Append
 }
 
