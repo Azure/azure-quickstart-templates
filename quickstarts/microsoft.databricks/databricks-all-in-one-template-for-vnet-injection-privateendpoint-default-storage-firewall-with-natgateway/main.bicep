@@ -53,6 +53,12 @@ param vnetName string = 'databricks-vnet'
 @description('The name of the subnet to create the private endpoint in.')
 param PrivateEndpointSubnetName string = 'default'
 
+@description('Name of the NAT gateway to be attached to the workspace subnets.')
+param natGatewayName string = 'nat-gateway'
+
+@description('Name of the Public IP associated with the NAT gateway.')
+param publicIpName string = 'nat-gw-public-ip'
+
 @description('The name of the access connector to create.')
 param accessConnectorName string = 'default'
 
@@ -168,7 +174,36 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@2021-03-01' = {
   }
 }
 
-resource vnet 'Microsoft.Network/virtualNetworks@2021-08-01' = {
+resource publicIp 'Microsoft.Network/publicIPAddresses@2023-09-01' = {
+  name: publicIpName
+  location: location
+  sku: {
+    name: 'Standard'
+  }
+  properties: {
+    publicIPAddressVersion: 'IPv4'
+    publicIPAllocationMethod: 'Static'
+    idleTimeoutInMinutes: 4
+  }
+}
+
+resource natGateway 'Microsoft.Network/natGateways@2023-09-01' = {
+  name: natGatewayName
+  location: location
+  sku: {
+    name: 'Standard'
+  }
+  properties: {
+    idleTimeoutInMinutes: 4
+    publicIpAddresses: [
+      {
+        id: publicIp.id
+      }
+    ]
+  }
+}
+
+resource vnet 'Microsoft.Network/virtualNetworks@2024-05-01' = {
   name: vnetName
   location: location
   properties: {
@@ -184,6 +219,10 @@ resource vnet 'Microsoft.Network/virtualNetworks@2021-08-01' = {
           addressPrefix: publicSubnetCidr
           networkSecurityGroup: {
             id: nsg.id
+          }
+          defaultOutboundAccess: false
+          natGateway: {
+            id: natGateway.id
           }
           delegations: [
             {
@@ -202,6 +241,10 @@ resource vnet 'Microsoft.Network/virtualNetworks@2021-08-01' = {
           networkSecurityGroup: {
             id: nsg.id
           }
+          defaultOutboundAccess: false
+          natGateway: {
+            id: natGateway.id
+          }
           delegations: [
             {
               name: 'databricks-del-private'
@@ -217,6 +260,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2021-08-01' = {
         properties: {
           addressPrefix: privateEndpointSubnetCidr
           privateEndpointNetworkPolicies: 'Disabled'
+          defaultOutboundAccess: false
         }
       }
     ]
