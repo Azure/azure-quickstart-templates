@@ -6,7 +6,7 @@ adddate() {
     done
 }
 
-echo "WILDFLY 18.0.1.Final Standalone Intallation Start..." | adddate >> wildfly.install.log
+echo "WILDFLY 18.0.1.Final Standalone Installation Start..." | adddate >> wildfly.install.log
 /bin/date +%H:%M:%S  >> wildfly.install.log
 
 while getopts "a:t:p:f:" opt; do
@@ -82,5 +82,5 @@ firewall-cmd --zone=public --add-port=22/tcp --permanent | adddate >> wildfly.in
 echo "firewall-cmd --reload" | adddate >> wildfly.install.log
 firewall-cmd --reload | adddate >> wildfly.install.log 2>&1
 
-echo "WILDFLY 18.0.1.Final Standalone Intallation End..." | adddate >> wildfly.install.log
+echo "WILDFLY 18.0.1.Final Standalone Installation End..." | adddate >> wildfly.install.log
 /bin/date +%H:%M:%S >> wildfly.install.log
