@@ -260,6 +260,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2024-05-01' = {
         properties: {
           addressPrefix: privateEndpointSubnetCidr
           privateEndpointNetworkPolicies: 'Disabled'
+          defaultOutboundAccess: false
         }
       }
     ]
@@ -304,7 +305,6 @@ resource privateEndpoint 'Microsoft.Network/privateEndpoints@2021-08-01' = {
   properties: {
     subnet: {
       id: resourceId('Microsoft.Network/virtualNetworks/subnets', vnetName, PrivateEndpointSubnetName)
-      defaultOutboundAccess: false
     }
     privateLinkServiceConnections: [
       {
