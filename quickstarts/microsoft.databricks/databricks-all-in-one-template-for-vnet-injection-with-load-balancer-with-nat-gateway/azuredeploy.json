@@ -112,6 +112,20 @@
         "description": "The name of the virtual network to create."
       }
     },
+    "natGatewayName": {
+        "type": "string",
+        "defaultValue": "nat-gateway",
+        "metadata": {
+            "description": "Name of the NAT gateway to be attached to the workspace subnets."
+        }
+      },
+    "publicIpName": {
+        "type": "string",
+        "defaultValue": "nat-gw-public-ip",
+        "metadata": {
+              "description": "Name of the Public IP associated with the NAT gateway."
+        }
+    },
     "workspaceName": {
       "type": "string",
       "metadata": {
@@ -199,6 +213,40 @@
       ]
     },
     {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2023-09-01",
+      "name": "[parameters('publicIpName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+          "name": "Standard"
+        },
+      "properties": {
+          "publicIPAddressVersion": "IPv4",
+          "publicIPAllocationMethod": "Static",
+          "idleTimeoutInMinutes": 4
+      }
+    },
+    {
+      "type": "Microsoft.Network/natGateways",
+      "apiVersion": "2023-09-01",
+      "name": "[parameters('natGatewayName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+            "name": "Standard"
+      },
+      "properties": {
+          "idleTimeoutInMinutes": 4,
+          "publicIpAddresses": [
+              {
+                  "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIpName'))]"
+              }
+          ]
+      },
+      "dependsOn": [
+      "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIpName'))]"
+      ]
+    },
+    {
       "type": "Microsoft.Network/virtualNetworks",
       "apiVersion": "2024-05-01",
       "name": "[parameters('vnetName')]",
@@ -218,6 +266,9 @@
                 "id": "[variables('nsgId')]"
               },
               "defaultOutboundAccess": false,
+              "natGateway": {
+                  "id": "[resourceId('Microsoft.Network/natGateways', parameters('natGatewayName'))]"
+              },
               "delegations": [
                 {
                   "name": "databricks-del-public",
@@ -236,6 +287,9 @@
                 "id": "[variables('nsgId')]"
               },
               "defaultOutboundAccess": false,
+              "natGateway": {
+                  "id": "[resourceId('Microsoft.Network/natGateways', parameters('natGatewayName'))]"
+              },
               "delegations": [
                 {
                   "name": "databricks-del-private",
@@ -249,7 +303,8 @@
         ]
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('nsgName'))]"
+          "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('nsgName'))]",
+          "[resourceId('Microsoft.Network/natGateways', parameters('natGatewayName'))]"
       ]
     },
     {
