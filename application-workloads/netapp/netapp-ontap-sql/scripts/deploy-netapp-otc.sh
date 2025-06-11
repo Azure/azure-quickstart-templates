@@ -112,7 +112,7 @@ sleep 5
 
 curl 'http://localhost/occm/api/azure/vsa/working-environments/'${OtcPublicId}'?fields=ontapClusterProperties' -X GET --header 'Content-Type:application/json' --header 'Referer:AzureQS' --cookie cookies.txt > /tmp/ontapClusterProperties.json
 
-## grab the Cluster managment LIF IP address and save in /tmp for refrence
+## grab the Cluster management LIF IP address and save in /tmp for refrence
 clusterLif=`curl 'http://localhost/occm/api/azure/vsa/working-environments/'${OtcPublicId}'?fields=ontapClusterProperties' -X GET --header 'Content-Type:application/json' --header 'Referer:AzureQS' --cookie cookies.txt |jq -r .ontapClusterProperties.nodes[].lifs[] |grep "Cluster Management" -a2|head -1|cut -f4 -d '"'`
 echo "${clusterLif}" > /tmp/clusterLif.txt
 ## grab the iSCSI data LIF IP address
