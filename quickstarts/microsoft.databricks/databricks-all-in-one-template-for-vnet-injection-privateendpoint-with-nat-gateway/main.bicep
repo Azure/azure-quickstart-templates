@@ -248,6 +248,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2024-05-01' = {
         properties: {
           addressPrefix: privateEndpointSubnetCidr
           privateEndpointNetworkPolicies: 'Disabled'
+          defaultOutboundAccess: false
         }
       }
     ]
