@@ -49,6 +49,6 @@ You can click the "deploy to Azure" button at the beginning of this document.
 + **smtp_pass**: Provide SMTP password for mail configuration
 
 ### How to access the OpenCanvas Site
-* You can access the site using the domain/host name you provide as the paramater while deploying the template.
+* You can access the site using the domain/host name you provide as the parameter while deploying the template.
 
 `Tags: Microsoft.Network/publicIPAddresses, Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, CustomScript`
