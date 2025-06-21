@@ -76,9 +76,9 @@ sudo apt-get -y install gradle
 sudo -u $5 /usr/bin/gradle
 sudo /bin/date +%H:%M:%S >> /home/$5/install.progress.txt
 
-# Install NodeJS, npm, and gulp
+# Install Node.js, npm, and gulp
 
-echo "Installing NodeJS package" >> /home/$5/install.progress.txt
+echo "Installing Node.js package" >> /home/$5/install.progress.txt
 sudo curl -sL https://deb.nodesource.com/setup_6.x | sudo -E bash -
 sudo apt-get install -y nodejs
 sudo /bin/date +%H:%M:%S >> /home/$5/install.progress.txt
