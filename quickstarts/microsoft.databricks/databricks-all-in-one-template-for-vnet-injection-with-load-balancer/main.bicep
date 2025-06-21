@@ -45,15 +45,10 @@ param vnetCidr string = '10.179.0.0/16'
 @description('The name of the virtual network to create.')
 param vnetName string = 'databricks-vnet'
 
-@description('Name of the NAT gateway to be attached to the workspace subnets.')
-param natGatewayName string = 'nat-gateway'
-
-@description('Name of the Public IP associated with the NAT gateway.')
-param publicIpName string = 'nat-gw-public-ip'
-
 @description('The name of the Azure Databricks workspace to create.')
 param workspaceName string
 
+var loadBalancerId = loadBalancer.id
 var loadBalancerBackendPoolId = resourceId('Microsoft.Network/loadBalancers/backendAddressPools', loadBalancerName, loadBalancerBackendPoolName)
 var loadBalancerFrontendConfigId = resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', loadBalancerName, loadBalancerFrontendConfigName)
 var managedResourceGroupName = 'databricks-rg-${workspaceName}-${uniqueString(workspaceName, resourceGroup().id)}'
@@ -67,7 +62,7 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@2023-09-01' = {
   name: nsgName
 }
 
-resource loadBalancerPublicIp 'Microsoft.Network/publicIPAddresses@2024-05-01' = {
+resource loadBalancerPublicIp 'Microsoft.Network/publicIPAddresses@2023-09-01' = {
   name: loadBalancerPublicIpName
   location: location
   sku: {
@@ -125,35 +120,6 @@ resource loadBalancer 'Microsoft.Network/loadBalancers@2023-09-01' = {
   }
 }
 
-resource publicIp 'Microsoft.Network/publicIPAddresses@2023-09-01' = {
-  name: publicIpName
-  location: location
-  sku: {
-    name: 'Standard'
-  }
-  properties: {
-    publicIPAddressVersion: 'IPv4'
-    publicIPAllocationMethod: 'Static'
-    idleTimeoutInMinutes: 4
-  }
-}
-
-resource natGateway 'Microsoft.Network/natGateways@2023-09-01' = {
-  name: natGatewayName
-  location: location
-  sku: {
-    name: 'Standard'
-  }
-  properties: {
-    idleTimeoutInMinutes: 4
-    publicIpAddresses: [
-      {
-        id: publicIp.id
-      }
-    ]
-  }
-}
-
 resource vnet 'Microsoft.Network/virtualNetworks@2024-05-01' = {
   location: location
   name: vnetName
@@ -172,9 +138,6 @@ resource vnet 'Microsoft.Network/virtualNetworks@2024-05-01' = {
             id: nsgId
           }
           defaultOutboundAccess: false
-          natGateway: {
-            id: natGateway.id
-          }
           delegations: [
             {
               name: 'databricks-del-public'
@@ -193,9 +156,6 @@ resource vnet 'Microsoft.Network/virtualNetworks@2024-05-01' = {
             id: nsgId
           }
           defaultOutboundAccess: false
-          natGateway: {
-            id: natGateway.id
-          }
           delegations: [
             {
               name: 'databricks-del-private'
@@ -230,7 +190,13 @@ resource workspace 'Microsoft.Databricks/workspaces@2024-05-01' = {
       }
       enableNoPublicIp: {
         value: disablePublicIp
-      }     
+      }
+      loadBalancerId: {
+        value: loadBalancerId
+      }
+      loadBalancerBackendPoolName: {
+        value: loadBalancerBackendPoolName
+      }
     }
   }
 }
