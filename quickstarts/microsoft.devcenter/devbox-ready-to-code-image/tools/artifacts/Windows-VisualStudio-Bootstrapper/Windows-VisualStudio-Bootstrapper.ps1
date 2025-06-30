@@ -101,7 +101,7 @@ function Run-WindowedApplication {
             foreach ($errorlog in $errorlogs) { Get-Content -Path $errorlog.FullName | Write-Output }
             
             foreach ($bootstrapperErrorLog in $bootstrapperErrorLogs) { Get-Content -Path $bootstrapperErrorLog.FullName | Write-Output }
-            throw "Commmand exit code: $($proc.ExitCode) - $command $arguments"
+            throw "Command exit code: $($proc.ExitCode) - $command $arguments"
         }
 
         return
