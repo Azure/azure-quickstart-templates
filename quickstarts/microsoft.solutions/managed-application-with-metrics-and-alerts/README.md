@@ -42,7 +42,7 @@ Once you deploy this sample template, navigate to the deployed managed applicati
 ![Portal View](images/default-view.png)
 
 This view is driven by the [viewDefinition.json](artifacts/ManagedAppZip/viewDefinition.json) file from the application definition package.
-The Overview is defined by the "kind" propert when set to "Overview".  Values for the header and description shown as a default overview experience.
+The Overview is defined by the "kind" property when set to "Overview".  Values for the header and description shown as a default overview experience.
 To learn more about View definition please visit:
 
 + [**View definition artifact in Azure Managed Applications**](https://docs.microsoft.com/azure/managed-applications/concepts-view-definition)
