@@ -37,7 +37,7 @@ autoUpgrade=false
 unit="GB"
 
 
-#Outputing the variables
+#Outputting the variables
 touch /tmp/inputlog.txt
 echo region $region >> /tmp/inputlog.txt
 echo otcName $otcName >> /tmp/inputlog.txt
