@@ -189,7 +189,7 @@ foreach ($t in $templates) {
 
         foreach ($ra in $roleAssignments) {
         
-            # filter out scopes that don't match the gallery item, scope propery returns higher level assignments in this case tenant assignments        
+            # filter out scopes that don't match the gallery item, scope property returns higher level assignments in this case tenant assignments        
             if ($ra.scope -eq $id) {
                 $roleAssignmentResource = [ordered]@{
                     scope      = "Microsoft.Resources/templateSpecs/$($tsName)"
