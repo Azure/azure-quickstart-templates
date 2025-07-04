@@ -1,5 +1,5 @@
 ---
-description: Create a DC, a SQL Server 2022, and from 1 to 5 server(s) hosting a SharePoint Subscription / 2019 / 2016 farm with an extensive configuration, including trusted authentication, user profiles with personal sites, an OAuth trust (using a certificate), a dedicated IIS site for hosting high-trust add-ins, etc... The latest version of key softwares (including Fiddler, vscode, np++, 7zip, ULS Viewer) is installed. SharePoint machines have additional fine-tuning to make them immediately usable (remote administration tools, custom policies for Edge and Chrome, shortcuts, etc...).
+description: Create a DC, a SQL Server 2022, and from 1 to 5 server(s) hosting a SharePoint Subscription / 2019 / 2016 farm with an extensive configuration, including trusted authentication, user profiles with personal sites, an OAuth trust (using a certificate), a dedicated IIS site for hosting high-trust add-ins, etc... The latest version of key software (including Fiddler, vscode, np++, 7zip, ULS Viewer) is installed. SharePoint machines have additional fine-tuning to make them immediately usable (remote administration tools, custom policies for Edge and Chrome, shortcuts, etc...).
 page_type: sample
 products:
 - azure
@@ -31,7 +31,7 @@ languages:
 ## Features
 
 This template creates a DC, a SQL Server 2022, and from 1 to 5 server(s) hosting a SharePoint Subscription / 2019 / 2016 farm with an extensive configuration, including trusted authentication, user profiles with personal sites, an OAuth trust (using a certificate), a dedicated IIS site for hosting high-trust add-ins, etc...  
-The latest version of key softwares (including Fiddler, vscode, np++, 7zip, ULS Viewer) is installed.  
+The latest version of key software (including Fiddler, vscode, np++, 7zip, ULS Viewer) is installed.  
 SharePoint machines have additional fine-tuning to make them immediately usable (remote administration tools, custom policies for Edge and Chrome, shortcuts, etc...).
 
 There are some differences in the configuration, depending on the SharePoint version:
@@ -114,9 +114,9 @@ You can visit <https://azure.com/e/26eea69e35b04cb884b83ce06feadb5c> to estimate
 ## Known issues
 
 - The password for the User Profile directory synchronization connection (value of parameter `otherAccountsPassword`) needs to be re-entered in the "Edit synchronization connection" page, otherwise the import fails (password decryption error).
-- When parameter `outboundAccessMethod` is `AzureFirewallProxy`, most of the softwares installed through Chocolatey fail to download and are not installed.
+- When parameter `outboundAccessMethod` is `AzureFirewallProxy`, most of the software installed through Chocolatey fail to download and are not installed.
 - When deploying SharePoint 2016 or 2019, the trial enterprise license has already expired, so you must enter your own in the central administration, then run iisreset and restart the SPTimerV4 service on all the servers.
-- When deploying SharePoint 2016 or 2019, the installation of softwares through Chocolatey fails for most of them.
+- When deploying SharePoint 2016 or 2019, the installation of software through Chocolatey fails for most of them.
 
 ## More information
 
