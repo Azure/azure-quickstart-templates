@@ -32,7 +32,7 @@ param minReplica int = 1
 @maxValue(25)
 param maxReplica int = 3
 
-resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2021-06-01' = {
+resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2022-10-01' = {
   name: containerAppLogAnalyticsName
   location: location
   properties: {
