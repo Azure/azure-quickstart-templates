@@ -17,7 +17,7 @@ param containerAppLogAnalyticsName string = 'containerapp-log-${uniqueString(res
 param location string
 
 @description('Specifies the docker container image to deploy.')
-param frontendContainerImage string = 'mcr.microsoft.com/azuredocs/azure-vote-front:v1'
+param frontendContainerImage string = 'lgmorand/azure-vote-front:v1'
 
 @description('Specifies the docker container image to deploy for the Redis backend.')
 param backendContainerImage string = 'mcr.microsoft.com/oss/bitnami/redis:6.0.8'
