@@ -11,6 +11,8 @@
   "parameters": {
     "serverName": {
       "type": "string",
+      "minLength": 3,
+      "maxLength": 63,
       "metadata": {
         "description": "The name of the Azure Analysis Services server to create. Server name must begin with a letter, be lowercase alphanumeric, and between 3 and 63 characters in length. Server name must be unique per region."
       }
@@ -25,6 +27,18 @@
     "skuName": {
       "type": "string",
       "defaultValue": "S0",
+      "allowedValues": [
+        "B1",
+        "B2",
+        "D1",
+        "S0",
+        "S1",
+        "S2",
+        "S3",
+        "S4",
+        "S8",
+        "S9"
+      ],
       "metadata": {
         "description": "The sku name of the Azure Analysis Services server to create. Choose from: B1, B2, D1, S0, S1, S2, S3, S4, S8, S9. Some skus are region specific. See https://docs.microsoft.com/en-us/azure/analysis-services/analysis-services-overview#availability-by-region"
       }
@@ -32,47 +46,77 @@
     "capacity": {
       "type": "int",
       "defaultValue": 1,
+      "minValue": 1,
       "metadata": {
         "description": "The total number of query replica scale-out instances. Scale-out of more than one instance is supported on selected regions only. See https://docs.microsoft.com/en-us/azure/analysis-services/analysis-services-overview#availability-by-region"
       }
     },
-    "firewallSettings": {
-      "type": "object",
-      "defaultValue": {
-        "firewallRules": [
-          {
-            "firewallRuleName": "AllowFromAll",
-            "rangeStart": "0.0.0.0",
-            "rangeEnd": "255.255.255.255"
-          }
-        ],
-        "enablePowerBIService": true
-      },
+    "firewallRules": {
+      "type": "array",
       "metadata": {
-        "description": "The inbound firewall rules to define on the server. If not specified, firewall is disabled."
+        "description": "Array of firewall rules with trusted IP ranges. Each rule must specify a name, rangeStart, and rangeEnd. Example: [{ 'firewallRuleName': 'AllowFromTrustedIP', 'rangeStart': 'x.x.x.x', 'rangeEnd': 'y.y.y.y' }]"
       }
     },
-    "backupBlobContainerUri": {
+    "enablePowerBIService": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Enable Power BI service access. Set to true only if required."
+      }
+    },
+    "asAdministrators": {
+      "type": "array",
+      "minLength": 1,
+      "metadata": {
+        "description": "List of user principal names (UPNs) to assign as Analysis Services server administrators."
+      }
+    },
+    "backupBlobContainerUriSecretName": {
       "type": "string",
       "defaultValue": "",
       "metadata": {
-        "description": "The SAS URI to a private Azure Blob Storage container with read, write and list permissions. Required only if you intend to use the backup/restore functionality. See https://docs.microsoft.com/en-us/azure/analysis-services/analysis-services-backup"
+        "description": "The name of the secret in Azure Key Vault that contains the SAS URI for the backup blob container. The SAS URI should have minimal permissions and a short expiry."
+      }
+    },
+    "keyVaultResourceId": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The resource ID of the Azure Key Vault containing the backup blob container SAS URI secret."
+      }
+    },
+    "tags": {
+      "type": "object",
+      "defaultValue": {
+        "Environment": "Production",
+        "Owner": "<owner-email-or-team>",
+        "Confidentiality": "High"
+      },
+      "metadata": {
+        "description": "Resource tags for management, cost tracking, and incident response."
       }
     }
   },
   "resources": [
     {
       "type": "Microsoft.AnalysisServices/servers",
-      "apiVersion": "2017-08-01",
+      "apiVersion": "2019-05-01",
       "name": "[parameters('serverName')]",
       "location": "[parameters('location')]",
       "sku": {
         "name": "[parameters('skuName')]",
         "capacity": "[parameters('capacity')]"
       },
+      "tags": "[parameters('tags')]",
       "properties": {
-        "ipV4FirewallSettings": "[parameters('firewallSettings')]",
-        "backupBlobContainerUri": "[parameters('backupBlobContainerUri')]"
+        "ipV4FirewallSettings": {
+          "firewallRules": "[parameters('firewallRules')]",
+          "enablePowerBIService": "[parameters('enablePowerBIService')]"
+        },
+        "asAdministrators": {
+          "members": "[parameters('asAdministrators')]"
+        },
+        "backupBlobContainerUri": "[if(and(not(empty(parameters('backupBlobContainerUriSecretName'))), not(empty(parameters('keyVaultResourceId')))), concat('https://',reference(parameters('keyVaultResourceId')).properties.vaultUri,'secrets/',parameters('backupBlobContainerUriSecretName')), '')]"
       }
     }
   ]
