@@ -51,9 +51,129 @@
       "defaultValue": [
         "AzureVmWorkloadAnyDatabase"
       ]
+    },
+    "vmName": {
+      "type": "string",
+      "defaultValue": "utk-vm-asepe"
+    },
+    "vmResourceGroup": {
+      "type": "string",
+      "defaultValue": "utk-ccy-pe"
+    },
+    "isNewVault": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Conditional parameter for New or Existing Vault"
+      }
+    },
+    "isNewPolicy": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Conditional parameter for New or Existing Backup Policy"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
     }
   },
+  "variables": {
+    "skuName": "RS0",
+    "skuTier": "Standard",
+    "backupFabric": "Azure",
+    "containerType": "VMAppContainer"
+  },
   "resources": [
+    {
+      "condition": "[parameters('isNewVault')]",
+      "type": "Microsoft.RecoveryServices/vaults",
+      "apiVersion": "2020-10-01",
+      "name": "[parameters('vaultName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[variables('skuName')]",
+        "tier": "[variables('skuTier')]"
+      },
+      "properties": {}
+    },
+    {
+      "type": "Microsoft.RecoveryServices/vaults/backupFabrics/protectionContainers",
+      "apiVersion": "2021-03-01",
+      "name": "[format('{0}/{1}/{2};compute;{3};{4}', parameters('vaultName'), variables('backupFabric'), variables('containerType'), parameters('vmResourceGroup'), parameters('vmName'))]",
+      "properties": {
+        "containerType": "[variables('containerType')]",
+        "backupManagementType": "[parameters('backupManagementType')]",
+        "workloadType": "[parameters('workloadType')]",
+        "friendlyName": "[parameters('vmName')]",
+        "sourceResourceId": "[resourceId(parameters('vmResourceGroup'), 'Microsoft.Compute/virtualMachines', parameters('vmName'))]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.RecoveryServices/vaults/backupPolicies', parameters('vaultName'), parameters('policyName'))]",
+        "[resourceId('Microsoft.RecoveryServices/vaults', parameters('vaultName'))]"
+      ]
+    },
+    {
+      "condition": "[parameters('isNewPolicy')]",
+      "type": "Microsoft.RecoveryServices/vaults/backupPolicies",
+      "apiVersion": "2021-03-01",
+      "name": "[format('{0}/{1}', parameters('vaultName'), parameters('policyName'))]",
+      "properties": {
+        "backupManagementType": "[parameters('backupManagementType')]",
+        "workloadType": "[parameters('workloadType')]",
+        "settings": {
+          "timeZone": "UTC",
+          "issqlcompression": false,
+          "isCompression": false
+        },
+        "subProtectionPolicy": [
+          {
+            "policyType": "Full",
+            "schedulePolicy": {
+              "schedulePolicyType": "SimpleSchedulePolicy",
+              "scheduleRunFrequency": "Daily",
+              "scheduleRunTimes": [
+                "2019-03-24T16:00:00Z"
+              ],
+              "scheduleWeeklyFrequency": 0
+            },
+            "retentionPolicy": {
+              "retentionPolicyType": "LongTermRetentionPolicy",
+              "dailySchedule": {
+                "retentionTimes": [
+                  "2019-03-24T16:00:00Z"
+                ],
+                "retentionDuration": {
+                  "count": 30,
+                  "durationType": "Days"
+                }
+              }
+            }
+          },
+          {
+            "policyType": "Log",
+            "schedulePolicy": {
+              "schedulePolicyType": "LogSchedulePolicy",
+              "scheduleFrequencyInMins": 60
+            },
+            "retentionPolicy": {
+              "retentionPolicyType": "SimpleRetentionPolicy",
+              "retentionDuration": {
+                "count": 30,
+                "durationType": "Days"
+              }
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.RecoveryServices/vaults', parameters('vaultName'))]"
+      ]
+    },
     {
       "type": "Microsoft.RecoveryServices/vaults/backupFabrics/protectionContainers/protectedItems",
       "apiVersion": "2016-06-01",
