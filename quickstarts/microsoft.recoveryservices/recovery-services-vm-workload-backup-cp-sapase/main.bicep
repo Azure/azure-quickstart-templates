@@ -1,7 +1,5 @@
 param armProviderNamespace string = 'Microsoft.RecoveryServices'
 param vaultName string = 'utk-ccy-vlt'
-param vaultRG string = 'utk-ccy-pe'
-param vaultSubID string = '14d16a2a-56f6-4c75-b091-084df9640297'
 param backupManagementType string = 'AzureWorkload'
 param workloadType string = 'SAPAseDatabase'
 param policyName string = 'DailyPolicy-m85s4oxj'
@@ -59,7 +57,7 @@ resource vaultName_backupFabric_containerType_compute_vmResourceGroup_vm 'Micros
 
 resource vaultName_policy 'Microsoft.RecoveryServices/vaults/backupPolicies@2021-03-01' = if (isNewPolicy) {
   parent: vault
-  name: '${policyName}'
+  name: policyName
   properties: {
     backupManagementType: backupManagementType
     workloadType: workloadType
