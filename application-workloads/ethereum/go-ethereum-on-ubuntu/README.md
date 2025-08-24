@@ -87,7 +87,7 @@ Our next step is to take the `GuestBook.sol` and compile it in the geth console.
 
 Next, lets start our node back up - `sh start-private-blockchain.sh`
 
-The Geth console actually implmements a [JavaScript Runtime Environment](https://github.com/ethereum/go-ethereum/wiki/JavaScript-Console); so if you have familiarity with NodeJs this should be a comfortable environment. Let's set a variable containing our source code:
+The Geth console actually implmements a [JavaScript Runtime Environment](https://github.com/ethereum/go-ethereum/wiki/JavaScript-Console); so if you have familiarity with Node.js this should be a comfortable environment. Let's set a variable containing our source code:
 
 ```
 var guestBookSource = 'contract GuestBook {   mapping (address => string) entryLog;    function setEntry(string guestBookEntry) {     entryLog[msg.sender] = guestBookEntry;   }    function getMyEntry() constant returns (string) {     return entryLog[msg.sender];   } }'

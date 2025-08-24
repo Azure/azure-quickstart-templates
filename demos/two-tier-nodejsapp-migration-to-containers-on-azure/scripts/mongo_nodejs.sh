@@ -16,7 +16,7 @@ apt-get install -y mongodb-org
 systemctl start mongod
 systemctl enable mongod
 
-#Install Nodejs
+#Install Node.js
 curl -sL https://deb.nodesource.com/setup_6.x | sudo -E bash -
 apt-get install -y nodejs
 
@@ -24,7 +24,7 @@ apt-get install -y nodejs
 mkdir /app
 git clone $1 /app
 
-#Install Nodejs app
+#Install Node.js app
 cd /app
 npm install
 #App to be started manually by user post declaing MONGODB_URL var
