@@ -48,7 +48,7 @@ The ARM template deploys:
 - A private endpoint to the Blob Storage Account
 - A private endpoint to to Azure Container Registry (ACR)
 - A private endpoint to Key Vault
-- When the ACR sku is equal to Premium, a Private Endpoint is created to allow the private AKS cluster to access ACR via a private IP address. For more information, see [Connect privately to an Azure container registry using Azure Private Link](https://docs.microsoft.com/azure/container-registry/container-registry-private-link).
+- When the ACR sku is equal to Premium, a Private Endpoint is created to allow the private AKS cluster to access ACR via a private IP address. For more information, see [Connect privately to an Azure Container Registry using Azure Private Link](https://docs.microsoft.com/azure/container-registry/container-registry-private-link).
 - A Private DNS Zone for the name resolution of the private endpoint to the Blob Storage Account
 - A Private DNS Zone for the name resolution of the private endpoint to Azure Container Registry (ACR)
 - A Private DNS Zone for the name resolution of the private endpoint to Key Vault
