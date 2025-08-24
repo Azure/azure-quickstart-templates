@@ -32,7 +32,7 @@ param apim_subnet_prefix string = '10.0.1.0/24'
 @description('Descriptive name for publisher to be used in the portal')
 param apim_publisher_name string = 'Contoso'
 
-@description('Email adddress associated with publisher')
+@description('Email address associated with publisher')
 param apim_publisher_email string = 'api@contoso.com'
 
 var appInsightName = '${base_name}-ai'
