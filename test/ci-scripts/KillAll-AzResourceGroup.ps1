@@ -50,7 +50,7 @@ foreach ($rg in $azdoResourceGroups) {
 
     # remove the resource group
     $bypassTag = $(Get-AzTag -ResourceId $rg.ResourceId).properties.tagsproperty.bypass
-    # skip resourece groups that have been tagged due to some bug and can't be deleted
+    # skip resource groups that have been tagged due to some bug and can't be deleted
     # this enables getting to the other resourceGroups instead of timing out
     if (!$bypassTag) {
         Write-Host "First attempt on ResourceGroup: $($rg.ResourceGroupName)"
