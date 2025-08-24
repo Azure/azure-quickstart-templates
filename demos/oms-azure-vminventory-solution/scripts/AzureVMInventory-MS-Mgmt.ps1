@@ -20,7 +20,7 @@ $Timestampfield = "Timestamp"
 #Update customer Id to your Operational Insights workspace ID
 $customerID = Get-AutomationVariable -Name  "AzureVMInventory-OPSINSIGHTS_WS_ID"
 
-#For shared key use either the primary or seconday Connected Sources client authentication key   
+#For shared key use either the primary or secondary Connected Sources client authentication key   
 $sharedKey = Get-AutomationVariable -Name  "AzureVMInventory-OPSINSIGHT_WS_KEY"
 
 $ApiVerSaAsm = '2016-04-01'
