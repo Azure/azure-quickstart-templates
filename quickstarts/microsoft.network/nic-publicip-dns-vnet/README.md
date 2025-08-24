@@ -1,5 +1,5 @@
 ---
-description: This template allows you to create a Network Inerface in a Virtual Network referencing a Public IP Address.
+description: This template allows you to create a Network Interface in a Virtual Network referencing a Public IP Address.
 page_type: sample
 products:
 - azure
