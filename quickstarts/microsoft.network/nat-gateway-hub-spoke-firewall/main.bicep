@@ -84,11 +84,6 @@ resource bastionPublicIP 'Microsoft.Network/publicIPAddresses@2024-05-01' = {
   properties: {
     publicIPAllocationMethod: 'Static'
   }
-  zones: [
-    '1'
-    '2'
-    '3'
-  ]
 }
 
 // Azure Bastion
@@ -122,11 +117,6 @@ resource firewallPublicIP 'Microsoft.Network/publicIPAddresses@2024-05-01' = {
   properties: {
     publicIPAllocationMethod: 'Static'
   }
-  zones: [
-    '1'
-    '2'
-    '3'
-  ]
 }
 
 // Firewall Policy
