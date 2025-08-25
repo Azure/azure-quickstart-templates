@@ -18,9 +18,8 @@ param authenticationType string = 'password'
 @secure()
 param adminPasswordOrKey string
 
-@description('SSH Key or password for the Virtual Machine. SSH key is recommended.')
-@secure()
-param vmPassword string = adminPasswordOrKey
+@description('Size of the virtual machine.')
+param vmSize string = 'Standard_DS1_v2'
 
 // Hub Virtual Network
 resource hubVirtualNetwork 'Microsoft.Network/virtualNetworks@2024-05-01' = {
@@ -295,9 +294,7 @@ resource routeTableSpoke 'Microsoft.Network/routeTables@2024-05-01' = {
 resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2024-05-01' = {
   name: '${resourcePrefix}-nsg-vm'
   location: location
-  properties: {
-    securityRules: []
-  }
+  properties: {}
 }
 
 // Network Interface for VM
@@ -341,12 +338,12 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2024-07-01' = {
   location: location
   properties: {
     hardwareProfile: {
-      vmSize: 'Standard_DS1_v2'
+      vmSize: vmSize
     }
     osProfile: {
       computerName: '${resourcePrefix}-vm'
       adminUsername: adminUsername
-      adminPassword: authenticationType == 'password' ? vmPassword : null
+      adminPassword: authenticationType == 'password' ? adminPasswordOrKey : null
       linuxConfiguration: authenticationType == 'password' ? null : linuxConfiguration
     }
     storageProfile: {
