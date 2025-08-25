@@ -7,16 +7,9 @@ param resourcePrefix string = 'natfw-${uniqueString(resourceGroup().id)}'
 @description('Admin username for the virtual machine.')
 param adminUsername string = 'azureuser'
 
-@description('Type of authentication to use on the Virtual Machine. SSH key is recommended.')
-@allowed([
-  'sshPublicKey'
-  'password'
-])
-param authenticationType string = 'password'
-
-@description('SSH Key or password for the Virtual Machine. SSH key is recommended.')
+@description('SSH public key for the virtual machine.')
 @secure()
-param adminPasswordOrKey string
+param adminSshKey string
 
 @description('Size of the virtual machine.')
 param vmSize string = 'Standard_DS1_v2'
@@ -326,7 +319,7 @@ var linuxConfiguration = {
     publicKeys: [
       {
         path: '/home/${adminUsername}/.ssh/authorized_keys'
-        keyData: adminPasswordOrKey
+        keyData: adminSshKey
       }
     ]
   }
@@ -343,8 +336,7 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2024-07-01' = {
     osProfile: {
       computerName: '${resourcePrefix}-vm'
       adminUsername: adminUsername
-      adminPassword: authenticationType == 'password' ? adminPasswordOrKey : null
-      linuxConfiguration: authenticationType == 'password' ? null : linuxConfiguration
+      linuxConfiguration: linuxConfiguration
     }
     storageProfile: {
       imageReference: {
