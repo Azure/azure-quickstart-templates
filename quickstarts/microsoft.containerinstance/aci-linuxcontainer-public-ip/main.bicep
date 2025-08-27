@@ -24,6 +24,9 @@ param memoryInGb int = 2
 ])
 param restartPolicy string = 'Always'
 
+@description('The availability zone to deploy the container group into. If not specified, the container group is nonzonal and might be deployed into any zone.')
+param zone string?
+
 resource containerGroup 'Microsoft.ContainerInstance/containerGroups@2023-05-01' = {
   name: name
   location: location
@@ -60,6 +63,7 @@ resource containerGroup 'Microsoft.ContainerInstance/containerGroups@2023-05-01'
       ]
     }
   }
+  zones: zone != null ? [zone!] : null
 }
 
 output name string = containerGroup.name
