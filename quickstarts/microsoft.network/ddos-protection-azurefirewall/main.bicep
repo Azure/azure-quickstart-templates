@@ -138,8 +138,6 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2024-05-01' = {
         name: 'AzureFirewallSubnet'
         properties: {
           addressPrefix: azureFirewallSubnetPrefix
-          serviceEndpoints: []
-          delegations: []
           privateEndpointNetworkPolicies: 'Enabled'
           privateLinkServiceNetworkPolicies: 'Enabled'
         }
@@ -151,8 +149,6 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2024-05-01' = {
           routeTable: {
             id: routeTable.id
           }
-          serviceEndpoints: []
-          delegations: []
           privateEndpointNetworkPolicies: 'Enabled'
           privateLinkServiceNetworkPolicies: 'Enabled'
         }
@@ -175,7 +171,6 @@ resource firewallPolicy 'Microsoft.Network/firewallPolicies@2024-05-01' = {
     }
     threatIntelMode: 'Alert'
     dnsSettings: {
-      servers: []
       enableProxy: true
     }
   }
