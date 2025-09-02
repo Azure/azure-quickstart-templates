@@ -207,9 +207,6 @@ resource networkRuleCollectionGroup 'Microsoft.Network/firewallPolicies/ruleColl
             destinationAddresses: [
               '*'
             ]
-            destinationFqdns: [
-              'www.microsoft.com'
-            ]
             destinationPorts: [
               '80'
               '443'
@@ -238,7 +235,7 @@ resource applicationRuleCollectionGroup 'Microsoft.Network/firewallPolicies/rule
         rules: [
           {
             ruleType: 'ApplicationRule'
-            name: 'AllowGoogleRule'
+            name: 'AllowWebsitesRule'
             protocols: [
               {
                 protocolType: 'Http'
@@ -249,24 +246,13 @@ resource applicationRuleCollectionGroup 'Microsoft.Network/firewallPolicies/rule
                 port: 443
               }
             ]
-            fqdnTags: [
-              'MicrosoftActiveProtectionService'
-            ]
-            webCategories: [
-              'Business'
-            ]
             targetFqdns: [
               'www.google.com'
-            ]
-            targetUrls: [
               'www.microsoft.com'
+              'www.bing.com'
             ]
-            terminateTLS: false
             sourceAddresses: [
               '10.1.2.0/24'
-            ]
-            destinationAddresses: [
-              '208.67.222.222'
             ]
           }
         ]
