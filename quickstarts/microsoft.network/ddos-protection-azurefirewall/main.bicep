@@ -209,12 +209,12 @@ resource networkRuleCollectionGroup 'Microsoft.Network/firewallPolicies/ruleColl
             sourceAddresses: [
               '10.1.2.0/24'
             ]
-            sourceIpGroups: []
             destinationAddresses: [
               '*'
             ]
-            destinationIpGroups: []
-            destinationFqdns: []
+            destinationFqdns: [
+              'www.microsoft.com'
+            ]
             destinationPorts: [
               '80'
               '443'
@@ -254,18 +254,25 @@ resource applicationRuleCollectionGroup 'Microsoft.Network/firewallPolicies/rule
                 port: 443
               }
             ]
-            fqdnTags: []
-            webCategories: []
+            fqdnTags: [
+              'MicrosoftActiveProtectionService'
+            ]
+            webCategories: [
+              'Business'
+            ]
             targetFqdns: [
               'www.google.com'
             ]
-            targetUrls: []
+            targetUrls: [
+              'www.microsoft.com'
+            ]
             terminateTLS: false
             sourceAddresses: [
               '10.1.2.0/24'
             ]
-            destinationAddresses: []
-            sourceIpGroups: []
+            destinationAddresses: [
+              '208.67.222.222'
+            ]
           }
         ]
       }
@@ -308,7 +315,6 @@ resource dnatRuleCollectionGroup 'Microsoft.Network/firewallPolicies/ruleCollect
             ]
             translatedAddress: '10.1.2.4'
             translatedPort: '3389'
-            sourceIpGroups: []
           }
         ]
       }
