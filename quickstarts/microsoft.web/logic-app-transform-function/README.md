@@ -1,5 +1,5 @@
 ---
-description: Creates a webhook based C# azure function with transform capabilites to use in logic apps integration scenarios
+description: Creates a webhook based C# azure function with transform capabilities to use in logic apps integration scenarios
 page_type: sample
 products:
 - azure
@@ -8,7 +8,7 @@ urlFragment: logic-app-transform-function
 languages:
 - json
 ---
-# Azure function with transform capabilites
+# Azure function with transform capabilities
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/logic-app-transform-function/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.web/logic-app-transform-function/PublicDeployment.svg)
@@ -23,7 +23,7 @@ languages:
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.web%2Flogic-app-transform-function%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.web%2Flogic-app-transform-function%2Fazuredeploy.json)
 
-This template creates a webhook based C# azure function with transform capabilites to use in logic apps integration scenarios.
+This template creates a webhook based C# azure function with transform capabilities to use in logic apps integration scenarios.
 
 ## Prerequisites
 
