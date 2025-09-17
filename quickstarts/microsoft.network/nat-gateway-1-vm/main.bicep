@@ -31,14 +31,33 @@ param nsgname string = 'nsg-1'
 @description('Administrator username for virtual machine')
 param adminusername string
 
-@description('Administrator password for virtual machine')
+@description('Type of authentication to use on the Virtual Machine. SSH key is recommended.')
+@allowed([
+  'sshPublicKey'
+  'password'
+])
+param authenticationType string = 'sshPublicKey'
+
+@description('SSH Key or password for the Virtual Machine. SSH key is recommended.')
 @secure()
-param adminpassword string
+param adminPasswordOrKey string
 
 @description('Name of resource group')
 param location string = resourceGroup().location
 
-resource nsg 'Microsoft.Network/networkSecurityGroups@2021-05-01' = {
+var linuxConfiguration = {
+  disablePasswordAuthentication: true
+  ssh: {
+    publicKeys: [
+      {
+        path: '/home/${adminusername}/.ssh/authorized_keys'
+        keyData: adminPasswordOrKey
+      }
+    ]
+  }
+}
+
+resource nsg 'Microsoft.Network/networkSecurityGroups@2023-06-01' = {
   name: nsgname
   location: location
   properties: {
@@ -60,12 +79,17 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@2021-05-01' = {
   }
 }
 
-resource publicip 'Microsoft.Network/publicIPAddresses@2021-05-01' = {
+resource publicip 'Microsoft.Network/publicIPAddresses@2023-06-01' = {
   name: publicipname
   location: location
   sku: {
-    name: 'Standard'
+    name: 'StandardV2'
   }
+  zones: [
+    '1'
+    '2'
+    '3'
+  ]
   properties: {
     publicIPAddressVersion: 'IPv4'
     publicIPAllocationMethod: 'Static'
@@ -76,6 +100,9 @@ resource publicip 'Microsoft.Network/publicIPAddresses@2021-05-01' = {
 resource vm 'Microsoft.Compute/virtualMachines@2021-11-01' = {
   name: vmname
   location: location
+  zones: [
+    '1'
+  ]
   properties: {
     hardwareProfile: {
       vmSize: vmsize
@@ -101,12 +128,8 @@ resource vm 'Microsoft.Compute/virtualMachines@2021-11-01' = {
     osProfile: {
       computerName: vmname
       adminUsername: adminusername
-      adminPassword: adminpassword
-      linuxConfiguration: {
-        disablePasswordAuthentication: false
-        provisionVMAgent: true
-      }
-      allowExtensionOperations: true
+      adminPassword: adminPasswordOrKey
+      linuxConfiguration: ((authenticationType == 'password') ? null : linuxConfiguration)
     }
     networkProfile: {
       networkInterfaces: [
@@ -118,7 +141,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2021-11-01' = {
   }
 }
 
-resource vnet 'Microsoft.Network/virtualNetworks@2021-05-01' = {
+resource vnet 'Microsoft.Network/virtualNetworks@2023-06-01' = {
   name: vnetname
   location: location
   properties: {
@@ -145,12 +168,17 @@ resource vnet 'Microsoft.Network/virtualNetworks@2021-05-01' = {
   }
 }
 
-resource natgateway 'Microsoft.Network/natGateways@2021-05-01' = {
+resource natgateway 'Microsoft.Network/natGateways@2023-06-01' = {
   name: natgatewayname
   location: location
   sku: {
-    name: 'Standard'
+    name: 'StandardV2'
   }
+  zones: [
+    '1'
+    '2'
+    '3'
+  ]
   properties: {
     idleTimeoutInMinutes: 4
     publicIpAddresses: [
@@ -161,7 +189,7 @@ resource natgateway 'Microsoft.Network/natGateways@2021-05-01' = {
   }
 }
 
-resource subnet 'Microsoft.Network/virtualNetworks/subnets@2021-05-01' = {
+resource subnet 'Microsoft.Network/virtualNetworks/subnets@2023-06-01' = {
   parent: vnet
   name: 'subnet-1'
   properties: {
@@ -174,7 +202,7 @@ resource subnet 'Microsoft.Network/virtualNetworks/subnets@2021-05-01' = {
   }
 }
 
-resource networkinterface 'Microsoft.Network/networkInterfaces@2021-05-01' = {
+resource networkinterface 'Microsoft.Network/networkInterfaces@2023-06-01' = {
   name: networkinterfacename
   location: location
   properties: {
