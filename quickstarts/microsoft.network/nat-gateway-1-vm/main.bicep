@@ -25,25 +25,27 @@ param networkinterfacename string = 'nic-1'
 @description('Name of the NAT gateway public IP')
 param publicipname string = 'public-ip-nat'
 
+@description('Name of the Bastion host')
+param bastionName string = 'bastion-host'
+
+@description('Name of the Bastion public IP')
+param bastionPublicIpName string = 'public-ip-bastion'
+
 @description('Name of the virtual machine NSG')
 param nsgname string = 'nsg-1'
 
 @description('Administrator username for virtual machine')
 param adminusername string
 
-@description('Type of authentication to use on the Virtual Machine. SSH key is recommended.')
-@allowed([
-  'sshPublicKey'
-  'password'
-])
-param authenticationType string = 'sshPublicKey'
-
-@description('SSH Key or password for the Virtual Machine. SSH key is recommended.')
+@description('SSH public key for the Virtual Machine.')
 @secure()
 param adminPasswordOrKey string
 
 @description('Name of resource group')
 param location string = resourceGroup().location
+
+var bastionSubnetName = 'AzureBastionSubnet'
+var bastionSubnetPrefix = '10.0.1.0/26'
 
 var linuxConfiguration = {
   disablePasswordAuthentication: true
@@ -61,21 +63,7 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@2023-06-01' = {
   name: nsgname
   location: location
   properties: {
-    securityRules: [
-      {
-        name: 'SSH'
-        properties: {
-          protocol: 'Tcp'
-          sourcePortRange: '*'
-          destinationPortRange: '22'
-          sourceAddressPrefix: '*'
-          destinationAddressPrefix: '*'
-          access: 'Allow'
-          priority: 300
-          direction: 'Inbound'
-        }
-      }
-    ]
+    securityRules: []
   }
 }
 
@@ -94,6 +82,18 @@ resource publicip 'Microsoft.Network/publicIPAddresses@2023-06-01' = {
     publicIPAddressVersion: 'IPv4'
     publicIPAllocationMethod: 'Static'
     idleTimeoutInMinutes: 4
+  }
+}
+
+resource bastionPublicIp 'Microsoft.Network/publicIPAddresses@2023-06-01' = {
+  name: bastionPublicIpName
+  location: location
+  sku: {
+    name: 'Standard'
+  }
+  properties: {
+    publicIPAddressVersion: 'IPv4'
+    publicIPAllocationMethod: 'Static'
   }
 }
 
@@ -128,8 +128,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2021-11-01' = {
     osProfile: {
       computerName: vmname
       adminUsername: adminusername
-      adminPassword: adminPasswordOrKey
-      linuxConfiguration: ((authenticationType == 'password') ? null : linuxConfiguration)
+      linuxConfiguration: linuxConfiguration
     }
     networkProfile: {
       networkInterfaces: [
@@ -158,6 +157,14 @@ resource vnet 'Microsoft.Network/virtualNetworks@2023-06-01' = {
           natGateway: {
             id: natgateway.id
           }
+          privateEndpointNetworkPolicies: 'Enabled'
+          privateLinkServiceNetworkPolicies: 'Enabled'
+        }
+      }
+      {
+        name: bastionSubnetName
+        properties: {
+          addressPrefix: bastionSubnetPrefix
           privateEndpointNetworkPolicies: 'Enabled'
           privateLinkServiceNetworkPolicies: 'Enabled'
         }
@@ -202,6 +209,19 @@ resource subnet 'Microsoft.Network/virtualNetworks/subnets@2023-06-01' = {
   }
 }
 
+resource bastionSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-06-01' = {
+  parent: vnet
+  name: bastionSubnetName
+  properties: {
+    addressPrefix: bastionSubnetPrefix
+    privateEndpointNetworkPolicies: 'Enabled'
+    privateLinkServiceNetworkPolicies: 'Enabled'
+  }
+  dependsOn: [
+    subnet
+  ]
+}
+
 resource networkinterface 'Microsoft.Network/networkInterfaces@2023-06-01' = {
   name: networkinterfacename
   location: location
@@ -224,6 +244,19 @@ resource networkinterface 'Microsoft.Network/networkInterfaces@2023-06-01' = {
     enableIPForwarding: false
     networkSecurityGroup: {
       id: nsg.id
+    }
+  }
+}
+
+resource bastionHost 'Microsoft.Network/bastionHosts@2023-06-01' = {
+  name: bastionName
+  location: location
+  sku: {
+    name: 'Developer'
+  }
+  properties: {
+    virtualNetwork: {
+      id: vnet.id
     }
   }
 }
