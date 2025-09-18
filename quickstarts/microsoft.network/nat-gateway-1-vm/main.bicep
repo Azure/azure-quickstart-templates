@@ -56,9 +56,7 @@ var linuxConfiguration = {
 resource nsg 'Microsoft.Network/networkSecurityGroups@2023-06-01' = {
   name: nsgname
   location: location
-  properties: {
-    securityRules: []
-  }
+  properties: {}
 }
 
 resource publicip 'Microsoft.Network/publicIPAddresses@2023-06-01' = {
@@ -82,9 +80,6 @@ resource publicip 'Microsoft.Network/publicIPAddresses@2023-06-01' = {
 resource vm 'Microsoft.Compute/virtualMachines@2021-11-01' = {
   name: vmname
   location: location
-  zones: [
-    '1'
-  ]
   properties: {
     hardwareProfile: {
       vmSize: vmsize
