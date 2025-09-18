@@ -40,12 +40,6 @@ resource hubVirtualNetwork 'Microsoft.Network/virtualNetworks@2024-05-01' = {
           }
         }
       }
-      {
-        name: 'AzureBastionSubnet'
-        properties: {
-          addressPrefix: '10.0.1.0/26'
-        }
-      }
     ]
   }
 }
@@ -74,36 +68,17 @@ resource spokeVirtualNetwork 'Microsoft.Network/virtualNetworks@2024-05-01' = {
   }
 }
 
-// Public IP for Azure Bastion
-resource bastionPublicIP 'Microsoft.Network/publicIPAddresses@2024-05-01' = {
-  name: '${resourcePrefix}-public-ip-bastion'
-  location: location
-  sku: {
-    name: 'Standard'
-  }
-  properties: {
-    publicIPAllocationMethod: 'Static'
-  }
-}
-
 // Azure Bastion
-resource bastion 'Microsoft.Network/bastionHosts@2024-05-01' = {
+resource bastion 'Microsoft.Network/bastionHosts@2024-01-01' = {
   name: '${resourcePrefix}-bastion'
   location: location
+  sku: {
+    name: 'Developer'
+  }
   properties: {
-    ipConfigurations: [
-      {
-        name: 'IpConf'
-        properties: {
-          subnet: {
-            id: '${hubVirtualNetwork.id}/subnets/AzureBastionSubnet'
-          }
-          publicIPAddress: {
-            id: bastionPublicIP.id
-          }
-        }
-      }
-    ]
+    virtualNetwork: {
+      id: hubVirtualNetwork.id
+    }
   }
 }
 
@@ -200,7 +175,7 @@ resource natGatewayPublicIP 'Microsoft.Network/publicIPAddresses@2024-05-01' = {
   name: '${resourcePrefix}-public-ip-nat'
   location: location
   sku: {
-    name: 'Standard'
+    name: 'StandardV2'
   }
   properties: {
     publicIPAllocationMethod: 'Static'
@@ -212,7 +187,7 @@ resource natGateway 'Microsoft.Network/natGateways@2024-05-01' = {
   name: '${resourcePrefix}-nat-gateway'
   location: location
   sku: {
-    name: 'Standard'
+    name: 'StandardV2'
   }
   properties: {
     idleTimeoutInMinutes: 4
