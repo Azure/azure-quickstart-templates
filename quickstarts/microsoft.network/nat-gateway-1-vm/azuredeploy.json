@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.25.53.49325",
-      "templateHash": "15583664434476061565"
+      "version": "0.37.4.10188",
+      "templateHash": "3835587956593484360"
     }
   },
   "parameters": {
@@ -72,6 +72,13 @@
         "description": "Name of the NAT gateway public IP"
       }
     },
+    "bastionName": {
+      "type": "string",
+      "defaultValue": "bastion-host",
+      "metadata": {
+        "description": "Name of the Bastion host"
+      }
+    },
     "nsgname": {
       "type": "string",
       "defaultValue": "nsg-1",
@@ -85,10 +92,10 @@
         "description": "Administrator username for virtual machine"
       }
     },
-    "adminpassword": {
+    "adminPasswordOrKey": {
       "type": "securestring",
       "metadata": {
-        "description": "Administrator password for virtual machine"
+        "description": "SSH public key for the Virtual Machine."
       }
     },
     "location": {
@@ -99,38 +106,42 @@
       }
     }
   },
+  "variables": {
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[format('/home/{0}/.ssh/authorized_keys', parameters('adminusername'))]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    }
+  },
   "resources": [
     {
       "type": "Microsoft.Network/networkSecurityGroups",
-      "apiVersion": "2021-05-01",
+      "apiVersion": "2023-06-01",
       "name": "[parameters('nsgname')]",
       "location": "[parameters('location')]",
       "properties": {
-        "securityRules": [
-          {
-            "name": "SSH",
-            "properties": {
-              "protocol": "Tcp",
-              "sourcePortRange": "*",
-              "destinationPortRange": "22",
-              "sourceAddressPrefix": "*",
-              "destinationAddressPrefix": "*",
-              "access": "Allow",
-              "priority": 300,
-              "direction": "Inbound"
-            }
-          }
-        ]
+        "securityRules": []
       }
     },
     {
       "type": "Microsoft.Network/publicIPAddresses",
-      "apiVersion": "2021-05-01",
+      "apiVersion": "2023-06-01",
       "name": "[parameters('publicipname')]",
       "location": "[parameters('location')]",
       "sku": {
-        "name": "Standard"
+        "name": "StandardV2"
       },
+      "zones": [
+        "1",
+        "2",
+        "3"
+      ],
       "properties": {
         "publicIPAddressVersion": "IPv4",
         "publicIPAllocationMethod": "Static",
@@ -142,6 +153,9 @@
       "apiVersion": "2021-11-01",
       "name": "[parameters('vmname')]",
       "location": "[parameters('location')]",
+      "zones": [
+        "1"
+      ],
       "properties": {
         "hardwareProfile": {
           "vmSize": "[parameters('vmsize')]"
@@ -167,12 +181,7 @@
         "osProfile": {
           "computerName": "[parameters('vmname')]",
           "adminUsername": "[parameters('adminusername')]",
-          "adminPassword": "[parameters('adminpassword')]",
-          "linuxConfiguration": {
-            "disablePasswordAuthentication": false,
-            "provisionVMAgent": true
-          },
-          "allowExtensionOperations": true
+          "linuxConfiguration": "[variables('linuxConfiguration')]"
         },
         "networkProfile": {
           "networkInterfaces": [
@@ -188,7 +197,7 @@
     },
     {
       "type": "Microsoft.Network/virtualNetworks",
-      "apiVersion": "2021-05-01",
+      "apiVersion": "2023-06-01",
       "name": "[parameters('vnetname')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -219,12 +228,17 @@
     },
     {
       "type": "Microsoft.Network/natGateways",
-      "apiVersion": "2021-05-01",
+      "apiVersion": "2023-06-01",
       "name": "[parameters('natgatewayname')]",
       "location": "[parameters('location')]",
       "sku": {
-        "name": "Standard"
+        "name": "StandardV2"
       },
+      "zones": [
+        "1",
+        "2",
+        "3"
+      ],
       "properties": {
         "idleTimeoutInMinutes": 4,
         "publicIpAddresses": [
@@ -239,7 +253,7 @@
     },
     {
       "type": "Microsoft.Network/virtualNetworks/subnets",
-      "apiVersion": "2021-05-01",
+      "apiVersion": "2023-06-01",
       "name": "[format('{0}/{1}', parameters('vnetname'), 'subnet-1')]",
       "properties": {
         "addressPrefix": "[parameters('vnetsubnetprefix')]",
@@ -256,7 +270,7 @@
     },
     {
       "type": "Microsoft.Network/networkInterfaces",
-      "apiVersion": "2021-05-01",
+      "apiVersion": "2023-06-01",
       "name": "[parameters('networkinterfacename')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -283,6 +297,23 @@
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('nsgname'))]",
         "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetname'), 'subnet-1')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/bastionHosts",
+      "apiVersion": "2023-06-01",
+      "name": "[parameters('bastionName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Developer"
+      },
+      "properties": {
+        "virtualNetwork": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetname'))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetname'))]"
       ]
     }
   ],
