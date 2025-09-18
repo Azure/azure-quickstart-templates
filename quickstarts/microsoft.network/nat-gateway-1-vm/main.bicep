@@ -34,7 +34,14 @@ param nsgname string = 'nsg-1'
 @description('Administrator username for virtual machine')
 param adminusername string
 
-@description('SSH public key for the Virtual Machine.')
+@description('Type of authentication to use on the Virtual Machine. SSH key is recommended.')
+@allowed([
+  'sshPublicKey'
+  'password'
+])
+param authenticationType string = 'password'
+
+@description('SSH Key or password for the Virtual Machine. SSH key is recommended.')
 @secure()
 param adminPasswordOrKey string
 
@@ -53,13 +60,13 @@ var linuxConfiguration = {
   }
 }
 
-resource nsg 'Microsoft.Network/networkSecurityGroups@2023-06-01' = {
+resource nsg 'Microsoft.Network/networkSecurityGroups@2024-01-01' = {
   name: nsgname
   location: location
   properties: {}
 }
 
-resource publicip 'Microsoft.Network/publicIPAddresses@2023-06-01' = {
+resource publicip 'Microsoft.Network/publicIPAddresses@2024-01-01' = {
   name: publicipname
   location: location
   sku: {
@@ -72,7 +79,7 @@ resource publicip 'Microsoft.Network/publicIPAddresses@2023-06-01' = {
   }
 }
 
-resource vm 'Microsoft.Compute/virtualMachines@2021-11-01' = {
+resource vm 'Microsoft.Compute/virtualMachines@2023-09-01' = {
   name: vmname
   location: location
   properties: {
@@ -100,7 +107,8 @@ resource vm 'Microsoft.Compute/virtualMachines@2021-11-01' = {
     osProfile: {
       computerName: vmname
       adminUsername: adminusername
-      linuxConfiguration: linuxConfiguration
+      adminPassword: adminPasswordOrKey
+      linuxConfiguration: ((authenticationType == 'password') ? null : linuxConfiguration)
     }
     networkProfile: {
       networkInterfaces: [
@@ -112,7 +120,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2021-11-01' = {
   }
 }
 
-resource vnet 'Microsoft.Network/virtualNetworks@2023-06-01' = {
+resource vnet 'Microsoft.Network/virtualNetworks@2024-01-01' = {
   name: vnetname
   location: location
   properties: {
@@ -139,7 +147,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2023-06-01' = {
   }
 }
 
-resource natgateway 'Microsoft.Network/natGateways@2023-06-01' = {
+resource natgateway 'Microsoft.Network/natGateways@2024-01-01' = {
   name: natgatewayname
   location: location
   sku: {
@@ -155,7 +163,7 @@ resource natgateway 'Microsoft.Network/natGateways@2023-06-01' = {
   }
 }
 
-resource subnet 'Microsoft.Network/virtualNetworks/subnets@2023-06-01' = {
+resource subnet 'Microsoft.Network/virtualNetworks/subnets@2024-01-01' = {
   parent: vnet
   name: 'subnet-1'
   properties: {
@@ -168,7 +176,7 @@ resource subnet 'Microsoft.Network/virtualNetworks/subnets@2023-06-01' = {
   }
 }
 
-resource networkinterface 'Microsoft.Network/networkInterfaces@2023-06-01' = {
+resource networkinterface 'Microsoft.Network/networkInterfaces@2024-01-01' = {
   name: networkinterfacename
   location: location
   properties: {
@@ -194,7 +202,7 @@ resource networkinterface 'Microsoft.Network/networkInterfaces@2023-06-01' = {
   }
 }
 
-resource bastionHost 'Microsoft.Network/bastionHosts@2023-06-01' = {
+resource bastionHost 'Microsoft.Network/bastionHosts@2024-01-01' = {
   name: bastionName
   location: location
   sku: {
