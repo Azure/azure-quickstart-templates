@@ -65,11 +65,6 @@ resource publicip 'Microsoft.Network/publicIPAddresses@2023-06-01' = {
   sku: {
     name: 'StandardV2'
   }
-  zones: [
-    '1'
-    '2'
-    '3'
-  ]
   properties: {
     publicIPAddressVersion: 'IPv4'
     publicIPAllocationMethod: 'Static'
@@ -150,11 +145,6 @@ resource natgateway 'Microsoft.Network/natGateways@2023-06-01' = {
   sku: {
     name: 'StandardV2'
   }
-  zones: [
-    '1'
-    '2'
-    '3'
-  ]
   properties: {
     idleTimeoutInMinutes: 4
     publicIpAddresses: [
