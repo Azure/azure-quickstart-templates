@@ -25,46 +25,52 @@ param networkinterfacename string = 'nic-1'
 @description('Name of the NAT gateway public IP')
 param publicipname string = 'public-ip-nat'
 
+@description('Name of the Bastion host')
+param bastionName string = 'bastion-host'
+
 @description('Name of the virtual machine NSG')
 param nsgname string = 'nsg-1'
 
 @description('Administrator username for virtual machine')
 param adminusername string
 
-@description('Administrator password for virtual machine')
+@description('Type of authentication to use on the Virtual Machine. SSH key is recommended.')
+@allowed([
+  'sshPublicKey'
+  'password'
+])
+param authenticationType string = 'sshPublicKey'
+
+@description('SSH Key or password for the Virtual Machine. SSH key is recommended.')
 @secure()
-param adminpassword string
+param adminPasswordOrKey string
 
 @description('Name of resource group')
 param location string = resourceGroup().location
 
-resource nsg 'Microsoft.Network/networkSecurityGroups@2021-05-01' = {
-  name: nsgname
-  location: location
-  properties: {
-    securityRules: [
+var linuxConfiguration = {
+  disablePasswordAuthentication: true
+  ssh: {
+    publicKeys: [
       {
-        name: 'SSH'
-        properties: {
-          protocol: 'Tcp'
-          sourcePortRange: '*'
-          destinationPortRange: '22'
-          sourceAddressPrefix: '*'
-          destinationAddressPrefix: '*'
-          access: 'Allow'
-          priority: 300
-          direction: 'Inbound'
-        }
+        path: '/home/${adminusername}/.ssh/authorized_keys'
+        keyData: adminPasswordOrKey
       }
     ]
   }
 }
 
-resource publicip 'Microsoft.Network/publicIPAddresses@2021-05-01' = {
+resource nsg 'Microsoft.Network/networkSecurityGroups@2024-01-01' = {
+  name: nsgname
+  location: location
+  properties: {}
+}
+
+resource publicip 'Microsoft.Network/publicIPAddresses@2024-01-01' = {
   name: publicipname
   location: location
   sku: {
-    name: 'Standard'
+    name: 'StandardV2'
   }
   properties: {
     publicIPAddressVersion: 'IPv4'
@@ -73,7 +79,7 @@ resource publicip 'Microsoft.Network/publicIPAddresses@2021-05-01' = {
   }
 }
 
-resource vm 'Microsoft.Compute/virtualMachines@2021-11-01' = {
+resource vm 'Microsoft.Compute/virtualMachines@2023-09-01' = {
   name: vmname
   location: location
   properties: {
@@ -101,12 +107,8 @@ resource vm 'Microsoft.Compute/virtualMachines@2021-11-01' = {
     osProfile: {
       computerName: vmname
       adminUsername: adminusername
-      adminPassword: adminpassword
-      linuxConfiguration: {
-        disablePasswordAuthentication: false
-        provisionVMAgent: true
-      }
-      allowExtensionOperations: true
+      adminPassword: adminPasswordOrKey
+      linuxConfiguration: ((authenticationType == 'password') ? null : linuxConfiguration)
     }
     networkProfile: {
       networkInterfaces: [
@@ -118,7 +120,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2021-11-01' = {
   }
 }
 
-resource vnet 'Microsoft.Network/virtualNetworks@2021-05-01' = {
+resource vnet 'Microsoft.Network/virtualNetworks@2024-01-01' = {
   name: vnetname
   location: location
   properties: {
@@ -145,11 +147,11 @@ resource vnet 'Microsoft.Network/virtualNetworks@2021-05-01' = {
   }
 }
 
-resource natgateway 'Microsoft.Network/natGateways@2021-05-01' = {
+resource natgateway 'Microsoft.Network/natGateways@2024-01-01' = {
   name: natgatewayname
   location: location
   sku: {
-    name: 'Standard'
+    name: 'StandardV2'
   }
   properties: {
     idleTimeoutInMinutes: 4
@@ -161,7 +163,7 @@ resource natgateway 'Microsoft.Network/natGateways@2021-05-01' = {
   }
 }
 
-resource subnet 'Microsoft.Network/virtualNetworks/subnets@2021-05-01' = {
+resource subnet 'Microsoft.Network/virtualNetworks/subnets@2024-01-01' = {
   parent: vnet
   name: 'subnet-1'
   properties: {
@@ -174,7 +176,7 @@ resource subnet 'Microsoft.Network/virtualNetworks/subnets@2021-05-01' = {
   }
 }
 
-resource networkinterface 'Microsoft.Network/networkInterfaces@2021-05-01' = {
+resource networkinterface 'Microsoft.Network/networkInterfaces@2024-01-01' = {
   name: networkinterfacename
   location: location
   properties: {
@@ -196,6 +198,19 @@ resource networkinterface 'Microsoft.Network/networkInterfaces@2021-05-01' = {
     enableIPForwarding: false
     networkSecurityGroup: {
       id: nsg.id
+    }
+  }
+}
+
+resource bastionHost 'Microsoft.Network/bastionHosts@2024-01-01' = {
+  name: bastionName
+  location: location
+  sku: {
+    name: 'Developer'
+  }
+  properties: {
+    virtualNetwork: {
+      id: vnet.id
     }
   }
 }
