@@ -38,7 +38,7 @@ do {
     }
     catch {
         $exceptionText = ($_ | Out-String).Trim()
-        Write-Verbose "Exception occured downloading agent: $exceptionText in try number $retries" -verbose
+        Write-Verbose "Exception occurred downloading agent: $exceptionText in try number $retries" -verbose
         $retries++
         Start-Sleep -Seconds 30 
     }

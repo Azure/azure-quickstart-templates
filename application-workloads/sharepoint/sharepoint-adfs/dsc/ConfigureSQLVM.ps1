@@ -60,7 +60,7 @@ configuration ConfigureSQLVM
         #**********************************************************
         # DNS record for ADFS is created only after the ADFS farm was created and DC restarted (required by ADFS setup)
         # This turns out to be a very reliable way to ensure that VM joins AD only when the DC is guaranteed to be ready
-        # This totally eliminates the random errors that occured in WaitForADDomain with the previous logic (and no more need of WaitForADDomain)
+        # This totally eliminates the random errors that occurred in WaitForADDomain with the previous logic (and no more need of WaitForADDomain)
         Script WaitForADFSFarmReady
         {
             SetScript =
