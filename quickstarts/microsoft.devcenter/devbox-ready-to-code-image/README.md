@@ -57,7 +57,7 @@ The sample includes the following demo images (named after the key git repositor
     - Clones repositories https://github.com/dotnet/eShop and https://github.com/Azure-Samples/eShopOnAzure
     - Demonstrates usage of custom restore/build/test commands when configuring `Ready-To-Code` repository.
 - [axios](./images/axios.bicep)
-    - Installs for all users tools like NodeJS and NPM packages.
+    - Installs for all users tools like Node.js and NPM packages.
     - installs for all users WinGet packages.
     - Clones repositories https://github.com/axios/axios and https://github.com/Azure/azure-quickstart-templates
     - Uses NPM to restore packages and build the `axios` repository.
