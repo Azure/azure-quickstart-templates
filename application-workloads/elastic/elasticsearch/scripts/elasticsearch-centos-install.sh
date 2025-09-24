@@ -539,7 +539,7 @@ exit 0
 #echo "session    required    pam_limits.so" >> /etc/pam.d/sudo
 
 #--------------- TEMP (We will use this for the update path yet) ---------------
-#Updating the properties in the existing configuraiton has been a bit sensitve and requires more testing
+#Updating the properties in the existing configuration has been a bit sensitve and requires more testing
 #sed -i -e "/cluster\.name/s/^#//g;s/^\(cluster\.name\s*:\s*\).*\$/\1${CLUSTER_NAME}/" /etc/elasticsearch/elasticsearch.yml
 #sed -i -e "/bootstrap\.mlockall/s/^#//g;s/^\(bootstrap\.mlockall\s*:\s*\).*\$/\1true/" /etc/elasticsearch/elasticsearch.yml
 #sed -i -e "/path\.data/s/^#//g;s/^\(path\.data\s*:\s*\).*\$/\1${DATAPATH_CONFIG}/" /etc/elasticsearch/elasticsearch.yml
