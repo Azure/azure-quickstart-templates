@@ -31,7 +31,7 @@ This ARM template is intended to create a **Cosmos DB Account** quickly with the
 `Tags : CosmosDB`
 
 ## Parameters
-The following parameters has default value allowing to deploy the template as-is without providing any parameter but could be overriden at the deployment time :
+The following parameters has default value allowing to deploy the template as-is without providing any parameter but could be overridden at the deployment time :
 
 `name` : Name of the Cosmos DB Account, default is a unique string calculated from the "cosmosdb" token and the resource group id.
 
