@@ -53,7 +53,7 @@ try
         $Status = Stop-AzureRmVM -Name $VMName -ResourceGroupName $ResourceGroupName -Force
         if($Status -eq $null)
         {
-            Write-Output "Error occured while stopping the Virtual Machine."
+            Write-Output "Error occurred while stopping the Virtual Machine."
         }
         else
         {
@@ -67,7 +67,7 @@ try
         $Status = Start-AzureRmVM -Name $VMName -ResourceGroupName $ResourceGroupName
         if($Status -eq $null)
         {
-            Write-Output "Error occured while starting the Virtual Machine $($VMName)"
+            Write-Output "Error occurred while starting the Virtual Machine $($VMName)"
         }
         else
         {
