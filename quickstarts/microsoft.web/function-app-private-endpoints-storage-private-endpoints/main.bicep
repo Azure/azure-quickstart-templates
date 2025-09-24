@@ -43,7 +43,7 @@ param functionSubnetName string = 'snet-func'
 @description('The name of the virtual network subnet used for allocating IP addresses for private endpoints.')
 param privateEndpointSubnetName string = 'snet-pe'
 
-@description('The IP adddress space used for the virtual network.')
+@description('The IP address space used for the virtual network.')
 param vnetAddressPrefix string = '10.100.0.0/16'
 
 @description('The IP address space used for the Azure Function integration subnet.')
