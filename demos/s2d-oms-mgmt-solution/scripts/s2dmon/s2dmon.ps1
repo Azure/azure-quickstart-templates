@@ -283,7 +283,7 @@ Function Now {
 #                                                                             #
 #   History                                                                   #
 #    2016-06-05 JFL Also prepend the Process ID.                              #
-#    2016-06-08 JFL Allow outputing blank lines.                              #
+#    2016-06-08 JFL Allow outputting blank lines.                              #
 #                                                                             #
 #-----------------------------------------------------------------------------#
 
