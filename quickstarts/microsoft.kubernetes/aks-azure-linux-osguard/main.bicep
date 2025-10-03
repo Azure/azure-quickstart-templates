@@ -37,7 +37,6 @@ resource aks 'Microsoft.ContainerService/managedClusters@2022-05-02-preview' = {
     agentPoolProfiles: [
       {
         name: 'agentpool'
-        osDiskSizeGB: osDiskSizeGB
         count: agentCount
         vmSize: agentVMSize
         osType: 'Linux'
@@ -51,16 +50,6 @@ resource aks 'Microsoft.ContainerService/managedClusters@2022-05-02-preview' = {
           }
       }
     ]
-    linuxProfile: {
-      adminUsername: linuxAdminUsername
-      ssh: {
-        publicKeys: [
-          {
-            keyData: sshRSAPublicKey
-          }
-        ]
-      }
-    }
   }
 }
 
