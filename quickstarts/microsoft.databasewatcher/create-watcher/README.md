@@ -1,5 +1,5 @@
 ---
-description: This sample creates a database watcher for Azure SQL and configures its data store, SQL targets, and managed private endpoints
+description: This sample creates a watcher in the Azure SQL database watcher service and configures its data store, SQL targets, and managed private endpoints
 page_type: sample
 products:
 - azure
@@ -9,7 +9,8 @@ languages:
 - bicep
 - json
 ---
-# Create a database watcher
+
+# Enable database watcher for Azure SQL
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.databasewatcher/create-watcher/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.databasewatcher/create-watcher/PublicDeployment.svg)
@@ -28,10 +29,11 @@ languages:
 
 
 Use this sample to:
-- Create a [database watcher](https://learn.microsoft.com/azure/azure-sql/database-watcher-overview).
-- Create an Azure Data Explorer cluster and a database on that cluster to be used as the [data store](https://learn.microsoft.com/azure/azure-sql/database-watcher-manage#manage-data-store) for the database watcher.
-- Create Azure SQL database, elastic pool, and managed instance [targets](https://learn.microsoft.com/azure/azure-sql/database-watcher-manage#add-sql-targets-to-a-watcher) for the database watcher, using Microsoft Entra and SQL authentication.
-- Create [managed private endpoints](https://learn.microsoft.com/azure/azure-sql/database-watcher-manage#create-a-managed-private-endpoint) for the database watcher to connect to an Azure SQL logical server and an Azure key vault using private connectivity.
+
+- Create a watcher in the [database watcher](https://learn.microsoft.com/azure/azure-sql/database-watcher-overview) service for Azure SQL.
+- Create an Azure Data Explorer cluster and a database on that cluster to be used as the [data store](https://learn.microsoft.com/azure/azure-sql/database-watcher-manage#manage-data-store) for the watcher.
+- Create Azure SQL database, elastic pool, and managed instance [SQL targets](https://learn.microsoft.com/azure/azure-sql/database-watcher-manage#add-sql-targets-to-a-watcher) for the watcher, using Microsoft Entra and SQL authentication.
+- Create [managed private endpoints](https://learn.microsoft.com/azure/azure-sql/database-watcher-manage#create-a-managed-private-endpoint) for the watcher to connect to an Azure SQL logical server and a vault in Azure Key Vault using private connectivity.
 
 ## Prerequisites
 

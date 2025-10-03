@@ -35,7 +35,7 @@ This template deploys an API center and registers a sample API in the API center
 | location | string | Yes | Specifies the location for the API center. |
 | apiCenterName | string | Yes | Specifies the name of the API center. |
 | apiName | string | No | Specifies the name of an API to register in the API center. |
-| apiType | string | No | Specifies the type of API to register in the API center. Example *REST*. |
+| apiType | string | No | Specifies the type of API to register in the API center. Example: *REST*. |
 
 
 `Tags: Microsoft.ApiCenter/service`

@@ -1,5 +1,5 @@
 @description('Specifies whether to deploy Azure Databricks workspace with Secure Cluster Connectivity (No Public IP) enabled or not')
-param disablePublicIp bool = false
+param disablePublicIp bool = true
 
 @description('Name of the outbound Load Balancer\'s Backend Pool.')
 param loadBalancerBackendPoolName string = 'myLoadBalancerBackendPool'
@@ -120,7 +120,7 @@ resource loadBalancer 'Microsoft.Network/loadBalancers@2023-09-01' = {
   }
 }
 
-resource vnet 'Microsoft.Network/virtualNetworks@2023-09-01' = {
+resource vnet 'Microsoft.Network/virtualNetworks@2024-05-01' = {
   location: location
   name: vnetName
   properties: {
@@ -137,6 +137,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2023-09-01' = {
           networkSecurityGroup: {
             id: nsgId
           }
+          defaultOutboundAccess: false
           delegations: [
             {
               name: 'databricks-del-public'
@@ -154,6 +155,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2023-09-01' = {
           networkSecurityGroup: {
             id: nsgId
           }
+          defaultOutboundAccess: false
           delegations: [
             {
               name: 'databricks-del-private'
@@ -168,7 +170,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2023-09-01' = {
   }
 }
 
-resource workspace 'Microsoft.Databricks/workspaces@2023-09-15-preview' = {
+resource workspace 'Microsoft.Databricks/workspaces@2024-05-01' = {
   location: location
   name: workspaceName
   sku: {
@@ -197,7 +199,4 @@ resource workspace 'Microsoft.Databricks/workspaces@2023-09-15-preview' = {
       }
     }
   }
-  dependsOn: [
-    nsg
-  ]
 }

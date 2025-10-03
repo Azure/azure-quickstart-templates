@@ -17,13 +17,13 @@ param administratorLogin string
 param administratorLoginPassword string
 
 @description('Azure database for MySQL sku name ')
-param skuName string = 'Standard_B1s'
+param skuName string = 'Standard_D2ads_v5'
 
 @description('Azure database for MySQL storage Size ')
 param StorageSizeGB int = 20
 
 @description('Azure database for MySQL storage Iops')
-param StorageIops int = 360
+param StorageIops int = 3200
 
 @description('Azure database for MySQL pricing tier')
 @allowed([
@@ -31,7 +31,7 @@ param StorageIops int = 360
   'MemoryOptimized'
   'Burstable'
 ])
-param SkuTier string = 'Burstable'
+param SkuTier string = 'GeneralPurpose'
 
 @description('MySQL version')
 @allowed([
@@ -64,7 +64,7 @@ param mySqlSubnetPrefix string = '10.0.0.0/28'
 @description('Composing the subnetId')
 var mysqlSubnetId = '${vnetLink.properties.virtualNetwork.id}/subnets/${subnetName}'
 
-resource vnet 'Microsoft.Network/virtualNetworks@2023-09-01' = {
+resource vnet 'Microsoft.Network/virtualNetworks@2024-01-01' = {
   name: virtualNetworkName
   location: location
   properties: {
@@ -75,7 +75,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2023-09-01' = {
     }
   }
 
-  resource subnet 'subnets@2023-09-01' = {
+  resource subnet 'subnets@2024-01-01' = {
     name: subnetName
     properties: {
       addressPrefix: mySqlSubnetPrefix
@@ -96,6 +96,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2023-09-01' = {
 resource dnszone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   name: dnsZoneFqdn
   location: 'global'
+  properties: {}
 }
 
 resource vnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
@@ -110,7 +111,7 @@ resource vnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06
   }
 }
 
-resource mysqlDbServer 'Microsoft.DBforMySQL/flexibleServers@2023-12-01-preview' = {
+resource mysqlDbServer 'Microsoft.DBforMySQL/flexibleServers@2024-02-01-preview' = {
   name: serverName
   location: location
   sku: {

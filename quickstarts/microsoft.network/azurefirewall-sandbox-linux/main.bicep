@@ -90,6 +90,9 @@ var linuxConfiguration = {
       }
     ]
   }
+  patchSettings: { 
+      patchMode: 'AutomaticByPlatform'
+  }
 }
 var networkSecurityGroupName = '${serversSubnetName}-nsg'
 var azureFirewallIpConfigurations = [for i in range(0, numberOfFirewallPublicIPAddresses): {
@@ -271,15 +274,18 @@ resource ServerNic 'Microsoft.Network/networkInterfaces@2023-09-01' = {
 resource JumpBox 'Microsoft.Compute/virtualMachines@2023-09-01' = {
   name: 'JumpBox'
   location: location
+  tags: { 
+    AzSecPackAutoConfigReady: true 
+  }
   properties: {
     hardwareProfile: {
       vmSize: vmSize
     }
     storageProfile: {
       imageReference: {
-        publisher: 'Canonical'
-        offer: '0001-com-ubuntu-server-lunar-daily'
-        sku: '23_04-daily-gen2'
+        publisher: 'MicrosoftCBLMariner'
+        offer: 'cbl-mariner'
+        sku: 'cbl-mariner-2-gen2'
         version: 'latest'
       }
       osDisk: {
@@ -339,15 +345,18 @@ resource JumpBox_extension 'Microsoft.Compute/virtualMachines/extensions@2023-09
 resource Server 'Microsoft.Compute/virtualMachines@2023-09-01' = {
   name: 'Server'
   location: location
+  tags: { 
+    AzSecPackAutoConfigReady: true 
+  }
   properties: {
     hardwareProfile: {
       vmSize: vmSize
     }
     storageProfile: {
       imageReference: {
-        publisher: 'Canonical'
-        offer: '0001-com-ubuntu-server-lunar'
-        sku: '23_04-gen2'
+        publisher: 'MicrosoftCBLMariner'
+        offer: 'cbl-mariner'
+        sku: 'cbl-mariner-2-gen2'
         version: 'latest'
       }
       osDisk: {

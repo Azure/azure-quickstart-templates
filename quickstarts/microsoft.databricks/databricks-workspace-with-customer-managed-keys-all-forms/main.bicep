@@ -2,7 +2,7 @@
 param location string
 
 @description('Specifies whether to deploy Azure Databricks workspace with Secure Cluster Connectivity (No Public IP) enabled or not')
-param enableNoPublicIp bool = false
+param enableNoPublicIp bool = true
 
 @description('The name of the Azure Databricks workspace to create.')
 param workspaceName string
@@ -58,8 +58,9 @@ param diskCmkKeyVaultUrl string = ''
 
 param diskCmkEnableAutoRotation bool = false
 
-var managedResourceGroupId = '${subscription().id}/resourceGroups/${managedResourceGroupName}'
 var managedResourceGroupName = 'databricks-rg-${workspaceName}-${uniqueString(workspaceName, resourceGroup().id)}'
+var trimmedMRGName = substring(managedResourceGroupName, 0, min(length(managedResourceGroupName), 90))
+var managedResourceGroupId = '${subscription().id}/resourceGroups/${trimmedMRGName}'
 var msCmkKeyVaultUrl = uri('https://${msCmkKeyVaultName}${environment().suffixes.keyvaultDns}', '/')
 var dbfsCmkKeyVaultUrl = uri('https://${dbfsCmkKeyVaultName}${environment().suffixes.keyvaultDns}', '/')
 var trimmedDiskCmkKeyVaultUrl = replace(diskCmkKeyVaultUrl, '.net/', '.net/')
@@ -73,7 +74,7 @@ module DatabricksManagedServicesCMKAccessPolicy './modules/ManagedServicesCMKAcc
   }
 }
 
-resource workspace 'Microsoft.Databricks/workspaces@2023-02-01' = {
+resource workspace 'Microsoft.Databricks/workspaces@2024-05-01' = {
   name: workspaceName
   location: location
   sku: {
