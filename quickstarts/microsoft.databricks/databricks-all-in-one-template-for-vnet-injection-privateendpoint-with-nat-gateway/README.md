@@ -9,7 +9,7 @@ languages:
 - bicep
 - json
 ---
-# Azure Databricks All-in-one Templat VNetInjection-Pvtendpt
+# Azure Databricks All-in-one Template VNetInjection-Pvtendpt
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.databricks/databricks-all-in-one-template-for-vnet-injection-privateendpoint-with-nat-gateway/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.databricks/databricks-all-in-one-template-for-vnet-injection-privateendpoint-with-nat-gateway/PublicDeployment.svg)
