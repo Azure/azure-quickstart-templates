@@ -11,11 +11,6 @@ param vaultStorageRedundancy string = 'GeoRedundant'
 @description('Name of the Backup Policy')
 param backupPolicyName string = 'policy${uniqueString(resourceGroup().id)}'
 
-@description('Operational tier backup retention duration in days')
-@minValue(1)
-@maxValue(360)
-param operationalTierRetentionInDays int = 30
-
 @description('Vault tier default backup retention duration in days')
 @minValue(7)
 @maxValue(3650)
