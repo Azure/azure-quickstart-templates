@@ -63,7 +63,7 @@ resource id_id_principalId_roleDefinitionId 'Microsoft.Authorization/roleAssignm
 
 resource projectName_formattedPool 'Microsoft.DevCenter/projects/pools@2024-10-01-preview' = {
   parent: project
-  name: 'formattedPoolName'
+  name: formattedPoolName
   location: location
   tags: {
     'hidden-created-with': 'devbox-quickstart-resource'
