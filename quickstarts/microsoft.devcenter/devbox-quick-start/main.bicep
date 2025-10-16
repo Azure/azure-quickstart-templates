@@ -15,10 +15,8 @@ var formattedPoolName = '${poolName}-${location}-pool'
 var poolPropertyAdmin = 'Enabled'
 var poolPropertyNetworkType = 'Managed'
 var poolPropertyNetworkName = 'mhn-network'
-var devBoxDefinitionName = '${devCenterName}-${uniqueString(devCenterName)}-devboxdefinition'
 var image_win11_ent_vs2022 = 'microsoftvisualstudio_visualstudioplustools_vs-2022-ent-general-win11-m365-gen2'
 var compute_16c_64gb = 'general_i_16c64gb512ssd_v2'
-var storage_512gb = '512gb'
 
 resource devCenterUnique 'Microsoft.DevCenter/devcenters@2024-10-01-preview' = {
   name: devCenterUniqueName
@@ -63,25 +61,6 @@ resource id_id_principalId_roleDefinitionId 'Microsoft.Authorization/roleAssignm
   }
 }
 
-resource devCenterUniqueName_devBoxDefinition 'Microsoft.DevCenter/devcenters/devboxdefinitions@2024-08-01-preview' = {
-  parent: devCenterUnique
-  name: devBoxDefinitionName
-  location: location
-  tags: {
-    'hidden-created-with': 'devbox-quickstart-resource'
-  }
-  properties: {
-    imageReference: {
-      id: '${devCenterUnique.id}/galleries/default/images/${image_win11_ent_vs2022}'
-    }
-    sku: {
-      name: compute_16c_64gb
-    }
-    osStorageType: 'ssd_${storage_512gb}'
-    hibernateSupport: 'Enabled'
-  }
-}
-
 resource projectName_formattedPool 'Microsoft.DevCenter/projects/pools@2024-10-01-preview' = {
   parent: project
   name: formattedPoolName
@@ -90,7 +69,16 @@ resource projectName_formattedPool 'Microsoft.DevCenter/projects/pools@2024-10-0
     'hidden-created-with': 'devbox-quickstart-resource'
   }
   properties: {
-    devBoxDefinitionName: devBoxDefinitionName
+    devBoxDefinitionType: 'Value'
+    devBoxDefinitionName: 'MarketplaceImage'
+    devBoxDefinition: {
+      imageReference: {
+        id: '${devCenterUnique.id}/galleries/default/images/${image_win11_ent_vs2022}'
+      }
+      sku: {
+        name: compute_16c_64gb
+      }
+    }
     licenseType: 'Windows_Client'
     localAdministrator: poolPropertyAdmin
     managedVirtualNetworkRegions: [
