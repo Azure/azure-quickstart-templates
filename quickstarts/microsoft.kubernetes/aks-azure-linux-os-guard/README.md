@@ -1,5 +1,5 @@
 ---
-description: Deploy a Azure Linux with OS Guard cluster Azure Container Service (AKS)
+description: Deploy a Azure Linux with OS Guard cluster on Azure Container Service (AKS)
 page_type: sample
 products:
 - azure
@@ -14,7 +14,7 @@ languages:
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.kubernetes/aks-azure-linux-os-guard/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.kubernetes/aks-azure-linux-os-guard/PublicDeployment.svg)
 
-![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.kubernetes/aks-azure-linux-os-guadr/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.kubernetes/aks-azure-linux-os-guard/FairfaxLastTestDate.svg)
 ![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.kubernetes/aks-azure-linux-os-guard/FairfaxDeployment.svg)
 ![GovLastTestDate](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.kubernetes/aks-azure-linux-os-guard/FairfaxLastTestDate.svg)
 
