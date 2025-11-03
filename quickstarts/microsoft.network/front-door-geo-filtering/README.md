@@ -1,5 +1,5 @@
 ---
-description: This template creates a WAF geo filtering rule for Azure Front Door that allows/blocks traffic from certain countries.
+description: This template creates a WAF geo filtering rule for Azure Front Door that allows/blocks traffic from certain countries/regions.
 page_type: sample
 products:
 - azure
