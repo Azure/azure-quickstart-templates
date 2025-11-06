@@ -300,7 +300,7 @@ resource backupInstance 'Microsoft.DataProtection/backupVaults/backupInstances@2
       policyParameters: {
         backupDatasourceParametersList: [
           {
-            objectType: 'BlobBackupDatasourceParameters'
+            objectType: 'AdlsBlobBackupDatasourceParameters'
             containersList: containerList
           }
         ]

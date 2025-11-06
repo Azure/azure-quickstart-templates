@@ -38,7 +38,7 @@ Azure Backup provides vaulted backup solution for Azure Data Lake. [Learn more](
 Azure Data Lake Storage vaulted backup is a streamlined, cloud-native solution to back up and restore general-purpose v2 storage accounts with a hierarchical namespace. It allows selective backup and restoration of containers, and store backups in a dedicated vault for granular control.
 
 #### Vaulted Backup
-Vaulted backup uses the platform capability of **object replication** to copy data to the Backup vault. Object replication asynchronously copies block blobs between a source storage account and a destination storage account. The contents of the blob, any versions associated with the blob, and the blob's metadata and properties are all copied from the source container to the destination container.
+Vaulted backup uses the platform capability of **object replication** to copy data to the Backup vault. Object replication asynchronously copies block blobs between a source storage account and a destination storage account. The contents of the blob, and the blob's metadata and properties are all copied from the source container to the destination container including the folder hierarchy and access control lists (ACLs).
 
 When you configure protection, Azure Backup allocates a destination storage account (Backup vault's storage account managed by Azure Backup) and enables object replication policy at container level on both destination and source storage account. When a backup job is triggered, the Azure Backup service creates a recovery point marker on the source storage account and polls the destination account for the recovery point marker replication. Once the replication point marker is present on the destination, a recovery point is created.
 
