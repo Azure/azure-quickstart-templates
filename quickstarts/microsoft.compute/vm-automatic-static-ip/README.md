@@ -28,7 +28,7 @@ This template allows you to deploy a simple Linux VM using Ubuntu from the marke
 
 ## Prerequisites
 
-There are no prerequistes for the deployment.
+There are no prerequisites for the deployment.
 
 ## Deployment steps
 
