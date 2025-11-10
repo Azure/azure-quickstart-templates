@@ -17,7 +17,7 @@ param containerAppLogAnalyticsName string = 'containerapp-log-${uniqueString(res
 param location string
 
 @description('Specifies the docker container image to deploy.')
-param frontendContainerImage string = 'mcr.microsoft.com/azuredocs/azure-vote-front:v1'
+param frontendContainerImage string = 'lgmorand/azure-vote-front:v1'
 
 @description('Specifies the docker container image to deploy for the Redis backend.')
 param backendContainerImage string = 'mcr.microsoft.com/oss/bitnami/redis:6.0.8'
@@ -32,7 +32,7 @@ param minReplica int = 1
 @maxValue(25)
 param maxReplica int = 3
 
-resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2021-06-01' = {
+resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2022-10-01' = {
   name: containerAppLogAnalyticsName
   location: location
   properties: {
@@ -42,7 +42,7 @@ resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2021-06-01' = {
   }
 }
 
-resource containerAppEnv 'Microsoft.App/managedEnvironments@2022-01-01-preview' = {
+resource containerAppEnv 'Microsoft.App/managedEnvironments@2025-02-02-preview' = {
   name: containerAppEnvName
   location: location
   properties: {
@@ -56,7 +56,7 @@ resource containerAppEnv 'Microsoft.App/managedEnvironments@2022-01-01-preview' 
   }
 }
 
-resource containerApp 'Microsoft.App/containerApps@2022-01-01-preview' = {
+resource containerApp 'Microsoft.App/containerApps@2025-02-02-preview' = {
   name: containerAppName
   location: location
   properties: {
