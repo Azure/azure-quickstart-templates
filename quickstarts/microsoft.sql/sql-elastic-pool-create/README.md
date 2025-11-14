@@ -7,6 +7,7 @@ products:
 urlFragment: sql-elastic-pool-create
 languages:
 - json
+- bicep
 ---
 # Deploy a new SQL Elastic Pool
 
@@ -18,6 +19,7 @@ languages:
 
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.sql/sql-elastic-pool-create/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.sql/sql-elastic-pool-create/CredScanResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.sql/sql-elastic-pool-create/BicepVersion.svg)
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.sql%2Fsql-elastic-pool-create%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.sql%2Fsql-elastic-pool-create%2Fazuredeploy.json)
@@ -27,6 +29,6 @@ This template allows you to deploy a new SQL Elastic Pool with its new associate
 
 For more information about Azure SQL Elastic Pools, see [What is an Azure Elastic Pool?](https://docs.microsoft.com/azure/sql-database/sql-database-elastic-pool).
 
-To know more about eDTU and storage limits for SQL Elastic Pools, please check out this [link](https://docs.microsoft.com/azure/sql-database/sql-database-elastic-pool#edtu-and-storage-limits-for-elastic-pools).
+To know more about eDTU and storage limits for SQL Elastic Pools, please check out this [Resource limits for elastic pools](https://learn.microsoft.com/en-us/azure/azure-sql/database/resource-limits-dtu-elastic-pools?view=azuresql).
 
 `Tags: Microsoft.Sql/servers, Microsoft.Sql/servers/elasticPools, Microsoft.Sql/servers/databases, Microsoft.Sql/servers/firewallrules`
