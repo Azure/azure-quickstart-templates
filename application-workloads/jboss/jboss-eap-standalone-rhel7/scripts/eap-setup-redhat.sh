@@ -46,7 +46,7 @@ git clone https://github.com/MyriamFentanes/dukes.git >> /home/$1/install.out.tx
 mv /home/$1/dukes/target/dukes.war $EAP_HOME/standalone/deployments/dukes.war
 cat > $EAP_HOME/standalone/deployments/dukes.war.dodeploy
 
-echo "Configuring EAP managment user" >> /home/$1/install.progress.txt
+echo "Configuring EAP management user" >> /home/$1/install.progress.txt
 $EAP_HOME/bin/add-user.sh -u $EAP_USER -p $EAP_PASSWORD -g 'guest,mgmtgroup'
 
 echo "Start EAP 7" >> /home/$1/install.progress.txt
