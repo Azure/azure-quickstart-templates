@@ -40,7 +40,7 @@ $Timestampfield = "Timestamp"
 #Update customer Id to your Operational Insights workspace ID
 $customerID = Get-AutomationVariable -Name 'OMSWorkspaceId'
 
-#For shared key use either the primary or seconday Connected Sources client authentication key   
+#For shared key use either the primary or secondary Connected Sources client authentication key   
 $sharedKey = Get-AutomationVariable -Name 'OMSWorkspaceKey'
 
 $logType  = "servicebus"
