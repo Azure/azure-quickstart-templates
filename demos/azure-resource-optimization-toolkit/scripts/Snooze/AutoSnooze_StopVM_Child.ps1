@@ -71,7 +71,7 @@ if ($WebhookData -ne $null) {
     
     if($Status -eq $null)
     {
-        Write-Output "Error occured while stopping the Virtual Machine. $AlertContext.resourceName"
+        Write-Output "Error occurred while stopping the Virtual Machine. $AlertContext.resourceName"
     }
     else
     {
