@@ -24,14 +24,14 @@ configuration ConfigureSPVM
     )
 
     Import-DscResource -ModuleName ComputerManagementDsc -ModuleVersion 10.0.0 # Custom
-    Import-DscResource -ModuleName NetworkingDsc -ModuleVersion 9.0.0
-    Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion 6.6.2
+    Import-DscResource -ModuleName NetworkingDsc -ModuleVersion 9.1.0
+    Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion 6.7.0
     Import-DscResource -ModuleName xCredSSP -ModuleVersion 1.4.0
     Import-DscResource -ModuleName WebAdministrationDsc -ModuleVersion 4.2.1
-    Import-DscResource -ModuleName SharePointDsc -ModuleVersion 5.6.1 # custom
-    Import-DscResource -ModuleName DnsServerDsc -ModuleVersion 3.0.0
+    Import-DscResource -ModuleName SharePointDsc -ModuleVersion 5.7.0 # Custom workaround on SPInstall
+    Import-DscResource -ModuleName DnsServerDsc -ModuleVersion 3.0.1
     Import-DscResource -ModuleName CertificateDsc -ModuleVersion 6.0.0
-    Import-DscResource -ModuleName SqlServerDsc -ModuleVersion 17.0.0
+    Import-DscResource -ModuleName SqlServerDsc -ModuleVersion 17.1.0 # Custom workaround on SqlSecureConnection
     Import-DscResource -ModuleName cChoco -ModuleVersion 2.6.0.0    # With custom changes to implement retry on package downloads
     Import-DscResource -ModuleName xPSDesiredStateConfiguration -ModuleVersion 9.2.1
 
@@ -244,13 +244,6 @@ configuration ConfigureSPVM
         cChocoPackageInstaller InstallVscode
         {   # Install takes about 30 secs
             Name                 = "vscode"
-            Ensure               = "Present"
-            DependsOn            = "[cChocoInstaller]InstallChoco"
-        }
-
-        cChocoPackageInstaller InstallAzureDataStudio
-        {   # Install takes about 40 secs
-            Name                 = "azure-data-studio"
             Ensure               = "Present"
             DependsOn            = "[cChocoInstaller]InstallChoco"
         }

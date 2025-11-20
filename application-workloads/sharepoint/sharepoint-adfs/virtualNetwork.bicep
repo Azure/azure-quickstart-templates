@@ -12,16 +12,19 @@ param mainSubnetAddressPrefix string = cidrSubnet(addressPrefix, 24, 1)
 @description('Optional. The network security rules to use in the network security group associated with the main subnet.')
 param networkSecurityRules array
 
-resource nsg_subnet_main 'Microsoft.Network/networkSecurityGroups@2024-07-01' = {
-  name: 'nsg-subnet-main'
-  location: location
-  properties: {
+@description('Tags to apply on the resources.')
+param tags object
+
+module nsg_subnet_main 'br/public:avm/res/network/network-security-group:0.5.2' = {
+  name: 'nsg-subnet-main-deployment'
+  params: {
+    name: 'nsg-subnet-main'
+    location: location
     securityRules: networkSecurityRules
   }
 }
 
-module virtualNetwork 'br/public:avm/res/network/virtual-network:0.7.0' = {
-  scope: resourceGroup()
+module virtualNetwork 'br/public:avm/res/network/virtual-network:0.7.1' = {
   name: '${virtualNetworkName}-module-avm'
   params: {
     addressPrefixes: [
@@ -29,12 +32,13 @@ module virtualNetwork 'br/public:avm/res/network/virtual-network:0.7.0' = {
     ]
     name: virtualNetworkName
     location: location
+    tags: tags
     subnets: [
       {
         addressPrefix: mainSubnetAddressPrefix
         name: 'mainSubnet'
         defaultOutboundAccess: false
-        networkSecurityGroupResourceId: nsg_subnet_main.id
+        networkSecurityGroupResourceId: nsg_subnet_main.outputs.resourceId
       }
     ]
   }
