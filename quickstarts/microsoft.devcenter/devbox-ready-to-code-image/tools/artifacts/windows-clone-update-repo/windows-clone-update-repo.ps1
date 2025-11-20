@@ -695,7 +695,7 @@ if ((-not (Test-Path variable:global:IsUnderTest)) -or (-not $global:IsUnderTest
     # If the optional parameter $repository_SourceControl is NOT passed in, default to git
     [SourceControl]$sourceControl = [SourceControl]::git
 
-    # If the optional paramter $repository_SourceControl is passed in, ensure it has a valid value
+    # If the optional parameter $repository_SourceControl is passed in, ensure it has a valid value
     if (-not [String]::IsNullOrEmpty($repository_SourceControl)) {
         $sourceControl = [Enum]::Parse([SourceControl], $repository_SourceControl)
     }
