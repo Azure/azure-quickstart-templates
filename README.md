@@ -15,3 +15,4 @@ To fix this, either use Bicep with [modules](https://learn.microsoft.com/en-us/a
 
 This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/). For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
 "My first contribution" 
+"My first contribution to Azure templates" 
