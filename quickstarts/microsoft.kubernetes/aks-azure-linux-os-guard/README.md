@@ -1,5 +1,5 @@
 ---
-description: Deploy a Azure Linux with OS Guard cluster on Azure Container Service (AKS)
+description: Deploy a Azure Linux with OS Guard cluster on Azure Container Service (AKS) 
 page_type: sample
 products:
 - azure
