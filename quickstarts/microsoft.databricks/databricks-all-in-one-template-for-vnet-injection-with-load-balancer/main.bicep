@@ -48,6 +48,7 @@ param vnetName string = 'databricks-vnet'
 @description('The name of the Azure Databricks workspace to create.')
 param workspaceName string
 
+var loadBalancerId = loadBalancer.id
 var loadBalancerBackendPoolId = resourceId('Microsoft.Network/loadBalancers/backendAddressPools', loadBalancerName, loadBalancerBackendPoolName)
 var loadBalancerFrontendConfigId = resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', loadBalancerName, loadBalancerFrontendConfigName)
 var managedResourceGroupName = 'databricks-rg-${workspaceName}-${uniqueString(workspaceName, resourceGroup().id)}'
@@ -119,7 +120,7 @@ resource loadBalancer 'Microsoft.Network/loadBalancers@2023-09-01' = {
   }
 }
 
-resource vnet 'Microsoft.Network/virtualNetworks@2023-09-01' = {
+resource vnet 'Microsoft.Network/virtualNetworks@2024-05-01' = {
   location: location
   name: vnetName
   properties: {
@@ -136,6 +137,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2023-09-01' = {
           networkSecurityGroup: {
             id: nsgId
           }
+          defaultOutboundAccess: false
           delegations: [
             {
               name: 'databricks-del-public'
@@ -153,6 +155,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2023-09-01' = {
           networkSecurityGroup: {
             id: nsgId
           }
+          defaultOutboundAccess: false
           delegations: [
             {
               name: 'databricks-del-private'
@@ -187,10 +190,13 @@ resource workspace 'Microsoft.Databricks/workspaces@2024-05-01' = {
       }
       enableNoPublicIp: {
         value: disablePublicIp
-      }     
+      }
+      loadBalancerId: {
+        value: loadBalancerId
+      }
+      loadBalancerBackendPoolName: {
+        value: loadBalancerBackendPoolName
+      }
     }
   }
-  dependsOn: [
-    nsg
-  ]
 }

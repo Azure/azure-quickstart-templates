@@ -5,10 +5,10 @@ param disablePublicIp bool = true
 param location string = resourceGroup().location
 
 @description('Name of the NAT gateway to be attached to the workspace subnets.')
-param natGatewayName string = 'myNATgateway'
+param natGatewayName string = 'nat-gateway'
 
 @description('Name of the NAT gateway public IP.')
-param natGatewayPublicIpName string = 'myNATGatewayPublicIP'
+param natGatewayPublicIpName string = 'nat-gw-public-ip'
 
 @description('The name of the network security group to create.')
 param nsgName string = 'databricks-nsg'
@@ -110,6 +110,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2023-09-01' = {
               }
             }
           ]
+          defaultOutboundAccess: false
         }
       }
       {
@@ -130,6 +131,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2023-09-01' = {
               }
             }
           ]
+          defaultOutboundAccess: false
         }
       }
     ]
@@ -159,7 +161,4 @@ resource workspace 'Microsoft.Databricks/workspaces@2024-05-01' = {
       }
     }
   }
-  dependsOn: [
-    nsg
-  ]
 }

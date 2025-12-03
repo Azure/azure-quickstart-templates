@@ -62,7 +62,7 @@ Parameter         | Suggested value     | Description
 **WorkspaceName** |  | The name of your DataBricks Workspace.
 **Pricing Tier** | 14 Day Trial, Standard or Premium
 **Resource Group** The Resource Group which you wish to deploy your DataBricks Environment.
-**Disable Public Ip** | Default is false | Set this to true to disable Public IP address
+**Disable Public Ip** | Default is true | Set this to false to enable Public IP address
 
 All the other parameters can be left as default.
 

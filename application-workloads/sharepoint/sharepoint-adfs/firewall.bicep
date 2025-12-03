@@ -6,12 +6,12 @@ param addressPrefix string
 param http_port int = 8080
 param https_port int = 8443
 
-resource virtualNetwork 'Microsoft.Network/virtualNetworks@2024-05-01' existing = {
+resource virtualNetwork 'Microsoft.Network/virtualNetworks@2024-07-01' existing = {
   scope: resourceGroup()
   name: virtualNetworkName
 }
 
-resource bastion_subnet 'Microsoft.Network/virtualNetworks/subnets@2024-05-01' = {
+resource bastion_subnet 'Microsoft.Network/virtualNetworks/subnets@2024-07-01' = {
   parent: virtualNetwork
   name: 'AzureFirewallSubnet'
   properties: {
@@ -20,7 +20,7 @@ resource bastion_subnet 'Microsoft.Network/virtualNetworks/subnets@2024-05-01' =
   }
 }
 
-resource firewall_policy_proxy 'Microsoft.Network/firewallPolicies@2024-05-01' = {
+resource firewall_policy_proxy 'Microsoft.Network/firewallPolicies@2024-07-01' = {
   name: 'firewall-policy-proxy'
   location: location
   properties: {
@@ -37,7 +37,7 @@ resource firewall_policy_proxy 'Microsoft.Network/firewallPolicies@2024-05-01' =
   }
 }
 
-resource firewall_proxy_rules 'Microsoft.Network/firewallPolicies/ruleCollectionGroups@2024-05-01' = {
+resource firewall_proxy_rules 'Microsoft.Network/firewallPolicies/ruleCollectionGroups@2024-07-01' = {
   name: 'rules'
   parent: firewall_policy_proxy
   properties: {
@@ -76,7 +76,7 @@ resource firewall_proxy_rules 'Microsoft.Network/firewallPolicies/ruleCollection
   }
 }
 
-module firewall 'br/public:avm/res/network/azure-firewall:0.6.0' = {
+module firewall 'br/public:avm/res/network/azure-firewall:0.6.1' = {
   name: 'firewall'
   params: {
     name: 'firewall'

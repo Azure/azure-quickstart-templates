@@ -5,10 +5,10 @@ param vnetName string = 'myVnet'
 param subnetName string = 'mySubnet'
 
 @description('Address space for virtual network')
-param vnetAddressSpace string = '192.168.0.0/16'
+param vnetAddressSpace string = '10.0.0.0/16'
 
 @description('Subnet prefix for virtual network')
-param vnetSubnetPrefix string = '192.168.0.0/24'
+param vnetSubnetPrefix string = '10.0.0.0/24'
 
 @description('Name of the NAT gateway resource')
 param natGatewayName string = 'myNATgateway'
@@ -26,11 +26,11 @@ var publicIpAddresses = [
   }
 ]
 
-resource publicIp 'Microsoft.Network/publicIPAddresses@2020-06-01' = {
+resource publicIp 'Microsoft.Network/publicIPAddresses@2024-01-01' = {
   name: publicIpName
   location: location
   sku: {
-    name: 'Standard'
+    name: 'StandardV2'
   }
   properties: {
     publicIPAddressVersion: 'IPv4'
@@ -42,11 +42,11 @@ resource publicIp 'Microsoft.Network/publicIPAddresses@2020-06-01' = {
   }
 }
 
-resource natGateway 'Microsoft.Network/natGateways@2020-06-01' = {
+resource natGateway 'Microsoft.Network/natGateways@2024-01-01' = {
   name: natGatewayName
   location: location
   sku: {
-    name: 'Standard'
+    name: 'StandardV2'
   }
   properties: {
     idleTimeoutInMinutes: 4
@@ -54,7 +54,7 @@ resource natGateway 'Microsoft.Network/natGateways@2020-06-01' = {
   }
 }
 
-resource vnet 'Microsoft.Network/virtualNetworks@2020-06-01' = {
+resource vnet 'Microsoft.Network/virtualNetworks@2024-01-01' = {
   name: vnetName
   location: location
   properties: {

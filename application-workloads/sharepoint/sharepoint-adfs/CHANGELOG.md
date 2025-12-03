@@ -1,11 +1,19 @@
 # Change log for Azure template SharePoint-ADFS
 
-## Enhancements & bug-fixes - Unreleased
+## Enhancements & bug-fixes - Published in June 2, 2025
 
 ### Changed
 
 - Template
-  - Rewrite the entire template to create all the resources using [Azure Verified Modules](https://azure.github.io/Azure-Verified-Modules/}
+  - Bump versions of Bicep resources and [Azure Verified Modules](https://azure.github.io/Azure-Verified-Modules/)
+  - Value `Subscription-Latest` for parameter `sharePointVersion` now installs the May 2025 CU for SharePoint Subscription
+
+## Enhancements & bug-fixes - Published in April 24, 2025
+
+### Changed
+
+- Template
+  - Rewrite the entire template to create all the resources using [Azure Verified Modules](https://azure.github.io/Azure-Verified-Modules/)
   - Parameter `enableAzureBastion` now deploys Azure Bastion Developer, which is available at no extra cost
   - Value `Subscription-Latest` for parameter `sharePointVersion` now installs the April 2025 CU for SharePoint Subscription
 - DSC Configuration for all VMs
