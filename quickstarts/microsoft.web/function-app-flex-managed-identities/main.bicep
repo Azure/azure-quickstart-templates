@@ -30,7 +30,7 @@ param instanceMemoryMB int = 2048
 @minLength(3)
 param resourceToken string = toLower(uniqueString(subscription().id, location))
 
-@description('A globally unigue name for your deployed function app.')
+@description('A globally unique name for your deployed function app.')
 param appName string = 'func-${resourceToken}'
 
 //********************************************
