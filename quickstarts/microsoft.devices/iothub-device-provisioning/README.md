@@ -28,11 +28,11 @@ languages:
 
 This template creates an IoT hub and an IoT Hub Device Provisioning Service, and link the two services together. For more information, go to: https://docs.microsoft.com/azure/iot-hub/.
 
-If you are new to Azure Iot Hub, see:
+If you are new to Azure IoT Hub, see:
 
-- [Azure Iot Hub service](https://azure.microsoft.com/services/iot-hub/)
-- [Azure Iot Hub documentation](https://docs.microsoft.com/azure/iot-hub/)
-- [Azure Iot Hub template reference](https://docs.microsoft.com/azure/templates/microsoft.devices/iothub-allversions)
+- [Azure IoT Hub service](https://azure.microsoft.com/services/iot-hub/)
+- [Azure IoT Hub documentation](https://docs.microsoft.com/azure/iot-hub/)
+- [Azure IoT Hub template reference](https://docs.microsoft.com/azure/templates/microsoft.devices/iothub-allversions)
 - [Quickstart templates](https://azure.microsoft.com/resources/templates/?resourceType=Microsoft.Devices&pageNumber=1&sort=Popular)
 - [Microsoft Learn IOT Courses and Modules](https://docs.microsoft.com/learn/browse/?products=azure-iot-central%2Cazure-iot-hub )
 
@@ -40,6 +40,6 @@ If you are new to the template development, see:
 
 - [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
 
-Tags: Azure Iot Hub, Iot Hub, Resource Manager, Resource Manager templates, ARM templates
+Tags: Azure IoT Hub, Iot Hub, Resource Manager, Resource Manager templates, ARM templates
 
 `Tags: Microsoft.Devices/IotHubs, Microsoft.Devices/provisioningServices`

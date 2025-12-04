@@ -23,10 +23,6 @@ In order to deploy this template, you must have Arc enabled the server(s) and in
     - Microsoft.GuestConfiguration
     - Microsoft.HybridConnectivity
     - Microsoft.AzureStackHCI
-- A Service Principal must be created.
-    - Make a note of the SPNs APP ID
-    - Make a note of the SPNs Object ID
-    - Make a note of the SPNs secret (if not already generated , generate one)
 - Make a note of the HCI Resource Provider SPNs Object ID in the tenant.
 
 

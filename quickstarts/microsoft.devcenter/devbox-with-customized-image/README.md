@@ -46,7 +46,7 @@ If you're new to template deployment, see:
 Click the "Deploy to Azure" button to deploy. There will be the deployment page as below:
 ![Deployment Sample](assets/deployment-page.png)
 
-or Run the Powershell script if you do not know how to get user principal id. 
+or Run the PowerShell script if you do not know how to get user principal id. 
 
 ### Microsoft.DevCenter
 
@@ -75,10 +75,10 @@ If you want to add your own software and tools, please fork this repo and change
 After you use this template to generate the customized image, if you want to generate more other types of image, please use the button below to generate customized image to your existing gallery and image definition.
 | Image Type | Software and Tools |
 | -- | -- |
-| Base | Git, Azure CLI, VSCode, VSCode Extension for GitHub Copilot |
-| Java | Git, Azure CLI, VSCode, Maven, OpenJdk11, VSCode Extension for Java Pack |
-| .Net | Git, Azure CLI, VSCode，.Net SDK, Visual Studio |
-| Data | Git, Azure CLI, VSCode，Python3, VSCode Extension for Python and Jupyter |
+| Base | Git, Azure CLI, VS Code, VS Code Extension for GitHub Copilot |
+| Java | Git, Azure CLI, VS Code, Maven, OpenJdk11, VS Code Extension for Java Pack |
+| .Net | Git, Azure CLI, VS Code，.Net SDK, Visual Studio |
+| Data | Git, Azure CLI, VS Code，Python3, VS Code Extension for Python and Jupyter |
 
 [![Deploy to Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.devcenter%2Fdevbox-with-customized-image%2Fcustomized-image%2Fcustomized-image.json)
 

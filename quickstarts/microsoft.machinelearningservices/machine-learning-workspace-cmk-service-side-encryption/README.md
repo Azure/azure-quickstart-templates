@@ -24,6 +24,8 @@ languages:
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.machinelearningservices%2Fmachine-learning-workspace-cmk-service-side-encryption%2Fazuredeploy.json)
 
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.machinelearningservices%2Fmachine-learning-workspace-cmk-service-side-encryption%2Fazuredeploy.json)
+
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.machinelearningservices%2Fmachine-learning-workspace-cmk-service-side-encryption%2Fazuredeploy.json)   
 
 This deployment template specifies how to create an Azure Machine Learning workspace with service-side encryption using your encryption keys. Please note that this is a preview capability without production-level support.
@@ -64,11 +66,11 @@ Before using this template, you must meet the following requirements:
 * You must have an existing Azure Key Vault that contains an encryption key.
 * The Azure Key Vault must exist in the same Azure region where you will create the Azure Machine Learning workspace.
 
-To add the Azure Machine Learning service principal as a contributor to your subscription, you can use the following steps in the Azure CLI or Powershell for automation. Alternatively complete the steps via the Azure Portal.
+To add the Azure Machine Learning service principal as a contributor to your subscription, you can use the following steps in the Azure CLI or PowerShell for automation. Alternatively complete the steps via the Azure Portal.
 
 ### Add Azure Machine Learning as a contributor
 
-1. Use the [Azure CLI](https://docs.microsoft.com/cli/azure/install-azure-cli) or [Azure Powershell](https://docs.microsoft.com/powershell/azure/install-az-ps) to authenticate to get your subscription ID:
+1. Use the [Azure CLI](https://docs.microsoft.com/cli/azure/install-azure-cli) or [Azure PowerShell](https://docs.microsoft.com/powershell/azure/install-az-ps) to authenticate to get your subscription ID:
 
 Azure CLI:
 

@@ -159,10 +159,12 @@ param computeIntentAdapterNames array
 @description('An array of Network Adapter names present on every cluster node intended for management traffic')
 param managementIntentAdapterNames array
 
-var clusterWitnessStorageAccountName = '${deploymentPrefix}witness'
+@description('Optional. The name of the storage account used for the Windows Failover Cluster Witness. If not provided, a new storage account will be created.')
+param clusterWitnessStorageAccountName string = '${deploymentPrefix}${uniqueString(resourceGroup().id)}wit'
 
-var keyVaultName = '${deploymentPrefix}-hcikv'
-var customLocationName = '${deploymentPrefix}_cl'
+param customLocationName string = '${deploymentPrefix}_cl'
+
+param keyVaultName string = '${deploymentPrefix}${uniqueString(resourceGroup().id)}kv'
 
 var storageNetworkList = [for (storageAdapter, index) in storageNetworks:{
     name: 'StorageNetwork${index + 1}'
@@ -170,6 +172,13 @@ var storageNetworkList = [for (storageAdapter, index) in storageNetworks:{
     vlanId: storageAdapter.vlan
     storageAdapterIPInfo: storageAdapter.?storageAdapterIPInfo
   }
+]
+
+var deploymentSecretEceNames = [
+  'LocalAdminCredential'
+  'AzureStackLCMUserCredential'
+  'DefaultARBApplication'
+  'WitnessStorageKey'
 ]
 
 var arcNodeResourceIds = [for (nodeName, index) in clusterNodeNames: resourceId('Microsoft.HybridCompute/machines', nodeName)]
@@ -189,28 +198,30 @@ module ashciPreReqResources 'modules/ashciPrereqs.bicep' = if (deploymentMode ==
     hciResourceProviderObjectId: hciResourceProviderObjectId
     softDeleteRetentionDays: softDeleteRetentionDays
     logsRetentionInDays: logsRetentionInDays
-    arcNodeResourceIds: arcNodeResourceIds
+    arcNodePrincipalIds: [for arcNodeResourceId in arcNodeResourceIds: reference(arcNodeResourceId, '2022-12-27', 'Full').identity.principalId]
     keyVaultName: keyVaultName
     clusterWitnessStorageAccountName: clusterWitnessStorageAccountName
     arbDeploymentSPObjectId: arbDeploymentSPObjectId
+    cloudId: cluster.properties.cloudId
+    clusterName: clusterName
   }
 }
 
-resource cluster 'Microsoft.AzureStackHCI/clusters@2024-02-15-preview' = if (deploymentMode == 'Validate') {
+resource cluster 'Microsoft.AzureStackHCI/clusters@2024-09-01-preview' = {
   name: clusterName
   identity: {
     type: 'SystemAssigned'
   }
   location: location
   properties: {}
+}
+
+resource deploymentSettings 'Microsoft.AzureStackHCI/clusters/deploymentSettings@2024-09-01-preview' = if (deploymentMode != 'LocksOnly') {
+  name: 'default'
+  parent: cluster
   dependsOn: [
     ashciPreReqResources
   ]
-}
-
-resource deploymentSettings 'Microsoft.AzureStackHCI/clusters/deploymentSettings@2024-02-15-preview' = if (deploymentMode != 'LocksOnly') {
-  name: 'default'
-  parent: cluster
   properties: {
     arcNodeResourceIds: arcNodeResourceIds
     deploymentMode: deploymentMode
@@ -355,6 +366,13 @@ resource deploymentSettings 'Microsoft.AzureStackHCI/clusters/deploymentSettings
             optionalServices: {
               customLocation: customLocationName
             }
+            secrets: [
+              for secretName in deploymentSecretEceNames: {
+                secretName: '${clusterName}-${secretName}-${cluster.properties.cloudId}'
+                eceSecretName: secretName
+                secretLocation: 'https://${keyVaultName}${environment().suffixes.keyvaultDns}/secrets/${clusterName}-${secretName}-${cluster.properties.cloudId}'
+              }
+            ]
           }
         }
       ]
