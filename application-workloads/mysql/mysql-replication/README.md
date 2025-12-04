@@ -50,7 +50,7 @@ This template deploys a MySQL replication environment with one master and one se
 - Ensure replication topology is properly configured, assuming master is 10.0.1.4:
 
 ```sh
-> mysqlrplshow --master=admin:secret@10.0.1.4 --discover-secondarys-login=admin:secret
+> mysqlrplshow --master=admin:secret@10.0.1.4 --discover-slaves-login=admin:secret
 ```
 
 ## How to Monitor MySQL Health
@@ -85,7 +85,7 @@ You can also do this in the Azure portal. Find the current master's MySQL NSG, e
 - Fail over MySQL from the old master to the new master.  On the secondary, run the following, assuming secondary 10.0.1.5 is to become the new master:
 
 ```sh
-mysql> stop secondary;
+mysql> stop slave;
 mysql> change master to master_host='10.0.1.5', master_user='admin', master_password='secret', master_auto_position=1;
 ```
 
@@ -105,22 +105,22 @@ mysql> change master to master_host='10.0.1.5', master_user='admin', master_pass
 ```
 
 Similarly, this can also be done in the Azure portal. First update the NSG for the new master:
-![Alt text](/application-workloads/mysql/mysql-replication/screenshots/2updatesecondaryNSG.PNG "Update the NSG for the new master")
+![Alt text](/application-workloads/mysql/mysql-replication/screenshots/2updateSlaveNSG.PNG "Update the NSG for the new master")
 Then update the NSG for the old master back to valid values:
-![Alt text](/application-workloads/mysql/mysql-replication/screenshots/3updateOldMasterTosecondary.PNG "Update the NSG for the old master")
+![Alt text](/application-workloads/mysql/mysql-replication/screenshots/3updateOldMasterToSlave.PNG "Update the NSG for the old master")
 
 - Add the old master back to replication as a secondary, on the old master, run the following, assuming the new master is 10.0.1.5:
 
 ```sh
-mysql> stop secondary;
+mysql> stop slave;
 mysql> change master to master_host='10.0.1.5', master_user='admin', master_password='secret', master_auto_position=1;
-mysql> start secondary;
+mysql> start slave;
 ```
 
 - Verify replication is properly restored by running the following command and make sure there is no error, assuming the new master is 10.0.1.5:
 
 ```sh
-> mysqlrplshow --master=admin:secret@10.0.1.5 --discover-secondarys-login=admin:secret
+> mysqlrplshow --master=admin:secret@10.0.1.5 --discover-slaves-login=admin:secret
 ```
 
 on the master:
@@ -132,7 +132,7 @@ mysql> show master status\G;
 on the secondary:
 
 ```sh
-mysql> show secondary status\G;
+mysql> show slave status\G;
 ```
 
 ## How to backup databases to Azure blob storage
@@ -166,7 +166,7 @@ mysql> show secondary status\G;
 > cd /home/admin/backups/
 
 # Stop replication to secondary
-> mysqladmin stop-secondary -u admin -p
+> mysqladmin stop-slave -u admin -p
 
 # Take mysql backup for all databases
 > mysqldump --all-databases > alldbs.sql -u admin -p
@@ -175,7 +175,7 @@ mysql> show secondary status\G;
 > gzip alldbs.sql
 
 # Start secondary replication
-> mysqladmin start-secondary -u admin -p
+> mysqladmin start-slave -u admin -p
 
 # Remove previous backup file
 > rm -Rf $image_to_upload
