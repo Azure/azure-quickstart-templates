@@ -1,5 +1,5 @@
 ---
-description: This template deploys a 2 node master/slave MySQL replication cluster on CentOS 6.5 or 6.6
+description: This template deploys a 2 node primary/secondary MySQL replication cluster on CentOS 6.5 or 6.6
 page_type: sample
 products:
 - azure
@@ -8,7 +8,7 @@ urlFragment: mysql-replication
 languages:
 - json
 ---
-# Deploys a 2 node master/slave MySQL replication cluster
+# Deploys a 2 node primary/secondary MySQL replication cluster
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/mysql/mysql-replication/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/mysql/mysql-replication/PublicDeployment.svg)
@@ -23,7 +23,7 @@ languages:
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fmysql%2Fmysql-replication%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fmysql%2Fmysql-replication%2Fazuredeploy.json)
 
-This template deploys a MySQL replication environment with one master and one slave servers.  It has the following capabilities:
+This template deploys a MySQL replication environment with one master and one secondary server.  It has the following capabilities:
 
 - Supports CentOS 6 and MySQL 5.6
 - Supports GTID based replication
@@ -34,7 +34,7 @@ This template deploys a MySQL replication environment with one master and one sl
 
 ## How to Access MySQL
 
-- Access MySQL using the public DNS name.  By default, the master server can be accessed at port 3306, and the slave server 3307.  By default, a user "admin" is created with all privileges to access from remote hosts. For example, access the master with the following command:
+- Access MySQL using the public DNS name.  By default, the master server can be accessed at port 3306, and the secondary server 3307.  By default, a user "admin" is created with all privileges to access from remote hosts. For example, access the master with the following command:
 
 ```sh
 > mysql -h mysqldns.eastus.cloudapp.azure.com -u admin -p
@@ -50,7 +50,7 @@ This template deploys a MySQL replication environment with one master and one sl
 - Ensure replication topology is properly configured, assuming master is 10.0.1.4:
 
 ```sh
-> mysqlrplshow --master=admin:secret@10.0.1.4 --discover-slaves-login=admin:secret
+> mysqlrplshow --master=admin:secret@10.0.1.4 --discover-secondarys-login=admin:secret
 ```
 
 ## How to Monitor MySQL Health
@@ -82,10 +82,10 @@ High availability and failover are no different from other GTID based MySQL repl
 You can also do this in the Azure portal. Find the current master's MySQL NSG, either delete it or set the ports to some invalid value:
 ![Alt text](/application-workloads/mysql/mysql-replication/screenshots/1removeOldMasterNSG.PNG "Remove or update NSG of the old master")
 
-- Fail over MySQL from the old master to the new master.  On the slave, run the following, assuming slave 10.0.1.5 is to become the new master:
+- Fail over MySQL from the old master to the new master.  On the secondary, run the following, assuming secondary 10.0.1.5 is to become the new master:
 
 ```sh
-mysql> stop slave;
+mysql> stop secondary;
 mysql> change master to master_host='10.0.1.5', master_user='admin', master_password='secret', master_auto_position=1;
 ```
 
@@ -105,22 +105,22 @@ mysql> change master to master_host='10.0.1.5', master_user='admin', master_pass
 ```
 
 Similarly, this can also be done in the Azure portal. First update the NSG for the new master:
-![Alt text](/application-workloads/mysql/mysql-replication/screenshots/2updateSlaveNSG.PNG "Update the NSG for the new master")
+![Alt text](/application-workloads/mysql/mysql-replication/screenshots/2updatesecondaryNSG.PNG "Update the NSG for the new master")
 Then update the NSG for the old master back to valid values:
-![Alt text](/application-workloads/mysql/mysql-replication/screenshots/3updateOldMasterToSlave.PNG "Update the NSG for the old master")
+![Alt text](/application-workloads/mysql/mysql-replication/screenshots/3updateOldMasterTosecondary.PNG "Update the NSG for the old master")
 
-- Add the old master back to replication as a slave, on the old master, run the following, assuming the new master is 10.0.1.5:
+- Add the old master back to replication as a secondary, on the old master, run the following, assuming the new master is 10.0.1.5:
 
 ```sh
-mysql> stop slave;
+mysql> stop secondary;
 mysql> change master to master_host='10.0.1.5', master_user='admin', master_password='secret', master_auto_position=1;
-mysql> start slave;
+mysql> start secondary;
 ```
 
 - Verify replication is properly restored by running the following command and make sure there is no error, assuming the new master is 10.0.1.5:
 
 ```sh
-> mysqlrplshow --master=admin:secret@10.0.1.5 --discover-slaves-login=admin:secret
+> mysqlrplshow --master=admin:secret@10.0.1.5 --discover-secondarys-login=admin:secret
 ```
 
 on the master:
@@ -129,15 +129,15 @@ on the master:
 mysql> show master status\G;
 ```
 
-on the slave:
+on the secondary:
 
 ```sh
-mysql> show slave status\G;
+mysql> show secondary status\G;
 ```
 
 ## How to backup databases to Azure blob storage
 
-- There are several ways to take mysql backups as shown at [Mysql Backup and Recovery](https://dev.mysql.com/doc/refman/5.6/en/backup-and-recovery.html). The example below shows mysql dump from the slave.
+- There are several ways to take mysql backups as shown at [Mysql Backup and Recovery](https://dev.mysql.com/doc/refman/5.6/en/backup-and-recovery.html). The example below shows mysql dump from the secondary.
 
 ```sh
 # Create backups directory if not already created (modify folder as required)
@@ -165,8 +165,8 @@ mysql> show slave status\G;
 
 > cd /home/admin/backups/
 
-# Stop replication to slave
-> mysqladmin stop-slave -u admin -p
+# Stop replication to secondary
+> mysqladmin stop-secondary -u admin -p
 
 # Take mysql backup for all databases
 > mysqldump --all-databases > alldbs.sql -u admin -p
@@ -174,8 +174,8 @@ mysql> show slave status\G;
 # Compress the mysql backup
 > gzip alldbs.sql
 
-# Start slave replication
-> mysqladmin start-slave -u admin -p
+# Start secondary replication
+> mysqladmin start-secondary -u admin -p
 
 # Remove previous backup file
 > rm -Rf $image_to_upload
