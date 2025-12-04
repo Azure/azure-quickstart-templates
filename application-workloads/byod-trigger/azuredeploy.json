@@ -16,9 +16,8 @@
       "type": "string"
     },
 
-    "azureBlobConnectionName": {
-      "type": "string",
-      "defaultValue": "azureblob-msi"
+    "connections_azureblob_name": {
+      "type": "string"
     }
   },
 
@@ -137,24 +136,39 @@
         "publicAccess": "None"
       }
     },
-    {
-      "type": "Microsoft.Web/connections",
-      "apiVersion": "2016-06-01",
-      "name": "[parameters('azureBlobConnectionName')]",
-      "location": "[parameters('location')]",
-      "dependsOn": [
-      ],
-      "properties": {
-        "displayName": "[parameters('storageAccountName')]",
-        "api": {
-          "id": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Web/locations/', parameters('location'), '/managedApis/azureblob')]"
+   {
+            "type": "Microsoft.Web/connections",
+            "apiVersion": "2016-06-01",
+            "name": "[parameters('connections_azureblob_name')]",
+            "location": "eastus",
+            "kind": "V1",
+            "properties": {
+                "displayName": "new_conn_23477",
+                "statuses": [
+                    {
+                        "status": "Ready"
+                    }
+                ],
+                "customParameterValues": {},
+                "createdTime": "2025-11-14T18:11:13.7371356Z",
+                "changedTime": "2025-11-14T18:11:13.7371356Z",
+                "api": {
+                    "name": "[parameters('connections_azureblob_name')]",
+                    "displayName": "Azure Blob Storage",
+                    "description": "Microsoft Azure Storage provides a massively scalable, durable, and highly available storage for data on the cloud, and serves as the data storage solution for modern applications. Connect to Blob Storage to perform various operations such as create, update, get and delete on blobs in your Azure Storage account.",
+                    "iconUri": "[concat('https://conn-afd-prod-endpoint-bmc9bqahasf3grgk.b01.azurefd.net/releases/v1.0.1777/1.0.1777.4410/', parameters('connections_azureblob_name'), '/icon.png')]",
+                    "brandColor": "#804998",
+                    "id": "[concat('/subscriptions/828b526f-c769-4b19-9797-734b4843b978/providers/Microsoft.Web/locations/eastus/managedApis/', parameters('connections_azureblob_name'))]",
+                    "type": "Microsoft.Web/locations/managedApis"
+                },
+                "testLinks": [
+                    {
+                        "requestUri": "[concat('https://management.azure.com:443/subscriptions/828b526f-c769-4b19-9797-734b4843b978/resourceGroups/DefaultResourceGroup-EUS/providers/Microsoft.Web/connections/', parameters('connections_azureblob_name'), '/extensions/proxy/testconnection?api-version=2016-06-01')]",
+                        "method": "get"
+                    }
+                ]
+            }
         },
-        "parameterValues": {
-          "authType": "ManagedServiceIdentity",
-          "accountName": "[parameters('storageAccountName')]"
-        }
-      }
-    },
     {
       "type": "Microsoft.Logic/workflows",
       "apiVersion": "2017-07-01",
@@ -164,7 +178,7 @@
         "type": "SystemAssigned"
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Web/connections', parameters('azureBlobConnectionName'))]",
+        "[resourceId('Microsoft.Web/connections', parameters('connections_azureblob_name'))]",
         "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
       ],
       "properties": {
@@ -649,8 +663,8 @@
             "value": {
               "azureblob": {
                 "id": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Web/locations/', parameters('location'), '/managedApis/azureblob')]",
-                "connectionId": "[resourceId('Microsoft.Web/connections', parameters('azureBlobConnectionName'))]",
-                "connectionName": "[parameters('azureBlobConnectionName')]",
+                "connectionId": "[resourceId('Microsoft.Web/connections', parameters('connections_azureblob_name'))]",
+                "connectionName": "[parameters('connections_azureblob_name')]",
                 "connectionProperties": {
                   "authentication": {
                     "type": "ManagedServiceIdentity"
@@ -661,7 +675,22 @@
           }
         }
       }
-    }
+    },   
+    {
+        "type": "Microsoft.Authorization/roleAssignments",
+        "apiVersion": "2022-04-01",
+        "name": "[guid(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), parameters('logicAppName'), 'blobRole')]",
+        "scope": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]",
+        "properties": {
+            "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')]", 
+            "principalId": "[reference(resourceId('Microsoft.Logic/workflows', parameters('logicAppName')), '2019-05-01', 'Full').identity.principalId]",
+            "principalType": "ServicePrincipal"
+        },
+        "dependsOn": [
+            "[resourceId('Microsoft.Logic/workflows', parameters('logicAppName'))]",
+            "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+        ]
+    }  
   ]
 
 }
