@@ -18,13 +18,13 @@ configuration ConfigureFEVM
     )
 
     Import-DscResource -ModuleName ComputerManagementDsc -ModuleVersion 10.0.0 # Custom
-    Import-DscResource -ModuleName NetworkingDsc -ModuleVersion 9.0.0
-    Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion 6.6.2
+    Import-DscResource -ModuleName NetworkingDsc -ModuleVersion 9.1.0
+    Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion 6.7.0
     Import-DscResource -ModuleName WebAdministrationDsc -ModuleVersion 4.2.1
-    Import-DscResource -ModuleName SharePointDsc -ModuleVersion 5.6.1 # custom
-    Import-DscResource -ModuleName DnsServerDsc -ModuleVersion 3.0.0
+    Import-DscResource -ModuleName SharePointDsc -ModuleVersion 5.7.0 # Custom workaround on SPInstall
+    Import-DscResource -ModuleName DnsServerDsc -ModuleVersion 3.0.1
     Import-DscResource -ModuleName CertificateDsc -ModuleVersion 6.0.0
-    Import-DscResource -ModuleName SqlServerDsc -ModuleVersion 17.0.0
+    Import-DscResource -ModuleName SqlServerDsc -ModuleVersion 17.1.0 # Custom workaround on SqlSecureConnection
     Import-DscResource -ModuleName cChoco -ModuleVersion 2.6.0.0    # With custom changes to implement retry on package downloads
     Import-DscResource -ModuleName StorageDsc -ModuleVersion 6.0.1
     Import-DscResource -ModuleName xPSDesiredStateConfiguration -ModuleVersion 9.2.1
@@ -94,44 +94,10 @@ configuration ConfigureFEVM
             Address = $DNSServerIP; InterfaceAlias = $InterfaceAlias; AddressFamily = 'IPv4' 
         }
         
-
-        # # xCredSSP is required for SharePointDsc resources SPUserProfileServiceApp and SPDistributedCacheService
-        # xCredSSP CredSSPServer { Ensure = "Present"; Role = "Server"; DependsOn = "[DnsServerAddress]SetDNS" }
-        # xCredSSP CredSSPClient { Ensure = "Present"; Role = "Client"; DelegateComputers = "*.$DomainFQDN", "localhost"; DependsOn = "[xCredSSP]CredSSPServer" }
-
         # Allow NTLM on HTTPS sites when site host name is different than the machine name - https://docs.microsoft.com/en-US/troubleshoot/windows-server/networking/accessing-server-locally-with-fqdn-cname-alias-denied
         Registry DisableLoopBackCheck {
             Key = "HKLM:\System\CurrentControlSet\Control\Lsa"; ValueName = "DisableLoopbackCheck"; ValueData = "1"; ValueType = "Dword"; Ensure = "Present" 
-        }
-
-        # Enable TLS 1.2 - https://learn.microsoft.com/en-us/azure/active-directory/app-proxy/application-proxy-add-on-premises-application#tls-requirements
-        # It's a best practice, and mandatory with Windows 2012 R2 (SharePoint 2013) to allow xRemoteFile to download releases from GitHub: https://github.com/PowerShell/xPSDesiredStateConfiguration/issues/405           
-        Registry EnableTLS12RegKey1 {
-            Key = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Client'; ValueName = 'DisabledByDefault'; ValueType = 'Dword'; ValueData = '0'; Ensure = 'Present' 
-        }
-        Registry EnableTLS12RegKey2 {
-            Key = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Client'; ValueName = 'Enabled'; ValueType = 'Dword'; ValueData = '1'; Ensure = 'Present' 
-        }
-        Registry EnableTLS12RegKey3 {
-            Key = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Server'; ValueName = 'DisabledByDefault'; ValueType = 'Dword'; ValueData = '0'; Ensure = 'Present' 
-        }
-        Registry EnableTLS12RegKey4 {
-            Key = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Server'; ValueName = 'Enabled'; ValueType = 'Dword'; ValueData = '1'; Ensure = 'Present' 
-        }
-
-        # Enable strong crypto by default for .NET Framework 4 applications - https://docs.microsoft.com/en-us/dotnet/framework/network-programming/tls#configuring-security-via-the-windows-registry
-        Registry SchUseStrongCrypto {
-            Key = 'HKLM:\SOFTWARE\Microsoft\.NETFramework\v4.0.30319'; ValueName = 'SchUseStrongCrypto'; ValueType = 'Dword'; ValueData = '1'; Ensure = 'Present' 
-        }
-        Registry SchUseStrongCrypto32 {
-            Key = 'HKLM:\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\v4.0.30319'; ValueName = 'SchUseStrongCrypto'; ValueType = 'Dword'; ValueData = '1'; Ensure = 'Present' 
-        }
-        Registry SystemDefaultTlsVersions {
-            Key = 'HKLM:\SOFTWARE\Microsoft\.NETFramework\v4.0.30319'; ValueName = 'SystemDefaultTlsVersions'; ValueType = 'Dword'; ValueData = '1'; Ensure = 'Present' 
-        }
-        Registry SystemDefaultTlsVersions32 {
-            Key = 'HKLM:\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\v4.0.30319'; ValueName = 'SystemDefaultTlsVersions'; ValueType = 'Dword'; ValueData = '1'; Ensure = 'Present' 
-        }
+        }       
 
         Registry DisableIESecurityRegKey1 {
             Key = 'HKLM:\SOFTWARE\Microsoft\Active Setup\Installed Components\{A509B1A7-37EF-4b3f-8CFC-4F3A74704073}'; ValueName = 'IsInstalled'; ValueType = 'Dword'; ValueData = '0'; Force = $true ; Ensure = 'Present' 
@@ -266,13 +232,6 @@ configuration ConfigureFEVM
             DependsOn = "[cChocoInstaller]InstallChoco"
         }
 
-        cChocoPackageInstaller InstallAzureDataStudio {
-            # Install takes about 40 secs
-            Name      = "azure-data-studio"
-            Ensure    = "Present"
-            DependsOn = "[cChocoInstaller]InstallChoco"
-        }
-
         # if ($EnableAnalysis) {
         #     # This resource is only for analyzing dsc logs using a custom Python script
         #     cChocoPackageInstaller InstallPython
@@ -342,6 +301,7 @@ configuration ConfigureFEVM
                     ChecksumType    = if ($null -ne $package.ChecksumType) { $package.ChecksumType } else { "None" }
                     Checksum        = if ($null -ne $package.Checksum) { $package.Checksum } else { $null }
                     MatchSource     = $false
+                    PsDscRunAsCredential = $DomainAdminCredsQualified;
                 }
 
                 Script "InstallSharePointUpdate_$($SharePointBuildLabel)_$packageFilename" {
@@ -374,6 +334,7 @@ configuration ConfigureFEVM
                     }
                     GetScript  = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
                     DependsOn  = "[SPInstall]InstallBinaries"
+                    PsDscRunAsCredential = $DomainAdminCredsQualified;
                 }
 
                 PendingReboot "RebootOnSignalFromInstallSharePointUpdate_$($SharePointBuildLabel)_$packageFilename" {
@@ -694,6 +655,7 @@ configuration ConfigureFEVM
             IsSingleInstance                   = "Yes"
             ServerRole                         = "WebFrontEnd"
             SkipRegisterAsDistributedCacheHost = $true
+            DatabaseConnectionEncryption       = "Optional" # required with 2025-08 PU+
             Ensure                             = "Present"
             DependsOn                          = "[Script]WaitToAvoidServersJoiningFarmSimultaneously"
         }
