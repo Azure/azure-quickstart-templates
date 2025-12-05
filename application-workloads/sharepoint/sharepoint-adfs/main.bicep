@@ -1,5 +1,5 @@
 targetScope = 'resourceGroup'
-metadata description = 'Create a DC, a SQL Server 2022, and from 1 to 5 server(s) hosting a SharePoint Subscription / 2019 / 2016 farm with an extensive configuration, including trusted authentication, user profiles with personal sites, an OAuth trust (using a certificate), a dedicated IIS site for hosting high-trust add-ins, etc... The latest version of key softwares (including Fiddler, vscode, np++, 7zip, ULS Viewer) is installed. SharePoint machines have additional fine-tuning to make them immediately usable (remote administration tools, custom policies for Edge and Chrome, shortcuts, etc...).'
+metadata description = 'Create a DC, a SQL Server 2025, and from 1 to 5 server(s) hosting a SharePoint Subscription / 2019 / 2016 farm with an extensive configuration, including trusted authentication, user profiles with personal sites, an OAuth trust (using a certificate), a dedicated IIS site for hosting high-trust add-ins, etc... The latest version of key softwares (including Fiddler, vscode, np++, 7zip, ULS Viewer) is installed. SharePoint machines have additional fine-tuning to make them immediately usable (remote administration tools, custom policies for Edge and Chrome, shortcuts, etc...).'
 metadata author = 'Yvand'
 
 @description('Location for all the resources.')
@@ -8,6 +8,7 @@ param location string = resourceGroup().location
 @description('Version of the SharePoint farm to create.')
 @allowed([
   'Subscription-Latest'
+  'Subscription-25H2'
   'Subscription-25H1'
   'Subscription-24H2'
   'Subscription-24H1'
@@ -283,6 +284,16 @@ param _artifactsLocation string = deployment().properties.templateLink.uri
 @description('The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured.')
 param _artifactsLocationSasToken string = ''
 
+@description('Tags to apply on the resources.')
+param tags object = {}
+
+@description('Default tags applied on the resources. Default tags are: \'source\', \'createdOn\', and \'sharePointVersion\'.')
+param defaultTags object = {
+  source: 'azure-quickstart-templates:sharepoint-adfs'
+  createdOn: utcNow('yyyy-MM-dd')
+  sharePointVersion: sharePointVersion
+}
+
 // Local variables
 var resourceGroupNameFormatted = replace(
   replace(replace(replace(resourceGroup().name, '.', '-'), '(', '-'), ')', '-'),
@@ -364,10 +375,18 @@ var sharePointSettings = {
       ]
     }
     {
+      Label: '25H2'
+      Packages: [
+        {
+          DownloadUrl: 'https://download.microsoft.com/download/0ae39b29-890d-428c-bcee-c93eeca2053b/uber-subscription-kb5002784-fullfile-x64-glb.exe'
+        }
+      ]
+    }
+    {
       Label: 'Latest'
       Packages: [
         {
-          DownloadUrl: 'https://download.microsoft.com/download/0d0fac81-9f1b-4f9f-9269-0798f9e0666c/uber-subscription-kb5002709-fullfile-x64-glb.exe'
+          DownloadUrl: 'https://download.microsoft.com/download/2ac104e1-555a-4186-9f83-ffca3ec88258/uber-subscription-kb5002800-fullfile-x64-glb.exe'
         }
       ]
     }
@@ -383,7 +402,7 @@ var templateSettings = {
   vmSPName: 'SP'
   vmFEName: 'FE'
   vmDCImage: 'MicrosoftWindowsServer:WindowsServer:2025-datacenter-azure-edition-smalldisk:latest'
-  vmSQLImage: 'MicrosoftSQLServer:sql2022-ws2022:sqldev-gen2:latest'
+  vmSQLImage: 'MicrosoftSQLServer:sql2025-ws2025:stddev-gen2:latest'
   vmSharePointImage: sharePointSettings.isSharePointSubscription
     ? sharePointSettings.sharePointImagesList.Subscription
     : sharePointVersion == '2019'
@@ -419,6 +438,8 @@ var firewallProxySettings = {
   httpPort: 8080
   httpsPort: 8443
 }
+
+var allTags = union(tags, defaultTags)
 
 // Single-line PowerShell script that runs on the VMs to update their proxy settings, if Azure Firewall is enabled
 var firewall_set_proxy_script = 'param([string]$proxyIp, [string]$proxyHttpPort, [string]$proxyHttpsPort, [string]$localDomainFqdn) $proxy = "http={0}:{1};https={0}:{2}" -f $proxyIp, $proxyHttpPort, $proxyHttpsPort; $bypasslist = "*.{0};<local>" -f $localDomainFqdn; netsh winhttp set proxy proxy-server=$proxy bypass-list=$bypasslist; $proxyEnabled = 1; New-ItemProperty -Path "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\CurrentVersion\\Internet Settings" -Name "ProxySettingsPerUser" -PropertyType DWORD -Value 0 -Force; $proxyBytes = [system.Text.Encoding]::ASCII.GetBytes($proxy); $bypassBytes = [system.Text.Encoding]::ASCII.GetBytes($bypasslist); $defaultConnectionSettings = [byte[]]@(@(70, 0, 0, 0, 0, 0, 0, 0, $proxyEnabled, 0, 0, 0, $proxyBytes.Length, 0, 0, 0) + $proxyBytes + @($bypassBytes.Length, 0, 0, 0) + $bypassBytes + @(1..36 | % { 0 })); $registryPaths = @("HKLM:\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings", "HKLM:\\Software\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Internet Settings"); foreach ($registryPath in $registryPaths) { Set-ItemProperty -Path $registryPath -Name ProxyServer -Value $proxy; Set-ItemProperty -Path $registryPath -Name ProxyEnable -Value $proxyEnabled; Set-ItemProperty -Path $registryPath -Name ProxyOverride -Value $bypasslist; Set-ItemProperty -Path "$registryPath\\Connections" -Name DefaultConnectionSettings -Value $defaultConnectionSettings; } Bitsadmin /util /setieproxy localsystem MANUAL_PROXY $proxy $bypasslist;'
@@ -467,9 +488,9 @@ var baseVirtualMachines = [
       pipConfiguration: outboundAccessMethod == 'PublicIPAddress'
         ? {
             publicIpNameSuffix: '-pip-01'
-            publicIpSku: 'Standard'
+            skuName: 'Standard'
             publicIPAllocationMethod: 'Static'
-            zones: []
+            availabilityZones: [] // must be '[]' to prevent error "-pip-01 does not support availability zones at location 'westus'"
             dnsSettings: addNameToPublicIpAddresses == 'Yes'
               ? {
                   domainNameLabel: toLower('${resourceGroupNameFormatted}-${templateSettings.vmDCName}')
@@ -529,9 +550,9 @@ var baseVirtualMachines = [
       pipConfiguration: outboundAccessMethod == 'PublicIPAddress'
         ? {
             publicIpNameSuffix: '-pip-01'
-            publicIpSku: 'Standard'
+            skuName: 'Standard'
             publicIPAllocationMethod: 'Static'
-            zones: []
+            availabilityZones: [] // must be '[]' to prevent error "-pip-01 does not support availability zones at location 'westus'"
             dnsSettings: addNameToPublicIpAddresses == 'Yes'
               ? {
                   domainNameLabel: toLower('${resourceGroupNameFormatted}-${templateSettings.vmSQLName}')
@@ -591,9 +612,9 @@ var baseVirtualMachines = [
       pipConfiguration: outboundAccessMethod == 'PublicIPAddress'
         ? {
             publicIpNameSuffix: '-pip-01'
-            publicIpSku: 'Standard'
+            skuName: 'Standard'
             publicIPAllocationMethod: 'Static'
-            zones: []
+            availabilityZones: [] // must be '[]' to prevent error "-pip-01 does not support availability zones at location 'westus'"
             dnsSettings: addNameToPublicIpAddresses == 'Yes' || addNameToPublicIpAddresses == 'SharePointVMsOnly'
               ? {
                   domainNameLabel: toLower('${resourceGroupNameFormatted}-${templateSettings.vmSPName}')
@@ -736,10 +757,10 @@ var frontendVirtualMachinesSettings = {
 }
 
 module virtualNetwork 'virtualNetwork.bicep' = {
-  scope: resourceGroup()
   name: 'vnet-module'
   params: {
     location: location
+    tags: allTags
     virtualNetworkName: 'vnet'
     addressPrefix: templateSettings.vNetPrivatePrefix
     mainSubnetAddressPrefix: cidrSubnet(templateSettings.vNetPrivatePrefix, 24, 1)
@@ -767,10 +788,10 @@ module virtualNetwork 'virtualNetwork.bicep' = {
 //@sys.batchSize(3)
 module baseVirtualMachinesModule 'virtualMachine.bicep' = [
   for baseVirtualMachine in baseVirtualMachines: {
-    scope: resourceGroup()
     name: 'virtualMachine-${baseVirtualMachine.virtualMachineSettings.virtualMachineName}-module'
     params: {
       location: location
+      tags: allTags
       adminPassword: adminPassword
       subnetResourceId: virtualNetwork.outputs.mainSubnetResourceId
       licenseType: enableHybridBenefitServerLicenses ? 'Windows_Server' : null
@@ -798,6 +819,7 @@ module frontends 'virtualMachine.bicep' = [
     name: 'virtualMachine-FE-${index}-module'
     params: {
       location: location
+      tags: allTags
       adminPassword: adminPassword
       subnetResourceId: virtualNetwork.outputs.mainSubnetResourceId
       licenseType: enableHybridBenefitServerLicenses ? 'Windows_Server' : null
@@ -813,9 +835,9 @@ module frontends 'virtualMachine.bicep' = [
       pipConfiguration: outboundAccessMethod == 'PublicIPAddress'
         ? {
             publicIpNameSuffix: '-pip-01'
-            publicIpSku: 'Standard'
+            skuName: 'Standard'
             publicIPAllocationMethod: 'Static'
-            zones: []
+            availabilityZones: [] // must be '[]' to prevent error "-pip-01 does not support availability zones at location 'westus'"
             dnsSettings: addNameToPublicIpAddresses == 'Yes' || addNameToPublicIpAddresses == 'SharePointVMsOnly'
               ? {
                   domainNameLabel: toLower('${resourceGroupNameFormatted}-${templateSettings.vmFEName}-${index}')
@@ -833,18 +855,18 @@ module frontends 'virtualMachine.bicep' = [
 ]
 
 module bastion 'bastion.bicep' = if (enableAzureBastion == true) {
-  scope: resourceGroup()
   name: 'bastion-module'
   params: {
     virtualNetworkName: virtualNetwork.outputs.vnetName
+    tags: allTags
   }
 }
 
 module firewall 'firewall.bicep' = if (outboundAccessMethod == 'AzureFirewallProxy') {
-  scope: resourceGroup()
   name: 'firewall-module'
   params: {
     virtualNetworkName: virtualNetwork.outputs.vnetName
+    tags: allTags
     addressPrefix: firewallProxySettings.firewallAddressPrefix
     http_port: firewallProxySettings.httpPort
     https_port: firewallProxySettings.httpsPort
@@ -855,18 +877,12 @@ output domainAdminAccount string = '${substring(domainFqdn,0,indexOf(domainFqdn,
 output domainAdminAccountFormatForBastion string = '${adminUsername}@${domainFqdn}'
 output localAdminAccount string = environmentSettings.localAdminUserName
 
-// output vm_base_public_dns array = [
-//   for i in range(0, 2): (outboundAccessMethod == 'PublicIPAddress')
-//     ? baseVirtualMachinesModule[i].outputs.virtualMachinePublicDomainName != null
-//         ? baseVirtualMachinesModule[i].outputs.virtualMachinePublicDomainName
-//         : baseVirtualMachinesModule[i].outputs.virtualMachinePublicIP
-//     : null
-// ]
+output baseVirtualMachines_data array = [for i in range(0, 3): {
+  name: baseVirtualMachinesModule[i].outputs.name
+  publicIP: baseVirtualMachinesModule[i].outputs.publicIP
+}]
 
-// output vm_fe_public_dns array = [
-//   for i in range(0, frontEndServersCount - 1): (outboundAccessMethod == 'PublicIPAddress')
-//     ? addNameToPublicIpAddresses == 'Yes' || addNameToPublicIpAddresses == 'SharePointVMsOnly'
-//         ? frontends[i].outputs.virtualMachinePublicDomainName
-//         : frontends[i].outputs.virtualMachinePublicIP
-//     : null
-// ]
+output frontEnds_data array = [for i in range(0, frontEndServersCount): {
+  name: frontends[i].outputs.name
+  publicIP: frontends[i].outputs.publicIP
+}]

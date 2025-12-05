@@ -24,14 +24,14 @@ configuration ConfigureSPVM
     )
 
     Import-DscResource -ModuleName ComputerManagementDsc -ModuleVersion 10.0.0 # Custom
-    Import-DscResource -ModuleName NetworkingDsc -ModuleVersion 9.0.0
-    Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion 6.6.2
+    Import-DscResource -ModuleName NetworkingDsc -ModuleVersion 9.1.0
+    Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion 6.7.0
     Import-DscResource -ModuleName xCredSSP -ModuleVersion 1.4.0
     Import-DscResource -ModuleName WebAdministrationDsc -ModuleVersion 4.2.1
-    Import-DscResource -ModuleName SharePointDsc -ModuleVersion 5.6.1 # custom
-    Import-DscResource -ModuleName DnsServerDsc -ModuleVersion 3.0.0
+    Import-DscResource -ModuleName SharePointDsc -ModuleVersion 5.7.0 # Custom workaround on SPInstall
+    Import-DscResource -ModuleName DnsServerDsc -ModuleVersion 3.0.1
     Import-DscResource -ModuleName CertificateDsc -ModuleVersion 6.0.0
-    Import-DscResource -ModuleName SqlServerDsc -ModuleVersion 17.0.0
+    Import-DscResource -ModuleName SqlServerDsc -ModuleVersion 17.1.0 # Custom workaround on SqlSecureConnection
     Import-DscResource -ModuleName cChoco -ModuleVersion 2.6.0.0    # With custom changes to implement retry on package downloads
     Import-DscResource -ModuleName StorageDsc -ModuleVersion 6.0.1
     Import-DscResource -ModuleName xPSDesiredStateConfiguration -ModuleVersion 9.2.1
@@ -130,35 +130,6 @@ configuration ConfigureSPVM
         # Allow NTLM on HTTPS sites when site host name is different than the machine name - https://docs.microsoft.com/en-US/troubleshoot/windows-server/networking/accessing-server-locally-with-fqdn-cname-alias-denied
         Registry DisableLoopBackCheck {
             Key = "HKLM:\System\CurrentControlSet\Control\Lsa"; ValueName = "DisableLoopbackCheck"; ValueData = "1"; ValueType = "Dword"; Ensure = "Present" 
-        }
-
-        # Enable TLS 1.2 - https://learn.microsoft.com/en-us/azure/active-directory/app-proxy/application-proxy-add-on-premises-application#tls-requirements
-        # This allows xRemoteFile to download releases from GitHub: https://github.com/PowerShell/xPSDesiredStateConfiguration/issues/405
-        Registry EnableTLS12RegKey1 {
-            Key = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Client'; ValueName = 'DisabledByDefault'; ValueType = 'Dword'; ValueData = '0'; Ensure = 'Present' 
-        }
-        Registry EnableTLS12RegKey2 {
-            Key = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Client'; ValueName = 'Enabled'; ValueType = 'Dword'; ValueData = '1'; Ensure = 'Present' 
-        }
-        Registry EnableTLS12RegKey3 {
-            Key = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Server'; ValueName = 'DisabledByDefault'; ValueType = 'Dword'; ValueData = '0'; Ensure = 'Present' 
-        }
-        Registry EnableTLS12RegKey4 {
-            Key = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Server'; ValueName = 'Enabled'; ValueType = 'Dword'; ValueData = '1'; Ensure = 'Present' 
-        }
-
-        # Enable strong crypto by default for .NET Framework 4 applications - https://docs.microsoft.com/en-us/dotnet/framework/network-programming/tls#configuring-security-via-the-windows-registry
-        Registry SchUseStrongCrypto {
-            Key = 'HKLM:\SOFTWARE\Microsoft\.NETFramework\v4.0.30319'; ValueName = 'SchUseStrongCrypto'; ValueType = 'Dword'; ValueData = '1'; Ensure = 'Present' 
-        }
-        Registry SchUseStrongCrypto32 {
-            Key = 'HKLM:\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\v4.0.30319'; ValueName = 'SchUseStrongCrypto'; ValueType = 'Dword'; ValueData = '1'; Ensure = 'Present' 
-        }
-        Registry SystemDefaultTlsVersions {
-            Key = 'HKLM:\SOFTWARE\Microsoft\.NETFramework\v4.0.30319'; ValueName = 'SystemDefaultTlsVersions'; ValueType = 'Dword'; ValueData = '1'; Ensure = 'Present' 
-        }
-        Registry SystemDefaultTlsVersions32 {
-            Key = 'HKLM:\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\v4.0.30319'; ValueName = 'SystemDefaultTlsVersions'; ValueType = 'Dword'; ValueData = '1'; Ensure = 'Present' 
         }
 
         Registry DisableIESecurityRegKey1 {
@@ -293,13 +264,6 @@ configuration ConfigureSPVM
             DependsOn = "[cChocoInstaller]InstallChoco"
         }
 
-        cChocoPackageInstaller InstallAzureDataStudio {
-            # Install takes about 40 secs
-            Name      = "azure-data-studio"
-            Ensure    = "Present"
-            DependsOn = "[cChocoInstaller]InstallChoco"
-        }
-
         # if ($EnableAnalysis) {
         #     # This resource is only for analyzing dsc logs using a custom Python script
         #     cChocoPackageInstaller InstallPython
@@ -369,6 +333,8 @@ configuration ConfigureSPVM
                     ChecksumType    = if ($null -ne $package.ChecksumType) { $package.ChecksumType } else { "None" }
                     Checksum        = if ($null -ne $package.Checksum) { $package.Checksum } else { $null }
                     MatchSource     = $false
+                    DependsOn       = "[SPInstall]InstallBinaries"
+                    PsDscRunAsCredential = $DomainAdminCredsQualified;
                 }
 
                 Script "InstallSharePointUpdate_$($SharePointBuildLabel)_$packageFilename" {
@@ -401,6 +367,7 @@ configuration ConfigureSPVM
                     }
                     GetScript  = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
                     DependsOn  = "[SPInstall]InstallBinaries"
+                    PsDscRunAsCredential = $DomainAdminCredsQualified;
                 }
 
                 # SPProductUpdate "InstallSharePointUpdate_$($SharePointBuildLabel)_$packageFilename"
@@ -840,23 +807,9 @@ configuration ConfigureSPVM
             RunCentralAdmin                    = $true
             IsSingleInstance                   = "Yes"
             SkipRegisterAsDistributedCacheHost = $false
+            DatabaseConnectionEncryption       = "Optional" # required with 2025-08 PU+
             Ensure                             = "Present"
             DependsOn                          = "[Script]WaitForSQL", "[Group]AddSPSetupAccountToAdminGroup", "[ADUser]CreateSParmAccount", "[ADUser]CreateSPSvcAccount", "[ADUser]CreateSPAppPoolAccount", "[ADUser]CreateSPSuperUserAccount", "[ADUser]CreateSPSuperReaderAccount", "[ADObjectPermissionEntry]GrantReplicatingDirectoryChanges", "[Script]CreateWSManSPNsIfNeeded"
-        }
-
-        Script AddRequiredDatabasesPermissions {
-            SetScript            =
-            {
-                # https://learn.microsoft.com/en-us/sharepoint/security-for-sharepoint-server/plan-for-least-privileged-administration
-                # Required for slipstream installs with 2022-10 CU or greated
-                foreach ($db in Get-SPDatabase) {
-                    $db.GrantOwnerAccessToDatabaseAccount()
-                }
-            }
-            GetScript            = { }
-            TestScript           = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
-            PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[SPFarm]CreateSPFarm"
         }
 
         Script RestartSPTimerAfterCreateSPFarm {
@@ -1567,6 +1520,22 @@ configuration ConfigureSPVM
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[SPSite]CreateAppCatalog", "[SPAppManagementServiceApp]CreateAppManagementServiceApp"
         }
+
+        # Move this op after all databases were created (instead of just after psconfig.exe as documented), but before other servers can join, to fix SQL permission errors thrown at step 10/10 in SPS config wizard, when installing a CU post-provisionning
+        Script AddRequiredDatabasesPermissions {
+            SetScript            =
+            {
+                # https://learn.microsoft.com/en-us/sharepoint/security-for-sharepoint-server/plan-for-least-privileged-administration
+                # Required for slipstream installs with 2022-10 CU or greater (and does not hurt to also do it in earlier versions)
+                foreach ($db in Get-SPDatabase) {
+                    $db.GrantOwnerAccessToDatabaseAccount()
+                }
+            }
+            GetScript            = { }
+            TestScript           = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+            DependsOn            = "[SPFarm]CreateSPFarm"
+        }
         
         # This team site is tested by VM FE to wait before joining the farm, so it acts as a milestone and it should be created only when all SharePoint services are created
         # If VM FE joins the farm while a SharePoint service is creating here, it may block its creation forever.
@@ -1838,33 +1807,37 @@ configuration ConfigureSPVM
                         }
                     }
 
-                    # # LanguageSynchronizationJob must be executed before updating profile properties, to ensure their property DisplayNameLocalized is set with a localized value
-                    # # This is populated in SQL table [SPDSC_UPA_Profiles].[upa].[PropertyListLoc]
-                    # # If this value is not set, $property.CoreProperty.Commit() will throw: Exception calling "Commit" with "0" argument(s): "The display name must be specified in order to create a property." 
-                    # $job = Get-SPTimerJob -Type "Microsoft.Office.Server.Administration.UserProfileApplication+LanguageSynchronizationJob"
-                    # $job.Execute()
+                    try {
+                        # LanguageSynchronizationJob must be executed before updating profile properties, to ensure their property DisplayNameLocalized is set with a localized value
+                        # This is populated in SQL table [SPDSC_UPA_Profiles].[upa].[PropertyListLoc]
+                        # If this value is not set, $property.CoreProperty.Commit() will throw: Exception calling "Commit" with "0" argument(s): "The display name must be specified in order to create a property." 
+                        # NOTE: Job LanguageSynchronizationJob will fail IF farm build is between some post-RTM CU and < 2025-08 CU.
+                        $job = Get-SPTimerJob -Type "Microsoft.Office.Server.Administration.UserProfileApplication+LanguageSynchronizationJob"
+                        $job.Execute()
 
-                    # $psm = [Microsoft.Office.Server.UserProfiles.ProfileSubTypeManager]::Get($context)
-                    # $ps = $psm.GetProfileSubtype([Microsoft.Office.Server.UserProfiles.ProfileSubtypeManager]::GetDefaultProfileName([Microsoft.Office.Server.UserProfiles.ProfileType]::User))
-                    # $properties = $ps.Properties
-                    # $properties.Count # will call LoadProperties()
-                    # #$properties.GetType().GetMethod("LoadProperties", [System.Reflection.BindingFlags]"NonPublic, Instance").Invoke($properties, $null);
-                    # $PropertyNames = @('FirstName', 'LastName', 'SPS-ClaimID', 'PreferredName')
-                    # foreach ($propertyName in $PropertyNames) { 
-                    #     $property = $properties.GetPropertyByName($propertyName)
-                    #     if ($property) {
-                    #         Write-Verbose -Verbose -Message "Checking property $($propertyName)"
-                    #         $property.CoreProperty.DisplayNameLocalized # Test to avoid error "The display name must be specified in order to create a property."
-                    #         $m_DisplayNamesValue = $property.CoreProperty.GetType().GetField("m_DisplayNames", [System.Reflection.BindingFlags]"NonPublic, Instance").GetValue($property.CoreProperty)
-                    #         if ($m_DisplayNamesValue) {
-                    #             Write-Verbose -Verbose -Message "Property $($propertyName) has m_DisplayNamesValue.DefaultLanguage $($m_DisplayNamesValue.DefaultLanguage) and m_DisplayNamesValue.Count $($m_DisplayNamesValue.Count)"
-                    #         }
-                    #         $property.CoreProperty.IsPeoplePickerSearchable = $true
-                    #         # Somehow this may throw this error: Exception calling "Commit" with "0" argument(s): "The display name must be specified in order to create a property."
-                    #         $property.CoreProperty.Commit()
-                    #         Write-Verbose -Verbose -Message "Updated property $($propertyName) with IsPeoplePickerSearchable: $($property.CoreProperty.IsPeoplePickerSearchable)"
-                    #     }
-                    # }
+                        $psm = [Microsoft.Office.Server.UserProfiles.ProfileSubTypeManager]::Get($context)
+                        $ps = $psm.GetProfileSubtype([Microsoft.Office.Server.UserProfiles.ProfileSubtypeManager]::GetDefaultProfileName([Microsoft.Office.Server.UserProfiles.ProfileType]::User))
+                        $properties = $ps.Properties
+                        $properties.Count # will call LoadProperties()
+                        $PropertyNames = @('FirstName', 'LastName', 'SPS-ClaimID', 'PreferredName')
+                        foreach ($propertyName in $PropertyNames) { 
+                            $property = $properties.GetPropertyByName($propertyName)
+                            if ($property) {
+                                Write-Verbose -Verbose -Message "Checking property $($propertyName)"
+                                $property.CoreProperty.DisplayNameLocalized # Test to avoid error "The display name must be specified in order to create a property."
+                                $m_DisplayNamesValue = $property.CoreProperty.GetType().GetField("m_DisplayNames", [System.Reflection.BindingFlags]"NonPublic, Instance").GetValue($property.CoreProperty)
+                                if ($m_DisplayNamesValue) {
+                                    Write-Verbose -Verbose -Message "Property $($propertyName) has m_DisplayNamesValue.DefaultLanguage $($m_DisplayNamesValue.DefaultLanguage) and m_DisplayNamesValue.Count $($m_DisplayNamesValue.Count)"
+                                }
+                                $property.CoreProperty.IsPeoplePickerSearchable = $true
+                                $property.CoreProperty.Commit()
+                                Write-Verbose -Verbose -Message "Updated property $($propertyName) with IsPeoplePickerSearchable: $($property.CoreProperty.IsPeoplePickerSearchable)"
+                            }
+                        }
+                    }
+                    catch [System.Exception] {
+                        Write-Verbose -Verbose -Message "Could not execute LanguageSynchronizationJob or update profile properties: $_"
+                    }
                 }
                 $uri = "http://$($using:SharePointSitesAuthority)/"
                 $accountPattern_WinClaims = "i:0#.w|$($using:DomainNetbiosName)\{0}"

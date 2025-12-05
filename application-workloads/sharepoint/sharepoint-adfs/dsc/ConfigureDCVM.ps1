@@ -12,11 +12,11 @@
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$AdfsSvcCreds
     )
 
-    Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion 6.6.2
-    Import-DscResource -ModuleName NetworkingDsc -ModuleVersion 9.0.0
+    Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion 6.7.0
+    Import-DscResource -ModuleName NetworkingDsc -ModuleVersion 9.1.0
     Import-DscResource -ModuleName ActiveDirectoryCSDsc -ModuleVersion 5.0.0
     Import-DscResource -ModuleName CertificateDsc -ModuleVersion 6.0.0
-    Import-DscResource -ModuleName DnsServerDsc -ModuleVersion 3.0.0
+    Import-DscResource -ModuleName DnsServerDsc -ModuleVersion 3.0.1
     Import-DscResource -ModuleName ComputerManagementDsc -ModuleVersion 10.0.0 # Custom
     Import-DscResource -ModuleName AdfsDsc -ModuleVersion 1.4.0
 
@@ -244,22 +244,19 @@
         #**********************************************************
         # Install AD FS early (before reboot) to workaround error below on resource AdfsApplicationGroup:
         # "System.InvalidOperationException: The test script threw an error. ---> System.IO.FileNotFoundException: Could not load file or assembly 'Microsoft.IdentityServer.Diagnostics, Version=10.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35' or one of its dependencie"
-        WindowsFeature AddADFS {
-            Name = "ADFS-Federation"; Ensure = "Present"; 
-        }
-        WindowsFeature AddADDS {
-            Name = "AD-Domain-Services"; Ensure = "Present" 
-        }
-        WindowsFeature AddDNS {
-            Name = "DNS"; Ensure = "Present" 
-        }
+        WindowsFeature AddADFS { Name = "ADFS-Federation"; Ensure = "Present"; }
+        WindowsFeature AddADDS { Name = "AD-Domain-Services"; Ensure = "Present" }
+        WindowsFeature AddDNS { Name = "DNS"; Ensure = "Present" }
+        WindowsFeature AddGroupPolicyPowerShellModule { Name = "GPMC"; Ensure = "Present" }
+
         DnsServerAddress SetDNS {
             Address = '127.0.0.1' ; InterfaceAlias = $InterfaceAlias; AddressFamily = 'IPv4' 
         }
-        # IPAddress NewIPv4Address
-        # {
-        #     IPAddress = '10.1.1.4'; InterfaceAlias = $InterfaceAlias; AddressFamily  = 'IPV4'
-        # }
+
+        PendingReboot CheckRebootBeforeCreateADForest {
+            Name      = "CheckRebootBeforeCreateADForest"
+            DependsOn = "[WindowsFeature]AddGroupPolicyPowerShellModule"
+        }
 
         ADDomain CreateADForest {
             DomainName                    = $DomainFQDN
