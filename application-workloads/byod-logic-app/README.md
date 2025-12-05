@@ -15,14 +15,19 @@ languages:
 
 # Deploy a Logic App for Automated BYOD File Uploads to Access Reviews
 
-![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/byod-trigger/PublicLastTestDate.svg)
-![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/byod-trigger/PublicDeployment.svg)
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/byod-logic-app/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/byod-logic-app/PublicDeployment.svg)
 
-![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/byod-trigger/BestPracticeResult.svg)
-![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/byod-trigger/CredScanResult.svg)
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/byod-logic-app/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/byod-logic-app/FairfaxDeployment.svg)
 
-[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fbyod-trigger%2Fazuredeploy.json)
-[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fbyod-trigger%2Fazuredeploy.json)
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/byod-logic-app/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/byod-logic-app/CredScanResult.svg)
+
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fbyod-logic-app%2Fazuredeploy.json)
+
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fbyod-logic-app%2Fazuredeploy.json)   
+
 
 ## Overview
 
@@ -51,7 +56,7 @@ The Logic App workflow performs the following operations:
 - Appropriate permissions to deploy resources and assign roles
 - Microsoft Graph API permissions for the Logic App's managed identity:
   - `AccessReview.ReadWrite.All`
-  - `IdentityGovernance.ReadWrite.All`
+  - `EntitlementManagement.ReadWrite.All`
 
 ## Parameters
 
