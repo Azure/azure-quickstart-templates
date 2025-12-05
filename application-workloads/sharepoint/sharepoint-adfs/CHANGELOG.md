@@ -1,5 +1,39 @@
 # Change log for Azure template SharePoint-ADFS
 
+## Enhancements & bug-fixes - Published in November 19, 2025
+
+### Changed
+
+- Template
+  - Value `Subscription-Latest` for parameter `sharePointVersion` now installs the November 2025 CU for SharePoint Subscription
+  - Added value `Subscription-25H2` to parameter `sharePointVersion`, to install SharePoint Subscription version 25H2 (September 2025 CU)
+  - Switched to SQL Server 2025 on Windows Server 2025
+  - Bumped versions of Bicep resources and [Azure Verified Modules](https://azure.github.io/Azure-Verified-Modules/)
+  - Updated bicep module for virtual machines
+  - Updated pipConfiguration objects to use updated property names, and prevent error "-pip-01 does not support availability zones at location 'westus'"
+  - Updated outputs
+
+- All DSC configurations
+  - Updated DSC module **DnsServerDsc** from 3.0.0 to 3.0.1
+
+- DSC Configuration for all SharePoint VMs
+  - Removed Azure Data Studio (deprecated)
+  - Updated DSC module **SharePointDsc** from 5.6.0 to 5.7.0
+
+- DSC Configuration for SharePoint SE
+  - Re-enabled setting property IsPeoplePickerSearchable on selected profile properties, for use by UPA claims provider
+  - Remove the explicit TLS settings, not required with Windows Server 2025
+  - Added parameter DatabaseConnectionEncryption for resource SPFarm, required with  **SharePointDsc** 5.7.0 + 2025-08 PU+
+
+### Fixed
+
+- DSC Configuration for SharePoint SE
+  - Move script that runs GrantOwnerAccessToDatabaseAccount after all databases were created, and before any WFE server may connect to the farm, to fix SQL permission errors thrown at step 10/10 in SPS config wizard, when installing a CU post-provisionning
+
+- DSC Configuration for DC
+  - Explicitly install the Windows feature "Group Policy Management Console (GPMC)", to ensure cmdlets *-GPO are installed
+  - Allow a reboot before running ADDomain, as it became necessary after installing the Windows feature "Group Policy Management Console (GPMC)"
+
 ## Enhancements & bug-fixes - Published in June 2, 2025
 
 ### Changed

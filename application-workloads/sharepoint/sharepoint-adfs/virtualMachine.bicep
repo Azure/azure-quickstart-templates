@@ -50,13 +50,16 @@ param increaseDscQuota bool = true
 
 param timeZone string = 'Romance Standard Time'
 param autoShutdownTime string = '1900'
+@description('Tags to apply on the resources.')
+param tags object
 
 var modulePrefix = 'virtualMachine'
 
-module vm_definition 'br/public:avm/res/compute/virtual-machine:0.15.0' = {
+module virtualMachine 'br/public:avm/res/compute/virtual-machine:0.21.0' = {
   name: '${modulePrefix}-${virtualMachineName}-module-avm'
   scope: resourceGroup()
   params: {
+    tags: tags
     location: resourceGroup().location
     name: 'vm-${virtualMachineName}'
     computerName: virtualMachineName
@@ -64,9 +67,11 @@ module vm_definition 'br/public:avm/res/compute/virtual-machine:0.15.0' = {
     adminPassword: adminPassword
     imageReference: virtualMachineImageReference
     vmSize: virtualMachineSize
-    zone: 0
-    encryptionAtHost: false
+    availabilityZone: -1
     securityType: virtualMachineSecurityType
+    encryptionAtHost: false
+    secureBootEnabled: virtualMachineSecurityType == 'TrustedLaunch' ? true : false
+    vTpmEnabled: virtualMachineSecurityType == 'TrustedLaunch' ? true : false
     osType: 'Windows'
     licenseType: licenseType
     timeZone: timeZone
@@ -104,43 +109,59 @@ module vm_definition 'br/public:avm/res/compute/virtual-machine:0.15.0' = {
     extensionGuestConfigurationExtension: {
       enabled: true
     }
+
+    // extensionCustomScriptConfig:
+    // extensionDSCConfig:
+
+    extensionCustomScriptConfig: increaseDscQuota == true ? {
+      name: 'increase-dsc-quota'
+      settings: {
+        commandToExecute: 'powershell -Command "Set-Item -Path WSMan:\\localhost\\MaxEnvelopeSizeKb -Value 2048"'
+      }
+    } : null
+
+    // extensionCustomScriptConfig : dscSettings != null ? {
+    //   autoUpgradeMinorVersion: true
+    //   settings: dscSettings
+    //   protectedSettings: dscProtectedSettings
+    // } : null
   }
 }
 
-resource virtualMachine 'Microsoft.Compute/virtualMachines@2024-11-01' existing = {
+resource virtualMachineCreated 'Microsoft.Compute/virtualMachines@2025-04-01' existing = {
   dependsOn: [
-    vm_definition
+    virtualMachine
   ]
   scope: resourceGroup()
   name: 'vm-${virtualMachineName}'
 }
 
-resource runcommand_increase_dsc_quota 'Microsoft.Compute/virtualMachines/runCommands@2024-11-01' = if (increaseDscQuota == true) {
-  parent: virtualMachine
-  name: '${modulePrefix}-${virtualMachineName}-runcommand-increase-dsc-quota'
-  location: location
-  properties: {
-    source: {
-      script: 'Set-Item -Path WSMan:\\localhost\\MaxEnvelopeSizeKb -Value 2048'
-    }
-    timeoutInSeconds: 90
-    treatFailureAsDeploymentFailure: false
-  }
-}
+// resource runcommand_increase_dsc_quota 'Microsoft.Compute/virtualMachines/runCommands@2025-04-01' = if (increaseDscQuota == true) {
+//   parent: virtualMachineCreated
+//   name: '${modulePrefix}-${virtualMachineName}-runcommand-increase-dsc-quota'
+//   location: location
+//   properties: {
+//     source: {
+//       script: 'Set-Item -Path WSMan:\\localhost\\MaxEnvelopeSizeKb -Value 2048'
+//     }
+//     timeoutInSeconds: 90
+//     treatFailureAsDeploymentFailure: false
+//   }
+// }
 
-resource runcommand 'Microsoft.Compute/virtualMachines/runCommands@2024-11-01' = if (runCommandProperties != null) {
-  parent: virtualMachine
+resource runcommand 'Microsoft.Compute/virtualMachines/runCommands@2025-04-01' = if (runCommandProperties != null) {
+  parent: virtualMachineCreated
   name: '${modulePrefix}-${virtualMachineName}-runcommand'
   location: location
   properties: runCommandProperties!
 }
 
-resource extension 'Microsoft.Compute/virtualMachines/extensions@2024-11-01' = if (dscSettings != null) {
+resource extension 'Microsoft.Compute/virtualMachines/extensions@2025-04-01' = if (dscSettings != null) {
   dependsOn: [
-    runcommand_increase_dsc_quota
+    // runcommand_increase_dsc_quota
     runcommand
   ]
-  parent: virtualMachine
+  parent: virtualMachineCreated
   name: '${modulePrefix}-${virtualMachineName}-dsc'
   location: location
   properties: {
@@ -155,8 +176,10 @@ resource extension 'Microsoft.Compute/virtualMachines/extensions@2024-11-01' = i
 }
 
 @description('The name of the virtual machine.')
-output virtualMachineName string = virtualMachine.name
+output name string = virtualMachine.outputs.name
+
+@description('The public IP address of the virtual machine.')
+output publicIP string = virtualMachine.outputs.nicConfigurations[0].ipConfigurations[0].?publicIP ?? ''
 
 // output virtualMachinePublicDomainName string = virtualMachine.properties.dnsSettings.fqdn
 // output virtualMachinePublicIP string = virtualMachine.properties.dnsSettings.ipAddress
-// output virtualMachinePublicDomainName string = virtualMachine.properties.networkProfile.networkInterfaces[0].properties.dnsSettings.fqdn
