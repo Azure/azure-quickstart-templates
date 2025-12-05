@@ -10,6 +10,7 @@
   - Switched to SQL Server 2025 on Windows Server 2025
   - Bumped versions of Bicep resources and [Azure Verified Modules](https://azure.github.io/Azure-Verified-Modules/)
   - Updated bicep module for virtual machines
+  - Updated pipConfiguration objects to use updated property names, and prevent error "-pip-01 does not support availability zones at location 'westus'"
   - Updated outputs
 
 - All DSC configurations

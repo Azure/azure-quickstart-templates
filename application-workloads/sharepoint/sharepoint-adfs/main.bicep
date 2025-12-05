@@ -488,9 +488,9 @@ var baseVirtualMachines = [
       pipConfiguration: outboundAccessMethod == 'PublicIPAddress'
         ? {
             publicIpNameSuffix: '-pip-01'
-            publicIpSku: 'Standard'
+            skuName: 'Standard'
             publicIPAllocationMethod: 'Static'
-            zones: []
+            availabilityZones: [] // must be '[]' to prevent error "-pip-01 does not support availability zones at location 'westus'"
             dnsSettings: addNameToPublicIpAddresses == 'Yes'
               ? {
                   domainNameLabel: toLower('${resourceGroupNameFormatted}-${templateSettings.vmDCName}')
@@ -550,9 +550,9 @@ var baseVirtualMachines = [
       pipConfiguration: outboundAccessMethod == 'PublicIPAddress'
         ? {
             publicIpNameSuffix: '-pip-01'
-            publicIpSku: 'Standard'
+            skuName: 'Standard'
             publicIPAllocationMethod: 'Static'
-            zones: []
+            availabilityZones: [] // must be '[]' to prevent error "-pip-01 does not support availability zones at location 'westus'"
             dnsSettings: addNameToPublicIpAddresses == 'Yes'
               ? {
                   domainNameLabel: toLower('${resourceGroupNameFormatted}-${templateSettings.vmSQLName}')
@@ -612,9 +612,9 @@ var baseVirtualMachines = [
       pipConfiguration: outboundAccessMethod == 'PublicIPAddress'
         ? {
             publicIpNameSuffix: '-pip-01'
-            publicIpSku: 'Standard'
+            skuName: 'Standard'
             publicIPAllocationMethod: 'Static'
-            zones: []
+            availabilityZones: [] // must be '[]' to prevent error "-pip-01 does not support availability zones at location 'westus'"
             dnsSettings: addNameToPublicIpAddresses == 'Yes' || addNameToPublicIpAddresses == 'SharePointVMsOnly'
               ? {
                   domainNameLabel: toLower('${resourceGroupNameFormatted}-${templateSettings.vmSPName}')
@@ -835,9 +835,9 @@ module frontends 'virtualMachine.bicep' = [
       pipConfiguration: outboundAccessMethod == 'PublicIPAddress'
         ? {
             publicIpNameSuffix: '-pip-01'
-            publicIpSku: 'Standard'
+            skuName: 'Standard'
             publicIPAllocationMethod: 'Static'
-            zones: []
+            availabilityZones: [] // must be '[]' to prevent error "-pip-01 does not support availability zones at location 'westus'"
             dnsSettings: addNameToPublicIpAddresses == 'Yes' || addNameToPublicIpAddresses == 'SharePointVMsOnly'
               ? {
                   domainNameLabel: toLower('${resourceGroupNameFormatted}-${templateSettings.vmFEName}-${index}')

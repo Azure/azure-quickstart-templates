@@ -55,7 +55,7 @@ param tags object
 
 var modulePrefix = 'virtualMachine'
 
-module virtualMachine 'br/public:avm/res/compute/virtual-machine:0.20.0' = {
+module virtualMachine 'br/public:avm/res/compute/virtual-machine:0.21.0' = {
   name: '${modulePrefix}-${virtualMachineName}-module-avm'
   scope: resourceGroup()
   params: {
