@@ -1,5 +1,5 @@
 ---
-description: This template deploys a 2 node master/slave MySQL replication cluster on CentOS 6.5 or 6.6
+description: This template deploys a 2 node primary/replica MySQL replication cluster on CentOS 6.5 or 6.6
 page_type: sample
 products:
 - azure
@@ -8,7 +8,7 @@ urlFragment: mysql-replication
 languages:
 - json
 ---
-# Deploys a 2 node master/slave MySQL replication cluster
+# Deploys a 2 node primary/replica MySQL replication cluster
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/mysql/mysql-replication/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/mysql/mysql-replication/PublicDeployment.svg)
@@ -23,7 +23,7 @@ languages:
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fmysql%2Fmysql-replication%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fmysql%2Fmysql-replication%2Fazuredeploy.json)
 
-This template deploys a MySQL replication environment with one master and one slave servers.  It has the following capabilities:
+This template deploys a MySQL replication environment with one master and one replica server.  It has the following capabilities:
 
 - Supports CentOS 6 and MySQL 5.6
 - Supports GTID based replication
@@ -34,7 +34,7 @@ This template deploys a MySQL replication environment with one master and one sl
 
 ## How to Access MySQL
 
-- Access MySQL using the public DNS name.  By default, the master server can be accessed at port 3306, and the slave server 3307.  By default, a user "admin" is created with all privileges to access from remote hosts. For example, access the master with the following command:
+- Access MySQL using the public DNS name.  By default, the master server can be accessed at port 3306, and the replica server 3307.  By default, a user "admin" is created with all privileges to access from remote hosts. For example, access the master with the following command:
 
 ```sh
 > mysql -h mysqldns.eastus.cloudapp.azure.com -u admin -p
@@ -82,7 +82,7 @@ High availability and failover are no different from other GTID based MySQL repl
 You can also do this in the Azure portal. Find the current master's MySQL NSG, either delete it or set the ports to some invalid value:
 ![Alt text](/application-workloads/mysql/mysql-replication/screenshots/1removeOldMasterNSG.PNG "Remove or update NSG of the old master")
 
-- Fail over MySQL from the old master to the new master.  On the slave, run the following, assuming slave 10.0.1.5 is to become the new master:
+- Fail over MySQL from the old master to the new master.  On the replica, run the following, assuming replica 10.0.1.5 is to become the new master:
 
 ```sh
 mysql> stop slave;
@@ -109,7 +109,7 @@ Similarly, this can also be done in the Azure portal. First update the NSG for t
 Then update the NSG for the old master back to valid values:
 ![Alt text](/application-workloads/mysql/mysql-replication/screenshots/3updateOldMasterToSlave.PNG "Update the NSG for the old master")
 
-- Add the old master back to replication as a slave, on the old master, run the following, assuming the new master is 10.0.1.5:
+- Add the old master back to replication as a replica, on the old master, run the following, assuming the new master is 10.0.1.5:
 
 ```sh
 mysql> stop slave;
@@ -129,7 +129,7 @@ on the master:
 mysql> show master status\G;
 ```
 
-on the slave:
+on the replica:
 
 ```sh
 mysql> show slave status\G;
@@ -137,7 +137,7 @@ mysql> show slave status\G;
 
 ## How to backup databases to Azure blob storage
 
-- There are several ways to take mysql backups as shown at [MySQL Backup and Recovery](https://dev.mysql.com/doc/refman/5.6/en/backup-and-recovery.html). The example below shows mysql dump from the slave.
+- There are several ways to take mysql backups as shown at [MySQL Backup and Recovery](https://dev.mysql.com/doc/refman/5.6/en/backup-and-recovery.html). The example below shows mysql dump from the replica.
 
 ```sh
 # Create backups directory if not already created (modify folder as required)
@@ -165,7 +165,7 @@ mysql> show slave status\G;
 
 > cd /home/admin/backups/
 
-# Stop replication to slave
+# Stop replication to replica
 > mysqladmin stop-slave -u admin -p
 
 # Take mysql backup for all databases
@@ -174,7 +174,7 @@ mysql> show slave status\G;
 # Compress the mysql backup
 > gzip alldbs.sql
 
-# Start slave replication
+# Start replica replication
 > mysqladmin start-slave -u admin -p
 
 # Remove previous backup file
