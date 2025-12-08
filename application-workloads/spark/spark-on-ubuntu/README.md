@@ -94,7 +94,7 @@ Topology
 --------
 
 The deployment topology is comprised of Master and Slave Instance nodes running in the cluster mode.
-Spark version 1.2.1 is the default version and can be changed to any pre-built binaries avaiable on Spark repo.
+Spark version 1.2.1 is the default version and can be changed to any pre-built binaries available on Spark repo.
 There is also a provision in the script to uncomment the build from source.
 
  A static IP address will be assigned to each Spark Master node 10.0.0.10
