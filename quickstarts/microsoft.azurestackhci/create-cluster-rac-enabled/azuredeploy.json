@@ -118,7 +118,7 @@
         "description": "Deployment user username"
       }
     },
-    "AzureStackLCMAdminPasssword": {
+    "AzureStackLCMAdminPassword": {
       "type": "securestring",
       "minLength": 1,
       "metadata": {
@@ -487,14 +487,13 @@
     "storageWitnessSecretName": "[concat( parameters('clusterName'), '-', 'WitnessStorageKey')]",
     "LocalAdminCredentialSecretName": "[concat( parameters('clusterName'), '-', 'LocalAdminCredential')]",
     "domainAdminSecretName": "[concat( parameters('clusterName'), '-', 'AzureStackLCMUserCredential')]",
-    "storageWitnessNameVar": "WitnessStorageKey",
-    "secretsLocationVar": "[concat('https://',parameters('keyVaultName'), '.vault.azure.net')]",
     "witnessTypeVar": "[if(equals(parameters('witnessType'), 'No Witness'), '','Cloud')]",
     "clusterWitnessStorageAccountNameVar": "[if(equals(parameters('witnessType'), 'No Witness'), '', parameters('clusterWitnessStorageAccountName'))]",
-    "AzureServiceEndpointVar": "[if(equals(parameters('witnessType'), 'No Witness'), '', 'core.windows.net')]",
+    "AzureServiceEndpointVar": "[if(equals(parameters('witnessType'), 'No Witness'), '', if(equals(environment().name, 'AzureCloud'), 'core.windows.net', 'core.usgovcloudapi.net'))]",
     "localAdminSecretValue": "[base64(concat(parameters('localAdminUserName'),':',parameters('localAdminPassword')))]",
-    "domainAdminSecretValueVar": "[base64(concat(parameters('AzureStackLCMAdminUsername'),':',parameters('AzureStackLCMAdminPasssword')))]",
+    "domainAdminSecretValueVar": "[base64(concat(parameters('AzureStackLCMAdminUsername'),':',parameters('AzureStackLCMAdminPassword')))]",
     "CloudWithnessStorageAccountIdVar": "[resourceId('Microsoft.Storage/storageAccounts', parameters('clusterWitnessStorageAccountName'))]",
+    "KeyVaultDNS": "[if(equals(environment().name, 'AzureCloud'), 'vault.azure.net', 'vault.usgovcloudapi.net')]",
     "copy": [
       {
           "name": "answerfileSBESecrets",
@@ -502,7 +501,7 @@
           "input": {
               "secretName": "[parameters('partnerCredentialList')[copyIndex('answerfileSBESecrets')].secretName]",
               "eceSecretName": "[parameters('partnerCredentialList')[copyIndex('answerfileSBESecrets')].secretName]",
-              "secretLocation": "[concat('https://', parameters('keyVaultName'), '.vault.azure.net/secrets/', parameters('partnerCredentialList')[copyIndex('answerfileSBESecrets')].secretName)]"
+              "secretLocation": "[concat('https://', parameters('keyVaultName'), '.', variables('KeyVaultDNS'), '/secrets/', parameters('partnerCredentialList')[copyIndex('answerfileSBESecrets')].secretName)]"
           }
       },
       {
@@ -515,17 +514,17 @@
       {
         "secretName": "[variables('storageWitnessSecretName')]",
         "eceSecretName" : "[variables('storageWitnessECEName')]",
-        "secretLocation": "[concat('https://', parameters('keyVaultName'), '.vault.azure.net/secrets/', variables('storageWitnessSecretName'))]"
+        "secretLocation": "[concat('https://', parameters('keyVaultName'), '.', variables('KeyVaultDNS'), '/secrets/', variables('storageWitnessSecretName'))]"
       },
       {
         "secretName":  "[variables('LocalAdminCredentialSecretName')]",
         "eceSecretName" :  "[variables('LocalAdminCredentialECEName')]",
-         "secretLocation": "[concat('https://', parameters('keyVaultName'), '.vault.azure.net/secrets/', variables('LocalAdminCredentialSecretName'))]"
+        "secretLocation": "[concat('https://', parameters('keyVaultName'), '.', variables('KeyVaultDNS'), '/secrets/', variables('LocalAdminCredentialSecretName'))]"
       },
       {
         "secretName":  "[variables('domainAdminSecretName')]",
         "eceSecretName" :  "[variables('domainAdminCredentialECEName')]",
-        "secretLocation": "[concat('https://', parameters('keyVaultName'), '.vault.azure.net/secrets/', variables('domainAdminSecretName'))]"
+        "secretLocation": "[concat('https://', parameters('keyVaultName'), '.', variables('KeyVaultDNS'), '/secrets/', variables('domainAdminSecretName'))]"
       }
 
     ]
