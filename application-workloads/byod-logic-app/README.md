@@ -137,7 +137,7 @@ After deploying the template, complete these additional configuration steps:
 
 ## Resources Deployed
 
-- **Microsoft.Storage/storageAccounts**: Storage account with blob, file, queue, and table services
+- **Microsoft.Storage/storageAccounts**: Storage account with blob and file services
 - **Microsoft.Storage/storageAccounts/blobServices/containers**: BYOD blob container
 - **Microsoft.Web/connections**: Azure Blob Storage API connection
 - **Microsoft.Logic/workflows**: Logic App workflow
