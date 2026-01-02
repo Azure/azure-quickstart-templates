@@ -25,7 +25,7 @@ param existingSubnetName string
   'SQL2014SP3-WS2012R2'
   'SQL2014SP2-WS2012R2'
 ])
-param imageOffer string = 'sql2019-ws2022'
+param imageOffer string = 'sql2025-ws2025'
 
 @description('SQL Server Sku')
 @allowed([
