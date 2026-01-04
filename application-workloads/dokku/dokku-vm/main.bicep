@@ -7,11 +7,11 @@ param sshKeyData string
 @description('DNS Label for the Public IP. Must be lowercase. It should match with the following regular expression: ^[a-z][a-z0-9-]{1,61}[a-z0-9]$ or it will raise an error.')
 param dnsLabelPrefix string
 
-@description('The Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version. Allowed values: 24_04-lts-gen2.')
+@description('The Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version. Allowed values: ubuntu-24_04-lts.')
 @allowed([
-  '24_04-lts-gen2'
+  'ubuntu-24_04-lts'
 ])
-param ubuntuOSVersion string = '24_04-lts-gen2'
+param ubuntuOSVersion string = 'ubuntu-24_04-lts'
 
 @description('The Dokku version to launch')
 param dokkuVersion string = '0.37.3'
