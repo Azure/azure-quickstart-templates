@@ -51,7 +51,7 @@ var virtualNetworkName = 'DokkuVNet'
 var subnetRef = resourceId('Microsoft.Network/virtualNetworks/subnets/', virtualNetworkName, subnetName)
 var sshKeyPath = '/home/${adminUsername}/.ssh/authorized_keys'
 
-resource storageAccount 'Microsoft.Storage/storageAccounts@2022-05-01' = {
+resource storageAccount 'Microsoft.Storage/storageAccounts@2025-06-01' = {
   name: storageAccountName
   location: location
   sku: {
@@ -62,7 +62,7 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2022-05-01' = {
   }
 }
 
-resource publicIPAddress 'Microsoft.Network/publicIPAddresses@2022-05-01' = {
+resource publicIPAddress 'Microsoft.Network/publicIPAddresses@2025-01-01' = {
   name: publicIPAddressName
   location: location
   properties: {
@@ -73,7 +73,7 @@ resource publicIPAddress 'Microsoft.Network/publicIPAddresses@2022-05-01' = {
   }
 }
 
-resource virtualNetwork 'Microsoft.Network/virtualNetworks@2022-05-01' = {
+resource virtualNetwork 'Microsoft.Network/virtualNetworks@2025-01-01' = {
   name: virtualNetworkName
   location: location
   properties: {
@@ -93,7 +93,7 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2022-05-01' = {
   }
 }
 
-resource nic 'Microsoft.Network/networkInterfaces@2022-05-01' = {
+resource nic 'Microsoft.Network/networkInterfaces@2025-01-01' = {
   name: nicName
   location: location
   properties: {
@@ -117,7 +117,7 @@ resource nic 'Microsoft.Network/networkInterfaces@2022-05-01' = {
   ]
 }
 
-resource vm 'Microsoft.Compute/virtualMachines@2022-08-01' = {
+resource vm 'Microsoft.Compute/virtualMachines@2025-04-01' = {
   name: vmName
   location: location
   properties: {
@@ -169,7 +169,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2022-08-01' = {
   }
 }
 
-resource initDokku 'Microsoft.Compute/virtualMachines/extensions@2022-08-01' = {
+resource initDokku 'Microsoft.Compute/virtualMachines/extensions@2025-04-01' = {
   parent: vm
   name: 'initdokku'
   location: location
