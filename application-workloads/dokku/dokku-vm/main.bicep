@@ -7,17 +7,17 @@ param sshKeyData string
 @description('DNS Label for the Public IP. Must be lowercase. It should match with the following regular expression: ^[a-z][a-z0-9-]{1,61}[a-z0-9]$ or it will raise an error.')
 param dnsLabelPrefix string
 
-@description('The Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version. Allowed values: 20_04-lts-gen2.')
+@description('The Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version. Allowed values: ubuntu-24_04-lts.')
 @allowed([
-  '20_04-lts-gen2'
+  'ubuntu-24_04-lts'
 ])
-param ubuntuOSVersion string = '20_04-lts-gen2'
+param ubuntuOSVersion string = 'ubuntu-24_04-lts'
 
 @description('The Dokku version to launch')
-param dokkuVersion string = '0.35.20'
+param dokkuVersion string = '0.37.3'
 
 @description('Size of the virtual machine')
-param vmSize string = 'Standard_D2S_V3'
+param vmSize string = 'Standard_D2S_V6'
 
 @description('Type of storage to be used for the VM\'s OS disk.  Diagnostics disk will use Standard_LRS.')
 @allowed([
@@ -39,7 +39,7 @@ param location string = resourceGroup().location
 
 var storageAccountName = '${uniqueString(resourceGroup().id)}dokku'
 var imagePublisher = 'Canonical'
-var imageOffer = '0001-com-ubuntu-server-focal'
+var imageSku = 'server'
 var nicName = 'dokkuVMNic'
 var addressPrefix = '10.0.0.0/16'
 var subnetName = 'Subnet'
@@ -51,7 +51,7 @@ var virtualNetworkName = 'DokkuVNet'
 var subnetRef = resourceId('Microsoft.Network/virtualNetworks/subnets/', virtualNetworkName, subnetName)
 var sshKeyPath = '/home/${adminUsername}/.ssh/authorized_keys'
 
-resource storageAccount 'Microsoft.Storage/storageAccounts@2022-05-01' = {
+resource storageAccount 'Microsoft.Storage/storageAccounts@2025-06-01' = {
   name: storageAccountName
   location: location
   sku: {
@@ -62,7 +62,7 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2022-05-01' = {
   }
 }
 
-resource publicIPAddress 'Microsoft.Network/publicIPAddresses@2022-05-01' = {
+resource publicIPAddress 'Microsoft.Network/publicIPAddresses@2025-01-01' = {
   name: publicIPAddressName
   location: location
   properties: {
@@ -73,7 +73,7 @@ resource publicIPAddress 'Microsoft.Network/publicIPAddresses@2022-05-01' = {
   }
 }
 
-resource virtualNetwork 'Microsoft.Network/virtualNetworks@2022-05-01' = {
+resource virtualNetwork 'Microsoft.Network/virtualNetworks@2025-01-01' = {
   name: virtualNetworkName
   location: location
   properties: {
@@ -93,7 +93,7 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2022-05-01' = {
   }
 }
 
-resource nic 'Microsoft.Network/networkInterfaces@2022-05-01' = {
+resource nic 'Microsoft.Network/networkInterfaces@2025-01-01' = {
   name: nicName
   location: location
   properties: {
@@ -117,7 +117,7 @@ resource nic 'Microsoft.Network/networkInterfaces@2022-05-01' = {
   ]
 }
 
-resource vm 'Microsoft.Compute/virtualMachines@2022-08-01' = {
+resource vm 'Microsoft.Compute/virtualMachines@2025-04-01' = {
   name: vmName
   location: location
   properties: {
@@ -142,8 +142,8 @@ resource vm 'Microsoft.Compute/virtualMachines@2022-08-01' = {
     storageProfile: {
       imageReference: {
         publisher: imagePublisher
-        offer: imageOffer
-        sku: ubuntuOSVersion
+        offer: ubuntuOSVersion
+        sku: imageSku
         version: 'latest'
       }
       osDisk: {
@@ -169,7 +169,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2022-08-01' = {
   }
 }
 
-resource initDokku 'Microsoft.Compute/virtualMachines/extensions@2022-08-01' = {
+resource initDokku 'Microsoft.Compute/virtualMachines/extensions@2025-04-01' = {
   parent: vm
   name: 'initdokku'
   location: location
