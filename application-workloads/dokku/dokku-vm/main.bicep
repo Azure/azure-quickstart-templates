@@ -39,7 +39,7 @@ param location string = resourceGroup().location
 
 var storageAccountName = '${uniqueString(resourceGroup().id)}dokku'
 var imagePublisher = 'Canonical'
-var imageOffer = '0001-com-ubuntu-server-focal'
+var imageSku = 'server'
 var nicName = 'dokkuVMNic'
 var addressPrefix = '10.0.0.0/16'
 var subnetName = 'Subnet'
@@ -142,8 +142,8 @@ resource vm 'Microsoft.Compute/virtualMachines@2025-04-01' = {
     storageProfile: {
       imageReference: {
         publisher: imagePublisher
-        offer: imageOffer
-        sku: ubuntuOSVersion
+        offer: ubuntuOSVersion
+        sku: imageSku
         version: 'latest'
       }
       osDisk: {
