@@ -17,7 +17,7 @@ param ubuntuOSVersion string = '24_04-lts-gen2'
 param dokkuVersion string = '0.35.20'
 
 @description('Size of the virtual machine')
-param vmSize string = 'Standard_D2S_V3'
+param vmSize string = 'Standard_D2S_V6'
 
 @description('Type of storage to be used for the VM\'s OS disk.  Diagnostics disk will use Standard_LRS.')
 @allowed([
