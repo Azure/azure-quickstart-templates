@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.17.1.54307",
-      "templateHash": "3407567292495018002"
+      "version": "0.39.26.7824",
+      "templateHash": "8885750212402280260"
     }
   },
   "parameters": {
@@ -46,6 +46,8 @@
       "type": "string",
       "defaultValue": "sql2019-ws2022",
       "allowedValues": [
+        "sql2025-ws2025",
+        "sql2022-ws2022",
         "sql2019-ws2019",
         "sql2017-ws2019",
         "sql2019-ws2022",
@@ -99,8 +101,8 @@
     "sqlDataDisksCount": {
       "type": "int",
       "defaultValue": 1,
-      "maxValue": 8,
       "minValue": 1,
+      "maxValue": 8,
       "metadata": {
         "description": "Amount of data disks (1TB each) for SQL Data files"
       }
@@ -115,8 +117,8 @@
     "sqlLogDisksCount": {
       "type": "int",
       "defaultValue": 1,
-      "maxValue": 8,
       "minValue": 1,
+      "maxValue": 8,
       "metadata": {
         "description": "Amount of data disks (1TB each) for SQL Log files"
       }
@@ -135,22 +137,26 @@
         "description": "Location for all resources."
       }
     },
-    "secureBoot": {
-      "type": "bool",
-      "defaultValue": true,
+    "securityType": {
+      "type": "string",
+      "defaultValue": "TrustedLaunch",
+      "allowedValues": [
+        "Standard",
+        "TrustedLaunch"
+      ],
       "metadata": {
-        "description": "Secure Boot setting of the virtual machine."
-      }
-    },
-    "vTPM": {
-      "type": "bool",
-      "defaultValue": true,
-      "metadata": {
-        "description": "vTPM setting of the virtual machine."
+        "description": "Security Type of the Virtual Machine."
       }
     }
   },
   "variables": {
+    "securityProfileJson": {
+      "uefiSettings": {
+        "secureBootEnabled": true,
+        "vTpmEnabled": true
+      },
+      "securityType": "[parameters('securityType')]"
+    },
     "networkInterfaceName": "[format('{0}-nic', parameters('virtualMachineName'))]",
     "networkSecurityGroupName": "[format('{0}-nsg', parameters('virtualMachineName'))]",
     "networkSecurityGroupRules": [
@@ -169,8 +175,8 @@
       }
     ],
     "publicIpAddressName": "[format('{0}-publicip-{1}', parameters('virtualMachineName'), uniqueString(parameters('virtualMachineName')))]",
-    "publicIpAddressType": "Dynamic",
-    "publicIpAddressSku": "Basic",
+    "publicIpAddressType": "Static",
+    "publicIpAddressSku": "Standard",
     "diskConfigurationType": "NEW",
     "nsgId": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]",
     "subnetRef": "[resourceId(parameters('existingVnetResourceGroup'), 'Microsoft.Network/virtualNetWorks/subnets', parameters('existingVirtualNetworkName'), parameters('existingSubnetName'))]",
@@ -296,20 +302,14 @@
             "provisionVMAgent": true
           }
         },
-        "securityProfile": {
-          "uefiSettings": {
-            "secureBootEnabled": "[parameters('secureBoot')]",
-            "vTpmEnabled": "[parameters('vTPM')]"
-          },
-          "securityType": "TrustedLaunch"
-        }
+        "securityProfile": "[if(equals(parameters('securityType'), 'TrustedLaunch'), variables('securityProfileJson'), null())]"
       },
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkInterfaces', variables('networkInterfaceName'))]"
       ]
     },
     {
-      "condition": "[and(parameters('vTPM'), parameters('secureBoot'))]",
+      "condition": "[and(equals(parameters('securityType'), 'TrustedLaunch'), and(equals(variables('securityProfileJson').uefiSettings.secureBootEnabled, true()), equals(variables('securityProfileJson').uefiSettings.vTpmEnabled, true())))]",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "apiVersion": "2022-03-01",
       "name": "[format('{0}/{1}', parameters('virtualMachineName'), variables('extensionName'))]",
