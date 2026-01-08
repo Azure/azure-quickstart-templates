@@ -28,7 +28,7 @@ var managedResourceGroupName = 'databricks-rg-${workspaceName}-${uniqueString(wo
 var trimmedMRGName = substring(managedResourceGroupName, 0, min(length(managedResourceGroupName), 90))
 var managedResourceGroupId = '${subscription().id}/resourceGroups/${trimmedMRGName}'
 
-resource workspace 'Microsoft.Databricks/workspaces@2024-05-01' = {
+resource workspace 'Microsoft.Databricks/workspaces@2025-02-01-preview' = {
   name: workspaceName
   location: location
   sku: {
