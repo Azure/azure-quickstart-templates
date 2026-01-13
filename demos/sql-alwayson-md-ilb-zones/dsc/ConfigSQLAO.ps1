@@ -79,7 +79,7 @@ configuration ConfigSQLAO
         $RebootVirtualMachine = $true
     }
 
-    #Finding the next avaiable disk letter for Add disk
+    #Finding the next available disk letter for Add disk
     $NewDiskLetter = ls function:[f-z]: -n | ?{ !(test-path $_) } | select -First 1 
     $NextAvailableDiskLetter = $NewDiskLetter[0]
 
