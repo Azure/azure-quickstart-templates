@@ -1,5 +1,5 @@
 ---
-description: This template creates a new DevTest Lab / DTL instance with a Windows Server 2019 Datacenter VM in it. More Azure Resource Manager Quickstart Templates for Azure DevTest Labs available at https://github.com/Azure/azure-devtestlab/tree/master/samples/DevTestLabs/QuickStartTemplates
+description: This template creates a new DevTest Lab / DTL instance with a Windows Server 2019 Datacenter VM in it. More Azure Resource Manager Quickstart Templates for Azure DevTest Labs available at https&#58;//github.com/Azure/azure-devtestlab/tree/master/ARMTemplates
 page_type: sample
 products:
 - azure
