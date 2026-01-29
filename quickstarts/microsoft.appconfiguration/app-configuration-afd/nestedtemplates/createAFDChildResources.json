@@ -1,0 +1,210 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "afdResourceName": {
+            "type": "string",
+            "defaultValue": "[format('azurefrontdoor-{0}', uniqueString(resourceGroup().id))]",
+            "metadata": {
+                "description": "Specifies the name of the Azure Front Door resource"
+            }
+        },
+        "afdEndpointName": {
+            "type": "string",
+            "metadata": {
+                "description": "Specify the Azure Front Door endpoint name"
+            }
+        },
+        "afdOriginGroupName": {
+            "type": "string",
+            "metadata": {
+                "description": "Specify the Azure Front Door origin group name"
+            }
+        },
+        "afdOriginName": {
+            "type": "string",
+            "metadata": {
+                "description": "Specify the Azure Front Door origin name"
+            }
+        },
+        "originHostName": {
+            "type": "string",
+            "metadata": {
+                "description": "Specify the origin host name"
+            }
+        },
+        "afdRuleSetName": {
+            "type": "string",
+            "metadata": {
+                "description": "Specify the Azure Front Door rule set name"
+            }
+        },
+        "afdRouteName": {
+            "type": "string",
+            "metadata": {
+                "description": "Specify the Azure Front Door route name"
+            }
+        }
+    },
+    "resources": [
+        {
+            "apiVersion": "2025-06-01",
+            "name": "[format('{0}/{1}', parameters('afdResourceName'), parameters('afdEndpointName'))]",
+            "location": "global",
+            "type": "Microsoft.Cdn/profiles/afdEndpoints",
+            "properties": {
+                "enabledState": "Enabled"
+            }
+        },
+        {
+            "apiVersion": "2025-06-01",
+            "name": "[format('{0}/{1}', parameters('afdResourceName'), parameters('afdOriginGroupName'))]",
+            "type": "Microsoft.Cdn/profiles/originGroups",
+            "properties": {
+                "loadBalancingSettings": {
+                    "sampleSize": 4,
+                    "successfulSamplesRequired": 3,
+                    "additionalLatencyInMilliseconds": 50
+                },
+                "healthProbeSettings": {
+                    "probeProtocol": "Https",
+                    "probePath": "/",
+                    "probeIntervalInSeconds": 100,
+                    "probeRequestType": "NotSet"
+                },
+                "authentication": {
+                    "type": "SystemAssignedIdentity",
+                    "scope": "https://appconfig.azure.com/.default"
+                }
+            }
+        },
+        {
+            "apiVersion": "2025-06-01",
+            "name": "[format('{0}/{1}/{2}', parameters('afdResourceName'), parameters('afdOriginGroupName'), parameters('afdOriginName')]",
+            "type": "Microsoft.Cdn/profiles/originGroups/origins",
+            "properties": {
+                "enabledState": "Enabled",
+                "hostName": "[parameters('originHostName')]",
+                "httpPort": 80,
+                "httpsPort": 443,
+                "originHostHeader": "[parameters('originHostName')]"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Cdn/profiles/originGroups', parameters('afdResourceName'), parameters('afdOriginGroupName'))]"
+            ]
+        },
+        {
+            "apiVersion": "2025-06-01",
+            "name": "[format('{0}/{1}', parameters('afdResourceName'), parameters('afdRuleSetName'))]",
+            "type": "Microsoft.Cdn/profiles/rulesets"
+        },
+        {
+            "apiVersion": "2025-06-01",
+            "type": "Microsoft.Cdn/profiles/ruleSets/rules",
+            "name": "[format('{0}/{1}/KeyValueFilter', parameters('afdResourceName'), parameters('afdRuleSetName'))]",
+            "properties": {
+                "order": 1,
+                "conditions": [
+                    {
+                        "name": "RequestUri",
+                        "parameters": {
+                            "typeName": "DeliveryRuleRequestUriConditionParameters",
+                            "operator": "RegEx",
+                            "negateCondition": false,
+                            "matchValues": [
+                                "^https?:\\/\\/[^\\/]+\\/kv\\?(?:after=[a-zA-Z0-9]+&)?(?:api-version=[a-zA-Z0-9\\.-]+&)?key=Message&label=[\\x00]$"
+                            ],
+                            "transforms": [
+                                "UrlDecode"
+                            ]
+                        }
+                    }
+                ],
+                "actions": [
+                    {
+                        "name": "RouteConfigurationOverride",
+                        "parameters": {
+                            "typeName": "DeliveryRuleRouteConfigurationOverrideActionParameters",
+                            "cacheConfiguration": {
+                                "isCompressionEnabled": "Enabled",
+                                "queryStringCachingBehavior": "IncludeSpecifiedQueryStrings",
+                                "queryParameters": "after,api-version,key,label,snapshot,tags",
+                                "cacheBehavior": "OverrideAlways",
+                                "cacheDuration": "00:10:10"
+                            },
+                            "originGroupOverride": null
+                        }
+                    }
+                ],
+                "matchProcessingBehavior": "Stop"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Cdn/profiles/rulesets', parameters('afdResourceName'), parameters('afdRuleSetName'))]"
+            ]
+        },
+        {
+            "apiVersion": "2025-06-01",
+            "type": "Microsoft.Cdn/profiles/ruleSets/rules",
+            "name": "[format('{0}/{1}/DenyEverythingElse', parameters('afdResourceName'), parameters('afdRuleSetName'))]",
+            "properties": {
+                "order": 2,
+                "conditions": [],
+                "actions": [
+                    {
+                        "name": "UrlRewrite",
+                        "parameters": {
+                            "typeName": "DeliveryRuleUrlRewriteActionParameters",
+                            "sourcePattern": "/",
+                            "destination": "/",
+                            "preserveUnmatchedPath": false
+                        }
+                    }
+                ],
+                "matchProcessingBehavior": "Stop"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Cdn/profiles/rulesets', parameters('afdResourceName'), parameters('afdRuleSetName'))]"
+            ]
+        },
+        {
+            "apiVersion": "2025-06-01",
+            "name": "[format('{0}/{1}/{2}', parameters('afdResourceName'), parameters('afdEndpointName'), parameters('afdRouteName'))]",
+            "type": "Microsoft.Cdn/profiles/afdEndpoints/routes",
+            "properties": {
+                "originGroup": {
+                    "id": "[resourceId('Microsoft.Cdn/profiles/originGroups', parameters('afdResourceName'), parameters('afdOriginGroupName'))]"
+                },
+                "ruleSets": [
+                    {
+                        "id": "[resourceId('Microsoft.Cdn/profiles/rulesets', parameters('afdResourceName'), parameters('afdRuleSetName'))]"
+                    }
+                ],
+                "cacheConfiguration": {
+                    "compressionSettings": {
+                        "contentTypesToCompress": [],
+                        "isCompressionEnabled": false
+                    },
+                    "queryParameters": null,
+                    "queryStringCachingBehavior": "UseQueryString"
+                },
+                "originPath": null,
+                "enabledState": "Enabled",
+                "supportedProtocols": [
+                    "Https",
+                    "Http"
+                ],
+                "patternsToMatch": [
+                    "/*"
+                ],
+                "forwardingProtocol": "HttpsOnly",
+                "linkToDefaultDomain": "Enabled",
+                "httpsRedirect": "Enabled"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Cdn/profiles/afdEndpoints', parameters('afdResourceName'), parameters('afdEndpointName'))]",
+                "[resourceId('Microsoft.Cdn/profiles/originGroups/origins', parameters('afdResourceName'), parameters('afdOriginGroupName'), parameters('afdOriginName'))]",
+                "[resourceId('Microsoft.Cdn/profiles/rulesets', parameters('afdResourceName'), parameters('afdRuleSetName'))]"
+            ]
+        }
+    ]
+}
