@@ -536,7 +536,7 @@ $saAsmList = $asmresp.value
 "$(GEt-date)  $($saAsmList.count) storage accounts found"
 #endregion
 
-#region Cache Storage Account Name , RG name and Build paramter array
+#region Cache Storage Account Name , RG name and Build parameter array
 
 $colParamsforChild = @()
 

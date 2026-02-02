@@ -616,7 +616,7 @@ $saAsmList=(ConvertFrom-Json -InputObject $sresp.Content).value
 
 
 
-#region Cache Storage Account Name , RG name and Build paramter array
+#region Cache Storage Account Name , RG name and Build parameter array
 
 $colParamsforChild=@()
 
