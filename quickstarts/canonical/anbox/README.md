@@ -52,7 +52,7 @@ By default, `anbox-cloud-appliance init` (see the linked instructions in the **D
 
 #### Exposing Anbox services to the public internet
 
-The template includes two parameters that allow the user to expose Anbox services running on the VM to the public internet. The first parameter, `exposeAnboxManagementService`, exposes the Anbox Management Service on port 8444. The second parameter, `exposeAnboxContainerServices`, exposes Anbox container services on the port range 10000-11000. When the default arguments for these parameters are not overriden, the Anbox Management Service and any container services will only be accessible from the VM.
+The template includes two parameters that allow the user to expose Anbox services running on the VM to the public internet. The first parameter, `exposeAnboxManagementService`, exposes the Anbox Management Service on port 8444. The second parameter, `exposeAnboxContainerServices`, exposes Anbox container services on the port range 10000-11000. When the default arguments for these parameters are not overridden, the Anbox Management Service and any container services will only be accessible from the VM.
 
 ## Notes
 
