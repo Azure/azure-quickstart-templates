@@ -74,11 +74,11 @@ This topology implements the following scenario:
 
 ![Route Table](images/dnat-rules.png)
 
-- DNS settings in the virtual network are configured to send DNS queries to the private IP adddress of the Azure Firewall.
+- DNS settings in the virtual network are configured to send DNS queries to the private IP address of the Azure Firewall.
 
 ![Route Table](images/dns-settings.png)
 
-- DNS settings in the Azure Policy is configured to enable the DNS Proxy on the associated Azure Firewall that will listen on port 53 for DNS queries and will them to the the private IP adddress of the custom DNS forwarder. To ensure DNS traffic is directed to the Azure Firewalls associated with this policy, you must configure your virtual network DNS server settings and set the Azure Firewall’s private IP address as a custom DNS server.
+- DNS settings in the Azure Policy is configured to enable the DNS Proxy on the associated Azure Firewall that will listen on port 53 for DNS queries and will them to the the private IP address of the custom DNS forwarder. To ensure DNS traffic is directed to the Azure Firewalls associated with this policy, you must configure your virtual network DNS server settings and set the Azure Firewall’s private IP address as a custom DNS server.
 
 ![Route Table](images/dns-proxy-with-custom-dns-forwarder.png)
 
