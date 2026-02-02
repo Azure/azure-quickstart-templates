@@ -1,5 +1,5 @@
 ---
-description: This template creates a front-end Nodejs service and a multi-server MongoDB deployment on Ubuntu virtual machines, and configures the MongoDB installation for high availability
+description: This template creates a front-end Node.js service and a multi-server MongoDB deployment on Ubuntu virtual machines, and configures the MongoDB installation for high availability
 page_type: sample
 products:
 - azure
@@ -8,7 +8,7 @@ urlFragment: mongodb-nodejs-high-availability
 languages:
 - json
 ---
-# Nodejs front-end and MongoDB cluster on Ubuntu VMs
+# Node.js front-end and MongoDB cluster on Ubuntu VMs
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/mongo/mongodb-nodejs-high-availability/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/mongo/mongodb-nodejs-high-availability/PublicDeployment.svg)
@@ -39,7 +39,7 @@ The adminUsername and adminPassword are administrators of all the VM's, the Mong
 These credentials are hard coded in the connection string in the Node js server, in /opt/app.js. Modify according to adminUsername:adminPassword you entered in the parameters.
 Please do not use a question mark in the adminUsername and/or the adminPassword.
 
-Navigate to /opt and run sudo nodejs app.js.
+Navigate to /opt and run sudo Node.js app.js.
 Open a browser with the public IP of the MyUbuntuVM machine from the Azure portal, on port 8080. You should get a JSON response with 3 tasks.
 
 MongoDB Topology
