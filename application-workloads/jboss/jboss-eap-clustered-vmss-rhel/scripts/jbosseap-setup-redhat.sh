@@ -6,7 +6,7 @@ adddate() {
     done
 }
 
-echo "Red Hat JBoss EAP Cluster Intallation Start " | adddate >> jbosseap.install.log
+echo "Red Hat JBoss EAP Cluster Installation Start " | adddate >> jbosseap.install.log
 /bin/date +%H:%M:%S >> jbosseap.install.log
 
 echo 'export EAP_HOME="/opt/rh/eap7/root/usr/share"' >> ~/.bash_profile
@@ -170,5 +170,5 @@ flag=$?; if [ $flag != 0 ] ; then echo  "ERROR! JBoss EAP management user config
 # Seeing a race condition timing error so sleep to delay
 sleep 20
 
-echo "Red Hat JBoss EAP Cluster Intallation End " | adddate >> jbosseap.install.log
+echo "Red Hat JBoss EAP Cluster Installation End " | adddate >> jbosseap.install.log
 /bin/date +%H:%M:%S  >> jbosseap.install.log
