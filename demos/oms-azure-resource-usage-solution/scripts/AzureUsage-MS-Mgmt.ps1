@@ -326,7 +326,7 @@ IF([String]::IsNullOrEmpty($OfferDurableId)){ $OfferDurableId = 'MS-AZR-0003P' }
 
 #Update customer Id to your Operational Insights workspace ID
 $customerID = Get-AutomationVariable -Name  "AzureUsage-OPSINSIGHTS_WS_ID"
-#For shared key use either the primary or seconday Connected Sources client authentication key   
+#For shared key use either the primary or secondary Connected Sources client authentication key   
 $sharedKey = Get-AutomationVariable -Name  "AzureUsage-OPSINSIGHTS_WS_KEY"
 #log analytics custom log name
 $logname='AzureUsage'
@@ -709,7 +709,7 @@ $ScriptBlock = {
 	$resmap=$hash.resmap
 #Update customer Id to your Operational Insights workspace ID
 	$customerID =$hash.customerID 
-#For shared key use either the primary or seconday Connected Sources client authentication key   
+#For shared key use either the primary or secondary Connected Sources client authentication key   
 	$sharedKey = $hash.sharedKey
 #log analytics custom log name
 	$logname=$hash.Logname
