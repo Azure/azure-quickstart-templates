@@ -119,7 +119,7 @@ module avnm 'modules/avnm.bicep' = {
 }
 
 //
-// In order to deploy a Connectivity or Security configruation, the /commit endpoint must be called or a Deployment created in the Portal. 
+// In order to deploy a Connectivity or Security configuration, the /commit endpoint must be called or a Deployment created in the Portal. 
 // This DeploymentScript resource executes a PowerShell script which calls the /commit endpoint and monitors the status of the deployment.
 //
 module deploymentScriptConnectivityConfigs 'modules/avnmDeploymentScript.bicep' = {

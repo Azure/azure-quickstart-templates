@@ -1,4 +1,4 @@
-// Execute this main file to depoy Azure AI studio resources in the basic agent configuraiton wit Managed Identity
+// Execute this main file to depoy Azure AI studio resources in the basic agent configuration wit Managed Identity
 
 // Parameters
 @minLength(2)
