@@ -58,7 +58,7 @@ flag=$?; if [ $flag != 0 ] ; then echo  "ERROR! Sample Application Download Fail
 echo "/bin/cp -rf ./JBoss-EAP_on_Azure.war ./wildfly-$WILDFLY_RELEASE.Final/standalone/deployments/" | adddate >> wildfly.install.log
 /bin/cp -rf ./JBoss-EAP_on_Azure.war ./wildfly-$WILDFLY_RELEASE.Final/standalone/deployments/ | adddate >> wildfly.install.log 2>&1
 
-echo "Configuring WILDFLY managment user..." | adddate >> wildfly.install.log
+echo "Configuring WILDFLY management user..." | adddate >> wildfly.install.log
 echo "./wildfly-$WILDFLY_RELEASE.Final/bin/add-user.sh -u WILDFLY_USER -p WILDFLY_PASSWORD -g 'guest,mgmtgroup'" | adddate >> wildfly.install.log
 ./wildfly-$WILDFLY_RELEASE.Final/bin/add-user.sh -u $WILDFLY_USER -p $WILDFLY_PASSWORD -g 'guest,mgmtgroup' >> wildfly.install.log 2>&1
 flag=$?; if [ $flag != 0 ] ; then echo  "ERROR! WildFly management user configuration Failed" | adddate >> wildfly.install.log; exit $flag;  fi
