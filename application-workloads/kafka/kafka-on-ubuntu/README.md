@@ -99,7 +99,7 @@ Topology
 --------
 
 The deployment topology is comprised of Kafka Brokers and Zookeeper nodes running in the cluster mode.
-Kafka version 0.8.2.1 is the default version and can be changed to any pre-built binaries avaiable on Kafka repo.
+Kafka version 0.8.2.1 is the default version and can be changed to any pre-built binaries available on Kafka repo.
 A static IP address will be assigned to each Kafka node in order to work around the current limitation of not being able to dynamically compose a list of IP addresses from within the template (by default, the first node will be assigned the private IP of 10.0.0.10, the second node - 10.0.0.11, and so on)
 A static IP address will be assigned to each Zookeeper node in order to work around the current limitation of not being able to dynamically compose a list of IP addresses from within the template (by default, the first node will be assigned the private IP of 10.0.0.40, the second node - 10.0.0.41, and so on)
 
