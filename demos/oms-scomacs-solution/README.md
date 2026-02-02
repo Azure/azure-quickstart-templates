@@ -46,7 +46,7 @@ Also, check out my original blog post about this solution: <a href="http://adine
 
 - **OMS Security and Audit Solution**
 
-    The OMS SCOM ACS Solution utilizes the security event data collected by the Security and Audit solution. This solution must also be added to the OMS Workspace to collecte the requried data.
+    The OMS SCOM ACS Solution utilizes the security event data collected by the Security and Audit solution. This solution must also be added to the OMS Workspace to collecte the required data.
 
     This ARM template will deploy the Security and Audit solution if it is not already present.
 
