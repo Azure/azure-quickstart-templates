@@ -1,6 +1,6 @@
 [CmdletBinding()]   
 param(
-    # The subcription Id to log in to
+    # The subscription Id to log in to
     [Parameter(Mandatory=$true)]
     [string]
     $SubscriptionId,
