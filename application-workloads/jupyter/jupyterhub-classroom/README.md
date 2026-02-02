@@ -186,7 +186,7 @@ After that, let's press the [Run] button. If we visit our **public IP** where ou
 
 ### Additional Resources
 
-- [Azure Resource Manger templates docs](https://docs.microsoft.com/azure/azure-resource-manager/template-deployment-overview)
+- [Azure Resource Manager templates docs](https://docs.microsoft.com/azure/azure-resource-manager/template-deployment-overview)
 
 - [The Littlest JupyterHub docs](https://the-littlest-jupyterhub.readthedocs.io/en/latest/index.html)
 
