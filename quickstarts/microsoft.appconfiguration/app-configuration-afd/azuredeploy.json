@@ -1,0 +1,219 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "_artifactsLocation": {
+            "type": "string",
+            "metadata": {
+                "description": "The base URI where artifacts required by this template are located including a trailing '/'"
+            },
+            "defaultValue": "[deployment().properties.templateLink.uri]"
+        },
+        "_artifactsLocationSasToken": {
+            "type": "securestring",
+            "metadata": {
+                "description": "The sasToken required to access _artifactsLocation."
+            },
+            "defaultValue": ""
+        },
+        "afdResourceName": {
+            "type": "string",
+            "defaultValue": "[format('azurefrontdoor-{0}', uniqueString(resourceGroup().id))]",
+            "metadata": {
+                "description": "Specifies the name of the Azure Front Door resource"
+            }
+        },
+        "afdResourceSku": {
+            "type": "string",
+            "defaultValue": "Standard_AzureFrontDoor",
+            "allowedValues": [
+                "Standard_AzureFrontDoor",
+                "Premium_AzureFrontDoor"
+            ],
+            "metadata": {
+                "description": "Specifies the sku of the Azure Front Door profile"
+            }
+        },
+        "afdEndpointName": {
+            "type": "string",
+            "metadata": {
+                "description": "Specify the Azure Front Door endpoint name"
+            }
+        },
+        "afdOriginGroupName": {
+            "type": "string",
+            "defaultValue": "[format('default-origin-group-{0}', uniqueString(resourceGroup().id))]",
+            "metadata": {
+                "description": "Specify the Azure Front Door origin group name"
+            }
+        },
+        "afdOriginName": {
+            "type": "string",
+            "defaultValue": "[format('default-origin-{0}', uniqueString(resourceGroup().id))]",
+            "metadata": {
+                "description": "Specify the Azure Front Door origin name"
+            }
+        },
+        "afdRuleSetName": {
+            "type": "string",
+            "defaultValue": "[format('defaultRuleSet{0}', uniqueString(resourceGroup().id))]",
+            "metadata": {
+                "description": "Specify the Azure Front Door rule set name"
+            }
+        },
+        "afdRouteName": {
+            "type": "string",
+            "defaultValue": "[format('default-route-{0}', uniqueString(resourceGroup().id))]",
+            "metadata": {
+                "description": "Specify the Azure Front Door route name"
+            }
+        },
+        "configurationStoreName": {
+            "type": "string",
+            "defaultValue": "[format('appconfig-{0}', uniqueString(resourceGroup().id))]",
+            "metadata": {
+                "description": "Specify the App Configuration store name"
+            }
+        },
+        "skuName": {
+            "type": "string",
+            "defaultValue": "standard",
+            "metadata": {
+                "description": "Specifies the SKU of the app configuration store"
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Specifies the Azure location where the app configuration store should be created"
+            }
+        }
+    },
+    "variables": {
+        "createAFDProfileUrl": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/createAFDProfile.json', parameters('_artifactsLocationSasToken')))]",
+        "createAFDChildResourcesUrl": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/createAFDChildResources.json', parameters('_artifactsLocationSasToken')))]",
+        "updateConfigStoreUrl": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/updateConfigStore.json', parameters('_artifactsLocationSasToken')))]",
+        "roleAssignmentUrl": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/roleAssignment.json', parameters('_artifactsLocationSasToken')))]"
+    },
+    "resources": [
+        {
+            "name": "frontDoor",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2022-09-01",
+            "properties": {
+                "expressionEvaluationOptions": {
+                    "scope": "inner"
+                },
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('createAFDProfileUrl')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "afdResourceName": {
+                        "value": "[parameters('afdResourceName')]"
+                    },
+                    "afdResourceSku": {
+                        "value": "[parameters('afdResourceSku')]"
+                    }
+                }
+            }
+        },
+        {
+            "name": "configurationStore",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2022-09-01",
+            "dependsOn": [
+                "frontDoor"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('updateConfigStoreUrl')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "afdResourceName": {
+                        "value": "[parameters('afdResourceName')]"
+                    },
+                    "configurationStoreName": {
+                        "value": "[parameters('configurationStoreName')]"
+                    },
+                    "skuName": {
+                        "value": "[parameters('skuName')]"
+                    },
+                    "location": {
+                        "value": "[parameters('location')]"
+                    }
+                }
+            }
+        },
+        {
+            "name": "frontDoorChildResources",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2022-09-01",
+            "dependsOn": [
+                "frontDoor",
+                "configurationStore"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('createAFDChildResourcesUrl')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "afdResourceName": {
+                        "value": "[parameters('afdResourceName')]"
+                    },
+                    "configurationStoreName": {
+                        "value": "[parameters('configurationStoreName')]"
+                    },
+                    "afdEndpointName": {
+                        "value": "[parameters('afdEndpointName')]"
+                    },
+                    "afdOriginGroupName": {
+                        "value": "[parameters('afdOriginGroupName')]"
+                    },
+                    "afdOriginName": {
+                        "value": "[parameters('afdOriginName')]"
+                    },
+                    "afdRuleSetName": {
+                        "value": "[parameters('afdRuleSetName')]"
+                    },
+                    "afdRouteName": {
+                        "value": "[parameters('afdRouteName')]"
+                    }
+                }
+            }
+        },
+        
+        {
+            "name": "roleAssignment",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2022-09-01",
+            "dependsOn": [
+                "configurationStore"
+            ],
+            "properties": {
+                "expressionEvaluationOptions": {
+                    "scope": "inner"
+                },
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('roleAssignmentUrl')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "principalId": {
+                        "value": "[reference('frontDoor').outputs.principalId.value]"
+                    },
+                    "configurationStoreName":{
+                        "value": "[parameters('configurationStoreName')]"
+                    }
+                }
+            }
+        }
+    ]
+}
