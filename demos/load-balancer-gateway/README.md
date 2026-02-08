@@ -30,7 +30,7 @@ This template creates a Public Load Balancer chained to a Gateway Load Balancer.
 
 ## Network diagram ##
 
-A hight level network diagram of the deployment is shown below:
+A high level network diagram of the deployment is shown below:
 
 ![1](./images/1.png "high level diagram with Public Load Balancer chained to a Gateway Load Balancer")
 
@@ -69,7 +69,7 @@ The full network diagram inclusive of IP addresses and network IPs is shown belo
 - To keep the deployment simple, the NVAs are configured with IP forwarding and do not apply any security check and filtering. In production environment is recommended to use in NVAs firewall/intrusion detection to protect the integrity of the applications exposed to internet. The NVAs should provide a secure network boundary by checking all inbound and outbound network traffic and passing only the traffic that meets network security rules.
 - The application VMs are configured to serve HTTP requests; this is not a best practice for web server exposed to internet. In production environments is high recommended to modify the script **nginx-serverblocks.sh** to configure HTTPS
 
-The diagram reported below shows the NGINX server blocks configurated in application VMs:
+The diagram reported below shows the NGINX server blocks configured in application VMs:
 
 ![5](./images/5.png "NGINX server blockes configured in application VMs")
 
