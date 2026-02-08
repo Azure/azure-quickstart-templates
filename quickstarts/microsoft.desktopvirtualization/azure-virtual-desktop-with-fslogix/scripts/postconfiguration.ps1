@@ -1,6 +1,6 @@
 <#
     Script will join FSLogix Azure storage account to active directory.
-    The storage account will be mounted on the specified diretory (Y:\) and set required acl permissions for AVD user and admin groups
+    The storage account will be mounted on the specified directory (Y:\) and set required acl permissions for AVD user and admin groups
 
     Run this as a post configuration and last step after deploying AVD resources.
     This script needs to be ran inside your onpremise domain controller as an administratrator.
@@ -32,7 +32,7 @@ param(
     [string] [Parameter(Mandatory=$true)] $StorageAccountKey,
     [string] [Parameter(Mandatory=$true)] $StorageAccountFileShareName,
     [string] [Parameter(Mandatory=$true)] $SamAccountName,
-    # Active diretory netbios name ("contoso")
+    # Active directory netbios name ("contoso")
     [string] [Parameter(Mandatory=$true)] $DomainName,
     # Storage account active directory OU distinguished name ("OU=StorageAccounts,OU=AzureVirtualDesktop,DC=contoso,DC=com")
     [string] [Parameter(Mandatory=$true)] $StorageAccountOUDistinguishedName,
