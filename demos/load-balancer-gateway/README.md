@@ -30,7 +30,7 @@ This template creates a Public Load Balancer chained to a Gateway Load Balancer.
 
 ## Network diagram ##
 
-A hight level network diagram of the deployment is shown below:
+A high level network diagram of the deployment is shown below:
 
 ![1](./images/1.png "high level diagram with Public Load Balancer chained to a Gateway Load Balancer")
 
@@ -61,7 +61,7 @@ The full network diagram inclusive of IP addresses and network IPs is shown belo
 
 ## Notes ##
 
-- Gateway LB maintains flow stickiness to a specific instance in the backend pool along with flow symmetry. As a result, packets traverse the same network path in both directions: from Stadard Public LB to the Gateway LB and from the Gateway LB to the Standard Public LB.
+- Gateway LB maintains flow stickiness to a specific instance in the backend pool along with flow symmetry. As a result, packets traverse the same network path in both directions: from Standard Public LB to the Gateway LB and from the Gateway LB to the Standard Public LB.
 - **Gateway LB is transparent**. Source and Destination IP addresses are unchanged when traffic traverses the Gateway LB, via VXLAN tunnels to backend pool members.
 - The Gateway LB routes traffic to the backend instances using the HA ports rule
 - Configurations of NVAs and application VMs are executed by two different bash scripts: **nva.sh** is used for the setting up the NVAs, **nginx-serverblocks.sh** install and customize the NGINX with different server blocks on the application VMs
@@ -69,14 +69,14 @@ The full network diagram inclusive of IP addresses and network IPs is shown belo
 - To keep the deployment simple, the NVAs are configured with IP forwarding and do not apply any security check and filtering. In production environment is recommended to use in NVAs firewall/intrusion detection to protect the integrity of the applications exposed to internet. The NVAs should provide a secure network boundary by checking all inbound and outbound network traffic and passing only the traffic that meets network security rules.
 - The application VMs are configured to serve HTTP requests; this is not a best practice for web server exposed to internet. In production environments is high recommended to modify the script **nginx-serverblocks.sh** to configure HTTPS
 
-The diagram reported below shows the NGINX server blocks configurated in application VMs:
+The diagram reported below shows the NGINX server blocks configured in application VMs:
 
 ![5](./images/5.png "NGINX server blockes configured in application VMs")
 
 - The bash scripts: **nva.sh** sets the VXLAN tunnels in the NVAs. A simplified version of bash script to create the VXLAN tunnels in the NVAs is shown below:
 
 ```bash
-# the VXLAN Network Idenfier (VNI) is specified with id
+# the VXLAN Network Identifier (VNI) is specified with id
 tunnel_internal_port=10800
 tunnel_internal_vni=800
 tunnel_external_port=10801
@@ -91,7 +91,7 @@ ip link set vxlan${tunnel_internal_vni} up
 ip link add name vxlan${tunnel_external_vni} type vxlan id ${tunnel_external_vni} remote ${nva_lb_ip} dstport ${tunnel_external_port}
 ip link set vxlan${tunnel_external_vni} up
 
-# bridge both VXLAN interfaces together (it works arounding routing between them)
+# bridge both VXLAN interfaces together (it works by routing between them)
 ip link add br-tunnel type bridge
 ip link set vxlan${tunnel_internal_vni} master br-tunnel
 ip link set vxlan${tunnel_external_vni} master br-tunnel
