@@ -1,5 +1,5 @@
 ---
-description: This template creates an Azure FrontDoor resource and connects an existing App Configuration store to the newly created Azure Front Door resource.
+description: This template creates an Azure FrontDoor resource, an Azure Front Door endpoint with the existing App Configuration store set as the origin, sets ups the route and rules that control which requests pass through Azure Front Door to App Configuration. The template also connects the App Configuration store to the newly created Azure Front Door resource.
 page_type: sample
 products:
 - azure
@@ -23,13 +23,15 @@ languages:
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.appconfiguration%2Fapp-configuration-afd%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.appconfiguration%2Fapp-configuration-afd%2Fazuredeploy.json)
 
-This template creates an Azure Front Door resource and connects it to an existing App Configuration store. It also configures Front Door child resources and assigns the App Configuration Data Reader role to the Front Door managed identity. 
+This template creates an Azure Front Door resource and connects it to an existing App Configuration store. It also configures Front Door child resources and assigns the App Configuration Data Reader role to the Front Door managed identity.
+
 **Note:** This template does not create an App Configuration store or modify its key-values.
 
 If you are new to App Configurations, see:
 
 - [Azure App Configuration](https://azure.microsoft.com/services/app-configuration/).
-- [Azure App Configuration Documentation](https://docs.microsoft.com/azure/azure-app-configuration)
+- [Azure App Configuration Documentation](https://docs.microsoft.com/azure/azure-app-configuration).
+- [Hyperscale configuration delivery for client applications](https://aka.ms/appconfig/azurefrontdoor)
 - [Template reference](https://docs.microsoft.com/azure/templates/microsoft.appconfiguration/allversions)
 
 If you are new to template deployment, see:
@@ -40,14 +42,15 @@ If you are new to template deployment, see:
 
 Before you begin, ensure you have:
 
-1. An active Azure subscription
-1. An existing Azure App Configuration store. To create an App Configuration store using ARM template, see [App Configuration store](https://azure.microsoft.com/resources/templates/101-app-configuration-store/).
-1. Permissions to create and manage Azure Front Door resources (Contributor or equivalent)
-1. Permissions to assign roles on the App Configuration resource (Owner or User Access Administrator)
-1. App Configuration Data Owner or App Configuration Data Reader role
+1. An active Azure subscription.
+1. An existing Azure App Configuration store.
+1. Permissions to create and manage Azure Front Door resources (Contributor or equivalent).
+1. Permissions to assign roles on the App Configuration resource (Owner or User Access Administrator).
+1. App Configuration Data Owner.
+1. Basic understanding of [CDN and content delivery concepts](https://learn.microsoft.com/en-us/azure/frontdoor/front-door-overview).
 
 
-Add the following key-values to you Azure App Configuration store:
+Add the following key-value to your Azure App Configuration store:
 
 |Key                        |Value                         |Label         |
 |---------------------------|------------------------------|--------------|
@@ -56,5 +59,4 @@ Add the following key-values to you Azure App Configuration store:
 
 
 
-
-`Tags: Azure4Student, AppConfiguration, Beginner, Microsoft.Storage/storageAccounts, Microsoft.Network/publicIPAddresses, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines`
+`Tags: Azure4Student, AppConfiguration, Beginner, Microsoft.AppConfiguration/configurationStores, Microsoft.AppConfiguration/configurationStores/keyValues`
