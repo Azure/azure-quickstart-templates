@@ -49,7 +49,6 @@ Before you begin, ensure you have:
 1. App Configuration Data Owner.
 1. Basic understanding of [CDN and content delivery concepts](https://learn.microsoft.com/en-us/azure/frontdoor/front-door-overview).
 
-
 Add the following key-value to your Azure App Configuration store:
 
 |Key                        |Value                         |Label         |
