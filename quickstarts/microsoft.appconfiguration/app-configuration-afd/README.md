@@ -1,5 +1,5 @@
 ---
-description: This template creates an Azure FrontDoor resource, an Azure Front Door endpoint with the existing App Configuration store set as the origin, sets ups the route and rules that control which requests pass through Azure Front Door to App Configuration. The template also connects the App Configuration store to the newly created Azure Front Door resource.
+description: The template connects Azure App Configuration store to a newly created Azure Front Door resource. The template creates a Front Door profile, a Front Door endpoint with App Configuration as origin, and sets up a route with rules that control which requests pass through Azure Front Door to App Configuration.
 page_type: sample
 products:
 - azure
@@ -23,15 +23,14 @@ languages:
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.appconfiguration%2Fapp-configuration-afd%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.appconfiguration%2Fapp-configuration-afd%2Fazuredeploy.json)
 
-This template creates an Azure Front Door resource and connects it to an existing App Configuration store. It also configures Front Door child resources and assigns the App Configuration Data Reader role to the Front Door managed identity.
+This template creates an Azure App Configuration store if it doesn't exist, an Azure Front Door resource and connects it to the App Configuration store. It also configures Front Door child resources and assigns the App Configuration Data Reader role to the Front Door managed identity.
 
-**Note:** This template does not create an App Configuration store or modify its key-values.
+**Note:** This template creates an App Configuration store if the provided store name does not exist.
 
 If you are new to App Configurations, see:
 
 - [Azure App Configuration](https://azure.microsoft.com/services/app-configuration/).
 - [Azure App Configuration Documentation](https://docs.microsoft.com/azure/azure-app-configuration).
-- [Hyperscale configuration delivery for client applications](https://aka.ms/appconfig/azurefrontdoor)
 - [Template reference](https://docs.microsoft.com/azure/templates/microsoft.appconfiguration/allversions)
 
 If you are new to template deployment, see:
@@ -48,6 +47,7 @@ Before you begin, ensure you have:
 1. Permissions to assign roles on the App Configuration resource (Owner or User Access Administrator).
 1. App Configuration Data Owner.
 1. Basic understanding of [CDN and content delivery concepts](https://learn.microsoft.com/en-us/azure/frontdoor/front-door-overview).
+1. [Hyperscale configuration delivery for client applications](https://aka.ms/appconfig/azurefrontdoor).
 
 Add the following key-value to your Azure App Configuration store:
 
@@ -58,4 +58,4 @@ Add the following key-value to your Azure App Configuration store:
 
 
 
-`Tags: Azure4Student, AppConfiguration, Beginner, Microsoft.AppConfiguration/configurationStores, Microsoft.AppConfiguration/configurationStores/keyValues`
+`Tags: Azure4Student, AppConfiguration, Beginner, Microsoft.AppConfiguration/configurationStores, Microsoft.AppConfiguration/configurationStores/keyValues, Microsoft.Cdn/profiles, Microsoft.Cdn/profiles/afdEndpoints, Microsoft.Cdn/profiles/originGroups, Microsoft.Cdn/profiles/originGroups/origins, Microsoft.Cdn/profiles/afdEndpoints/routes`
