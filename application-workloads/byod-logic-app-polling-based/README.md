@@ -7,7 +7,7 @@ products:
 - azure-logic-apps
 - azure-storage
 - azure-active-directory
-urlFragment: byod-trigger-logicapp
+urlFragment: byod-logic-app-polling-based
 languages:
 - json
 - bicep
