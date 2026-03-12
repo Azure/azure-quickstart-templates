@@ -1,20 +1,19 @@
+@minLength(3)
+@maxLength(16)
+@description('Basename that is used to name provisioned resources. Should be alphanumeric, at least 3 characters and up to or less than 16 characters.')
+param basename string
+
 @description('The Azure region for all resources.')
 param location string = resourceGroup().location
 
-@minLength(3)
-@maxLength(24)
 @description('The name of the Azure Health Data Services workspace.')
-param workspaceName string
+param workspaceName string = replace('ws-${basename}', '-', '')
 
-@minLength(3)
-@maxLength(24)
 @description('The name of the FHIR service.')
-param fhirServiceName string
+param fhirServiceName string = 'fhir-${basename}'
 
-@minLength(3)
-@maxLength(24)
 @description('The name of the DICOM service.')
-param dicomServiceName string
+param dicomServiceName string = 'dicom-${basename}'
 
 @description('The FHIR version to use. Defaults to R4.')
 param fhirKind string = 'fhir-R4'
