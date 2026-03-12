@@ -4,7 +4,7 @@
 param basename string
 
 @description('The Azure region for all resources.')
-param location string = resourceGroup().location
+param location string = 'westus2'
 
 @description('The name of the Azure Health Data Services workspace.')
 param workspaceName string = replace('ws-${basename}', '-', '')
