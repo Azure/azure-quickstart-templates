@@ -1,0 +1,47 @@
+name: Query ADX (manual, approved)
+
+on:
+  workflow_dispatch:
+    inputs:
+      correlation_id:
+        description: 'ARM correlationId to look up in ADX'
+        required: true
+        type: string
+
+jobs:
+  query-adx:
+    runs-on: ubuntu-latest
+    environment: adx-readonly  # require reviewers in repo settings
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Azure login via OIDC (federated to UAMI)
+        uses: azure/login@v2
+        with:
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          client-id: ${{ secrets.AZURE_UAMI_CLIENT_ID }}
+
+      - name: Query ADX via REST
+        shell: bash
+        env:
+          CLUSTER_URL: "https://armprodgbl.eastus.kusto.windows.net"
+          DATABASE: ${{ secrets.ADX_DATABASE }}
+          CORRELATION_ID: ${{ inputs.correlation_id }}
+        run: |
+          set -euo pipefail
+
+          # Token for ADX
+          TOKEN="$(az account get-access-token \
+            --resource "https://kusto.kusto.windows.net" \
+            --query accessToken -o tsv)"
+
+          KUSTO_QUERY="Unionizer(\"Deployments\", \"Deployments\") | where correlationId == \"${CORRELATION_ID}\""
+
+          curl -sS -X POST "${CLUSTER_URL}/v1/rest/query" \
+            -H "Authorization: Bearer ${TOKEN}" \
+            -H "Content-Type: application/json; charset=utf-8" \
+            -d "$(jq -n --arg db "${DATABASE}" --arg csl "${KUSTO_QUERY}" '{db:$db,csl:$csl}')" \
+            | jq .
