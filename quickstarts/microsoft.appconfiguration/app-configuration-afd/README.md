@@ -25,8 +25,6 @@ languages:
 
 This template creates an Azure App Configuration store if it doesn't exist, an Azure Front Door resource and connects it to the App Configuration store. It also configures Front Door child resources and assigns the App Configuration Data Reader role to the Front Door managed identity.
 
-**Note:** This template creates an App Configuration store if the provided store name does not exist.
-
 If you are new to App Configurations, see:
 
 - [Azure App Configuration](https://azure.microsoft.com/services/app-configuration/).
