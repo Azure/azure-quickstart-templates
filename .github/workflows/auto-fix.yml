@@ -32,30 +32,26 @@ jobs:
           CORRELATION_ID: ${{ inputs.correlation_id }}
         run: |
           set -euo pipefail
+          echo "== Azure context =="
+          az account show -o jsonc
 
-          # Token for ADX
-          TOKEN="$(az account get-access-token \
-            --resource "https://kusto.kusto.windows.net" \
-            --query accessToken -o tsv)"
+          TOKEN="$(az account get-access-token --resource "https://kusto.kusto.windows.net" --query accessToken -o tsv)"
+          echo "Got token length: ${#TOKEN}"
 
-          if [[ -z "${TOKEN}" ]]; then
-            echo "::error::Failed to acquire ADX access token" >&2
-            exit 1
-          fi
+          run_query () {
+            local q="$1"
+            local label="$2"
+            echo "== Query test: ${label} =="
+            local code
+            code=$(curl -sS -o /tmp/adx_test.json -w "%{http_code}" \
+              -X POST "${CLUSTER_URL}/v1/rest/query" \
+              -H "Authorization: Bearer ${TOKEN}" \
+              -H "Content-Type: application/json; charset=utf-8" \
+              -d "$(jq -n --arg db "${DATABASE}" --arg csl "${q}" '{db:$db,csl:$csl}')")
+            echo "HTTP: ${code}"
+            cat /tmp/adx_test.json
+            echo
+          }
 
-          KUSTO_QUERY="Unionizer(\"Deployments\", \"DeploymentOperations\") | where correlationId == \"${CORRELATION_ID}\""
-
-          HTTP_CODE=$(curl -sS -o /tmp/adx_response.json -w "%{http_code}" \
-            -X POST "${CLUSTER_URL}/v1/rest/query" \
-            -H "Authorization: Bearer ${TOKEN}" \
-            -H "Content-Type: application/json; charset=utf-8" \
-            -d "$(jq -n --arg db "${DATABASE}" --arg csl "${KUSTO_QUERY}" '{db:$db,csl:$csl}')")
-
-          if [[ "${HTTP_CODE}" -lt 200 || "${HTTP_CODE}" -ge 300 ]]; then
-            echo "::error::ADX returned HTTP ${HTTP_CODE}" >&2
-            echo "--- Raw response ---" >&2
-            cat /tmp/adx_response.json >&2
-            exit 1
-          fi
-
-          jq . /tmp/adx_response.json
+          run_query "Deployments | take 1" "Deployments"
+          run_query "DeploymentOperations | take 1" "DeploymentOperations"
