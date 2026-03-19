@@ -1,11 +1,5 @@
-@description('Azure region for all resources. Must be a Discovery-supported region.')
-@allowed([
-  'eastus'
-  'eastus2'
-  'swedencentral'
-  'uksouth'
-])
-param location string = 'swedencentral'
+@description('Location for all resources. Discovery is currently supported in eastus, eastus2, swedencentral and uksouth.')
+param location string = resourceGroup().location
 
 @description('Name of the Microsoft Discovery Supercomputer. Must be 3-24 characters, alphanumeric and hyphens only.')
 @minLength(3)
@@ -107,51 +101,71 @@ resource vnet 'Microsoft.Network/virtualNetworks@2024-05-01' = {
         vnetAddressPrefix
       ]
     }
-    subnets: [
+  }
+}
+
+resource supercomputerNodepoolSubnet 'Microsoft.Network/virtualNetworks/subnets@2024-05-01' = {
+  parent: vnet
+  name: 'supercomputerNodepoolSubnet'
+  properties: {
+    addressPrefix: supercomputerNodepoolSubnetPrefix
+  }
+}
+
+resource aksSubnet 'Microsoft.Network/virtualNetworks/subnets@2024-05-01' = {
+  parent: vnet
+  name: 'aksSubnet'
+  dependsOn: [
+    supercomputerNodepoolSubnet
+  ]
+  properties: {
+    addressPrefix: aksSubnetPrefix
+  }
+}
+
+resource workspaceSubnet 'Microsoft.Network/virtualNetworks/subnets@2024-05-01' = {
+  parent: vnet
+  name: 'workspaceSubnet'
+  dependsOn: [
+    aksSubnet
+  ]
+  properties: {
+    addressPrefix: workspaceSubnetPrefix
+    delegations: [
       {
-        name: 'supercomputerNodepoolSubnet'
+        name: 'Microsoft.App.environments'
         properties: {
-          addressPrefix: supercomputerNodepoolSubnetPrefix
+          serviceName: 'Microsoft.App/environments'
         }
       }
+    ]
+  }
+}
+
+resource privateEndpointSubnet 'Microsoft.Network/virtualNetworks/subnets@2024-05-01' = {
+  parent: vnet
+  name: 'privateEndpointSubnet'
+  dependsOn: [
+    workspaceSubnet
+  ]
+  properties: {
+    addressPrefix: privateEndpointSubnetPrefix
+  }
+}
+
+resource agentSubnet 'Microsoft.Network/virtualNetworks/subnets@2024-05-01' = {
+  parent: vnet
+  name: 'agentSubnet'
+  dependsOn: [
+    privateEndpointSubnet
+  ]
+  properties: {
+    addressPrefix: agentSubnetPrefix
+    delegations: [
       {
-        name: 'aksSubnet'
+        name: 'Microsoft.App.environments'
         properties: {
-          addressPrefix: aksSubnetPrefix
-        }
-      }
-      {
-        name: 'workspaceSubnet'
-        properties: {
-          addressPrefix: workspaceSubnetPrefix
-          delegations: [
-            {
-              name: 'Microsoft.App.environments'
-              properties: {
-                serviceName: 'Microsoft.App/environments'
-              }
-            }
-          ]
-        }
-      }
-      {
-        name: 'privateEndpointSubnet'
-        properties: {
-          addressPrefix: privateEndpointSubnetPrefix
-        }
-      }
-      {
-        name: 'agentSubnet'
-        properties: {
-          addressPrefix: agentSubnetPrefix
-          delegations: [
-            {
-              name: 'Microsoft.App.environments'
-              properties: {
-                serviceName: 'Microsoft.App/environments'
-              }
-            }
-          ]
+          serviceName: 'Microsoft.App/environments'
         }
       }
     ]
@@ -252,11 +266,8 @@ resource acrPullAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' 
 resource supercomputer 'Microsoft.Discovery/supercomputers@2026-02-01-preview' = {
   name: supercomputerName
   location: location
-  dependsOn: [
-    vnet
-  ]
   properties: {
-    subnetId: resourceId('Microsoft.Network/virtualNetworks/subnets', vnetName, 'aksSubnet')
+    subnetId: aksSubnet.id
     identities: {
       clusterIdentity: {
         id: managedIdentity.id
@@ -275,11 +286,8 @@ resource nodePool 'Microsoft.Discovery/supercomputers/nodePools@2026-02-01-previ
   parent: supercomputer
   name: nodePoolName
   location: location
-  dependsOn: [
-    vnet
-  ]
   properties: {
-    subnetId: resourceId('Microsoft.Network/virtualNetworks/subnets', vnetName, 'supercomputerNodepoolSubnet')
+    subnetId: supercomputerNodepoolSubnet.id
     vmSize: nodePoolVmSize
     maxNodeCount: nodePoolMaxNodeCount
     minNodeCount: nodePoolMinNodeCount
@@ -293,9 +301,6 @@ resource workspace 'Microsoft.Discovery/workspaces@2026-02-01-preview' = {
   tags: {
     version: 'v2'
   }
-  dependsOn: [
-    vnet
-  ]
   properties: {
     workspaceIdentity: {
       id: managedIdentity.id
@@ -303,9 +308,9 @@ resource workspace 'Microsoft.Discovery/workspaces@2026-02-01-preview' = {
     supercomputerIds: [
       supercomputer.id
     ]
-    agentSubnetId: resourceId('Microsoft.Network/virtualNetworks/subnets', vnetName, 'agentSubnet')
-    privateEndpointSubnetId: resourceId('Microsoft.Network/virtualNetworks/subnets', vnetName, 'privateEndpointSubnet')
-    workspaceSubnetId: resourceId('Microsoft.Network/virtualNetworks/subnets', vnetName, 'workspaceSubnet')
+    agentSubnetId: agentSubnet.id
+    privateEndpointSubnetId: privateEndpointSubnet.id
+    workspaceSubnetId: workspaceSubnet.id
   }
 }
 
