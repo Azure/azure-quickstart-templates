@@ -3,23 +3,23 @@
 @description('Basename that is used to name provisioned resources. Should be alphanumeric, at least 3 characters and up to or less than 16 characters.')
 param basename string
 
-@description('The Azure region for all resources.')
-param location string = 'westus2'
+@description('The location where the resources are deployed. ')
+var location = 'eastus'
 
 @description('The name of the Azure Health Data Services workspace.')
-param workspaceName string = replace('ws-${basename}', '-', '')
+var workspaceName = replace('ws-${basename}', '-', '')
 
 @description('The name of the FHIR service.')
-param fhirServiceName string = 'fhir-${basename}'
+var fhirServiceName = 'fhir-${basename}'
 
 @description('The name of the DICOM service.')
-param dicomServiceName string = 'dicom-${basename}'
+var dicomServiceName = 'dicom-${basename}'
 
 @description('The FHIR version to use. Defaults to R4.')
-param fhirKind string = 'fhir-R4'
+var fhirKind = 'fhir-R4'
 
 @description('The Microsoft Entra tenant ID for FHIR authentication.')
-param tenantId string = subscription().tenantId
+var tenantId = subscription().tenantId
 
 // Azure Health Data Services workspace
 resource workspace 'Microsoft.HealthcareApis/workspaces@2024-03-31' = {
