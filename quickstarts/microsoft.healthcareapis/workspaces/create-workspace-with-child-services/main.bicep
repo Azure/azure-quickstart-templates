@@ -12,6 +12,10 @@ var workspaceName = replace('ws-${basename}', '-', '')
 @description('The name of the FHIR service.')
 var fhirServiceName = 'fhir-${basename}'
 
+@description('Relative URI path for the FHIR service. ')
+var fhirAudience = 'https://${workspaceName}-${fhirServiceName}.fhir.azurehealthcareapis.com'
+
+
 @description('The name of the DICOM service.')
 var dicomServiceName = 'dicom-${basename}'
 
@@ -22,7 +26,7 @@ var fhirKind = 'fhir-R4'
 var tenantId = subscription().tenantId
 
 // Azure Health Data Services workspace
-resource workspace 'Microsoft.HealthcareApis/workspaces@2024-03-31' = {
+resource workspace 'Microsoft.HealthcareApis/workspaces@2025-04-01-preview' = {
   name: workspaceName
   location: location
   properties: {
@@ -31,7 +35,7 @@ resource workspace 'Microsoft.HealthcareApis/workspaces@2024-03-31' = {
 }
 
 // FHIR service (child of workspace)
-resource fhirService 'Microsoft.HealthcareApis/workspaces/fhirservices@2024-03-31' = {
+resource fhirService 'Microsoft.HealthcareApis/workspaces/fhirservices@2025-04-01-preview' = {
   parent: workspace
   name: fhirServiceName
   location: location
@@ -42,14 +46,14 @@ resource fhirService 'Microsoft.HealthcareApis/workspaces/fhirservices@2024-03-3
   properties: {
     authenticationConfiguration: {
       authority: '${environment().authentication.loginEndpoint}${tenantId}'
-      audience: 'https://${workspaceName}-${fhirServiceName}.fhir.azurehealthcareapis.com'
+      audience: fhirAudience
     }
     publicNetworkAccess: 'Enabled'
   }
 }
 
 // DICOM service (child of workspace)
-resource dicomService 'Microsoft.HealthcareApis/workspaces/dicomservices@2024-03-31' = {
+resource dicomService 'Microsoft.HealthcareApis/workspaces/dicomservices@2025-04-01-preview' = {
   parent: workspace
   name: dicomServiceName
   location: location
@@ -64,6 +68,6 @@ resource dicomService 'Microsoft.HealthcareApis/workspaces/dicomservices@2024-03
 // Outputs
 output workspaceId string = workspace.id
 output fhirServiceId string = fhirService.id
-output fhirServiceUrl string = 'https://${workspaceName}-${fhirServiceName}.fhir.azurehealthcareapis.com'
+output fhirServiceUrl string = fhirAudience
 output dicomServiceId string = dicomService.id
 output dicomServiceUrl string = dicomService.properties.serviceUrl
