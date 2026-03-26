@@ -67,87 +67,94 @@ jobs:
               --resource "https://kusto.kusto.windows.net"
           }
 
+          # ── Extract fields from the flat deployments object ───────────────
+          TEMPLATE_FILE_NAME=$(echo "${DEPLOYMENTS}" | jq -r '.templateFileName // empty')
+          CORRELATION_ID=$(echo "${DEPLOYMENTS}"     | jq -r '.correlationId    // empty')
+          DEPLOYMENT_NAME=$(echo "${DEPLOYMENTS}"    | jq -r '.deploymentName   // empty')
+          ENTRY_TIMESTAMP=$(echo "${DEPLOYMENTS}"    | jq -r '.timestamp        // "N/A"')
+          EXPECTED_HASH=$(echo "${DEPLOYMENTS}"      | jq -r '.templatehash     // empty')
+
+          echo ""
+          echo "================================================================"
+          echo "  Template file : ${TEMPLATE_FILE_NAME:-<missing>}"
+          echo "  correlationId : ${CORRELATION_ID:-<missing>}"
+          echo "  deploymentName: ${DEPLOYMENT_NAME:-<missing>}"
+          echo "  timestamp     : ${ENTRY_TIMESTAMP}"
+          echo "  expected hash : ${EXPECTED_HASH:-<missing>}"
+          echo "================================================================"
+
+          # ── Validate templateFileName is an allowed value ─────────────────
+          if [[ -z "${TEMPLATE_FILE_NAME}" ]]; then
+            echo "ERROR: 'templateFileName' is missing from '.testResult.deployments'" >&2
+            exit 1
+          fi
+          if [[ "${TEMPLATE_FILE_NAME}" != "azuredeploy.json" && "${TEMPLATE_FILE_NAME}" != "main.bicep" ]]; then
+            echo "ERROR: 'templateFileName' is '${TEMPLATE_FILE_NAME}' — must be 'azuredeploy.json' or 'main.bicep'" >&2
+            exit 1
+          fi
+
+          # ── Validate remaining required fields ────────────────────────────
+          if [[ -z "${CORRELATION_ID}" ]]; then
+            echo "ERROR: 'correlationId' is missing from '.testResult.deployments'" >&2
+            exit 1
+          fi
+          if [[ -z "${DEPLOYMENT_NAME}" ]]; then
+            echo "ERROR: 'deploymentName' is missing from '.testResult.deployments'" >&2
+            exit 1
+          fi
+          if [[ -z "${EXPECTED_HASH}" ]]; then
+            echo "ERROR: 'templatehash' is missing from '.testResult.deployments'" >&2
+            exit 1
+          fi
+
+          # ── Run Kusto query ───────────────────────────────────────────────
+          # jq handles JSON-escaping of all KQL string values
+          REQUEST_BODY=$(jq -n \
+            --arg db  "${DATABASE}" \
+            --arg cid "${CORRELATION_ID}" \
+            --arg dn  "${DEPLOYMENT_NAME}" \
+            '{db: $db, csl: "Deployments | where correlationId == \"\($cid)\" | where deploymentName == \"\($dn)\" | project timestamp=TIMESTAMP, deploymentName, executionStatus, templateHash | top 1 by timestamp desc"}')
+
+          echo "Running Kusto query for '${TEMPLATE_FILE_NAME}'..."
+          RESPONSE=$(run_kusto_query "${REQUEST_BODY}")
+
+          ROW_COUNT=$(echo "${RESPONSE}" | jq '(.Tables[0].Rows // []) | length')
+          if [[ "${ROW_COUNT}" -eq 0 ]]; then
+            echo "ERROR: No ADX record found — correlationId='${CORRELATION_ID}' deploymentName='${DEPLOYMENT_NAME}'" >&2
+            exit 1
+          fi
+
+          # Extract field values by column name (robust against column-order changes)
+          ACTUAL_STATUS=$(echo "${RESPONSE}" | jq -r \
+            '.Tables[0] as $t | ($t.Columns | map(.ColumnName) | index("executionStatus")) as $i | $t.Rows[0][$i]')
+          ACTUAL_HASH=$(echo "${RESPONSE}" | jq -r \
+            '.Tables[0] as $t | ($t.Columns | map(.ColumnName) | index("templateHash")) as $i | $t.Rows[0][$i]')
+
+          echo "  actual status : ${ACTUAL_STATUS}"
+          echo "  actual hash   : ${ACTUAL_HASH}"
+
+          # ── Compare results ───────────────────────────────────────────────
           OVERALL_PASS=true
 
-          # ── Iterate over every entry in .testResult.deployments ───────────
-          while IFS= read -r ENTRY; do
-            TEMPLATE_FILE_NAME=$(echo "${ENTRY}" | jq -r '.key')
-            CORRELATION_ID=$(echo "${ENTRY}"    | jq -r '.value.correlationId  // empty')
-            DEPLOYMENT_NAME=$(echo "${ENTRY}"   | jq -r '.value.deploymentName // empty')
-            ENTRY_TIMESTAMP=$(echo "${ENTRY}"   | jq -r '.value.timestamp      // "N/A"')
-            EXPECTED_HASH=$(echo "${ENTRY}"     | jq -r '.value.templatehash   // empty')
+          if [[ "${ACTUAL_STATUS}" != "Succeeded" ]]; then
+            echo "FAIL: executionStatus='${ACTUAL_STATUS}' (expected 'Succeeded') — correlationId='${CORRELATION_ID}' deploymentName='${DEPLOYMENT_NAME}'" >&2
+            OVERALL_PASS=false
+          else
+            echo "PASS: executionStatus = Succeeded"
+          fi
 
-            echo ""
-            echo "================================================================"
-            echo "  Template file : ${TEMPLATE_FILE_NAME}"
-            echo "  correlationId : ${CORRELATION_ID:-<missing>}"
-            echo "  deploymentName: ${DEPLOYMENT_NAME:-<missing>}"
-            echo "  timestamp     : ${ENTRY_TIMESTAMP}"
-            echo "  expected hash : ${EXPECTED_HASH:-<missing>}"
-            echo "================================================================"
-
-            # Validate required fields before querying
-            if [[ -z "${CORRELATION_ID}" ]]; then
-              echo "ERROR: 'correlationId' missing for '${TEMPLATE_FILE_NAME}'" >&2
-              OVERALL_PASS=false; continue
-            fi
-            if [[ -z "${DEPLOYMENT_NAME}" ]]; then
-              echo "ERROR: 'deploymentName' missing for '${TEMPLATE_FILE_NAME}'" >&2
-              OVERALL_PASS=false; continue
-            fi
-            if [[ -z "${EXPECTED_HASH}" ]]; then
-              echo "ERROR: 'templatehash' missing for '${TEMPLATE_FILE_NAME}'" >&2
-              OVERALL_PASS=false; continue
-            fi
-
-            # Build request body; jq handles JSON-escaping of all KQL string values
-            REQUEST_BODY=$(jq -n \
-              --arg db  "${DATABASE}" \
-              --arg cid "${CORRELATION_ID}" \
-              --arg dn  "${DEPLOYMENT_NAME}" \
-              '{db: $db, csl: "Deployments | where correlationId == \"\($cid)\" | where deploymentName == \"\($dn)\" | project timestamp=TIMESTAMP, deploymentName, executionStatus, templateHash | top 1 by timestamp desc"}')
-
-            echo "Running Kusto query for '${TEMPLATE_FILE_NAME}'..."
-            RESPONSE=$(run_kusto_query "${REQUEST_BODY}")
-
-            ROW_COUNT=$(echo "${RESPONSE}" | jq '(.Tables[0].Rows // []) | length')
-            if [[ "${ROW_COUNT}" -eq 0 ]]; then
-              echo "ERROR: No ADX record found — correlationId='${CORRELATION_ID}' deploymentName='${DEPLOYMENT_NAME}'" >&2
-              OVERALL_PASS=false; continue
-            fi
-
-            # Extract field values by column name (robust against column-order changes)
-            ACTUAL_STATUS=$(echo "${RESPONSE}" | jq -r \
-              '.Tables[0] as $t | ($t.Columns | map(.ColumnName) | index("executionStatus")) as $i | $t.Rows[0][$i]')
-            ACTUAL_HASH=$(echo "${RESPONSE}" | jq -r \
-              '.Tables[0] as $t | ($t.Columns | map(.ColumnName) | index("templateHash")) as $i | $t.Rows[0][$i]')
-
-            echo "  actual status : ${ACTUAL_STATUS}"
-            echo "  actual hash   : ${ACTUAL_HASH}"
-
-            # Compare executionStatus
-            if [[ "${ACTUAL_STATUS}" != "Succeeded" ]]; then
-              echo "FAIL: executionStatus='${ACTUAL_STATUS}' (expected 'Succeeded') — correlationId='${CORRELATION_ID}' deploymentName='${DEPLOYMENT_NAME}'" >&2
-              OVERALL_PASS=false
-            else
-              echo "PASS: executionStatus = Succeeded"
-            fi
-
-            # Compare templateHash
-            if [[ "${ACTUAL_HASH}" != "${EXPECTED_HASH}" ]]; then
-              echo "FAIL: templateHash mismatch for '${TEMPLATE_FILE_NAME}'" >&2
-              echo "      expected : ${EXPECTED_HASH}" >&2
-              echo "      actual   : ${ACTUAL_HASH}" >&2
-              OVERALL_PASS=false
-            else
-              echo "PASS: templateHash matches"
-            fi
-
-          done < <(jq -c 'to_entries[]' <<< "${DEPLOYMENTS}")
+          if [[ "${ACTUAL_HASH}" != "${EXPECTED_HASH}" ]]; then
+            echo "FAIL: templateHash mismatch for '${TEMPLATE_FILE_NAME}'" >&2
+            echo "      expected : ${EXPECTED_HASH}" >&2
+            echo "      actual   : ${ACTUAL_HASH}" >&2
+            OVERALL_PASS=false
+          else
+            echo "PASS: templateHash matches"
+          fi
 
           echo ""
           if [[ "${OVERALL_PASS}" != "true" ]]; then
-            echo "VALIDATION FAILED: one or more deployment entries did not pass." >&2
+            echo "VALIDATION FAILED: deployment did not pass." >&2
             exit 1
           fi
-          echo "== All deployment validations PASSED =="
+          echo "== Deployment validation PASSED =="
