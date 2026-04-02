@@ -130,10 +130,13 @@ jobs:
               --resource "https://kusto.kusto.windows.net"
           }
 
+          # ── Normalize deployment entry keys to lowercase (case-insensitive) ─
+          DEPLOYMENTS=$(echo "${DEPLOYMENTS}" | jq -c 'with_entries(.key |= ascii_downcase)')
+
           # ── Extract fields from the flat deployments object ───────────────
-          TEMPLATE_FILE_NAME=$(echo "${DEPLOYMENTS}" | jq -r '.templateFileName // empty')
-          CORRELATION_ID=$(echo "${DEPLOYMENTS}"     | jq -r '.correlationId    // empty')
-          DEPLOYMENT_NAME=$(echo "${DEPLOYMENTS}"    | jq -r '.deploymentName   // empty')
+          TEMPLATE_FILE_NAME=$(echo "${DEPLOYMENTS}" | jq -r '.templatefilename // empty')
+          CORRELATION_ID=$(echo "${DEPLOYMENTS}"     | jq -r '.correlationid    // empty')
+          DEPLOYMENT_NAME=$(echo "${DEPLOYMENTS}"    | jq -r '.deploymentname   // empty')
           ENTRY_TIMESTAMP=$(echo "${DEPLOYMENTS}"    | jq -r '.timestamp        // "N/A"')
           EXPECTED_HASH=$(echo "${DEPLOYMENTS}"      | jq -r '.templatehash     // empty')
 
@@ -308,7 +311,7 @@ jobs:
 
           # ── Filter prereqs entries ────────────────────────────────────────
           PREREQ_DEPLOYMENTS=$(jq -c \
-            '[.testResult.deployments[] | select(.templateFileName | startswith("prereqs/"))]' \
+            '[.testResult.deployments[] | with_entries(.key |= ascii_downcase) | select(.templatefilename | startswith("prereqs/"))]' \
             "${METADATA_PATH}")
           PREREQ_COUNT=$(echo "${PREREQ_DEPLOYMENTS}" | jq 'length')
 
@@ -338,11 +341,11 @@ jobs:
             ENTRY=$(echo "${PREREQ_DEPLOYMENTS}" | jq -c ".[$i]")
             ENTRY_LABEL="$((i + 1))/${PREREQ_COUNT}"
 
-            TEMPLATE_FILE_NAME=$(echo "${ENTRY}" | jq -r '.templateFileName // empty')
-            CORRELATION_ID=$(echo "${ENTRY}"     | jq -r '.correlationId    // empty')
-            DEPLOYMENT_NAME=$(echo "${ENTRY}"    | jq -r '.deploymentName   // empty')
+            TEMPLATE_FILE_NAME=$(echo "${ENTRY}" | jq -r '.templatefilename // empty')
+            CORRELATION_ID=$(echo "${ENTRY}"     | jq -r '.correlationid    // empty')
+            DEPLOYMENT_NAME=$(echo "${ENTRY}"    | jq -r '.deploymentname   // empty')
             ENTRY_TIMESTAMP=$(echo "${ENTRY}"    | jq -r '.timestamp        // "N/A"')
-            EXPECTED_HASH=$(echo "${ENTRY}"      | jq -r '.templateHash     // empty')
+            EXPECTED_HASH=$(echo "${ENTRY}"      | jq -r '.templatehash     // empty')
 
             echo ""
             echo "================================================================"
@@ -356,7 +359,7 @@ jobs:
 
             # ── Validate all required fields ──────────────────────────────
             ENTRY_VALID=true
-            for FIELD_NAME in templateFileName correlationId deploymentName timestamp templateHash; do
+            for FIELD_NAME in templatefilename correlationid deploymentname timestamp templatehash; do
               FIELD_VAL=$(echo "${ENTRY}" | jq -r --arg f "${FIELD_NAME}" '.[$f] // empty')
               if [[ -z "${FIELD_VAL}" ]]; then
                 echo "ERROR [prereqs ${ENTRY_LABEL}]: '${FIELD_NAME}' is missing or empty" >&2
