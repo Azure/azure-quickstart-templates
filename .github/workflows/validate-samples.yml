@@ -433,6 +433,129 @@ jobs:
           echo ""
           echo "✅ README.md passed all checks."
 
+      # ── (4) Prereqs A: verify at least one recognized template exists ───────
+      - name: Validate prereqs/ template files
+        id: check-prereqs
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          SAMPLE_DIR="${{ matrix.sample }}"
+          PREREQS_DIR="${SAMPLE_DIR}/prereqs"
+
+          echo "──────────────────────────────────────────"
+          echo "CHECK 4 – prereqs/ template files"
+          echo "  sample: ${SAMPLE_DIR}"
+          echo "──────────────────────────────────────────"
+
+          if [[ ! -d "${PREREQS_DIR}" ]]; then
+            echo "No prereqs/ folder found — skipping prereqs validation."
+            echo "has_prereqs=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "has_prereqs=true" >> "$GITHUB_OUTPUT"
+          echo "== prereqs/ folder found: ${PREREQS_DIR} =="
+
+          EXPECTED_FILES=("prereq.azuredeploy.json" "prereq.main.bicep" "azuredeploy.json" "main.bicep")
+          FOUND_FILES=()
+          for f in "${EXPECTED_FILES[@]}"; do
+            [[ -f "${PREREQS_DIR}/${f}" ]] && FOUND_FILES+=("$f")
+          done
+
+          if [[ ${#FOUND_FILES[@]} -eq 0 ]]; then
+            echo ""
+            echo "❌ ERROR – No valid template file found in prereqs/ folder."
+            echo ""
+            echo "  Sample folder : ${SAMPLE_DIR}"
+            echo "  Prereqs folder: ${PREREQS_DIR}"
+            echo "  Expected one of: ${EXPECTED_FILES[*]}"
+            echo "  Actual contents:"
+            ls "${PREREQS_DIR}" 2>/dev/null | while IFS= read -r entry; do
+              echo "    ${entry}"
+            done || echo "    (empty)"
+            exit 1
+          fi
+
+          printf '✅ Found prereqs template(s): %s\n' "${FOUND_FILES[*]}"
+          if [[ ${#FOUND_FILES[@]} -gt 1 ]]; then
+            echo "NOTE: Multiple matching template files found. The pipeline relies on metadata.json for validation."
+          fi
+
+      # ── (5) Prereqs B: validate metadata.json prereqs entries ───────────────
+      - name: Validate prereqs entries in metadata.json
+        if: steps.check-prereqs.outputs.has_prereqs == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          SAMPLE_DIR="${{ matrix.sample }}"
+          META="${SAMPLE_DIR}/metadata.json"
+
+          echo "──────────────────────────────────────────"
+          echo "CHECK 5 – prereqs entries in metadata.json"
+          echo "  file: ${META}"
+          echo "──────────────────────────────────────────"
+
+          # When prereqs/ exists, testResult.deployments must be an array
+          DEPLOYMENTS_TYPE=$(jq -r '(.testResult.deployments // null) | type' "${META}")
+          if [[ "${DEPLOYMENTS_TYPE}" != "array" ]]; then
+            echo ""
+            echo "❌ ERROR – prereqs/ folder exists but '.testResult.deployments' is not an array (got '${DEPLOYMENTS_TYPE}')."
+            echo ""
+            echo "  When a prereqs/ folder is present, 'testResult.deployments' must be a JSON array"
+            echo "  containing one entry per deployed template (main + each prereqs template)."
+            echo "  Current value: $(jq -c '.testResult.deployments // "missing"' "${META}")"
+            exit 1
+          fi
+
+          # At least one entry must have templateFileName starting with "prereqs/"
+          PREREQ_DEPLOYMENTS=$(jq -c \
+            '[.testResult.deployments[] | with_entries(.key |= ascii_downcase) | select(.templatefilename | startswith("prereqs/"))]' \
+            "${META}")
+          PREREQ_COUNT=$(echo "${PREREQ_DEPLOYMENTS}" | jq 'length')
+
+          if [[ "${PREREQ_COUNT}" -eq 0 ]]; then
+            echo ""
+            echo "❌ ERROR – prereqs/ folder exists but no prereqs entries found in '.testResult.deployments'."
+            echo ""
+            echo "  Add one entry per prereqs template with 'templateFileName' starting with 'prereqs/'."
+            echo "  Example: \"templateFileName\": \"prereqs/prereq.main.bicep\""
+            exit 1
+          fi
+
+          echo "Found ${PREREQ_COUNT} prereqs deployment entry/entries."
+
+          REQUIRED_FIELDS=(templatefilename correlationid deploymentname timestamp templatehash)
+          OVERALL_PASS=true
+
+          for i in $(seq 0 $((PREREQ_COUNT - 1))); do
+            ENTRY=$(echo "${PREREQ_DEPLOYMENTS}" | jq -c ".[$i]")
+            ENTRY_LABEL="$((i + 1))/${PREREQ_COUNT}"
+            TEMPLATE_FILE_NAME=$(echo "${ENTRY}" | jq -r '.templatefilename // empty')
+
+            echo ""
+            echo "  [prereqs entry ${ENTRY_LABEL}] ${TEMPLATE_FILE_NAME}"
+
+            for FIELD_NAME in "${REQUIRED_FIELDS[@]}"; do
+              FIELD_VAL=$(echo "${ENTRY}" | jq -r --arg f "${FIELD_NAME}" '.[$f] // empty')
+              if [[ -z "${FIELD_VAL}" ]]; then
+                echo "  ❌ '${FIELD_NAME}' is missing or empty"
+                echo "     offending entry: ${ENTRY}"
+                OVERALL_PASS=false
+              else
+                echo "  ✅ ${FIELD_NAME}: present"
+              fi
+            done
+          done
+
+          echo ""
+          if [[ "${OVERALL_PASS}" != "true" ]]; then
+            echo "❌ One or more prereqs entries in metadata.json are missing required fields."
+            exit 1
+          fi
+          echo "✅ All prereqs metadata.json entries are valid."
+
       # ── Summary ─────────────────────────────────────────────────────────────
       - name: Validation summary
         if: success()
