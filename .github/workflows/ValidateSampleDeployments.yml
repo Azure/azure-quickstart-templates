@@ -39,6 +39,39 @@ jobs:
         run: |
           echo "number=${{ github.event.issue.number }}" >> "$GITHUB_OUTPUT"
 
+      - name: Safeguard – block ValidateSampleDeployments.yml edits by non MEMBER/OWNER
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const allowed = new Set(["MEMBER", "OWNER"]);
+            const pull_number = parseInt("${{ steps.pr.outputs.number }}", 10);
+            const owner = context.repo.owner;
+            const repo  = context.repo.repo;
+
+            const [prData, files] = await Promise.all([
+              github.rest.pulls.get({ owner, repo, pull_number }),
+              github.paginate(
+                github.rest.pulls.listFiles,
+                { owner, repo, pull_number, per_page: 100 }
+              )
+            ]);
+
+            const assoc = prData.data.author_association;
+            const touched = files.some(f =>
+              f.filename === ".github/workflows/ValidateSampleDeployments.yml" ||
+              f.filename.endsWith("/ValidateSampleDeployments.yml") ||
+              f.filename === "ValidateSampleDeployments.yml"
+            );
+
+            core.info(`PR author_association=${assoc}; ValidateSampleDeployments.yml touched=${touched}`);
+
+            if (touched && !allowed.has(assoc)) {
+              core.setFailed(
+                `Blocked: ValidateSampleDeployments.yml was modified by PR author with ` +
+                `author_association='${assoc}'. Only MEMBER or OWNER may modify this file.`
+              );
+            }
+
       - name: Checkout PR HEAD
         uses: actions/checkout@v4
         with:
