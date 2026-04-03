@@ -2,7 +2,7 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "name": {
+    "logicAppName": {
       "type": "string",
       "metadata": {
         "description": "Name of the Logic App"
@@ -15,18 +15,13 @@
         "description": "Deployment location"
       }
     },
-    "catalogId": {
+    "storageAccountName": {
       "type": "string",
       "metadata": {
-        "description": "Catalog Id from Entitlement Management"
+        "description": "The name of the storage account where files will be uploaded."
       }
     },
-    "customDataProvidedResourceId": {
-      "type": "string",
-      "metadata": {
-        "description": "Custom Data Provided Resource Id from Entitlement Management"
-      }
-    },
+
     "armResource": {
       "type": "string",
       "defaultValue": "management.azure.com",
@@ -40,33 +35,153 @@
       "metadata": {
         "description": "Token issuer"
       }
-    },
-    "appId": {
-      "type": "string",
-      "defaultValue": "2829028a-b35b-42cc-86e3-517e751a3e2a",
-      "metadata": {
-        "description": "ESI AppId for Logic App Creation"
-      }
-    },
-    "arAppId": {
-      "type": "string",
-      "defaultValue": "d8c767ef-3e9a-48c4-aef9-562696539b39",
-      "metadata": {
-        "description": "AR AppId for Logic App Creation"
-      }
     }
   },
   "variables": {
-    "catalogIdExpression": "@{triggerBody()?['catalogId']}",
-    "customDataProvidedResourceIdExpression": "@{triggerBody()?['customDataProvidedResourceId']}",
-    "possession": "[concat(resourceGroup().id, '/providers/Microsoft.Logic/workflows/', parameters('name'))]"
+    "blobConnectionName": "[concat(parameters('logicAppName'), '-', parameters('storageAccountName'), '-connection')]",
+    "possession": "[concat(resourceGroup().id, '/providers/Microsoft.Logic/workflows/', parameters('logicAppName'))]",
+    "appId": "2829028a-b35b-42cc-86e3-517e751a3e2a",
+    "arAppId": "d8c767ef-3e9a-48c4-aef9-562696539b39"
   },
   "resources": [
     {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2025-01-01",
+      "name": "[parameters('storageAccountName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard_RAGRS",
+        "tier": "Standard"
+      },
+      "kind": "StorageV2",
+      "properties": {
+        "dnsEndpointType": "Standard",
+        "defaultToOAuthAuthentication": false,
+        "publicNetworkAccess": "Enabled",
+        "allowCrossTenantReplication": false,
+        "minimumTlsVersion": "TLS1_2",
+        "allowBlobPublicAccess": false,
+        "allowSharedKeyAccess": true,
+        "largeFileSharesState": "Enabled",
+        "networkAcls": {
+          "bypass": "AzureServices",
+          "defaultAction": "Allow"
+        },
+        "supportsHttpsTrafficOnly": true,
+        "encryption": {
+          "requireInfrastructureEncryption": false,
+          "services": {
+            "file": {
+              "keyType": "Account",
+              "enabled": true
+            },
+            "blob": {
+              "keyType": "Account",
+              "enabled": true
+            }
+          },
+          "keySource": "Microsoft.Storage"
+        },
+        "accessTier": "Hot"
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts/blobServices",
+      "apiVersion": "2025-01-01",
+      "name": "[concat(parameters('storageAccountName'), '/default')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+      ],
+      "sku": {
+        "name": "Standard_RAGRS",
+        "tier": "Standard"
+      },
+      "properties": {
+        "containerDeleteRetentionPolicy": {
+          "enabled": true,
+          "days": 7
+        },
+        "deleteRetentionPolicy": {
+          "allowPermanentDelete": false,
+          "enabled": true,
+          "days": 7
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts/fileServices",
+      "apiVersion": "2025-01-01",
+      "name": "[concat(parameters('storageAccountName'), '/default')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+      ],
+      "sku": {
+        "name": "Standard_RAGRS",
+        "tier": "Standard"
+      },
+      "properties": {
+        "shareDeleteRetentionPolicy": {
+          "enabled": true,
+          "days": 7
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+      "apiVersion": "2025-01-01",
+      "name": "[concat(parameters('storageAccountName'), '/default/byod')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts/blobServices', parameters('storageAccountName'), 'default')]",
+        "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+      ],
+      "properties": {
+        "immutableStorageWithVersioning": {
+          "enabled": false
+        },
+        "defaultEncryptionScope": "$account-encryption-key",
+        "denyEncryptionScopeOverride": false,
+        "publicAccess": "None"
+      }
+    },
+    {
+      "type": "Microsoft.Web/connections",
+      "apiVersion": "2016-06-01",
+      "name": "[variables('blobConnectionName')]",
+      "location": "[parameters('location')]",
+      "kind": "V1",
+      "properties": {
+        "displayName": "templatetest",
+        "customParameterValues": {},
+        "api": {
+          "name": "azureblob",
+          "displayName": "Azure Blob Storage",
+          "id": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Web/locations/', parameters('location'), '/managedApis/azureblob')]",
+          "type": "Microsoft.Web/locations/managedApis"
+        },
+        "parameterValueSet": {
+          "name": "managedIdentityAuth",
+          "values": {}
+        },
+        "testLinks": [
+          {
+            "requestUri": "[concat('https://management.azure.com/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Web/connections/', variables('blobConnectionName'), '/extensions/proxy/testconnection?api-version=2016-06-01')]",
+            "method": "get"
+          }
+        ]
+      }
+    },
+    {
       "type": "Microsoft.Logic/workflows",
       "apiVersion": "2019-05-01",
-      "name": "[parameters('name')]",
+      "name": "[parameters('logicAppName')]",
       "location": "[parameters('location')]",
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/connections', variables('blobConnectionName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+      ],
       "tags": {
         "Purpose": "Azure AD Entitlement Management"
       },
@@ -75,7 +190,12 @@
         "definition": {
           "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
           "contentVersion": "1.0.0.0",
-          "parameters": {},
+          "parameters": {
+            "$connections": {
+              "type": "Object",
+              "defaultValue": {}
+            }
+          },
           "triggers": {
             "manual": {
               "type": "Request",
@@ -85,16 +205,20 @@
                   "type": "object",
                   "properties": {
                     "reviewDefinitionId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Definition Id for the Access Review"
                     },
                     "reviewInstanceId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Instance Id for the Access Review"
                     },
                     "catalogId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Id for the Catalog used in the Access Review"
                     },
                     "customDataProvidedResourceId": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Id used for the Disconnected App Resource in the Catalog"
                     },
                     "callbackDataType": {
                       "type": "string"
@@ -102,38 +226,305 @@
                     "triggerType": {
                       "type": "string"
                     }
-                  }
+                  },
+                  "required": [
+                    "reviewDefinitionId",
+                    "reviewInstanceId",
+                    "catalogId",
+                    "customDataProvidedResourceId"
+                  ]
                 }
               },
               "operationOptions": "IncludeAuthorizationHeadersInOutputs"
             }
           },
           "actions": {
-            "Condition": {
-              "actions": {},
-              "expression": {
-                "and": [
+            "Initialize_variables": {
+              "runAfter": {},
+              "type": "InitializeVariable",
+              "inputs": {
+                "variables": [
                   {
-                    "equals": [
-                      "[variables('catalogIdExpression')]",
-                      "[trim(parameters('catalogId'))]"
-                    ]
-                  },
-                  {
-                    "equals": [
-                      "[variables('customDataProvidedResourceIdExpression')]",
-                      "[trim(parameters('customDataProvidedResourceId'))]"
-                    ]
+                    "name": "byod_session_id",
+                    "type": "string"
                   }
                 ]
+              }
+            },
+            "Create-Upload-Session": {
+              "runAfter": {
+                "Initialize_variables": [
+                  "Succeeded"
+                ]
               },
-              "runAfter": {},
-              "type": "If"
+              "type": "Http",
+              "inputs": {
+                "uri": "https://graph.microsoft.com/beta/identityGovernance/catalogs/@{triggerBody()?['catalogId']}/accessPackageResources/@{triggerBody()?['customDataProvidedResourceId']}/uploadSessions",
+                "method": "POST",
+                "headers": {
+                  "Accept": "application/json",
+                  "Content-Type": "application/json"
+                },
+                "body": {
+                  "source": "BuildingAccessData",
+                  "type": "#microsoft.graph.accessReviewDataUploadTriggerCallbackData",
+                  "data": {
+                    "@@odata.type": "#microsoft.graph.accessReviewInstance",
+                    "accessReviewId": "@triggerBody()?['reviewDefinitionId']",
+                    "accessReviewInstanceId": "@triggerBody()?['reviewInstanceId']"
+                  }
+                },
+                "authentication": {
+                  "type": "ManagedServiceIdentity",
+                  "audience": "https://graph.microsoft.com"
+                }
+              },
+              "runtimeConfiguration": {
+                "contentTransfer": {
+                  "transferMode": "Chunked"
+                }
+              }
+            },
+            "Parse_BYOD_Response": {
+              "runAfter": {
+                "Create-Upload-Session": [
+                  "Succeeded"
+                ]
+              },
+              "type": "ParseJson",
+              "inputs": {
+                "content": "@body('Create-Upload-Session')",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "@@odata.context": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "isUploadDone": {
+                      "type": "boolean"
+                    },
+                    "createdDateTime": {
+                      "type": "string"
+                    },
+                    "expirationDateTime": {
+                      "type": "string"
+                    },
+                    "stats": {
+                      "type": "object",
+                      "properties": {
+                        "filesUploaded": {
+                          "type": "integer"
+                        },
+                        "totalBytesUploaded": {
+                          "type": "integer"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "Set_Session_Id": {
+              "runAfter": {
+                "Parse_BYOD_Response": [
+                  "Succeeded"
+                ]
+              },
+              "type": "SetVariable",
+              "inputs": {
+                "name": "byod_session_id",
+                "value": "@body('Parse_BYOD_Response')?['id']"
+              }
+            },
+            "Delay_1": {
+              "runAfter": {
+                "Set_Session_Id": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Wait",
+              "inputs": {
+                "interval": {
+                  "count": 10,
+                  "unit": "Second"
+                }
+              }
+            },
+            "List_Blobs": {
+              "runAfter": {
+                "Delay_1": [
+                  "Succeeded"
+                ]
+              },
+              "type": "ApiConnection",
+              "inputs": {
+                "host": {
+                  "connection": {
+                    "name": "@parameters('$connections')['azureblob']['connectionId']"
+                  }
+                },
+                "method": "get",
+                "path": "[concat('/v2/datasets/@{encodeURIComponent(encodeURIComponent(''', parameters('storageAccountName'), '''))}/foldersV2/@{encodeURIComponent(encodeURIComponent(''/byod''))}')]"
+              }
+            },
+            "For_each": {
+              "foreach": "@body('List_Blobs')?['value']",
+              "actions": {
+                "Get_blob_content_(V2)": {
+                  "type": "ApiConnection",
+                  "inputs": {
+                    "host": {
+                      "connection": {
+                        "name": "@parameters('$connections')['azureblob']['connectionId']"
+                      }
+                    },
+                    "method": "get",
+                    "path": "[concat('/v2/datasets/@{encodeURIComponent(encodeURIComponent(''', parameters('storageAccountName'), '''))}/files/@{encodeURIComponent(encodeURIComponent(items(''For_each'')?[''Path'']))}/content')]",
+                    "queries": {
+                      "inferContentType": false
+                    }
+                  }
+                },
+                "Compose_FileName": {
+                  "runAfter": {
+                    "Get_blob_content_(V2)": [
+                      "Succeeded"
+                    ]
+                  },
+                  "type": "Compose",
+                  "inputs": "@last(split(items('For_each')?['Path'], '/'))"
+                },
+                "HTTP_Upload": {
+                  "runAfter": {
+                    "Compose_FileName": [
+                      "Succeeded"
+                    ]
+                  },
+                  "type": "Http",
+                  "inputs": {
+                    "uri": "https://graph.microsoft.com/beta/identityGovernance/catalogs/@{triggerBody()?['catalogId']}/accessPackageResources/@{triggerBody()?['customDataProvidedResourceId']}/uploadSessions/@{variables('byod_session_id')}/uploadFile",
+                    "method": "POST",
+                    "headers": {
+                      "Content-Type": "multipart/form-data; boundary=testboundary"
+                    },
+                    "body": "--testboundary\r\nContent-Disposition: form-data; name=\"file\"; filename=\"@{outputs('Compose_FileName')}\"\r\nContent-Type: application/octet-stream\r\n\r\n@{body('Get_blob_content_(V2)')}\r\n\r\n--testboundary--",
+                    "authentication": {
+                      "type": "ManagedServiceIdentity",
+                      "audience": "https://graph.microsoft.com"
+                    }
+                  },
+                  "runtimeConfiguration": {
+                    "contentTransfer": {
+                      "transferMode": "Chunked"
+                    }
+                  }
+                },
+                "Delay": {
+                  "runAfter": {
+                    "HTTP_Upload": [
+                      "Succeeded"
+                    ]
+                  },
+                  "type": "Wait",
+                  "inputs": {
+                    "interval": {
+                      "count": 5,
+                      "unit": "Second"
+                    }
+                  }
+                }
+              },
+              "runAfter": {
+                "List_Blobs": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Foreach",
+              "runtimeConfiguration": {
+                "concurrency": {
+                  "repetitions": 1
+                }
+              }
+            },
+            "End-Upload-Session": {
+              "runAfter": {
+                "For_each": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Http",
+              "inputs": {
+                "uri": "https://graph.microsoft.com/beta/identityGovernance/catalogs/@{triggerBody()?['catalogId']}/accessPackageResources/@{triggerBody()?['customDataProvidedResourceId']}/uploadSessions/@{variables('byod_session_id')}",
+                "method": "PATCH",
+                "headers": {
+                  "Accept": "application/json"
+                },
+                "body": {
+                  "isUploadDone": true
+                },
+                "authentication": {
+                  "type": "ManagedServiceIdentity",
+                  "audience": "https://graph.microsoft.com"
+                }
+              },
+              "runtimeConfiguration": {
+                "contentTransfer": {
+                  "transferMode": "Chunked"
+                }
+              }
+            },
+            "End-Upload-Session-copy": {
+              "runAfter": {
+                "For_each": [
+                  "Failed"
+                ]
+              },
+              "type": "Http",
+              "inputs": {
+                "uri": "https://graph.microsoft.com/beta/identityGovernance/catalogs/@{triggerBody()?['catalogId']}/accessPackageResources/@{triggerBody()?['customDataProvidedResourceId']}/uploadSessions/@{variables('byod_session_id')}",
+                "method": "PATCH",
+                "headers": {
+                  "Accept": "application/json"
+                },
+                "body": {
+                  "isUploadDone": true
+                },
+                "authentication": {
+                  "type": "ManagedServiceIdentity",
+                  "audience": "https://graph.microsoft.com"
+                }
+              },
+              "runtimeConfiguration": {
+                "contentTransfer": {
+                  "transferMode": "Chunked"
+                }
+              }
             }
           },
           "outputs": {}
         },
-        "parameters": {},
+        "parameters": {
+          "$connections": {
+            "value": {
+              "azureblob": {
+                "id": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Web/locations/', parameters('location'), '/managedApis/azureblob')]",
+                "connectionId": "[resourceId('Microsoft.Web/connections', variables('blobConnectionName'))]",
+                "connectionName": "[variables('blobConnectionName')]",
+                "connectionProperties": {
+                  "authentication": {
+                    "type": "ManagedServiceIdentity"
+                  }
+                }
+              }
+            }
+          }
+        },
         "accessControl": {
           "triggers": {
             "SasAuthenticationPolicy": {
@@ -154,7 +545,7 @@
                     },
                     {
                       "name": "appid",
-                      "value": "[trim(parameters('appId'))]"
+                      "value": "[variables('appId')]"
                     },
                     {
                       "name": "m",
@@ -183,7 +574,7 @@
                     },
                     {
                       "name": "appid",
-                      "value": "[trim(parameters('arAppId'))]"
+                      "value": "[variables('arAppId')]"
                     },
                     {
                       "name": "m",
@@ -204,6 +595,21 @@
           }
         }
       }
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "name": "[guid(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), parameters('logicAppName'), 'blobRole')]",
+      "scope": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]",
+      "properties": {
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')]",
+        "principalId": "[reference(resourceId('Microsoft.Logic/workflows', parameters('logicAppName')), '2019-05-01', 'Full').identity.principalId]",
+        "principalType": "ServicePrincipal"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Logic/workflows', parameters('logicAppName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+      ]
     }
   ]
 }
