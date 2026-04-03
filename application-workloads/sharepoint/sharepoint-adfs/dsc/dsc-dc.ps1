@@ -1,4 +1,4 @@
-﻿configuration ConfigureDCVM
+﻿configuration ConfigDc
 {
     param
     (
@@ -9,28 +9,29 @@
         [Parameter(Mandatory)] [String]$SharePointCentralAdminPort,
         [Parameter ()] [Boolean]$ApplyBrowserPolicies = $true,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$Admincreds,
-        [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$AdfsSvcCreds
+        [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$AdfsSvcCreds,
+        [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SqlSvcCreds,
+        [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSetupCreds
     )
 
-    Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion 6.7.0
+    Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion 6.7.1
     Import-DscResource -ModuleName NetworkingDsc -ModuleVersion 9.1.0
     Import-DscResource -ModuleName ActiveDirectoryCSDsc -ModuleVersion 5.0.0
     Import-DscResource -ModuleName CertificateDsc -ModuleVersion 6.0.0
-    Import-DscResource -ModuleName DnsServerDsc -ModuleVersion 3.0.1
-    Import-DscResource -ModuleName ComputerManagementDsc -ModuleVersion 10.0.0 # Custom
+    Import-DscResource -ModuleName DnsServerDsc -ModuleVersion 3.0.3
+    Import-DscResource -ModuleName ComputerManagementDsc -ModuleVersion 10.0.0
     Import-DscResource -ModuleName AdfsDsc -ModuleVersion 1.4.0
 
     # Init
-    [String] $InterfaceAlias = (Get-NetAdapter| Where-Object InterfaceDescription -Like "Microsoft Hyper-V Network Adapter*" | Select-Object -First 1).Name
+    [String] $InterfaceAlias = (Get-NetAdapter | Where-Object InterfaceDescription -Like "Microsoft Hyper-V Network Adapter*" | Select-Object -First 1).Name
     [String] $ComputerName = Get-Content env:computername
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
     [String] $AdditionalUsersPath = "OU=AdditionalUsers,DC={0},DC={1}" -f $DomainFQDN.Split('.')[0], $DomainFQDN.Split('.')[1]
+    [String] $SetupPath = "C:\DSC Data"
 
     # Format credentials to be qualified by domain name: "domain\username"
     [System.Management.Automation.PSCredential] $DomainCredsNetbios = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($Admincreds.UserName)", $Admincreds.Password)
     [System.Management.Automation.PSCredential] $AdfsSvcCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($AdfsSvcCreds.UserName)", $AdfsSvcCreds.Password)
-
-    [String] $SetupPath = "C:\DSC Data"
 
     # ADFS settings
     [String] $ADFSSiteName = "adfs"
@@ -39,8 +40,8 @@
     
     # SharePoint settings
     [String] $centralAdminUrl = "http://{0}:{1}/" -f $SPServerName, $SharePointCentralAdminPort
-    [String] $rootSiteDefaultZone = "http://{0}/" -f $SharePointSitesAuthority
-    [String] $rootSiteIntranetZone = "https://{0}.{1}/" -f $SharePointSitesAuthority, $DomainFQDN
+    [String] $urlMainWebAppHttp = "http://{0}/" -f $SharePointSitesAuthority
+    [String] $urlMainWebAppSsl = "https://{0}.{1}/" -f $SharePointSitesAuthority, $DomainFQDN
     [String] $AppDomainFQDN = "{0}{1}.{2}" -f $DomainFQDN.Split('.')[0], "Apps", $DomainFQDN.Split('.')[1]
     [String] $AppDomainIntranetFQDN = "{0}{1}.{2}" -f $DomainFQDN.Split('.')[0], "Apps-Intranet", $DomainFQDN.Split('.')[1]
 
@@ -140,12 +141,12 @@
         @{
             policyValueName        = "ManagedFavorites";
             policyCanBeRecommended = $false;
-            policyValueValue       = "[{ ""toplevel_name"": ""SharePoint"" }, { ""name"": ""Central administration"", ""url"": ""$centralAdminUrl"" }, { ""name"": ""Root site - Default zone"", ""url"": ""$rootSiteDefaultZone"" }, { ""name"": ""Root site - Intranet zone"", ""url"": ""$rootSiteIntranetZone"" }]";
+            policyValueValue       = "[{ ""toplevel_name"": ""SharePoint"" }, { ""name"": ""Central administration"", ""url"": ""$centralAdminUrl"" }, { ""name"": ""Main web app - HTTP"", ""url"": ""$urlMainWebAppHttp"" }, { ""name"": ""Main web app - SSL"", ""url"": ""$urlMainWebAppSsl"" }]";
         },
         @{
             policyValueName        = "NewTabPageManagedQuickLinks";
             policyCanBeRecommended = $true;
-            policyValueValue       = "[{""pinned"": true, ""title"": ""Central administration"", ""url"": ""$centralAdminUrl"" }, { ""pinned"": true, ""title"": ""Root site - Default zone"", ""url"": ""$rootSiteDefaultZone"" }, { ""pinned"": true, ""title"": ""Root site - Intranet zone"", ""url"": ""$rootSiteIntranetZone"" }]";
+            policyValueValue       = "[{""pinned"": true, ""title"": ""Central administration"", ""url"": ""$centralAdminUrl"" }, { ""pinned"": true, ""title"": ""Main web app - HTTP"", ""url"": ""$urlMainWebAppHttp"" }, { ""pinned"": true, ""title"": ""Main web app - SSL"", ""url"": ""$urlMainWebAppSsl"" }]";
         }
     )
 
@@ -198,7 +199,7 @@
         @{
             policyValueName        = "ManagedBookmarks";
             policyCanBeRecommended = $false;
-            policyValueValue       = "[{ ""toplevel_name"": ""SharePoint"" }, { ""name"": ""Central administration"", ""url"": ""$centralAdminUrl"" }, { ""name"": ""Root site - Default zone"", ""url"": ""$rootSiteDefaultZone"" }, { ""name"": ""Root site - Intranet zone"", ""url"": ""$rootSiteIntranetZone"" }]";
+            policyValueValue       = "[{ ""toplevel_name"": ""SharePoint"" }, { ""name"": ""Central administration"", ""url"": ""$centralAdminUrl"" }, { ""name"": ""Main web app - HTTP"", ""url"": ""$urlMainWebAppHttp"" }, { ""name"": ""Main web app - SSL"", ""url"": ""$urlMainWebAppSsl"" }]";
         }
     )
 
@@ -232,30 +233,20 @@
             RebootNodeIfNeeded = $true
         }
 
-        # Fix emerging issue "WinRM cannot process the request. The following error with errorcode 0x80090350" while Windows Azure Guest Agent service initiates using https://stackoverflow.com/a/74015954/8669078
-        Script SetWindowsAzureGuestAgentDepndencyOnDNS {
-            GetScript  = { }
-            TestScript = { return $false }
-            SetScript  = { Set-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Services\WindowsAzureGuestAgent' -Name "DependOnService" -Type MultiString -Value "DNS" }
-        }
-
         #**********************************************************
         # Create AD domain
         #**********************************************************
         # Install AD FS early (before reboot) to workaround error below on resource AdfsApplicationGroup:
         # "System.InvalidOperationException: The test script threw an error. ---> System.IO.FileNotFoundException: Could not load file or assembly 'Microsoft.IdentityServer.Diagnostics, Version=10.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35' or one of its dependencie"
-        WindowsFeature AddADFS { Name = "ADFS-Federation"; Ensure = "Present"; }
-        WindowsFeature AddADDS { Name = "AD-Domain-Services"; Ensure = "Present" }
-        WindowsFeature AddDNS { Name = "DNS"; Ensure = "Present" }
-        WindowsFeature AddGroupPolicyPowerShellModule { Name = "GPMC"; Ensure = "Present" }
+        WindowsFeature AddADFS {
+            Name = "ADFS-Federation"; Ensure = "Present"; 
+        }
+        WindowsFeature AddADDS {
+            Name = "AD-Domain-Services"; Ensure = "Present" 
+        }
 
         DnsServerAddress SetDNS {
             Address = '127.0.0.1' ; InterfaceAlias = $InterfaceAlias; AddressFamily = 'IPv4' 
-        }
-
-        PendingReboot CheckRebootBeforeCreateADForest {
-            Name      = "CheckRebootBeforeCreateADForest"
-            DependsOn = "[WindowsFeature]AddGroupPolicyPowerShellModule"
         }
 
         ADDomain CreateADForest {
@@ -280,65 +271,6 @@
             Credential              = $DomainCredsNetbios
             WaitForValidCredentials = $true
             DependsOn               = "[PendingReboot]RebootOnSignalFromCreateADForest"
-        }
-
-        if ($true -eq $ApplyBrowserPolicies) {
-            # Set browser policies asap, so that computers that join domain get them immediately, and  it runs very quickly (<5 secs)
-            # Edge - https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies
-            Script ConfigureEdgePolicies {
-                SetScript  = {
-                    $domain = Get-ADDomain -Current LocalComputer
-                    $registryKey = "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Edge"
-                    $policies = $using:EdgePolicies
-                    $gpo = New-GPO -name "Edge_browser"
-                    New-GPLink -Guid $gpo.Id -Target $domain.DistinguishedName -order 1
-
-                    foreach ($policy in $policies) {
-                        $key = $registryKey
-                        if ($true -eq $policy.policyCanBeRecommended) { $key += "\Recommended" }
-                        $valueType = if ($policy.policyValueValue -is [int]) { "DWORD" } else { "STRING" }
-                        Set-GPRegistryValue -Guid $gpo.Id -key $key -ValueName $policy.policyValueName -Type $valueType -value $policy.policyValueValue
-                    }
-                }
-                GetScript  = { return @{ "Result" = "false" } }
-                TestScript = {
-                    $policy = Get-GPO -name "Edge_browser" -ErrorAction SilentlyContinue
-                    if ($null -eq $policy) {
-                        return $false
-                    }
-                    else {
-                        return $true
-                    }
-                }
-            }
-
-            # Chrome - https://chromeenterprise.google/intl/en_us/policies/
-            Script ConfigureChromePolicies {
-                SetScript  = {
-                    $domain = Get-ADDomain -Current LocalComputer
-                    $registryKey = "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Google\Chrome"
-                    $policies = $using:ChromePolicies
-                    $gpo = New-GPO -name "Chrome_browser"
-                    New-GPLink -Guid $gpo.Id -Target $domain.DistinguishedName -order 1
-
-                    foreach ($policy in $policies) {
-                        $key = $registryKey
-                        if ($true -eq $policy.policyCanBeRecommended) { $key += "\Recommended" }
-                        $valueType = if ($policy.policyValueValue -is [int]) { "DWORD" } else { "STRING" }
-                        Set-GPRegistryValue -Guid $gpo.Id -key $key -ValueName $policy.policyValueName -Type $valueType -value $policy.policyValueValue
-                    }
-                }
-                GetScript  = { return @{ "Result" = "false" } }
-                TestScript = {
-                    $policy = Get-GPO -name "Chrome_browser" -ErrorAction SilentlyContinue
-                    if ($null -eq $policy) {
-                        return $false
-                    }
-                    else {
-                        return $true
-                    }
-                }
-            }
         }
         
         #**********************************************************
@@ -523,6 +455,29 @@
             DependsOn   = "[AdfsFarm]CreateADFSFarm"
         }
 
+        # Create other service accounts
+        ADUser CreateSqlSvcAccount {
+            DomainName           = $DomainFQDN
+            UserName             = $SqlSvcCreds.UserName
+            UserPrincipalName    = "$($SqlSvcCreds.UserName)@$DomainFQDN"
+            Password             = $SqlSvcCreds
+            PasswordNeverExpires = $true
+            Ensure               = "Present"
+            PsDscRunAsCredential = $DomainCredsNetbios
+            DependsOn            = "[WaitForADDomain]WaitForDCReady"
+        }
+
+        ADUser CreateSPSetupAccount {
+            DomainName           = $DomainFQDN
+            UserName             = $SPSetupCreds.UserName
+            UserPrincipalName    = "$($SPSetupCreds.UserName)@$DomainFQDN"
+            Password             = $SPSetupCreds
+            PasswordNeverExpires = $true
+            Ensure               = "Present"
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+            DependsOn            = "[WaitForADDomain]WaitForDCReady"
+        }
+
         ADFSRelyingPartyTrust CreateADFSRelyingParty {
             Name                       = $SharePointSitesAuthority
             Identifier                 = "urn:sharepoint:$($SharePointSitesAuthority)"
@@ -621,17 +576,64 @@
             DependsOn            = "[AdfsNativeClientApplication]OidcNativeApp", "[AdfsWebApiApplication]OidcWebApiApp"
         }
 
-        WindowsFeature AddADTools {
-            Name = "RSAT-AD-Tools"; Ensure = "Present"; 
-        }        
-        WindowsFeature AddDnsTools {
-            Name = "RSAT-DNS-Server"; Ensure = "Present"; 
-        }
-        WindowsFeature AddADLDS {
-            Name = "RSAT-ADLDS"; Ensure = "Present"; 
-        }
-        WindowsFeature AddADCSManagementTools {
-            Name = "RSAT-ADCS-Mgmt"; Ensure = "Present"; 
+        if ($true -eq $ApplyBrowserPolicies) {
+            # Edge - https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies
+            Script ConfigureEdgePolicies {
+                SetScript  = {
+                    $domain = Get-ADDomain -Current LocalComputer
+                    $registryKey = "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Edge"
+                    $policies = $using:EdgePolicies
+                    $gpo = New-GPO -name "Edge_browser"
+                    New-GPLink -Guid $gpo.Id -Target $domain.DistinguishedName -order 1
+
+                    foreach ($policy in $policies) {
+                        $key = $registryKey
+                        if ($true -eq $policy.policyCanBeRecommended) { $key += "\Recommended" }
+                        $valueType = if ($policy.policyValueValue -is [int]) { "DWORD" } else { "STRING" }
+                        Set-GPRegistryValue -Guid $gpo.Id -key $key -ValueName $policy.policyValueName -Type $valueType -value $policy.policyValueValue
+                    }
+                }
+                GetScript  = { return @{ "Result" = "false" } }
+                TestScript = {
+                    $policy = Get-GPO -name "Edge_browser" -ErrorAction SilentlyContinue
+                    if ($null -eq $policy) {
+                        return $false
+                    }
+                    else {
+                        return $true
+                    }
+                }
+                DependsOn = "[WaitForADDomain]WaitForDCReady"
+            }
+
+            # Chrome - https://chromeenterprise.google/intl/en_us/policies/
+            Script ConfigureChromePolicies {
+                SetScript  = {
+                    $domain = Get-ADDomain -Current LocalComputer
+                    $registryKey = "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Google\Chrome"
+                    $policies = $using:ChromePolicies
+                    $gpo = New-GPO -name "Chrome_browser"
+                    New-GPLink -Guid $gpo.Id -Target $domain.DistinguishedName -order 1
+
+                    foreach ($policy in $policies) {
+                        $key = $registryKey
+                        if ($true -eq $policy.policyCanBeRecommended) { $key += "\Recommended" }
+                        $valueType = if ($policy.policyValueValue -is [int]) { "DWORD" } else { "STRING" }
+                        Set-GPRegistryValue -Guid $gpo.Id -key $key -ValueName $policy.policyValueName -Type $valueType -value $policy.policyValueValue
+                    }
+                }
+                GetScript  = { return @{ "Result" = "false" } }
+                TestScript = {
+                    $policy = Get-GPO -name "Chrome_browser" -ErrorAction SilentlyContinue
+                    if ($null -eq $policy) {
+                        return $false
+                    }
+                    else {
+                        return $true
+                    }
+                }
+                DependsOn = "[WaitForADDomain]WaitForDCReady"
+            }
         }
 
         Script EnableFileSharing {
@@ -695,6 +697,19 @@
                 DependsOn            = "[ADOrganizationalUnit]AdditionalUsersOU"
             }
         }
+
+        # WindowsFeature AddADTools {
+        #     Name = "RSAT-AD-Tools"; Ensure = "Present"; 
+        # }
+        # WindowsFeature AddDnsTools {
+        #     Name = "RSAT-DNS-Server"; Ensure = "Present"; 
+        # }
+        # WindowsFeature AddADLDS {
+        #     Name = "RSAT-ADLDS"; Ensure = "Present"; 
+        # }
+        WindowsFeature AddADCSManagementTools {
+            Name = "RSAT-ADCS-Mgmt"; Ensure = "Present"; 
+        }
     }
 }
 
@@ -722,32 +737,21 @@ function Get-NetBIOSName {
 }
 
 <#
-# Azure DSC extension logging: C:\WindowsAzure\Logs\Plugins\Microsoft.Powershell.DSC\2.80.0.0
-# Azure DSC extension configuration: C:\Packages\Plugins\Microsoft.Powershell.DSC\2.80.0.0\DSCWork
-
-Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force
-Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
-Install-Module -Name xAdcsDeployment
-Install-Module -Name xCertificate
-Install-Module -Name xPSDesiredStateConfiguration
-Install-Module -Name xCredSSP
-Install-Module -Name xWebAdministration
-Install-Module -Name xDisk
-Install-Module -Name xNetworking
-
-help ConfigureDCVM
+help ConfigDc
 
 $password = ConvertTo-SecureString -String "mytopsecurepassword" -AsPlainText -Force
 $Admincreds = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList "yvand", $password
 $AdfsSvcCreds = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList "adfssvc", $password
+$SqlSvcCreds = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList "sqlsvc", $password
+$SPSetupCreds = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList "spsetup", $password
 $DomainFQDN = "contoso.local"
-$PrivateIP = "10.1.1.4"
+$PrivateIP = "10.1.1.100"
 $SPServerName = "SP"
 $SharePointSitesAuthority = "spsites"
 $SharePointCentralAdminPort = 5000
 
-$outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.83.5\DSCWork\ConfigureDCVM.0\ConfigureDCVM"
-ConfigureDCVM -Admincreds $Admincreds -AdfsSvcCreds $AdfsSvcCreds -DomainFQDN $DomainFQDN -PrivateIP $PrivateIP -SPServerName $SPServerName -SharePointSitesAuthority $SharePointSitesAuthority -SharePointCentralAdminPort $SharePointCentralAdminPort -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath $outputPath
+$outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.83.5\DSCWork\dsc-dc.0\ConfigDc"
+ConfigDc -Admincreds $Admincreds -AdfsSvcCreds $AdfsSvcCreds -SqlSvcCreds $SqlSvcCreds -SPSetupCreds $SPSetupCreds -DomainFQDN $DomainFQDN -PrivateIP $PrivateIP -SPServerName $SPServerName -SharePointSitesAuthority $SharePointSitesAuthority -SharePointCentralAdminPort $SharePointCentralAdminPort -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath $outputPath
 Set-DscLocalConfigurationManager -Path $outputPath
 Start-DscConfiguration -Path $outputPath -Wait -Verbose -Force
 
