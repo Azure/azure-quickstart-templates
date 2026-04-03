@@ -144,6 +144,8 @@ jobs:
     name: Validate – ${{ matrix.sample }}
     runs-on: ubuntu-latest
     needs: detect_changed_samples
+    permissions:
+      pull-requests: read
 
     # Skip the whole job when nothing changed
     if: needs.detect_changed_samples.outputs.samples_json != '[]'
@@ -154,6 +156,44 @@ jobs:
         sample: ${{ fromJson(needs.detect_changed_samples.outputs.samples_json) }}
 
     steps:
+      # ── (0) Safeguard ────────────────────────────────────────────────────────
+      - name: Safeguard – block ValidateSampleDeployments.yml edits by non MEMBER/OWNER
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const allowed = new Set(["MEMBER", "OWNER"]);
+            const pr = context.payload.pull_request;
+            if (!pr) {
+              core.info("No pull_request payload; skipping safeguard.");
+              return;
+            }
+
+            const assoc = pr.author_association;
+            const owner = context.repo.owner;
+            const repo  = context.repo.repo;
+            const pull_number = pr.number;
+
+            const files = await github.paginate(
+              github.rest.pulls.listFiles,
+              { owner, repo, pull_number, per_page: 100 }
+            );
+
+            const touched = files.some(f =>
+              f.filename === ".github/workflows/ValidateSampleDeployments.yml" ||
+              f.filename.endsWith("/ValidateSampleDeployments.yml") ||
+              f.filename === "ValidateSampleDeployments.yml"
+            );
+
+            core.info(`author_association=${assoc}; ValidateSampleDeployments.yml touched=${touched}`);
+
+            if (touched && !allowed.has(assoc)) {
+              core.setFailed(
+                `Blocked: ValidateSampleDeployments.yml was modified but author_association='${assoc}'. ` +
+                `Only MEMBER or OWNER may modify this file.`
+              );
+            }
+
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
