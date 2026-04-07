@@ -1,5 +1,5 @@
 ---
-description: This template deploys a request-triggered Logic App for Azure AD Entitlement Management BYOD (Bring Your Own Data) scenarios. It provisions a storage account with a byod blob container, a Logic App with an HTTP Request trigger, and AADPOP authentication policies for secure integration with Entra ID and Access Reviews.
+description: This template deploys a request-triggered Logic App for Microsoft Entra Entitlement Management BYOD (Bring Your Own Data) scenarios. It provisions a storage account with a byod blob container, a Logic App with an HTTP Request trigger, and AADPOP authentication policies for secure integration with Entra ID and Access Reviews.
 page_type: sample
 products:
 - azure
@@ -28,7 +28,7 @@ languages:
 
 ## Overview
 
-This template deploys a **request-triggered Logic App** for Azure AD Entitlement Management BYOD (Bring Your Own Data) scenarios. When triggered, the Logic App reads files from a blob storage container and uploads them to Microsoft Graph for use in Access Reviews.
+This template deploys a **request-triggered Logic App** for Microsoft Entra Entitlement Management BYOD (Bring Your Own Data) scenarios. When triggered, the Logic App reads files from a blob storage container and uploads them to Microsoft Graph for use in Access Reviews.
 
 The template only requires two inputs — a **Logic App name** and a **Storage Account name**. Everything else is auto-configured.
 
