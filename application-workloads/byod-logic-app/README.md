@@ -51,7 +51,7 @@ All Microsoft Graph API calls use the Logic App's **system-assigned managed iden
 | `logicAppName` | string | The name of the Logic App workflow that will be created to handle BYOD data uploads for Access Reviews | *Required* |
 | `storageAccountName` | string | The name of the storage account to create. Files placed in its `byod` container will be uploaded to Microsoft Graph during Access Reviews | *Required* |
 | `location` | string | Azure region for all deployed resources | Resource group location |
-| `armResource` | string | Azure Resource Manager hostname for AADPOP token validation. Change only for sovereign clouds | `management.azure.com` |
+| `armEndpoint` | string | Azure Resource Manager hostname for AADPOP token validation. Change only for sovereign clouds | `management.azure.com` |
 | `issuer` | string | Entra ID STS issuer URL for AADPOP token validation. Change only for sovereign clouds | `https://sts.windows.net/` |
 
 The blob connection name is auto-generated as `{logicAppName}-{storageAccountName}-connection`.
