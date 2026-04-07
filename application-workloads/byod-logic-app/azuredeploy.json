@@ -22,18 +22,16 @@
       }
     },
 
-    "armEndpoint": {
+    "cloudEnvironment": {
       "type": "string",
-      "defaultValue": "management.azure.com",
+      "defaultValue": "Public",
+      "allowedValues": [
+        "Public",
+        "USGovernment",
+        "China"
+      ],
       "metadata": {
-        "description": "The Azure Resource Manager hostname used for AADPOP token validation. Change only for sovereign clouds (e.g., management.usgovcloudapi.net)."
-      }
-    },
-    "issuer": {
-      "type": "string",
-      "defaultValue": "https://sts.windows.net/",
-      "metadata": {
-        "description": "The Entra ID Security Token Service (STS) issuer URL used for AADPOP token validation. Change only for sovereign clouds."
+        "description": "The target Azure cloud environment. Determines ARM, Microsoft Graph, and STS issuer endpoints used throughout the template."
       }
     }
   },
@@ -41,7 +39,25 @@
     "blobConnectionName": "[concat(parameters('logicAppName'), '-', parameters('storageAccountName'), '-connection')]",
     "possession": "[concat(resourceGroup().id, '/providers/Microsoft.Logic/workflows/', parameters('logicAppName'))]",
     "appId": "2829028a-b35b-42cc-86e3-517e751a3e2a",
-    "arAppId": "d8c767ef-3e9a-48c4-aef9-562696539b39"
+    "arAppId": "d8c767ef-3e9a-48c4-aef9-562696539b39",
+    "cloudConfig": {
+      "Public": {
+        "arm": "management.azure.com",
+        "graph": "https://graph.microsoft.com",
+        "issuer": "https://sts.windows.net/"
+      },
+      "USGovernment": {
+        "arm": "management.usgovcloudapi.net",
+        "graph": "https://graph.microsoft.us",
+        "issuer": "https://sts.windows.net/"
+      },
+      "China": {
+        "arm": "management.chinacloudapi.cn",
+        "graph": "https://microsoftgraph.chinacloudapi.cn",
+        "issuer": "https://sts.chinacloudapi.cn/"
+      }
+    },
+    "cloud": "[variables('cloudConfig')[parameters('cloudEnvironment')]]"
   },
   "resources": [
     {
@@ -164,7 +180,7 @@
         },
         "testLinks": [
           {
-            "requestUri": "[concat('https://management.azure.com/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Web/connections/', variables('blobConnectionName'), '/extensions/proxy/testconnection?api-version=2016-06-01')]",
+            "requestUri": "[concat('https://', variables('cloud').arm, '/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Web/connections/', variables('blobConnectionName'), '/extensions/proxy/testconnection?api-version=2016-06-01')]",
             "method": "get"
           }
         ]
@@ -194,6 +210,10 @@
             "$connections": {
               "type": "Object",
               "defaultValue": {}
+            },
+            "graphEndpoint": {
+              "type": "String",
+              "defaultValue": "https://graph.microsoft.com"
             }
           },
           "triggers": {
@@ -259,7 +279,7 @@
               },
               "type": "Http",
               "inputs": {
-                "uri": "https://graph.microsoft.com/beta/identityGovernance/catalogs/@{triggerBody()?['catalogId']}/accessPackageResources/@{triggerBody()?['customDataProvidedResourceId']}/uploadSessions",
+                "uri": "@{parameters('graphEndpoint')}/beta/identityGovernance/catalogs/@{triggerBody()?['catalogId']}/accessPackageResources/@{triggerBody()?['customDataProvidedResourceId']}/uploadSessions",
                 "method": "POST",
                 "headers": {
                   "Accept": "application/json",
@@ -276,7 +296,7 @@
                 },
                 "authentication": {
                   "type": "ManagedServiceIdentity",
-                  "audience": "https://graph.microsoft.com"
+                  "audience": "@{parameters('graphEndpoint')}"
                 }
               },
               "runtimeConfiguration": {
@@ -285,7 +305,7 @@
                 }
               }
             },
-            "Parse_BYOD_Response": {
+            "Parse_BYOD_Response":{
               "runAfter": {
                 "Create-Upload-Session": [
                   "Succeeded"
@@ -394,7 +414,7 @@
                   },
                   "type": "Http",
                   "inputs": {
-                    "uri": "https://graph.microsoft.com/beta/identityGovernance/catalogs/@{triggerBody()?['catalogId']}/accessPackageResources/@{triggerBody()?['customDataProvidedResourceId']}/uploadSessions/@{variables('byod_session_id')}/uploadFile",
+                    "uri": "@{parameters('graphEndpoint')}/beta/identityGovernance/catalogs/@{triggerBody()?['catalogId']}/accessPackageResources/@{triggerBody()?['customDataProvidedResourceId']}/uploadSessions/@{variables('byod_session_id')}/uploadFile",
                     "method": "POST",
                     "headers": {
                       "Content-Type": "multipart/form-data; boundary=testboundary"
@@ -402,7 +422,7 @@
                     "body": "--testboundary\r\nContent-Disposition: form-data; name=\"file\"; filename=\"@{outputs('Compose_FileName')}\"\r\nContent-Type: application/octet-stream\r\n\r\n@{body('Get_blob_content_(V2)')}\r\n\r\n--testboundary--",
                     "authentication": {
                       "type": "ManagedServiceIdentity",
-                      "audience": "https://graph.microsoft.com"
+                      "audience": "@{parameters('graphEndpoint')}"
                     }
                   },
                   "runtimeConfiguration": {
@@ -411,7 +431,7 @@
                     }
                   }
                 },
-                "Delay": {
+                "Delay":{
                   "runAfter": {
                     "HTTP_Upload": [
                       "Succeeded"
@@ -446,7 +466,7 @@
               },
               "type": "Http",
               "inputs": {
-                "uri": "https://graph.microsoft.com/beta/identityGovernance/catalogs/@{triggerBody()?['catalogId']}/accessPackageResources/@{triggerBody()?['customDataProvidedResourceId']}/uploadSessions/@{variables('byod_session_id')}",
+                "uri": "@{parameters('graphEndpoint')}/beta/identityGovernance/catalogs/@{triggerBody()?['catalogId']}/accessPackageResources/@{triggerBody()?['customDataProvidedResourceId']}/uploadSessions/@{variables('byod_session_id')}",
                 "method": "PATCH",
                 "headers": {
                   "Accept": "application/json"
@@ -456,7 +476,7 @@
                 },
                 "authentication": {
                   "type": "ManagedServiceIdentity",
-                  "audience": "https://graph.microsoft.com"
+                  "audience": "@{parameters('graphEndpoint')}"
                 }
               },
               "runtimeConfiguration": {
@@ -473,7 +493,7 @@
               },
               "type": "Http",
               "inputs": {
-                "uri": "https://graph.microsoft.com/beta/identityGovernance/catalogs/@{triggerBody()?['catalogId']}/accessPackageResources/@{triggerBody()?['customDataProvidedResourceId']}/uploadSessions/@{variables('byod_session_id')}",
+                "uri": "@{parameters('graphEndpoint')}/beta/identityGovernance/catalogs/@{triggerBody()?['catalogId']}/accessPackageResources/@{triggerBody()?['customDataProvidedResourceId']}/uploadSessions/@{variables('byod_session_id')}",
                 "method": "PATCH",
                 "headers": {
                   "Accept": "application/json"
@@ -483,7 +503,7 @@
                 },
                 "authentication": {
                   "type": "ManagedServiceIdentity",
-                  "audience": "https://graph.microsoft.com"
+                  "audience": "@{parameters('graphEndpoint')}"
                 }
               },
               "runtimeConfiguration": {
@@ -509,6 +529,9 @@
                 }
               }
             }
+          },
+          "graphEndpoint": {
+            "value": "[variables('cloud').graph]"
           }
         },
         "accessControl": {
@@ -523,11 +546,11 @@
                   "claims": [
                     {
                       "name": "iss",
-                      "value": "[concat(trim(parameters('issuer')), subscription().tenantId, '/')]"
+                      "value": "[concat(variables('cloud').issuer, subscription().tenantId, '/')]"
                     },
                     {
                       "name": "aud",
-                      "value": "[concat('https://', trim(parameters('armEndpoint')))]"
+                      "value": "[concat('https://', variables('cloud').arm)]"
                     },
                     {
                       "name": "appid",
@@ -539,7 +562,7 @@
                     },
                     {
                       "name": "u",
-                      "value": "[trim(parameters('armEndpoint'))]"
+                      "value": "[variables('cloud').arm]"
                     },
                     {
                       "name": "p",
@@ -552,11 +575,11 @@
                   "claims": [
                     {
                       "name": "iss",
-                      "value": "[concat(trim(parameters('issuer')), subscription().tenantId, '/')]"
+                      "value": "[concat(variables('cloud').issuer, subscription().tenantId, '/')]"
                     },
                     {
                       "name": "aud",
-                      "value": "[concat('https://', trim(parameters('armEndpoint')))]"
+                      "value": "[concat('https://', variables('cloud').arm)]"
                     },
                     {
                       "name": "appid",
@@ -568,7 +591,7 @@
                     },
                     {
                       "name": "u",
-                      "value": "[trim(parameters('armEndpoint'))]"
+                      "value": "[variables('cloud').arm]"
                     },
                     {
                       "name": "p",
