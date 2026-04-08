@@ -51,7 +51,7 @@ All Microsoft Graph API calls use the Logic App's **system-assigned managed iden
 | `logicAppName` | string | The name of the Logic App workflow that will be created to handle BYOD data uploads for Access Reviews | *Required* |
 | `storageAccountName` | string | The name of the storage account to create. Files placed in its `byod` container will be uploaded to Microsoft Graph during Access Reviews | *Required* |
 | `location` | string | Azure region for all deployed resources | Resource group location |
-| `cloudEnvironment` | string | Target Azure cloud environment. Determines ARM, Graph, and STS endpoints. Allowed values: `Public`, `USGovernment`, `China` | `Public` |
+| `cloudEnvironment` | string | Target Azure cloud environment. Determines ARM, Graph, and STS endpoints. Allowed values: `AzureCloud`, `AzureUSGovernment`, `AzureChinaCloud` | `AzureCloud` |
 
 The blob connection name is auto-generated as `{logicAppName}-{storageAccountName}-connection`.
 

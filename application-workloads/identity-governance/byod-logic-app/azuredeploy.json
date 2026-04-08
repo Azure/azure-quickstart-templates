@@ -21,14 +21,13 @@
         "description": "The name of the storage account to create. Files placed in its 'byod' container will be uploaded to Microsoft Graph during Access Reviews."
       }
     },
-
     "cloudEnvironment": {
       "type": "string",
-      "defaultValue": "Public",
+      "defaultValue": "AzureCloud",
       "allowedValues": [
-        "Public",
-        "USGovernment",
-        "China"
+        "AzureCloud",
+        "AzureUSGovernment",
+        "AzureChinaCloud"
       ],
       "metadata": {
         "description": "The target Azure cloud environment. Determines ARM, Microsoft Graph, and STS issuer endpoints used throughout the template."
@@ -41,17 +40,17 @@
     "appId": "2829028a-b35b-42cc-86e3-517e751a3e2a",
     "arAppId": "d8c767ef-3e9a-48c4-aef9-562696539b39",
     "cloudConfig": {
-      "Public": {
+      "AzureCloud": {
         "arm": "management.azure.com",
         "graph": "https://graph.microsoft.com",
         "issuer": "https://sts.windows.net/"
       },
-      "USGovernment": {
+      "AzureUSGovernment": {
         "arm": "management.usgovcloudapi.net",
         "graph": "https://graph.microsoft.us",
         "issuer": "https://sts.windows.net/"
       },
-      "China": {
+      "AzureChinaCloud": {
         "arm": "management.chinacloudapi.cn",
         "graph": "https://microsoftgraph.chinacloudapi.cn",
         "issuer": "https://sts.chinacloudapi.cn/"
@@ -65,6 +64,7 @@
       "apiVersion": "2025-01-01",
       "name": "[parameters('storageAccountName')]",
       "location": "[parameters('location')]",
+      "comments": "Storage account for BYOD blob data uploaded to Microsoft Graph during Access Reviews.",
       "sku": {
         "name": "Standard_RAGRS",
         "tier": "Standard"
@@ -105,13 +105,10 @@
       "type": "Microsoft.Storage/storageAccounts/blobServices",
       "apiVersion": "2025-01-01",
       "name": "[concat(parameters('storageAccountName'), '/default')]",
+      "comments": "Blob service configuration with soft-delete retention policies.",
       "dependsOn": [
         "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
       ],
-      "sku": {
-        "name": "Standard_RAGRS",
-        "tier": "Standard"
-      },
       "properties": {
         "containerDeleteRetentionPolicy": {
           "enabled": true,
@@ -128,13 +125,10 @@
       "type": "Microsoft.Storage/storageAccounts/fileServices",
       "apiVersion": "2025-01-01",
       "name": "[concat(parameters('storageAccountName'), '/default')]",
+      "comments": "File service configuration with share soft-delete retention policy.",
       "dependsOn": [
         "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
       ],
-      "sku": {
-        "name": "Standard_RAGRS",
-        "tier": "Standard"
-      },
       "properties": {
         "shareDeleteRetentionPolicy": {
           "enabled": true,
@@ -146,9 +140,9 @@
       "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
       "apiVersion": "2025-01-01",
       "name": "[concat(parameters('storageAccountName'), '/default/byod')]",
+      "comments": "Blob container where BYOD data files are placed for upload.",
       "dependsOn": [
-        "[resourceId('Microsoft.Storage/storageAccounts/blobServices', parameters('storageAccountName'), 'default')]",
-        "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+        "[resourceId('Microsoft.Storage/storageAccounts/blobServices', parameters('storageAccountName'), 'default')]"
       ],
       "properties": {
         "immutableStorageWithVersioning": {
@@ -164,9 +158,10 @@
       "apiVersion": "2016-06-01",
       "name": "[variables('blobConnectionName')]",
       "location": "[parameters('location')]",
+      "comments": "Managed identity-authenticated API connection to Azure Blob Storage.",
       "kind": "V1",
       "properties": {
-        "displayName": "templatetest",
+        "displayName": "[variables('blobConnectionName')]",
         "customParameterValues": {},
         "api": {
           "name": "azureblob",
@@ -191,6 +186,7 @@
       "apiVersion": "2019-05-01",
       "name": "[parameters('logicAppName')]",
       "location": "[parameters('location')]",
+      "comments": "Logic App that reads blobs and uploads them to Microsoft Graph for Access Reviews.",
       "identity": {
         "type": "SystemAssigned"
       },
@@ -305,7 +301,7 @@
                 }
               }
             },
-            "Parse_BYOD_Response":{
+            "Parse_BYOD_Response": {
               "runAfter": {
                 "Create-Upload-Session": [
                   "Succeeded"
@@ -431,7 +427,7 @@
                     }
                   }
                 },
-                "Delay":{
+                "Delay": {
                   "runAfter": {
                     "HTTP_Upload": [
                       "Succeeded"
@@ -570,7 +566,7 @@
                     }
                   ]
                 },
-                "EntraIDAccessReviewsPOPAuthPolicy":{
+                "EntraIDAccessReviewsPOPAuthPolicy": {
                   "type": "AADPOP",
                   "claims": [
                     {
@@ -609,6 +605,7 @@
       "type": "Microsoft.Authorization/roleAssignments",
       "apiVersion": "2022-04-01",
       "name": "[guid(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), parameters('logicAppName'), 'blobRole')]",
+      "comments": "Grants the Logic App's managed identity Storage Blob Data Reader access on the storage account.",
       "scope": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]",
       "properties": {
         "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')]",
