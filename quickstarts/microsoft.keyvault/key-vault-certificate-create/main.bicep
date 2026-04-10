@@ -42,6 +42,7 @@ resource vault 'Microsoft.KeyVault/vaults@2023-07-01' = {
   }
 }
 
+#disable-next-line BCP081
 resource certificate 'Microsoft.KeyVault/vaults/certificates@2023-07-01' = {
   parent: vault
   name: certificateName
