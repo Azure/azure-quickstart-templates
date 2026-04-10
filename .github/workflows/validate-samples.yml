@@ -382,6 +382,84 @@ jobs:
           echo ""
           echo "✅ metadata.json passed all checks."
 
+      # ── (2b) Ensure README contains the public "Deploy to Azure" button ────
+      - name: Ensure README public deploy button
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          SAMPLE_DIR="${{ matrix.sample }}"
+          README="${SAMPLE_DIR}/README.md"
+          META="${SAMPLE_DIR}/metadata.json"
+
+          echo "──────────────────────────────────────────"
+          echo "CHECK 2b – Ensure public deploy button"
+          echo "  sample: ${SAMPLE_DIR}"
+          echo "──────────────────────────────────────────"
+
+          # Skip if README or metadata doesn't exist (later steps will catch that)
+          if [[ ! -f "${README}" ]] || [[ ! -f "${META}" ]]; then
+            echo "README.md or metadata.json not found — skipping button insertion."
+            exit 0
+          fi
+
+          # ── Read supported environments from metadata.json ────────────────
+          SUPPORTED_ENVS=$(jq -r '(.environments // ["AzureCloud"]) | .[]' "${META}")
+          if ! echo "${SUPPORTED_ENVS}" | grep -qx "AzureCloud"; then
+            echo "AzureCloud not in supported environments — skipping."
+            exit 0
+          fi
+
+          # ── Compute sEncoded (match Validate-ReadMe.ps1 logic) ────────────
+          # Replace both \ and / with %2F
+          S_ENCODED=$(echo "${SAMPLE_DIR}" | sed 's|\\|%2F|g; s|/|%2F|g')
+
+          IMAGE_URL="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true"
+          PORTAL_URL="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F${S_ENCODED}%2Fazuredeploy.json"
+          BUTTON_LINE="[![Deploy To Azure](${IMAGE_URL})](${PORTAL_URL})"
+
+          # ── Idempotency check ─────────────────────────────────────────────
+          if grep -qF "${PORTAL_URL}" "${README}" || grep -qF "${IMAGE_URL}" "${README}"; then
+            echo "✅ Public deploy button already present — no changes needed."
+            exit 0
+          fi
+
+          echo "Public deploy button not found — inserting..."
+
+          # ── Determine insertion point ─────────────────────────────────────
+          INSERT_AFTER=0
+
+          # Check for YAML front matter (starts with --- on line 1)
+          if head -1 "${README}" | grep -qx '\-\-\-'; then
+            # Find the closing --- (second occurrence)
+            CLOSING_LINE=$(awk 'NR>1 && /^---$/ { print NR; exit }' "${README}")
+            if [[ -n "${CLOSING_LINE}" ]]; then
+              INSERT_AFTER=${CLOSING_LINE}
+            fi
+          fi
+
+          # If no front matter, find the first # heading
+          if [[ ${INSERT_AFTER} -eq 0 ]]; then
+            HEADING_LINE=$(grep -n '^# ' "${README}" | head -1 | cut -d: -f1)
+            if [[ -n "${HEADING_LINE}" ]]; then
+              INSERT_AFTER=${HEADING_LINE}
+            else
+              INSERT_AFTER=1
+            fi
+          fi
+
+          # ── Insert the button line ────────────────────────────────────────
+          {
+            head -n "${INSERT_AFTER}" "${README}"
+            echo ""
+            echo "${BUTTON_LINE}"
+            echo ""
+            tail -n +"$((INSERT_AFTER + 1))" "${README}"
+          } > "${README}.tmp"
+          mv "${README}.tmp" "${README}"
+
+          echo "✅ Inserted public deploy button after line ${INSERT_AFTER}."
+
       # ── (3) README.md validation ────────────────────────────────────────────
       - name: Validate README.md
         shell: bash
