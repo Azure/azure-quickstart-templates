@@ -12,7 +12,7 @@
 #  3 - k: Storage account key (password)
 #  4 - l: MSI client id (principal id)
 #  5 - u: User account name
-#  6 - d: Ubuntu Desktop GUI for developement
+#  6 - d: Ubuntu Desktop GUI for development
 #  7 - h: help
 # Note :
 # This script has only been tested on Ubuntu 12.04 LTS & 14.04 LTS and must be root

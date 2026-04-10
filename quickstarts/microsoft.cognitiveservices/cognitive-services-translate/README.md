@@ -1,5 +1,5 @@
 ---
-description: This template deploys a Cognitive Services Translate API. Microsoft Translator API is a neural machine translation service that developers can easily integrate into their applications websites, tools, or any solution requiring multi-language support such as website localization, e-commerce, customer support, messaging applications, internal communication, and more.
+description: This template deploys an Azure AI Translator resource to bring AI within reach of every developer without requiring machine learning expertise.
 page_type: sample
 products:
 - azure
@@ -9,7 +9,7 @@ languages:
 - bicep
 - json
 ---
-# Deploy a Cognitive Services Translate API
+# Deploy an Azure AI Translator resource
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cognitiveservices/cognitive-services-translate/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cognitiveservices/cognitive-services-translate/PublicDeployment.svg)
@@ -25,7 +25,7 @@ languages:
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.cognitiveservices%2Fcognitive-services-translate%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.cognitiveservices%2Fcognitive-services-translate%2Fazuredeploy.json)
 
-This template deploys an Cognitive Services Translation API. see  https://azure.microsoft.com/services/cognitive-services/translator-text-api/
+This template deploys an Azure AI Translator resource. see  https://azure.microsoft.com/services/cognitive-services/translator-text-api/
 
 | SKU  | Feature                                                      | Price                                                        |
 | ---- | ------------------------------------------------------------ | ------------------------------------------------------------ |
@@ -35,13 +35,16 @@ This template deploys an Cognitive Services Translation API. see  https://azure.
 | S3   | Standard Translation <br />Custom Translation                | $6,000/month Up to 1B chars per month Overage: $6 per million chars |
 | S4   | Standard Translation <br />Custom Translation                | $45,000/month<br/>Up to 10B chars per month<br/>Overage: $4.50 per million chars |
 
-If you are new to Azure Cognitive Services, see:
 
-- [Azure Cognitive Services](https://azure.microsoft.com/services/cognitive-services/).
-- [Azure Cognitive Services Text Translator](https://azure.microsoft.com/services/cognitive-services/translator-text-api/)
-- [Whats is the Microsoft Cognitive Test Translator](https://docs.microsoft.com/azure/cognitive-services/Translator/translator-info-overview)
-- [Template reference](https://azure.microsoft.com/resources/templates/?referenceType=Microsoft.Cognitiveservices)
-- [Quick Start templates](https://azure.microsoft.com/resources/templates/?resourceType=Microsoft.Cognitiveservices)
-- [Microsoft Learn Modules](https://docs.microsoft.com/learn/browse/?products=azure&term=cognitive)
+If you are new to Azure AI services, see:
+
+- [Azure AI services](https://learn.microsoft.com/azure/ai-services/)
+- [Template reference](https://learn.microsoft.com/azure/templates/microsoft.cognitiveservices/2017-04-18/accounts)
+- [Microsoft Learn training - AI Services](https://learn.microsoft.com/learn/browse/?term=ai%20services)
+
+If you are new to template deployment, see:
+
+- [Azure Resource Manager documentation](https://learn.microsoft.com/azure/azure-resource-manager/)
+- [Azure AI services quickstart article](https://learn.microsoft.com/azure/cognitive-services/resource-manager-template)
 
 `Tags: Microsoft.CognitiveServices/accounts`

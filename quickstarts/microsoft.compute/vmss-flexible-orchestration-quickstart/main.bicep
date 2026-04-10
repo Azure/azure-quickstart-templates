@@ -43,6 +43,13 @@ param lbName string = '${vmssName}-LB'
 ])
 param os string = 'ubuntulinux'
 
+@description('Security Type of the Virtual Machine.')
+@allowed([
+  'Standard'
+  'TrustedLaunch'
+])
+param securityType string = 'TrustedLaunch'
+
 @description('Region where the scale set will be deployed')
 param location string = resourceGroup().location
 
@@ -75,6 +82,7 @@ module vmss './modules/compute/vmssflex.bicep' = {
     adminUsername: vmssAdminUserName
     adminPasswordOrKey: vmssAdminPasswordOrSSHKey
     os: os
+    securityType: securityType
     platformFaultDomainCount: platformFaultDomainCount
     zones: zones
     subnetId: basenetwork.outputs.vnetSubnetArray[0].id

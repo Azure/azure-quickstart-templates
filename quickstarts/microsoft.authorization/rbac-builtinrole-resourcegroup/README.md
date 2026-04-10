@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: rbac-builtinrole-resourcegroup
 languages:
-- json
 - bicep
+- json
 ---
 # Assign an RBAC role to a Resource Group
 

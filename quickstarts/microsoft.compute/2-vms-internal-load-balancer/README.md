@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: 2-vms-internal-load-balancer
 languages:
-- json
 - bicep
+- json
 ---
 # 2 VMs in VNET - Internal Load Balancer and LB rules
 

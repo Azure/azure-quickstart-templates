@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: attestation-provider-create
 languages:
-- json
 - bicep
+- json
 ---
 # Create a Attestation provider
 

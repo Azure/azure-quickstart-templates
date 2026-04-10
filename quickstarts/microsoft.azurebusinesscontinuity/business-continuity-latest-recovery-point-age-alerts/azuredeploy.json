@@ -1,0 +1,339 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+      "resourceGroupName": {
+        "type": "string",
+        "defaultValue": "rg-sample-alert",
+        "metadata": {
+          "description": "The resource group name where MSI and alert will be created"
+        }
+      },
+      "alertRuleName": {
+        "type": "string",
+        "defaultValue": "ABCRecoveryPointAvailabilityAlert",
+        "metadata": {
+          "description": "Name of the alert rule to be created for recovery point availability."
+        }
+      },
+      "alertRuleDescription": {
+        "type": "string",
+        "defaultValue": "Alert rule to be fired if the age of the latest recovery point is more than the time in days provided by the user.",
+        "metadata": {
+          "description": "Description of the alert rule to be created for recovery point availability."
+        }
+      },
+      "alertSeverity": {
+        "type": "int",
+        "defaultValue": 3,
+        "allowedValues": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "metadata": {
+          "description": "Severity of alert {0 - Critical, 1 - Error, 2 - Warning, 3 - Informational, 4 - Verbose}"
+        }
+      },
+      "alertAggregationGranularity": {
+        "type": "string",
+        "defaultValue": "P1D",
+        "allowedValues": [
+          "P1D",
+          "P2D"
+        ],
+        "metadata": {
+          "description": "The interval over which datapoints are grouped by the aggregation type represented in ISO 8601 duration format. Please ensure this value is more or equal to alertEvaluationFrequency."
+        }
+      },
+      "alertEvaluationFrequency": {
+        "type": "string",
+        "defaultValue": "PT6H",
+        "allowedValues": [
+          "PT6H",
+          "P1D"
+        ],
+        "metadata": {
+          "description": "How often the metric alert is evaluated represented in ISO 8601 duration format. Please ensure that this value is less or equal to alertAggregationGranularity."
+        }
+      },
+      "LatestRPAgeThresholdInDays": {
+        "type": "string",
+        "defaultValue": "2",
+        "metadata": {
+          "description": "Add latest recovery point age limit in days. If current time minus latest recovery point exceeds this value then an alert will be generated."
+        }
+      },
+      "MSIName": {
+        "type": "string",
+        "minLength": 3,
+        "maxLength": 128,
+        "defaultValue": "ABCAlertsMSI",
+        "metadata": {
+          "description": "Name of the user-assigned managed identity (MSI) to associate with the alert rule. The template assigns the MSI reader access to the subscription so that the alert rule has access to query the required protected items and latest recovery point details."
+        }
+      },
+      "newOrExistingMSI": {
+        "type": "string",
+        "allowedValues": [
+          "new",
+          "existing"
+        ],
+        "metadata": {
+          "description": "Specify whether you are using an existing managed identity or creating a new managed identity for the alert rule."
+        }
+      },
+      "roleDefinitionId": {
+        "type": "string",
+        "defaultValue": "acdd72a7-3385-48ef-bd42-f606fba81ae7",
+        "metadata": {
+          "description": "RoleDefinition Id for the role assignment to MSI - Default is for reader role. Please add a different role definition id for another role."
+        }
+      }
+    },
+    "variables": {
+      "msiCreationTemplateName": "MSI-creation-template",
+      "msiRoleAssignmentTemplateName": "MSI-role-assignment-template",
+      "alertRuleCreationTemplateName": "Alert-rule-creation-template"
+    },
+    "resources": [
+      {
+        "condition": "[equals(parameters('newOrExistingMSI'),'new')]",
+        "type": "Microsoft.Resources/deployments",
+        "apiVersion": "2022-09-01",
+        "name": "[variables('msiCreationTemplateName')]",
+        "resourceGroup": "[parameters('resourceGroupName')]",
+        "properties": {
+          "mode": "Incremental",
+          "expressionEvaluationOptions": {
+            "scope": "inner"
+          },
+          "parameters": {
+            "MSIName": {
+              "value": "[parameters('MSIName')]"
+            },
+            "location": {
+              "value": "[deployment().location]"
+            }
+          },
+          "template": {
+            "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+            "contentVersion": "1.0.0.0",
+            "parameters": {
+              "MSIName": {
+                "type": "string"
+              },
+              "location": {
+                "type": "string"
+              }
+            },
+            "resources": [
+              {
+                "apiVersion": "2023-01-31",
+                "name": "[parameters('MSIName')]",
+                "location": "[parameters('location')]",
+                "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+                "properties": {}
+              }
+            ]
+          }
+        }
+      },
+      {
+        "dependsOn": [
+          "[variables('msiCreationTemplateName')]"
+        ],
+        "condition": "[equals(parameters('newOrExistingMSI'),'new')]",
+        "type": "Microsoft.Resources/deployments",
+        "apiVersion": "2022-09-01",
+        "name": "[variables('msiRoleAssignmentTemplateName')]",
+        "location": "[deployment().location]",
+        "properties": {
+          "mode": "Incremental",
+          "expressionEvaluationOptions": {
+            "scope": "inner"
+          },
+          "parameters": {
+            "roleDefinitionId": {
+              "value": "[parameters('roleDefinitionId')]"
+            },
+            "MSIName": {
+              "value": "[parameters('MSIName')]"
+            },
+            "resourceGroupName": {
+              "value": "[parameters('resourceGroupName')]"
+            }
+          },
+          "template": {
+            "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+            "contentVersion": "1.0.0.0",
+            "parameters": {
+              "roleDefinitionId": {
+                "type": "string"
+              },
+              "MSIName": {
+                "type": "string"
+              },
+              "resourceGroupName": {
+                "type": "string"
+              }
+            },
+            "variables": {
+              "roleDefinitionArmId": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', parameters('roleDefinitionId'))]",
+              "msiArmId": "[concat('/subscriptions/', subscription().subscriptionId,'/resourceGroups/',parameters('resourceGroupName'), '/providers/Microsoft.ManagedIdentity/userAssignedIdentities/', parameters('MSIName'))]"
+
+            },
+            "resources": [
+              {
+                "type": "Microsoft.Authorization/roleAssignments",
+                "apiVersion": "2022-04-01",
+                "name": "[guid(subscription().subscriptionId,parameters('MSIName'),parameters('resourceGroupName'),parameters('roleDefinitionId'))]",
+                "properties": {
+                  "principalId": "[reference(variables('msiArmId'),'2023-01-31','Full').properties.principalId]",
+                  "roleDefinitionId": "[variables('roleDefinitionArmId')]",
+                  "scope": "[subscription().id]",
+                  "ObjectType": "ServicePrincipal"
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "dependsOn": [
+          "[variables('msiRoleAssignmentTemplateName')]"
+        ],
+        "type": "Microsoft.Resources/deployments",
+        "apiVersion": "2022-09-01",
+        "name": "[variables('alertRuleCreationTemplateName')]",
+        "resourceGroup": "[parameters('resourceGroupName')]",
+        "properties": {
+          "mode": "Incremental",
+          "expressionEvaluationOptions": {
+            "scope": "inner"
+          },
+          "parameters": {
+            "alertRuleName": {
+              "value": "[parameters('alertRuleName')]"
+            },
+            "alertRuleDescription": {
+              "value": "[parameters('alertRuleDescription')]"
+            },
+            "alertSeverity": {
+              "value": "[parameters('alertSeverity')]"
+            },
+            "alertEvaluationFrequency": {
+              "value": "[parameters('alertEvaluationFrequency')]"
+            },
+            "alertAggregationGranularity": {
+              "value": "[parameters('alertAggregationGranularity')]"
+            },
+            "MSIName": {
+              "value": "[parameters('MSIName')]"
+            },
+            "resourceGroupName": {
+              "value": "[parameters('resourceGroupName')]"
+            },
+            "location": {
+              "value": "[deployment().location]"
+            },
+            "LatestRPAgeThresholdInDays": {
+              "value": "[parameters('LatestRPAgeThresholdInDays')]"
+            }
+          },
+          "template": {
+            "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+            "contentVersion": "1.0.0.0",
+            "parameters": {
+              "alertRuleName": {
+                "type": "string"
+              },
+              "alertRuleDescription": {
+                "type": "string"
+              },
+              "alertSeverity": {
+                "type": "int"
+              },
+              "alertEvaluationFrequency": {
+                "type": "string"
+              },
+              "alertAggregationGranularity": {
+                "type": "string"
+              },
+              "MSIName": {
+                "type": "string"
+              },
+              "resourceGroupName": {
+                "type": "string"
+              },
+              "location": {
+                "type": "string"
+              },
+              "LatestRPAgeThresholdInDays": {
+                "type": "string"
+              }
+            },
+            "variables": {
+              "msiArmId": "[concat('/subscriptions/', subscription().subscriptionId,'/resourceGroups/',parameters('resourceGroupName'), '/providers/Microsoft.ManagedIdentity/userAssignedIdentities/', parameters('MSIName'))]",
+              "subscriptionArmId": "[concat('/subscriptions/',subscription().subscriptionId)]",
+              "LatestRPAgeThresholdInDaysToMinutes": "[mul(int(parameters('LatestRPAgeThresholdInDays')), 1440)]",
+              "argQuery": "arg(\"\").RecoveryServicesResources\n//| project type, id, properties\n| where type == \"microsoft.azurebusinesscontinuity/unifiedprotecteditems\"\n| project\n    id,\n    latestRecoveryPointPrimary = todatetime(parse_json(properties).primaryRegionProtectionDetails.latestRecoveryPoint.propertyValue),\n    dataSourceType =  tostring(parse_json(properties).dataSourceInformation.dataSourceType),\n    protectionStatusInPrimaryRegion = tostring(parse_json(properties).protectionStatusInPrimaryRegion)\n|where protectionStatusInPrimaryRegion != \"NotProtected\"\n| extend currentTime = now()\n| extend currentTimeSpan = totimespan(currentTime)\n| extend latestRecoveryPointPrimaryTimeSpan = totimespan(latestRecoveryPointPrimary)\n| extend TimeSpanDiff = currentTimeSpan - latestRecoveryPointPrimaryTimeSpan\n| extend dayValueExists = split(TimeSpanDiff, \".\", 2)\n| extend dayValue = split(TimeSpanDiff, \".\", 0)\n| extend day = toint(iff((dayValueExists != \"\"), dayValue[0], \"0\"))\n| extend nonDayTime = iff((dayValueExists != \"\"), split(TimeSpanDiff, \".\", 1)[0], split(TimeSpanDiff, \".\", 0)[0])\n| extend hour = toint(split(nonDayTime, \":\", 0)[0])\n| extend min = toint(split(nonDayTime, \":\", 1)[0])\n| extend sec = toint(split(nonDayTime, \":\", 2)[0])\n| extend totalMinutes = (((day * 24) + hour) * 60) + min\n| extend latestRPAge = iff((totalMinutes > @#LatestRPAgeThresholdInDaysToMinutes#@), 1, 0)\n| project\n    currentTime,\n    latestRecoveryPointPrimary,\n    TimeSpanDiff,\n    totalMinutes,\n    latestRPAge,\n    dataSourceType,\n    day,\n    hour,\n    min,\n    sec,\n    id\n"
+            },
+            "resources": [
+              {
+                "type": "microsoft.insights/scheduledqueryrules",
+                "apiVersion": "2023-03-15-preview",
+                "name": "[parameters('alertRuleName')]",
+                "location": "[parameters('location')]",
+                "identity": {
+                  "type": "UserAssigned",
+                  "userAssignedIdentities": {
+                    "[variables('msiARMId')]": {}
+                  }
+                },
+                "properties": {
+                  "displayName": "[parameters('alertRuleName')]",
+                  "description": "[parameters('alertRuleDescription')]",
+                  "severity": "[parameters('alertSeverity')]",
+                  "enabled": true,
+                  "evaluationFrequency": "[parameters('alertEvaluationFrequency')]",
+                  "scopes": [
+                    "[variables('subscriptionArmId')]"
+                  ],
+                  "windowSize": "[parameters('alertAggregationGranularity')]",
+                  "criteria": {
+                    "allOf": [
+                      {
+                        "query": "[replace(variables('argQuery'),'@#LatestRPAgeThresholdInDaysToMinutes#@', string(variables('LatestRPAgeThresholdInDaysToMinutes')))]",
+                        "timeAggregation": "Maximum",
+                        "metricMeasureColumn": "latestRPAge",
+                        "dimensions": [
+                          {
+                            "name": "dataSourceType",
+                            "operator": "Include",
+                            "values": [
+                              "*"
+                            ]
+                          }
+                        ],
+                        "resourceIdColumn": "id",
+                        "operator": "GreaterThanOrEqual",
+                        "threshold": 1,
+                        "failingPeriods": {
+                          "numberOfEvaluationPeriods": 1,
+                          "minFailingPeriodsToAlert": 1
+                        }
+                      }
+                    ]
+                  },
+                  "autoMitigate": false
+                }
+              }
+            ]
+          }
+        }
+      }
+    ]
+  }

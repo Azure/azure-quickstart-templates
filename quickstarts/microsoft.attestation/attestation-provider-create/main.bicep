@@ -20,10 +20,13 @@ var PolicySigningCertificates = {
   }
 }
 
-resource attestationProvider 'Microsoft.Attestation/attestationProviders@2021-06-01-preview' = {
+resource attestationProvider 'Microsoft.Attestation/attestationProviders@2021-06-01' = {
   name: attestationProviderName
   location: location
   properties: (empty(policySigningCertificates) ? json('{}') : PolicySigningCertificates)
 }
 
-output attestationName string = attestationProviderName
+output attestationName string = attestationProvider.id
+output location string = location
+output resourceGroupName string = resourceGroup().name
+output resourceId string = attestationProvider.id

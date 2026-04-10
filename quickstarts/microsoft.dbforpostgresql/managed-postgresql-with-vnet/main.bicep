@@ -78,7 +78,7 @@ var firewallrules = [
   }
 ]
 
-resource vnet 'Microsoft.Network/virtualNetworks@2021-05-01' = {
+resource vnet 'Microsoft.Network/virtualNetworks@2023-09-01' = {
   name: virtualNetworkName
   location: location
   properties: {
@@ -90,7 +90,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2021-05-01' = {
   }
 }
 
-resource subnet 'Microsoft.Network/virtualNetworks/subnets@2021-05-01' = {
+resource subnet 'Microsoft.Network/virtualNetworks/subnets@2023-09-01' = {
   parent: vnet
   name: subnetName
   properties: {
@@ -118,6 +118,8 @@ resource server 'Microsoft.DBforPostgreSQL/servers@2017-12-01' = {
       backupRetentionDays: backupRetentionDays
       geoRedundantBackup: geoRedundantBackup
     }
+    sslEnforcement: 'Enabled'
+    minimalTlsVersion: 'TLS1_2'
   }
 
   resource virtualNetworkRule 'virtualNetworkRules@2017-12-01' = {
@@ -131,9 +133,15 @@ resource server 'Microsoft.DBforPostgreSQL/servers@2017-12-01' = {
 
 @batchSize(1)
 resource firewallRules 'Microsoft.DBforPostgreSQL/servers/firewallRules@2017-12-01' = [for rule in firewallrules: {
-  name: '${server.name}/${rule.Name}'
+  parent: server
+  name: rule.Name
   properties: {
     startIpAddress: rule.StartIpAddress
     endIpAddress: rule.EndIpAddress
   }
 }]
+
+output name string = server.name
+output resourceId string = server.id
+output resourceGroupName string = resourceGroup().name
+output location string = location

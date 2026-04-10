@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.9.1.41621",
-      "templateHash": "13701948159885019128"
+      "version": "0.26.54.24096",
+      "templateHash": "7578513359154607542"
     }
   },
   "parameters": {
@@ -38,45 +38,45 @@
     "defaultConsistencyLevel": {
       "type": "string",
       "defaultValue": "Session",
-      "metadata": {
-        "description": "The default consistency level of the Cosmos DB account."
-      },
       "allowedValues": [
         "Eventual",
         "ConsistentPrefix",
         "Session",
         "BoundedStaleness",
         "Strong"
-      ]
+      ],
+      "metadata": {
+        "description": "The default consistency level of the Cosmos DB account."
+      }
     },
     "maxStalenessPrefix": {
       "type": "int",
       "defaultValue": 100000,
+      "minValue": 10,
+      "maxValue": 2147483647,
       "metadata": {
         "description": "Max stale requests. Required for BoundedStaleness. Valid ranges, Single Region: 10 to 2147483647. Multi Region: 100000 to 2147483647."
-      },
-      "maxValue": 2147483647,
-      "minValue": 10
+      }
     },
     "maxIntervalInSeconds": {
       "type": "int",
       "defaultValue": 300,
+      "minValue": 5,
+      "maxValue": 86400,
       "metadata": {
         "description": "Max lag time (minutes). Required for BoundedStaleness. Valid ranges, Single Region: 5 to 84600. Multi Region: 300 to 86400."
-      },
-      "maxValue": 86400,
-      "minValue": 5
+      }
     },
     "systemManagedFailover": {
       "type": "bool",
       "defaultValue": true,
-      "metadata": {
-        "description": "Enable system managed failover for regions"
-      },
       "allowedValues": [
         true,
         false
-      ]
+      ],
+      "metadata": {
+        "description": "Enable system managed failover for regions"
+      }
     },
     "databaseName": {
       "type": "string",
@@ -95,11 +95,11 @@
     "throughput": {
       "type": "int",
       "defaultValue": 400,
+      "minValue": 400,
+      "maxValue": 1000000,
       "metadata": {
         "description": "The throughput for the container"
-      },
-      "maxValue": 1000000,
-      "minValue": 400
+      }
     }
   },
   "variables": {
@@ -138,7 +138,7 @@
   "resources": [
     {
       "type": "Microsoft.DocumentDB/databaseAccounts",
-      "apiVersion": "2022-05-15",
+      "apiVersion": "2024-02-15-preview",
       "name": "[toLower(parameters('accountName'))]",
       "location": "[parameters('location')]",
       "kind": "GlobalDocumentDB",
@@ -146,12 +146,13 @@
         "consistencyPolicy": "[variables('consistencyPolicy')[parameters('defaultConsistencyLevel')]]",
         "locations": "[variables('locations')]",
         "databaseAccountOfferType": "Standard",
-        "enableAutomaticFailover": "[parameters('systemManagedFailover')]"
+        "enableAutomaticFailover": "[parameters('systemManagedFailover')]",
+        "disableKeyBasedMetadataWriteAccess": true
       }
     },
     {
       "type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases",
-      "apiVersion": "2022-05-15",
+      "apiVersion": "2024-02-15-preview",
       "name": "[format('{0}/{1}', toLower(parameters('accountName')), parameters('databaseName'))]",
       "properties": {
         "resource": {
@@ -164,8 +165,8 @@
     },
     {
       "type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers",
-      "apiVersion": "2022-05-15",
-      "name": "[format('{0}/{1}', format('{0}/{1}', toLower(parameters('accountName')), parameters('databaseName')), parameters('containerName'))]",
+      "apiVersion": "2024-02-15-preview",
+      "name": "[format('{0}/{1}/{2}', toLower(parameters('accountName')), parameters('databaseName'), parameters('containerName'))]",
       "properties": {
         "resource": {
           "id": "[parameters('containerName')]",
@@ -230,8 +231,26 @@
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases', split(format('{0}/{1}', toLower(parameters('accountName')), parameters('databaseName')), '/')[0], split(format('{0}/{1}', toLower(parameters('accountName')), parameters('databaseName')), '/')[1])]"
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases', toLower(parameters('accountName')), parameters('databaseName'))]"
       ]
     }
-  ]
+  ],
+  "outputs": {
+    "location": {
+      "type": "string",
+      "value": "[parameters('location')]"
+    },
+    "name": {
+      "type": "string",
+      "value": "[parameters('databaseName')]"
+    },
+    "resourceGroupName": {
+      "type": "string",
+      "value": "[resourceGroup().name]"
+    },
+    "resourceId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases', toLower(parameters('accountName')), parameters('databaseName'))]"
+    }
+  }
 }

@@ -1,7 +1,7 @@
 <#
 
 .DESCRIPTION
-  The DSC will configure a VSTS agent on a VM using Windows Powershell DSC. 
+  The DSC will configure a VSTS agent on a VM using Windows PowerShell DSC. 
 
 .NOTES
   Version:        1.0

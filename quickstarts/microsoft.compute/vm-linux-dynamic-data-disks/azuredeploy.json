@@ -1,20 +1,27 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.26.170.59819",
+      "templateHash": "12772411669749776216"
+    }
+  },
   "parameters": {
     "_artifactsLocation": {
       "type": "string",
+      "defaultValue": "[deployment().properties.templateLink.uri]",
       "metadata": {
         "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
-      },
-      "defaultValue": "[deployment().properties.templateLink.uri]"
+      }
     },
     "_artifactsLocationSasToken": {
       "type": "securestring",
+      "defaultValue": "",
       "metadata": {
         "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
-      },
-      "defaultValue": ""
+      }
     },
     "dnsLabelPrefix": {
       "type": "string",
@@ -126,7 +133,7 @@
     },
     "numDataDisks": {
       "type": "int",
-      "defaultValue": "4",
+      "defaultValue": 4,
       "minValue": 0,
       "maxValue": 64,
       "metadata": {
@@ -162,15 +169,15 @@
     "publicIPAddressName": "publicips",
     "publicIPAddressType": "Dynamic",
     "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('networkSettings').virtualNetworkName, variables('networkSettings').subnet.dse.name)]",
-    "installationCLI": "[concat('bash azuredeploy.sh ', parameters('masterVMName'), ' ', parameters('mountFolder'), ' ', parameters('numDataDisks'), ' ', parameters('dockerVer'), ' ', parameters('dockerComposeVer'), ' ', parameters('adminUsername'), ' ', parameters('imageSku'), ' ', parameters('dockerMachineVer'))]",
-    "sshKeyPath": "[concat('/home/',parameters('adminUsername'),'/.ssh/authorized_keys')]",
+    "installationCLI": "[format('bash azuredeploy.sh {0} {1} {2} {3} {4} {5} {6} {7}', parameters('masterVMName'), parameters('mountFolder'), parameters('numDataDisks'), parameters('dockerVer'), parameters('dockerComposeVer'), parameters('adminUsername'), parameters('imageSku'), parameters('dockerMachineVer'))]",
+    "sshKeyPath": "[format('/home/{0}/.ssh/authorized_keys', parameters('adminUsername'))]",
     "networkSecurityGroupName": "default-NSG"
   },
   "resources": [
     {
       "type": "Microsoft.Compute/availabilitySets",
+      "apiVersion": "2023-09-01",
       "name": "[variables('avSetName')]",
-      "apiVersion": "2020-12-01",
       "location": "[parameters('location')]",
       "sku": {
         "name": "Aligned"
@@ -181,9 +188,8 @@
       }
     },
     {
-      "comments": "Default Network Security Group for template",
       "type": "Microsoft.Network/networkSecurityGroups",
-      "apiVersion": "2020-11-01",
+      "apiVersion": "2023-09-01",
       "name": "[variables('networkSecurityGroupName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -205,13 +211,10 @@
       }
     },
     {
-      "apiVersion": "2020-11-01",
       "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2023-09-01",
       "name": "[variables('networkSettings').virtualNetworkName]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
-      ],
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -229,11 +232,14 @@
             }
           }
         ]
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+      ]
     },
     {
       "type": "Microsoft.Network/publicIPAddresses",
-      "apiVersion": "2020-11-01",
+      "apiVersion": "2023-09-01",
       "name": "[variables('publicIPAddressName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -244,14 +250,10 @@
       }
     },
     {
-      "apiVersion": "2020-11-01",
       "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2023-09-01",
       "name": "[variables('nicName')]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
-        "[resourceId('Microsoft.Network/virtualNetworks/', variables('networkSettings').virtualNetworkName)]"
-      ],
       "properties": {
         "ipConfigurations": [
           {
@@ -260,7 +262,7 @@
               "privateIPAllocationMethod": "Static",
               "privateIPAddress": "[variables('networkSettings').statics.master]",
               "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]"
               },
               "subnet": {
                 "id": "[variables('subnetRef')]"
@@ -268,17 +270,17 @@
             }
           }
         ]
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('networkSettings').virtualNetworkName)]"
+      ]
     },
     {
-      "apiVersion": "2020-12-01",
       "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2023-09-01",
       "name": "[parameters('masterVMName')]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/networkInterfaces/', variables('nicName'))]",
-        "[resourceId('Microsoft.Compute/availabilitySets/', variables('avSetName'))]"
-      ],
       "properties": {
         "availabilitySet": {
           "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('avSetName'))]"
@@ -302,6 +304,19 @@
           }
         },
         "storageProfile": {
+          "copy": [
+            {
+              "name": "dataDisks",
+              "count": "[length(range(0, parameters('numDataDisks')))]",
+              "input": {
+                "caching": "[variables('diskCaching')]",
+                "diskSizeGB": "[parameters('dataDiskSize')]",
+                "lun": "[range(0, parameters('numDataDisks'))[copyIndex('dataDisks')]]",
+                "name": "[format('{0}-datadisk{1}', parameters('masterVMName'), range(0, parameters('numDataDisks'))[copyIndex('dataDisks')])]",
+                "createOption": "Empty"
+              }
+            }
+          ],
           "imageReference": {
             "publisher": "[parameters('imagePublisher')]",
             "offer": "[parameters('imageOffer')]",
@@ -309,41 +324,29 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "[concat(parameters('masterVMName'),'_OSDisk')]",
+            "name": "[format('{0}_OSDisk', parameters('masterVMName'))]",
             "caching": "ReadWrite",
             "createOption": "FromImage"
-          },
-          "copy": [
-            {
-              "name": "dataDisks",
-              "count": "[parameters('numDataDisks')]",
-              "input": {
-                "caching": "[variables('diskCaching')]",
-                "diskSizeGB": "[parameters('dataDiskSize')]",
-                "lun": "[copyIndex('dataDisks')]",
-                "name": "[concat(parameters('masterVMName'),'-datadisk',copyIndex('dataDisks'))]",
-                "createOption": "Empty"
-              }
-            }
-          ]
+          }
         },
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
             }
           ]
         }
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/availabilitySets', variables('avSetName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
+      ]
     },
     {
-      "apiVersion": "2020-12-01",
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(parameters('masterVMName'), '/Installation')]",
+      "apiVersion": "2023-09-01",
+      "name": "[format('{0}/{1}', parameters('masterVMName'), 'Installation')]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Compute/virtualMachines/', parameters('masterVMName'))]"
-      ],
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",
         "type": "CustomScript",
@@ -351,12 +354,14 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
-            "[uri(parameters('_artifactsLocation'), concat('azuredeploy.sh', parameters('_artifactsLocationSasToken')))]"
+            "[uri(parameters('_artifactsLocation'), format('scripts/azuredeploy.sh{0}', parameters('_artifactsLocationSasToken')))]"
           ],
           "commandToExecute": "[variables('installationCLI')]"
         }
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines', parameters('masterVMName'))]"
+      ]
     }
   ]
 }
-

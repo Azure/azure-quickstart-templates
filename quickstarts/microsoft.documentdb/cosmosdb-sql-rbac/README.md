@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: cosmosdb-sql-rbac
 languages:
-- json
 - bicep
+- json
 ---
 # Create an Azure Cosmos DB SQL Account with data plane RBAC
 

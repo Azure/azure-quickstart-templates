@@ -9,7 +9,7 @@ languages:
 - bicep
 - json
 ---
-# Ubuntu Mate Desktop VM with VSCode
+# Ubuntu Mate Desktop VM with VS Code
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/visualstudio/ubuntu-mate-desktop-vscode/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/visualstudio/ubuntu-mate-desktop-vscode/PublicDeployment.svg)
@@ -41,7 +41,7 @@ To connect, run "mstsc" from windows desktop and connect to the fqdn/public ip o
 
 To open a terminal with Ctrl + Alt + t
 
-# Running VSCode
+# Running VS Code
 
 ### Manage IDE from the Command Line
 The vscode IDE includes a command line tool called code which can use to manage the IDE directly from the Ubuntu terminal.

@@ -31,7 +31,7 @@ This template deploys the necessary resources to run Azure Cloud Shell inside a 
 ## Prerequisites
 
 In order to use this deployment there must be an existing resource group and a virtual network. Most users will already have a deesired resource group and virtual network they would like to connect to. If these resources do not exist, they must be created prior to running this template. Both the resource group and the virtual network must be in the same location.
-Important! While this functionality is in preview, only the following locations may be used: WestCentralUS, WestUS
+Cloud Shell in a virtual network may be used in any region supported by the standard Cloud Shell.
 
 ## Deployment steps
 

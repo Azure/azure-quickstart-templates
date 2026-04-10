@@ -1,0 +1,303 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Location for the resources."
+            }
+        },
+        "virtualMachineScaleSetName": {
+            "type": "String"
+        },
+        "useCustomerManagedKey": {
+            "type": "String",
+            "defaultValue": "Confidential Disk Encryption with Platform managed key",
+            "allowedValues": [
+                "Confidential Disk Encryption with Platform managed key",
+                "Confidential Disk Encryption with Customer managed key"
+            ]
+        },
+        "diskEncryptionSetId": {
+            "type": "String",
+            "defaultValue": "GEN-DES"
+        },
+        "storageAccountType": {
+            "type": "String",
+            "defaultValue": "Premium_LRS"
+        },
+        "adminUsername": {
+            "type": "String"
+        },
+        "adminPassword": {
+            "type": "SecureString",
+            "defaultValue": "[newGuid()]"
+        },
+        "authenticationType": {
+            "type": "string",
+            "defaultValue": "sshPublicKey",
+            "allowedValues": [
+                "password",
+                "sshPublicKey"
+            ],
+            "metadata": {
+                "description": "Type of authentication to use on the VMSS."
+            }
+        },
+        "adminPasswordOrKey": {
+            "type": "SecureString",
+            "defaultValue": "[newGuid()]",
+            "metadata": {
+                "description": "Password or ssh key for the VMSS."
+            }
+        },
+        "instanceCount": {
+            "type": "int",
+            "defaultValue": 5
+        },
+        "osType": {
+            "type": "String",
+            "defaultValue": "Windows",
+            "allowedValues": [
+                "Windows",
+                "Linux"
+            ]
+        },
+        "vmSize": {
+            "type": "String",
+            "defaultValue": "Standard_DC2as_v5"
+        },
+        "windowsCvmImage": {
+            "type": "String",
+            "defaultValue": "2022-datacenter-smalldisk-g2",
+            "allowedValues": [
+                "2022-datacenter-smalldisk-g2",
+                "2022-datacenter-g2",
+                "2022-datacenter-core-smalldisk-g2",
+                "2022-datacenter-core-g2",
+                "2019-datacenter-smalldisk-g2",
+                "2019-datacenter-gensecond",
+                "2019-datacenter-core-smalldisk-g2",
+                "2019-datacenter-core-g2"
+            ],
+            "metadata": {
+                "description": "Set this value for the windows os version"
+            }
+        },
+        "linuxCvmImage": {
+            "type": "String",
+            "defaultValue": "22_04-lts-cvm",
+            "allowedValues": [
+                "20_04-lts-cvm",
+                "22_04-lts-cvm",
+                "9_3_cvm_sev_snp"
+            ],
+            "metadata": {
+                "description": "Set this value for the Linux os version"
+            }
+        }
+    },
+    "variables": {
+        "networkSecurityGroupName": "default-NSG",
+        "linuxVmImagePublisher": "[if(equals (parameters('linuxCvmImage'), '9_3_cvm_sev_snp'), 'Redhat', 'Canonical')]",
+        "linuxVmImageOffer": "[if(equals (parameters('linuxCvmImage'), '9_3_cvm_sev_snp'), 'RHEL-CVM', if(equals (parameters('linuxCvmImage'), '20_04-lts-cvm'), '0001-COM-UBUNTU-CONFIDENTIAL-VM-FOCAL', '0001-COM-UBUNTU-CONFIDENTIAL-VM-JAMMY'))]",
+        "vmImagePublisher": "[if(equals (parameters('osType'), 'Windows'), 'MicrosoftWindowsServer', variables('linuxVmImagePublisher'))]",
+        "vmImageOffer": "[if(equals (parameters('osType'), 'Windows'), 'WindowsServer', variables('linuxVmImageOffer'))]",
+        "vmImageSku": "[if(equals (parameters('osType'), 'Windows'), parameters('windowsCvmImage'), parameters('linuxCvmImage'))]",
+        "computerNamePrefix": "[toLower(substring(concat(parameters('virtualMachineScaleSetName'), uniqueString(resourceGroup().id)), 0, 9))]",
+        "addressPrefixes": [
+            "10.4.0.0/16"
+        ],
+        "subnets": [
+            {
+                "name": "default",
+                "properties": {
+                    "addressPrefix": "10.4.0.0/20"
+                }
+            }
+        ],
+        "virtualNetworkName": "[concat(parameters('virtualMachineScaleSetName'), '-vnet')]",
+        "networkSecurityGroups": [
+            {
+                "name": "[variables('networkSecurityGroupName')]"
+            }
+        ],
+        "linuxSecurityRules": [
+            {
+                "name": "default-allow-22",
+                "properties": {
+                    "priority": 1000,
+                    "access": "Allow",
+                    "direction": "Inbound",
+                    "destinationPortRange": "22",
+                    "protocol": "Tcp",
+                    "sourceAddressPrefix": "*",
+                    "sourcePortRange": "*",
+                    "destinationAddressPrefix": "*"
+                }
+            }
+        ],
+        "windowsSecurityRules": [
+            {
+                "name": "default-allow-3389",
+                "properties": {
+                    "priority": 1000,
+                    "access": "Allow",
+                    "direction": "Inbound",
+                    "destinationPortRange": "3389",
+                    "protocol": "Tcp",
+                    "sourceAddressPrefix": "*",
+                    "sourcePortRange": "*",
+                    "destinationAddressPrefix": "*"
+                }
+            }
+        ],
+        "networkInterfaceConfigurations": [
+            {
+                "name": "[concat(parameters('virtualMachineScaleSetName'),'-nic01')]",
+                "primary": true,
+                "subnetId": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName')), '/subnets/default')]",
+                "enableAcceleratedNetworking": false,
+                "nsgId": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroups')[0].name)]"
+            }
+        ],
+        "linuxKeyConfiguration": {
+            "disablePasswordAuthentication": true,
+            "ssh": {
+                "publicKeys": [
+                    {
+                        "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+                        "keyData": "[parameters('adminPasswordOrKey')]"
+                    }
+                ]
+            }
+        },
+        "linuxOsProfile": {
+            "computerNamePrefix": "[variables('computerNamePrefix')]",
+            "adminUsername": "[parameters('adminUsername')]",
+            "adminPassword": "[parameters('adminPasswordOrKey')]",
+            "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxKeyConfiguration'))]"
+        },
+        "windowsOsProfile": {
+            "computerNamePrefix": "[variables('computerNamePrefix')]",
+            "adminUsername": "[parameters('adminUsername')]",
+            "adminPassword": "[parameters('adminPassword')]"
+        },
+        "diskEncryptionSetId": {
+            "id": "[parameters('diskEncryptionSetId')]"
+        },
+        "diskEncryptionSet": "[if(equals(parameters('useCustomerManagedKey'), 'Confidential Disk Encryption with Platform managed key'), json('null'), variables('diskEncryptionSetId'))]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Network/virtualNetworks",
+            "apiVersion": "2022-07-01",
+            "location": "[parameters('location')]",
+            "name": "[variables('virtualNetworkName')]",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": "[variables('addressPrefixes')]"
+                },
+                "subnets": "[variables('subnets')]"
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2022-07-01",
+            "location": "[parameters('location')]",
+            "name": "[variables('networkSecurityGroupName')]",
+            "properties": {
+                "securityRules": "[if( equals (parameters('osType'), 'Linux'), variables('linuxSecurityRules'), variables('windowsSecurityRules'))]"
+            },
+            "copy": {
+                "name": "networkSecurityGroups",
+                "count": "[length(variables('networkSecurityGroups'))]"
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachineScaleSets",
+            "apiVersion": "2023-09-01",
+            "location": "[parameters('location')]",
+            "name": "[parameters('virtualMachineScaleSetName')]",
+            "dependsOn": [
+                "[variables('virtualNetworkName')]",
+                "networkSecurityGroups"
+            ],
+            "sku": {
+                "name": "[parameters('vmSize')]",
+                "capacity": "[int(parameters('instanceCount'))]"
+            },
+            "properties": {
+                "virtualMachineProfile": {
+                    "storageProfile": {
+                        "osDisk": {
+                            "createOption": "fromImage",
+                            "managedDisk": {
+                                "storageAccountType": "[parameters('storageAccountType')]",
+                                "securityProfile": {
+                                    "securityEncryptionType": "DiskWithVMGuestState",
+                                    "diskEncryptionSet": "[variables('diskEncryptionSet')]"
+                                }
+                            }
+                        },
+                        "imageReference": {
+                            "publisher": "[variables('vmImagePublisher')]",
+                            "offer": "[variables('vmImageOffer')]",
+                            "sku": "[variables('vmImageSku')]",
+                            "version": "latest"
+                        }
+                    },
+                    "networkProfile": {
+                        "copy": [
+                            {
+                                "name": "networkInterfaceConfigurations",
+                                "count": "[length(variables('networkInterfaceConfigurations'))]",
+                                "input": {
+                                    "name": "[variables('networkInterfaceConfigurations')[copyIndex('networkInterfaceConfigurations')].name]",
+                                    "properties": {
+                                        "primary": "[variables('networkInterfaceConfigurations')[copyIndex('networkInterfaceConfigurations')].primary]",
+                                        "enableAcceleratedNetworking": "[variables('networkInterfaceConfigurations')[copyIndex('networkInterfaceConfigurations')].enableAcceleratedNetworking]",
+                                        "ipConfigurations": [
+                                            {
+                                                "name": "[concat(take(variables('networkInterfaceConfigurations')[copyIndex('networkInterfaceConfigurations')].name, sub(80, length('-defaultIpConfiguration'))), '-defaultIpConfiguration')]",
+                                                "properties": {
+                                                    "subnet": {
+                                                        "id": "[variables('networkInterfaceConfigurations')[copyIndex('networkInterfaceConfigurations')].subnetId]"
+                                                    },
+                                                    "primary": "[variables('networkInterfaceConfigurations')[copyIndex('networkInterfaceConfigurations')].primary]"
+                                                }
+                                            }
+                                        ],
+                                        "networkSecurityGroup": "[if( equals( variables('networkInterfaceConfigurations')[copyIndex('networkInterfaceConfigurations')].nsgId, ''), json('null'),json(concat('{\"id\": \"', variables('networkInterfaceConfigurations')[copyIndex('networkInterfaceConfigurations')].nsgId, '\"}')))]"
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    "osProfile": "[if( equals (parameters('osType'), 'Linux'), variables('linuxOsProfile'), variables('windowsOSProfile'))]",
+                    "securityProfile": {
+                        "securityType": "ConfidentialVM",
+                        "uefiSettings": {
+                            "secureBootEnabled": true,
+                            "vTpmEnabled": true
+                        }
+                    }
+                },
+                "singlePlacementGroup": false,
+                "upgradePolicy": {
+                    "mode": "Manual"
+                },
+                "orchestrationMode": "Uniform",
+                "platformFaultDomainCount": 1
+            }
+        }
+    ],
+    "outputs": {
+        "adminUsername": {
+            "type": "String",
+            "value": "[parameters('adminUsername')]"
+        }
+    }
+}

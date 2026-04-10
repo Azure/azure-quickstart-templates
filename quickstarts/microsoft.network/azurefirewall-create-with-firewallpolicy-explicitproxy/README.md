@@ -1,4 +1,14 @@
-# Create a Firewall, FirewallPolicy with Explicit Proxy and IpGroups
+---
+description: This template creates an Azure Firewall, FirewalllPolicy with Explicit Proxy and Network Rules with IpGroups. Also, includes a Linux Jumpbox vm setup
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: azurefirewall-create-with-firewallpolicy-explicitproxy
+languages:
+- json
+---
+# Create a Firewall, FirewallPolicy with Explicit Proxy
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/azurefirewall-create-with-firewallpolicy-explicitproxy/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.network/azurefirewall-create-with-firewallpolicy-explicitproxy/PublicDeployment.svg)

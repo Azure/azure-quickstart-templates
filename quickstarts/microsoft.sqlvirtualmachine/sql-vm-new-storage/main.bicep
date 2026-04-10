@@ -15,6 +15,8 @@ param existingSubnetName string
 
 @description('Windows Server and SQL Offer')
 @allowed([
+  'sql2025-ws2025'
+  'sql2022-ws2022'
   'sql2019-ws2019'
   'sql2017-ws2019'
   'sql2019-ws2022'
@@ -23,7 +25,7 @@ param existingSubnetName string
   'SQL2014SP3-WS2012R2'
   'SQL2014SP2-WS2012R2'
 ])
-param imageOffer string = 'sql2019-ws2022'
+param imageOffer string = 'sql2025-ws2025'
 
 @description('SQL Server Sku')
 @allowed([
@@ -102,8 +104,8 @@ var networkSecurityGroupRules = [
   }
 ]
 var publicIpAddressName = '${virtualMachineName}-publicip-${uniqueString(virtualMachineName)}'
-var publicIpAddressType = 'Dynamic'
-var publicIpAddressSku = 'Basic'
+var publicIpAddressType = 'Static'
+var publicIpAddressSku = 'Standard'
 var diskConfigurationType = 'NEW'
 var nsgId = networkSecurityGroup.id
 var subnetRef = resourceId(existingVnetResourceGroup, 'Microsoft.Network/virtualNetWorks/subnets', existingVirtualNetworkName, existingSubnetName)

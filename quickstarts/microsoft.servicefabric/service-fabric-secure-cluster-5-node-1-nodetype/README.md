@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: service-fabric-secure-cluster-5-node-1-nodetype
 languages:
-- json
 - bicep
+- json
 ---
 # Deploy a 5 Node Secure Cluster
 

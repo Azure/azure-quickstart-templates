@@ -1,0 +1,138 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.33.93.31351",
+      "templateHash": "13000240630105370736"
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]"
+    },
+    "keyVaultName": {
+      "type": "string",
+      "defaultValue": "[format('kv-{0}', uniqueString(resourceGroup().id))]"
+    },
+    "nspName": {
+      "type": "string",
+      "defaultValue": "networkSecurityPerimeter"
+    },
+    "profileName": {
+      "type": "string",
+      "defaultValue": "profile1"
+    },
+    "inboundIpv4AccessRuleName": {
+      "type": "string",
+      "defaultValue": "inboundRule"
+    },
+    "outboundFqdnAccessRuleName": {
+      "type": "string",
+      "defaultValue": "outboundRule"
+    },
+    "associationName": {
+      "type": "string",
+      "defaultValue": "networkSecurityPerimeterAssociation"
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.KeyVault/vaults",
+      "apiVersion": "2022-07-01",
+      "name": "[parameters('keyVaultName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "sku": {
+          "family": "A",
+          "name": "standard"
+        },
+        "tenantId": "[subscription().tenantId]",
+        "accessPolicies": [],
+        "enabledForDeployment": false,
+        "enabledForDiskEncryption": false,
+        "enabledForTemplateDeployment": false,
+        "enableSoftDelete": true,
+        "softDeleteRetentionInDays": 90,
+        "enableRbacAuthorization": false
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityPerimeters",
+      "apiVersion": "2023-07-01-preview",
+      "name": "[parameters('nspName')]",
+      "location": "[parameters('location')]",
+      "properties": {}
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityPerimeters/profiles",
+      "apiVersion": "2023-07-01-preview",
+      "name": "[format('{0}/{1}', parameters('nspName'), parameters('profileName'))]",
+      "location": "[parameters('location')]",
+      "properties": {},
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityPerimeters', parameters('nspName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityPerimeters/profiles/accessRules",
+      "apiVersion": "2023-07-01-preview",
+      "name": "[format('{0}/{1}/{2}', parameters('nspName'), parameters('profileName'), parameters('inboundIpv4AccessRuleName'))]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "direction": "Inbound",
+        "addressPrefixes": [
+          "100.10.0.0/16"
+        ],
+        "fullyQualifiedDomainNames": [],
+        "subscriptions": [],
+        "emailAddresses": [],
+        "phoneNumbers": []
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityPerimeters/profiles', parameters('nspName'), parameters('profileName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityPerimeters/profiles/accessRules",
+      "apiVersion": "2023-07-01-preview",
+      "name": "[format('{0}/{1}/{2}', parameters('nspName'), parameters('profileName'), parameters('outboundFqdnAccessRuleName'))]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "direction": "Outbound",
+        "addressPrefixes": [],
+        "fullyQualifiedDomainNames": [
+          "contoso.com"
+        ],
+        "subscriptions": [],
+        "emailAddresses": [],
+        "phoneNumbers": []
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityPerimeters/profiles', parameters('nspName'), parameters('profileName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityPerimeters/resourceAssociations",
+      "apiVersion": "2023-07-01-preview",
+      "name": "[format('{0}/{1}', parameters('nspName'), parameters('associationName'))]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "privateLinkResource": {
+          "id": "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]"
+        },
+        "profile": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityPerimeters/profiles', parameters('nspName'), parameters('profileName'))]"
+        },
+        "accessMode": "Enforced"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]",
+        "[resourceId('Microsoft.Network/networkSecurityPerimeters', parameters('nspName'))]",
+        "[resourceId('Microsoft.Network/networkSecurityPerimeters/profiles', parameters('nspName'), parameters('profileName'))]"
+      ]
+    }
+  ]
+}

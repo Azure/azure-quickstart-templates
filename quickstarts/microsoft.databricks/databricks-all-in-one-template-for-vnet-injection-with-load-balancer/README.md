@@ -6,6 +6,7 @@ products:
 - azure-resource-manager
 urlFragment: databricks-all-in-one-template-for-vnet-injection-with-load-balancer
 languages:
+- bicep
 - json
 ---
 # AzureDatabricks Template for VNetInjection and Load Balancer
@@ -18,6 +19,8 @@ languages:
 
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.databricks/databricks-all-in-one-template-for-vnet-injection-with-load-balancer/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.databricks/databricks-all-in-one-template-for-vnet-injection-with-load-balancer/CredScanResult.svg)
+
+![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.databricks/databricks-all-in-one-template-for-vnet-injection-with-load-balancer/BicepVersion.svg)
 
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.databricks%2Fdatabricks-all-in-one-template-for-vnet-injection-with-load-balancer%2Fazuredeploy.json)
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.databricks%2Fdatabricks-all-in-one-template-for-vnet-injection-with-load-balancer%2Fazuredeploy.json)
@@ -59,7 +62,7 @@ Parameter         | Suggested value     | Description
 **WorkspaceName** |  | The name of your DataBricks Workspace.
 **Pricing Tier** | 14 Day Trial, Standard or Premium
 **Resource Group** The Resource Group which you wish to deploy your DataBricks Environment.
-**Disable Public Ip** | Default is false | Set this to true to disable Public IP address
+**Disable Public Ip** | Default is true | Set this to false to enable Public IP address
 
 All the other parameters can be left as default.
 

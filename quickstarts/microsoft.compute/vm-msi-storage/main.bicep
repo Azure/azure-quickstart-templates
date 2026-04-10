@@ -18,12 +18,11 @@ param adminPasswordOrKey string
 @description('Unique DNS Name for the Public IP used to access the Virtual Machine.')
 param dnsLabelPrefix string = toLower('vm-msi-${uniqueString(resourceGroup().id)}')
 
-@description('The Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version.')
-@allowed([
-  '18_04-daily-lts-gen2'
-  '18_04-lts-gen2'
-])
-param ubuntuOSVersion string = '18_04-lts-gen2'
+@description('The offer of the Ubuntu image from which to launch the Virtual Machine.')
+param imageOffer string = '0001-com-ubuntu-server-jammy'
+
+@description('The SKU of the Ubuntu image from which to launch the Virtual Machine.')
+param imageSku string = '22_04-lts-gen2'
 
 @description('Location for all resources.')
 param location string = resourceGroup().location
@@ -210,8 +209,8 @@ resource vm 'Microsoft.Compute/virtualMachines@2023-03-01' = {
       }
       imageReference: {
         publisher: 'Canonical'
-        offer: 'UbuntuServer'
-        sku: ubuntuOSVersion
+        offer: imageOffer
+        sku: imageSku
         version: 'latest'
       }
     }

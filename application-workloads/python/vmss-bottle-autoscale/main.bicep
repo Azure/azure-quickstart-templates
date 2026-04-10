@@ -2,7 +2,7 @@
 param location string = resourceGroup().location
 
 @description('Size of VMs in the VM Scale Set.')
-param vmSku string = 'Standard_D2_v3'
+param vmSku string = 'Standard_D2s_v3'
 
 @description('String used as a base for naming resources (9 characters or less). A hash is prepended to this string for some resources, and resource-specific information is appended.')
 param vmssName string
@@ -25,6 +25,13 @@ param authenticationType string = 'sshPublicKey'
 @description('SSH Key or password for the Virtual Machine. SSH key is recommended.')
 @secure()
 param adminPasswordOrKey string
+
+@description('Security Type of the Virtual Machine.')
+@allowed([
+  'Standard'
+  'TrustedLaunch'
+])
+param securityType string = 'TrustedLaunch'
 
 @description('The base URI where artifacts required by this template are located')
 param _artifactsLocation string = deployment().properties.templateLink.uri
@@ -50,11 +57,18 @@ var ipConfigName = '${vmssName}ipconfig'
 var frontEndIPConfigID = resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', loadBalancerName, 'loadBalancerFrontEnd')
 var osType = {
   publisher: 'Canonical'
-  offer: 'UbuntuServer'
-  sku: '16.04-LTS'
+  offer: '0001-com-ubuntu-server-focal'
+  sku: '20_04-lts-gen2'
   version: 'latest'
 }
 var imageReference = osType
+var securityProfileJson = {
+  uefiSettings: {
+    secureBootEnabled: true
+    vTpmEnabled: true
+  }
+  securityType: securityType
+}
 var linuxConfiguration = {
   disablePasswordAuthentication: true
   ssh: {
@@ -67,7 +81,7 @@ var linuxConfiguration = {
   }
 }
 
-resource virtualNetwork 'Microsoft.Network/virtualNetworks@2022-01-01' = {
+resource virtualNetwork 'Microsoft.Network/virtualNetworks@2023-04-01' = {
   name: virtualNetworkName
   location: location
   properties: {
@@ -87,7 +101,7 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2022-01-01' = {
   }
 }
 
-resource publicIPAddress 'Microsoft.Network/publicIPAddresses@2022-01-01' = {
+resource publicIPAddress 'Microsoft.Network/publicIPAddresses@2023-04-01' = {
   name: publicIPAddressName
   location: location
   properties: {
@@ -98,7 +112,7 @@ resource publicIPAddress 'Microsoft.Network/publicIPAddresses@2022-01-01' = {
   }
 }
 
-resource loadBalancer 'Microsoft.Network/loadBalancers@2022-01-01' = {
+resource loadBalancer 'Microsoft.Network/loadBalancers@2023-04-01' = {
   name: loadBalancerName
   location: location
   properties: {
@@ -146,7 +160,7 @@ resource loadBalancer 'Microsoft.Network/loadBalancers@2022-01-01' = {
   }
 }
 
-resource vmScaleSet 'Microsoft.Compute/virtualMachineScaleSets@2022-03-01' = {
+resource vmScaleSet 'Microsoft.Compute/virtualMachineScaleSets@2023-03-01' = {
   name: vmssName
   location: location
   sku: {
@@ -171,8 +185,9 @@ resource vmScaleSet 'Microsoft.Compute/virtualMachineScaleSets@2022-03-01' = {
         computerNamePrefix: vmssName
         adminUsername: adminUsername
         adminPassword: adminPasswordOrKey
-        linuxConfiguration: ((authenticationType == 'password') ? json('null') : linuxConfiguration)
+        linuxConfiguration: ((authenticationType == 'password') ? null : linuxConfiguration)
       }
+      securityProfile: ((securityType == 'TrustedLaunch') ? securityProfileJson : null)
       networkProfile: {
         networkInterfaceConfigurations: [
           {
@@ -230,7 +245,7 @@ resource vmScaleSet 'Microsoft.Compute/virtualMachineScaleSets@2022-03-01' = {
   }
 }
 
-resource autoscaleHost 'Microsoft.Insights/autoscalesettings@2021-05-01-preview' = {
+resource autoscaleHost 'Microsoft.Insights/autoscalesettings@2022-10-01' = {
   name: 'autoscaleHost'
   location: location
   properties: {

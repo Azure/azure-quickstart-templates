@@ -1,34 +1,34 @@
 # Simple Linux Virtual Machine
 
-The purpose of this ARM Template is **simple Linux Virtual Machine** inserting a few parameters.
+The purpose of this ARM Template is a **simple Linux Virtual Machine** inserting a few parameters.
 
 ## The Template
 
 Don't let the size of the template scares you. The structure is very intuitive and once that you get the gist of it, you will see how much easier your life will be deploying resources to Azure.
 
-These are the parameters on the template, most of them already have values inserted, the ones that you need to inform are: **adminUsername**, **adminPassword** and **resourceGroup**.
+These are the parameters on the template, most of them already have values inserted, the ones that you need to provide are: **adminUsername**, **adminPassword**, and **resourceGroup**.
 
 Parameter         | Suggested value     | Description
-:--------------- | :-------------      |:---------------------
+:---------------- | :-------------      |:---------------------
 **vmName** | The name of your Virtual Machine | The name of you Virtual Machine.
 **VmSize** | Standard_B2s | The size of the VM.
-**adminUsername** | adminusername | Usernames can be a maximum of 20 characters and cannot end in a period (".").
-**adminPassword** | Complex Password | Password requirements between 12 to 72 characters and have lower and upper characters, a digit and a special character (Regex match [\W_])
-**Location**| The default location | Select the geographic location for your resource group.
-**ubuntuOSVersion** | 18.04-LTS | The Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version.
+**adminUsername** | adminusername | Usernames can be a maximum of 20 characters and cannot end in a period (`.`).
+**adminPassword** | Complex Password | Password requirements between 12 to 72 characters and have lower and upper characters, a digit, and a special character (Regex match [\W_]).
+**location**| The default location | Select the geographic location for your resource group.
+**ubuntuOSVersion** | 20.04-LTS | The Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version.
 **authenticationType** | password | Type of authentication to use on the Virtual Machine.
 **dnsLabelPrefix** | dns-vmName | Unique DNS Name for the Public IP used to access the Virtual Machine
-**virtualNetworkName** | vNet | Name of the VNET
-**subnetName** | subnet | Name of the subnet in the virtual network
-**networkSecurityGroupName** | SecGroupNet | Name of the Network Security Group
+**virtualNetworkName** | vNet | Name of the virtual network.
+**subnetName** | subnet | Name of the subnet in the virtual network.
+**networkSecurityGroupName** | SecGroupNet | Name of the Network Security Group.
 **Resource Group**| myResourceGroup |  That is the Resource Group that you need to deploy your resources.
 
 ## Deployment
 
 There are a few ways to deploy this template.
-You can use [PowerShell](https://docs.microsoft.com/azure/azure-resource-manager/resource-group-template-deploy), [Azure CLI](https://docs.microsoft.com/azure/azure-resource-manager/resource-group-template-deploy-cli), [Azure Portal](https://docs.microsoft.com/azure/azure-resource-manager/resource-group-template-deploy-portal) or your favorite SDK.
+You can use [PowerShell](https://learn.microsoft.com/azure/azure-resource-manager/templates/deploy-powershell), [Azure CLI](https://learn.microsoft.com/azure/azure-resource-manager/templates/deploy-cli), [Azure Portal](https://learn.microsoft.com/azure/azure-resource-manager/templates/deploy-portal), or your favorite SDK.
 
-For Azure CLI I'm using the Visual Code with Azure CLI extensions. If you would like you can find more information [here](https://code.visualstudio.com/docs/azure/extensions). But bare in mind that you don't need to use the Visual Code app, you can stick with the always present **Command Line** on Windows or the Linux **bash terminal**.
+For Azure CLI, I'm using Visual Code with the Azure CLI extensions. If you would like, you can find more information [here](https://code.visualstudio.com/docs/azure/extensions). But bear in mind that you don't need to use Visual Code, you can stick with the always present **Command Line** on Windows or the Linux **bash terminal**.
 
 ### Using Azure CLI with Visual Code
 
@@ -48,7 +48,7 @@ To set the right subscription, type following command:
 
 ### Resource Group
 
-Now you need a Resource Group for our deployment. If you haven't already created a Resource Group, you can do it now. If you are new to Azure and wonder what is a Resource Group? Bare with me! A Resource Group is a container that holds related resources for an Azure solution. The resource group includes those resources that you want to manage as a group. Simply saying: it's like a folder that contains files. Simple as that.
+Now you need a Resource Group for the deployment. If you haven't already created a Resource Group, you can do it now. If you are new to Azure and wonder what is a Resource Group? Bear with me! A Resource Group is a container that holds related resources for an Azure solution. The resource group includes those resources that you want to manage as a group. Simply saying: it's like a folder that contains files. Simple as that.
 
 To create a Resource Group, you need a name and a location for your Resource Group.
 
@@ -69,7 +69,7 @@ Super simple, right? Now that we have our **Resource Group** created, let's depl
 Insert the values for the parameters.
 As you can see, it's running.
 
-Go grab a cup of coffee, have some fresh air. Before you come back you will have your  **Virtual Machine**.
+Go grab a cup of coffee or have some fresh air. Before you come back you will have your  **Virtual Machine**.
 
 And there we go, your deployment has Succeeded:
 
@@ -90,9 +90,9 @@ Click on the Resource Group to expand and show the **Resources**:
 - Virtual network
 - Virtual machine
 
-Click on the Virtual Machine and then click in **connect**.
+Click on the Virtual Machine and then click **Connect**.
 
-Where you have **Login using VM Local account** copy the ssh command and open your terminal.
+Where you have **Login using VM Local account**, copy the ssh command and open your terminal.
 
 ![Screen](./images/azdeployportal3.png)
 
@@ -102,7 +102,7 @@ Insert the password you've created.
 
 ![Screen](./images/azssh.png)
 
-And Voilà, there you have a brandy new Ubuntu Virtual Machine.
+And voilà, there you have a brand new Ubuntu Virtual Machine.
 
 ![Screen](./images/azubuntu.png)
 
@@ -114,23 +114,23 @@ Using your favorite web browser Navigate to the Portal, in All Services look for
 
 Click on **Add** to add your template:
 
-On General, type the name and the description for your template, and click on [OK].
+On the General tab, type the name and the description for your template, and click [OK].
 
 ![Screen](./images/aztemplate.png)
 
-On ARM Template, replace the contents of the template with your template, and click on [OK].
+On ARM Template, replace the contents of the template with your template, and click [OK].
 
 ![Screen](./images/aztemplate2.png)
 
-Click on the refresh button and there is your template:
+Click the Refresh button and there is your template:
 
 ![Screen](./images/aztemplate3.png)
 
-Open the template and click in [Deploy]
+Open the template and click [Deploy]
 
-On the screen Custom Deployment, insert the information that you must be already familiar with.
+On the Custom Deployment screen, insert the information that you must be already familiar with.
 
-Select [I agree] and click on [Purchase].
+Select [I agree] and click [Purchase].
 
 As you can see, it's deploying.
 
@@ -140,23 +140,23 @@ After a couple of minutes, voilà, you have your Virtual Machine deployed.
 
 Go to the Resource. Repeat the test that you have done before.
 
-**p.s.: It's pretty easy to create resources on Azure, right? But if you are the sort of IT guy that always loves automation, here is the surprise. Just click on the button below and it will automatically deploy simple Linux Virtual Machine through the  Azure Portal.**
+**P.S.: It's pretty easy to create resources on Azure, right? But if you are the sort of IT guy that always loves automation, here is the surprise. Just click on the button below and it will automatically deploy this quickstart using the Azure Portal.**
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.compute%2Fvm-simple-linux%2Fazuredeploy.json" target="_blank">
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true"/>
 </a>
 
-#### Important disclaimer: Azure charges you for the resources you are using, and you don't want to use all your credits at once, right? So, don't forget to stop the Virtual Machine at the portal or even delete the Resource Group you have created to avoid unnecessary charges
+#### Important disclaimer: Azure charges you for the resources you are using, and you don't want to use all your credits at once, right? So, don't forget to stop the Virtual Machine in the Portal or even delete the Resource Group you have created to avoid unnecessary charges.
 
 ### How to shutdown your resources
 
 #### Using the portal
 
-On the portal, open your Resource Group, you can either stop the Virtual Machine clicking on [Stop] or delete the Virtual Machine clicking on [Delete].
+In the Portal, open your Resource Group. You can either stop the Virtual Machine by clicking on [Stop] or delete the Virtual Machine by clicking on [Delete].
 
 ![Screen](./images/off1.png)
 
-You can also delete the Resource Group. Click on the Resource Group and then in [Delete].
+You can also delete the Resource Group. Click on the Resource Group and then on [Delete resource group].
 
 ![Screen](./images/off2.png)
 

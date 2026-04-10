@@ -28,13 +28,13 @@ This template shows a simple example to deploy OSPatching Extension on an Linux 
 
 ## Deploy
 
-Azure CLI or Powershell is recommended to deploy the template. And Azure Portal cannot ignore the optional parameters.
+Azure CLI or PowerShell is recommended to deploy the template. And Azure Portal cannot ignore the optional parameters.
 
 1. Using Azure CLI
 
   https://azure.microsoft.com/documentation/articles/xplat-cli-azure-resource-manager/
 
-2. Using Powershell
+2. Using PowerShell
 
   https://azure.microsoft.com/documentation/articles/powershell-azure-resource-manager/
 

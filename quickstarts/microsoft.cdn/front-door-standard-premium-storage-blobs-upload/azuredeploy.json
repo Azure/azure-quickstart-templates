@@ -1,0 +1,147 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.26.170.59819",
+      "templateHash": "18437145567930955312"
+    }
+  },
+  "parameters": {
+    "profileName": {
+      "type": "string",
+      "defaultValue": "[format('cdn-{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "The name of the Front Door to create. This must be globally unique."
+      }
+    },
+    "endpointName": {
+      "type": "string",
+      "defaultValue": "[format('endpoint-{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "The name of the Front Door endpoint to create. This must be globally unique."
+      }
+    },
+    "skuName": {
+      "type": "string",
+      "defaultValue": "Premium_AzureFrontDoor",
+      "allowedValues": [
+        "Standard_AzureFrontDoor",
+        "Premium_AzureFrontDoor"
+      ],
+      "metadata": {
+        "description": "The name of the SKU to use when creating the Front Door profile. If you use Private Link this must be set to `Premium_AzureFrontDoor`."
+      }
+    },
+    "wafMode": {
+      "type": "string",
+      "defaultValue": "Prevention",
+      "metadata": {
+        "description": "The mode that the WAF should be deployed using. In 'Prevention' mode, the WAF will block requests it detects as malicious. In 'Detection' mode, the WAF will not block requests and will simply log the request."
+      }
+    },
+    "wafManagedRuleSets": {
+      "type": "array",
+      "defaultValue": [
+        {
+          "ruleSetType": "Microsoft_DefaultRuleSet",
+          "ruleSetVersion": "2.0",
+          "ruleSetAction": "Block"
+        },
+        {
+          "ruleSetType": "Microsoft_BotManagerRuleSet",
+          "ruleSetVersion": "1.0"
+        }
+      ],
+      "metadata": {
+        "description": "The list of managed rule sets to configure on the WAF."
+      }
+    }
+  },
+  "variables": {
+    "wafPolicyName": "WafPolicy",
+    "securityPolicyName": "SecurityPolicy"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Cdn/profiles",
+      "apiVersion": "2021-06-01",
+      "name": "[parameters('profileName')]",
+      "location": "global",
+      "sku": {
+        "name": "[parameters('skuName')]"
+      }
+    },
+    {
+      "type": "Microsoft.Cdn/profiles/afdEndpoints",
+      "apiVersion": "2021-06-01",
+      "name": "[format('{0}/{1}', parameters('profileName'), parameters('endpointName'))]",
+      "location": "global",
+      "properties": {
+        "enabledState": "Enabled"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Cdn/profiles', parameters('profileName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/FrontDoorWebApplicationFirewallPolicies",
+      "apiVersion": "2022-05-01",
+      "name": "[variables('wafPolicyName')]",
+      "location": "global",
+      "sku": {
+        "name": "[parameters('skuName')]"
+      },
+      "properties": {
+        "policySettings": {
+          "enabledState": "Enabled",
+          "mode": "[parameters('wafMode')]"
+        },
+        "managedRules": {
+          "managedRuleSets": "[parameters('wafManagedRuleSets')]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Cdn/profiles/securityPolicies",
+      "apiVersion": "2021-06-01",
+      "name": "[format('{0}/{1}', parameters('profileName'), variables('securityPolicyName'))]",
+      "properties": {
+        "parameters": {
+          "type": "WebApplicationFirewall",
+          "wafPolicy": {
+            "id": "[resourceId('Microsoft.Network/FrontDoorWebApplicationFirewallPolicies', variables('wafPolicyName'))]"
+          },
+          "associations": [
+            {
+              "domains": [
+                {
+                  "id": "[resourceId('Microsoft.Cdn/profiles/afdEndpoints', parameters('profileName'), parameters('endpointName'))]"
+                }
+              ],
+              "patternsToMatch": [
+                "/*"
+              ]
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Cdn/profiles/afdEndpoints', parameters('profileName'), parameters('endpointName'))]",
+        "[resourceId('Microsoft.Cdn/profiles', parameters('profileName'))]",
+        "[resourceId('Microsoft.Network/FrontDoorWebApplicationFirewallPolicies', variables('wafPolicyName'))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "frontDoorEndpointHostName": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Cdn/profiles/afdEndpoints', parameters('profileName'), parameters('endpointName')), '2021-06-01').hostName]"
+    },
+    "frontDoorId": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Cdn/profiles', parameters('profileName')), '2021-06-01').frontDoorId]"
+    }
+  }
+}

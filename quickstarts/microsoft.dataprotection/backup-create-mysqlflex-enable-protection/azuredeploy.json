@@ -1,0 +1,321 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.28.1.47646",
+      "templateHash": "14470205049975154780"
+    }
+  },
+  "parameters": {
+    "vaultName": {
+      "type": "string",
+      "defaultValue": "[format('vault{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Name of the Vault"
+      }
+    },
+    "vaultStorageRedundancy": {
+      "type": "string",
+      "defaultValue": "LocallyRedundant",
+      "allowedValues": [
+        "LocallyRedundant",
+        "GeoRedundant"
+      ],
+      "metadata": {
+        "description": "Change Vault Storage Type (not allowed if the vault has registered backups)"
+      }
+    },
+    "backupPolicyName": {
+      "type": "string",
+      "defaultValue": "[format('policy{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Name of the Backup Policy"
+      }
+    },
+    "retentionDays": {
+      "type": "int",
+      "defaultValue": 30,
+      "minValue": 1,
+      "maxValue": 35,
+      "metadata": {
+        "description": "Retention duration in days"
+      }
+    },
+    "mysqlFlexServerName": {
+      "type": "string",
+      "defaultValue": "[format('mysqlflex{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Name of the MySQL Flexible Server"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources"
+      }
+    },
+    "administratorLogin": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "Database administrator login name"
+      }
+    },
+    "administratorLoginPassword": {
+      "type": "securestring",
+      "minLength": 8,
+      "metadata": {
+        "description": "Database administrator password"
+      }
+    },
+    "skuName": {
+      "type": "string",
+      "defaultValue": "Standard_B1s",
+      "metadata": {
+        "description": "Azure database for MySQL sku name "
+      }
+    },
+    "skuTier": {
+      "type": "string",
+      "defaultValue": "Burstable",
+      "allowedValues": [
+        "Burstable",
+        "GeneralPurpose",
+        "MemoryOptimized"
+      ],
+      "metadata": {
+        "description": "Azure database for MySQL pricing tier"
+      }
+    },
+    "storageSizeGB": {
+      "type": "int",
+      "defaultValue": 20,
+      "metadata": {
+        "description": "Azure database for MySQL Flexible Server Storage Size in GB "
+      }
+    },
+    "storageIops": {
+      "type": "int",
+      "defaultValue": 360,
+      "metadata": {
+        "description": "Azure database for MySQL storage Iops"
+      }
+    },
+    "mysqlVersion": {
+      "type": "string",
+      "defaultValue": "8.0.21",
+      "allowedValues": [
+        "5.7",
+        "8.0.21"
+      ],
+      "metadata": {
+        "description": "MySQL version"
+      }
+    },
+    "backupRetentionDays": {
+      "type": "int",
+      "defaultValue": 7,
+      "metadata": {
+        "description": "MySQL Flexible Server backup retention days"
+      }
+    },
+    "geoRedundantBackup": {
+      "type": "string",
+      "defaultValue": "Disabled",
+      "allowedValues": [
+        "Disabled",
+        "Enabled"
+      ],
+      "metadata": {
+        "description": "Geo-Redundant Backup setting"
+      }
+    },
+    "haMode": {
+      "type": "string",
+      "defaultValue": "Disabled",
+      "allowedValues": [
+        "Disabled",
+        "ZoneRedundant",
+        "SameZone"
+      ],
+      "metadata": {
+        "description": "High Availability Mode"
+      }
+    }
+  },
+  "variables": {
+    "roleDefinitionIdForMySqlFlex": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'd18ad5f3-1baf-4119-b49b-d944edb1f9d0')]",
+    "roleDefinitionIdForDiscovery": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'acdd72a7-3385-48ef-bd42-f606fba81ae7')]",
+    "dataSourceType": "Microsoft.DBforMySQL/flexibleServers",
+    "resourceType": "Microsoft.DBforMySQL/flexibleServers",
+    "retentionDuration": "[format('P{0}D', parameters('retentionDays'))]",
+    "repeatingTimeInterval": "R/2021-05-20T22:00:00+00:00/PT12H",
+    "roleNameGuidForMySqlFlex": "[guid(resourceGroup().id, variables('roleDefinitionIdForMySqlFlex'), resourceId('Microsoft.DataProtection/backupVaults', parameters('vaultName')))]",
+    "roleNameGuidForDiscovery": "[guid(resourceGroup().id, variables('roleDefinitionIdForDiscovery'), resourceId('Microsoft.DataProtection/backupVaults', parameters('vaultName')))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.DataProtection/backupVaults",
+      "apiVersion": "2021-01-01",
+      "name": "[parameters('vaultName')]",
+      "location": "[parameters('location')]",
+      "identity": {
+        "type": "systemAssigned"
+      },
+      "properties": {
+        "storageSettings": [
+          {
+            "datastoreType": "VaultStore",
+            "type": "[parameters('vaultStorageRedundancy')]"
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.DataProtection/backupVaults/backupPolicies",
+      "apiVersion": "2021-01-01",
+      "name": "[format('{0}/{1}', parameters('vaultName'), parameters('backupPolicyName'))]",
+      "properties": {
+        "policyRules": [
+          {
+            "backupParameters": {
+              "backupType": "full",
+              "objectType": "AzureBackupParams"
+            },
+            "trigger": {
+              "schedule": {
+                "repeatingTimeIntervals": [
+                  "[variables('repeatingTimeInterval')]"
+                ]
+              },
+              "taggingCriteria": [
+                {
+                  "tagInfo": {
+                    "tagName": "Default"
+                  },
+                  "taggingPriority": 99,
+                  "isDefault": true
+                }
+              ],
+              "objectType": "ScheduleBasedTriggerContext"
+            },
+            "dataStore": {
+              "dataStoreType": "VaultStore",
+              "objectType": "DataStoreInfoBase"
+            },
+            "name": "BackupHourly",
+            "objectType": "AzureBackupRule"
+          },
+          {
+            "lifecycles": [
+              {
+                "sourceDataStore": {
+                  "dataStoreType": "VaultStore",
+                  "objectType": "DataStoreInfoBase"
+                },
+                "deleteAfter": {
+                  "objectType": "AbsoluteDeleteOption",
+                  "duration": "[variables('retentionDuration')]"
+                }
+              }
+            ],
+            "isDefault": true,
+            "name": "Default",
+            "objectType": "AzureRetentionRule"
+          }
+        ],
+        "datasourceTypes": [
+          "[variables('dataSourceType')]"
+        ],
+        "objectType": "BackupPolicy"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DataProtection/backupVaults', parameters('vaultName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.DBforMySQL/flexibleServers",
+      "apiVersion": "2023-12-01-preview",
+      "name": "[parameters('mysqlFlexServerName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[parameters('skuName')]",
+        "tier": "[parameters('skuTier')]"
+      },
+      "properties": {
+        "administratorLogin": "[parameters('administratorLogin')]",
+        "administratorLoginPassword": "[parameters('administratorLoginPassword')]",
+        "storage": {
+          "autoGrow": "Enabled",
+          "iops": "[parameters('storageIops')]",
+          "storageSizeGB": "[parameters('storageSizeGB')]"
+        },
+        "createMode": "Default",
+        "version": "[parameters('mysqlVersion')]",
+        "backup": {
+          "backupRetentionDays": "[parameters('backupRetentionDays')]",
+          "geoRedundantBackup": "[parameters('geoRedundantBackup')]"
+        },
+        "highAvailability": {
+          "mode": "[parameters('haMode')]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "name": "[variables('roleNameGuidForMySqlFlex')]",
+      "properties": {
+        "principalId": "[reference(resourceId('Microsoft.DataProtection/backupVaults', parameters('vaultName')), '2021-01-01', 'full').identity.principalId]",
+        "roleDefinitionId": "[variables('roleDefinitionIdForMySqlFlex')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DataProtection/backupVaults/backupPolicies', parameters('vaultName'), parameters('backupPolicyName'))]",
+        "[resourceId('Microsoft.DataProtection/backupVaults', parameters('vaultName'))]",
+        "[resourceId('Microsoft.DBforMySQL/flexibleServers', parameters('mysqlFlexServerName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "name": "[variables('roleNameGuidForDiscovery')]",
+      "properties": {
+        "roleDefinitionId": "[variables('roleDefinitionIdForDiscovery')]",
+        "principalId": "[reference(resourceId('Microsoft.DataProtection/backupVaults', parameters('vaultName')), '2021-01-01', 'full').identity.principalId]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DataProtection/backupVaults/backupPolicies', parameters('vaultName'), parameters('backupPolicyName'))]",
+        "[resourceId('Microsoft.DataProtection/backupVaults', parameters('vaultName'))]",
+        "[resourceId('Microsoft.DBforMySQL/flexibleServers', parameters('mysqlFlexServerName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.DataProtection/backupVaults/backupInstances",
+      "apiVersion": "2023-12-01",
+      "name": "[format('{0}/{1}', parameters('vaultName'), parameters('mysqlFlexServerName'))]",
+      "properties": {
+        "objectType": "BackupInstance",
+        "dataSourceInfo": {
+          "objectType": "Datasource",
+          "resourceID": "[resourceId('Microsoft.DBforMySQL/flexibleServers', parameters('mysqlFlexServerName'))]",
+          "resourceName": "[parameters('mysqlFlexServerName')]",
+          "resourceType": "[variables('resourceType')]",
+          "resourceUri": "[resourceId('Microsoft.DBforMySQL/flexibleServers', parameters('mysqlFlexServerName'))]",
+          "resourceLocation": "[parameters('location')]",
+          "datasourceType": "[variables('dataSourceType')]"
+        },
+        "policyInfo": {
+          "policyId": "[resourceId('Microsoft.DataProtection/backupVaults/backupPolicies', parameters('vaultName'), parameters('backupPolicyName'))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DataProtection/backupVaults/backupPolicies', parameters('vaultName'), parameters('backupPolicyName'))]",
+        "[resourceId('Microsoft.DataProtection/backupVaults', parameters('vaultName'))]",
+        "[resourceId('Microsoft.DBforMySQL/flexibleServers', parameters('mysqlFlexServerName'))]"
+      ]
+    }
+  ]
+}

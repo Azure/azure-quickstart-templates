@@ -1,13 +1,13 @@
 ---
-description: Template that creates storage account and enable protection via Backup Vault
+description: Template that creates storage account and enable operational and vaulted backup via Backup Vault
 page_type: sample
 products:
 - azure
 - azure-resource-manager
 urlFragment: backup-create-storage-account-enable-protection
 languages:
-- json
 - bicep
+- json
 ---
 # Create Storage Account & enable protection via Backup Vault
 
@@ -32,9 +32,20 @@ A disaster recovery and data protection strategy keeps your business running whe
 
 The Backup service is Microsoft's born in the cloud backup solution to backup data that's located on-premises and in Azure. It replaces your existing on-premises or offsite backup solution with a reliable, secure and cost competitive cloud backup solution. It also provides the flexibility of protecting your assets running in the cloud. [Learn more](http://aka.ms/backup-learn-more/).
 
-### Operational backup for Azure Blobs
+### Overview of Azure Blob backup
+Azure Backup provides both operational and vaulted backup solution for Azure Blobs. [Learn more](https://docs.microsoft.com/azure/backup/blob-backup-overview)
 
-Operational backup for Azure Blobs is a managed, local data protection solution that lets you protect your block blobs from various data loss scenarios like blob corruptions, blob deletions, and accidental storage account deletion. The data is stored locally within the source storage account itself and can be restored to a selected point in time whenever needed. So this provides a simple, secure, and cost-effective means to protect your blobs. [Learn more](https://docs.microsoft.com/azure/backup/blob-backup-overview)
+#### Operational Backup
+Operational backup uses blob platform capabilities to protect your data and allow recovery when required:
+
+**Point-in-time restore:** Blob point-in-time restore allows restoring blob data to an earlier state. This, in turn, uses soft delete, change feed and blob versioning to retain data for the specified duration. Operational backup takes care of enabling point-in-time restore as well as the underlying capabilities to ensure data is retained for the specified duration.
+
+**Delete lock:** Delete lock prevents the storage account from being deleted accidentally or by unauthorized users. Operational backup when configured also automatically applies a delete lock to reduce the possibilities of data loss because of storage account deletion.
+
+#### Vaulted Backup
+Vaulted backup uses the platform capability of **object replication** to copy data to the Backup vault. Object replication asynchronously copies block blobs between a source storage account and a destination storage account. The contents of the blob, any versions associated with the blob, and the blob's metadata and properties are all copied from the source container to the destination container.
+
+When you configure protection, Azure Backup allocates a destination storage account (Backup vault's storage account managed by Azure Backup) and enables object replication policy at container level on both destination and source storage account. When a backup job is triggered, the Azure Backup service creates a recovery point marker on the source storage account and polls the destination account for the recovery point marker replication. Once the replication point marker is present on the destination, a recovery point is created.
 
 #### Delete a Backup Vault
 You can't delete a Backup vault with any of the following dependencies:

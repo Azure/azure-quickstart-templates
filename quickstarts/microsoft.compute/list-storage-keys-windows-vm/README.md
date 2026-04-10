@@ -1,5 +1,5 @@
 ---
-description: This template creates a Windows Server 2012 R2 VM and runs a PowerShell script using the custom script extension. It also uses the listKeys function to get the Azure Storage Account keys. The PowerShell script for this sample must be hosted in an Azure Storage account. (Note&#58; For other samples custom script can also be hosted in Github)
+description: This template creates a Windows Server 2012 R2 VM and runs a PowerShell script using the custom script extension. It also uses the listKeys function to get the Azure Storage Account keys. The PowerShell script for this sample must be hosted in an Azure Storage account. (Note&#58; For other samples custom script can also be hosted in GitHub)
 page_type: sample
 products:
 - azure

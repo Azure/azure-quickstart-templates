@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: app-configuration-store
 languages:
-- json
 - bicep
+- json
 ---
 # Create an App Configuration Store
 

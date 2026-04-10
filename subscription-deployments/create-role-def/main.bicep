@@ -14,9 +14,9 @@ param roleName string = 'Custom Role - RG Reader'
 @description('Detailed description of the role definition')
 param roleDescription string = 'Subscription Level Deployment of a Role Definition'
 
-var roleDefName = guid(subscription().id, string(actions), string(notActions))
+var roleDefName = guid(roleName)
 
-resource roleDef 'Microsoft.Authorization/roleDefinitions@2018-07-01' = {
+resource roleDef 'Microsoft.Authorization/roleDefinitions@2022-04-01' = {
   name: roleDefName
   properties: {
     roleName: roleName

@@ -113,6 +113,9 @@
             "keyData": "[parameters('adminPasswordOrKey')]"
           }
         ]
+      },
+      "patchSettings": {
+        "patchMode": "AutomaticByPlatform"
       }
     },
     "networkSecurityGroupName": "[concat(variables('serversSubnetName'), '-nsg')]"
@@ -121,7 +124,7 @@
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('storageAccountName')]",
-      "apiVersion": "2019-06-01",
+      "apiVersion": "2022-09-01",
       "location": "[parameters('location')]",
       "sku": {
         "name": "Standard_LRS"
@@ -132,7 +135,7 @@
     {
       "type": "Microsoft.Network/routeTables",
       "name": "[variables('azfwRouteTableName')]",
-      "apiVersion": "2020-05-01",
+      "apiVersion": "2022-07-01",
       "location": "[parameters('location')]",
       "properties": {
         "disableBgpRoutePropagation": false,
@@ -151,14 +154,14 @@
     {
       "comments": "Simple Network Security Group for subnet [variables('serversSubnetName')]",
       "type": "Microsoft.Network/networkSecurityGroups",
-      "apiVersion": "2020-05-01",
+      "apiVersion": "2022-07-01",
       "name": "[variables('networkSecurityGroupName')]",
       "location": "[parameters('location')]",
       "properties": {}
     },
     {
       "name": "[parameters('virtualNetworkName')]",
-      "apiVersion": "2020-05-01",
+      "apiVersion": "2022-07-01",
       "type": "Microsoft.Network/virtualNetworks",
       "location": "[parameters('location')]",
       "dependsOn": [
@@ -205,8 +208,9 @@
     {
       "name": "[concat(variables('publicIPNamePrefix'), add(copyIndex(), 1))]",
       "type": "Microsoft.Network/publicIPAddresses",
-      "apiVersion": "2020-05-01",
+      "apiVersion": "2023-09-01",
       "location": "[parameters('location')]",
+      "zones": "[if(equals(length(parameters('availabilityZones')), 0), null(), parameters('availabilityZones'))]",
       "sku": {
         "name": "Standard"
       },
@@ -222,7 +226,7 @@
     {
       "name": "[variables('jumpBoxPublicIPAddressName')]",
       "type": "Microsoft.Network/publicIPAddresses",
-      "apiVersion": "2020-05-01",
+      "apiVersion": "2022-07-01",
       "location": "[parameters('location')]",
       "properties": {
         "publicIPAllocationMethod": "Dynamic"
@@ -231,7 +235,7 @@
     {
       "name": "[variables('jumpBoxNsgName')]",
       "type": "Microsoft.Network/networkSecurityGroups",
-      "apiVersion": "2020-05-01",
+      "apiVersion": "2022-07-01",
       "location": "[parameters('location')]",
       "properties": {
         "securityRules": [
@@ -252,7 +256,7 @@
       }
     },
     {
-      "apiVersion": "2020-05-01",
+      "apiVersion": "2022-07-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('JumpBoxNicName')]",
       "location": "[parameters('location')]",
@@ -282,7 +286,7 @@
       }
     },
     {
-      "apiVersion": "2020-05-01",
+      "apiVersion": "2022-07-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('ServerNicName')]",
       "location": "[parameters('location')]",
@@ -306,8 +310,11 @@
     {
       "name": "JumpBox",
       "type": "Microsoft.Compute/virtualMachines",
-      "apiVersion": "2019-12-01",
+      "apiVersion": "2022-11-01",
       "location": "[parameters('location')]",
+      "tags": {
+        "AzSecPackAutoConfigReady": "true"
+      },
       "dependsOn": [
         "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
         "[resourceId('Microsoft.Network/networkInterfaces', variables('JumpBoxNicName'))]"
@@ -318,9 +325,9 @@
         },
         "storageProfile": {
           "imageReference": {
-            "publisher": "Canonical",
-            "offer": "UbuntuServer",
-            "sku": "18.04-LTS",
+            "publisher": "MicrosoftCBLMariner",
+            "offer": "cbl-mariner",
+            "sku": "cbl-mariner-2-gen2",
             "version": "latest"
           },
           "osDisk": {
@@ -351,8 +358,11 @@
     {
       "name": "Server",
       "type": "Microsoft.Compute/virtualMachines",
-      "apiVersion": "2019-12-01",
+      "apiVersion": "2022-11-01",
       "location": "[parameters('location')]",
+      "tags": {
+        "AzSecPackAutoConfigReady": "true"
+      },
       "dependsOn": [
         "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
         "[resourceId('Microsoft.Network/networkInterfaces', variables('ServerNicName'))]"
@@ -363,9 +373,9 @@
         },
         "storageProfile": {
           "imageReference": {
-            "publisher": "Canonical",
-            "offer": "UbuntuServer",
-            "sku": "18.04-LTS",
+            "publisher": "MicrosoftCBLMariner",
+            "offer": "cbl-mariner",
+            "sku": "cbl-mariner-2-gen2",
             "version": "latest"
           },
           "osDisk": {
@@ -394,7 +404,7 @@
       }
     },
     {
-      "apiVersion": "2020-04-01",
+      "apiVersion": "2022-07-01",
       "type": "Microsoft.Network/firewallPolicies",
       "name": "[variables('firewallPolicyName')]",
       "location": "[parameters('location')]",
@@ -487,7 +497,7 @@
       ]
     },
     {
-      "apiVersion": "2020-04-01",
+      "apiVersion": "2022-07-01",
       "type": "Microsoft.Network/azureFirewalls",
       "name": "[variables('firewallName')]",
       "location": "[parameters('location')]",

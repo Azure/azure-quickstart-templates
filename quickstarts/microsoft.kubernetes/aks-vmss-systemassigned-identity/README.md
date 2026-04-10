@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: aks-vmss-systemassigned-identity
 languages:
-- json
 - bicep
+- json
 ---
 # Azure Kubernetes Service (AKS)
 

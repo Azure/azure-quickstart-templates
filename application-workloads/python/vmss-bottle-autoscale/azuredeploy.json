@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.9.1.41621",
-      "templateHash": "6934872684673677368"
+      "version": "0.24.24.22086",
+      "templateHash": "5938224263232242545"
     }
   },
   "parameters": {
@@ -18,7 +18,7 @@
     },
     "vmSku": {
       "type": "string",
-      "defaultValue": "Standard_D2_v3",
+      "defaultValue": "Standard_D2s_v3",
       "metadata": {
         "description": "Size of VMs in the VM Scale Set."
       }
@@ -32,8 +32,8 @@
     "instanceCount": {
       "type": "int",
       "defaultValue": 1,
-      "maxValue": 100,
       "minValue": 1,
+      "maxValue": 100,
       "metadata": {
         "description": "Number of VM instances (100 or less)."
       }
@@ -56,9 +56,20 @@
       }
     },
     "adminPasswordOrKey": {
-      "type": "secureString",
+      "type": "securestring",
       "metadata": {
         "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "securityType": {
+      "type": "string",
+      "defaultValue": "TrustedLaunch",
+      "allowedValues": [
+        "Standard",
+        "TrustedLaunch"
+      ],
+      "metadata": {
+        "description": "Security Type of the Virtual Machine."
       }
     },
     "_artifactsLocation": {
@@ -69,7 +80,7 @@
       }
     },
     "_artifactsLocationSasToken": {
-      "type": "secureString",
+      "type": "securestring",
       "defaultValue": "",
       "metadata": {
         "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated"
@@ -94,11 +105,18 @@
     "frontEndIPConfigID": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', variables('loadBalancerName'), 'loadBalancerFrontEnd')]",
     "osType": {
       "publisher": "Canonical",
-      "offer": "UbuntuServer",
-      "sku": "16.04-LTS",
+      "offer": "0001-com-ubuntu-server-focal",
+      "sku": "20_04-lts-gen2",
       "version": "latest"
     },
     "imageReference": "[variables('osType')]",
+    "securityProfileJson": {
+      "uefiSettings": {
+        "secureBootEnabled": true,
+        "vTpmEnabled": true
+      },
+      "securityType": "[parameters('securityType')]"
+    },
     "linuxConfiguration": {
       "disablePasswordAuthentication": true,
       "ssh": {
@@ -114,7 +132,7 @@
   "resources": [
     {
       "type": "Microsoft.Network/virtualNetworks",
-      "apiVersion": "2022-01-01",
+      "apiVersion": "2023-04-01",
       "name": "[variables('virtualNetworkName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -135,7 +153,7 @@
     },
     {
       "type": "Microsoft.Network/publicIPAddresses",
-      "apiVersion": "2022-01-01",
+      "apiVersion": "2023-04-01",
       "name": "[variables('publicIPAddressName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -147,7 +165,7 @@
     },
     {
       "type": "Microsoft.Network/loadBalancers",
-      "apiVersion": "2022-01-01",
+      "apiVersion": "2023-04-01",
       "name": "[variables('loadBalancerName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -199,7 +217,7 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachineScaleSets",
-      "apiVersion": "2022-03-01",
+      "apiVersion": "2023-03-01",
       "name": "[parameters('vmssName')]",
       "location": "[parameters('location')]",
       "sku": {
@@ -224,8 +242,9 @@
             "computerNamePrefix": "[parameters('vmssName')]",
             "adminUsername": "[parameters('adminUsername')]",
             "adminPassword": "[parameters('adminPasswordOrKey')]",
-            "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
+            "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), null(), variables('linuxConfiguration'))]"
           },
+          "securityProfile": "[if(equals(parameters('securityType'), 'TrustedLaunch'), variables('securityProfileJson'), null())]",
           "networkProfile": {
             "networkInterfaceConfigurations": [
               {
@@ -237,19 +256,19 @@
                       "name": "[variables('ipConfigName')]",
                       "properties": {
                         "subnet": {
-                          "id": "[reference(resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))).subnets[0].id]"
+                          "id": "[reference(resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName')), '2023-04-01').subnets[0].id]"
                         },
                         "loadBalancerBackendAddressPools": [
                           {
-                            "id": "[reference(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerName'))).backendAddressPools[0].id]"
+                            "id": "[reference(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerName')), '2023-04-01').backendAddressPools[0].id]"
                           }
                         ],
                         "loadBalancerInboundNatPools": [
                           {
-                            "id": "[reference(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerName'))).inboundNatPools[0].id]"
+                            "id": "[reference(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerName')), '2023-04-01').inboundNatPools[0].id]"
                           },
                           {
-                            "id": "[reference(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerName'))).inboundNatPools[1].id]"
+                            "id": "[reference(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerName')), '2023-04-01').inboundNatPools[1].id]"
                           }
                         ]
                       }
@@ -288,7 +307,7 @@
     },
     {
       "type": "Microsoft.Insights/autoscalesettings",
-      "apiVersion": "2021-05-01-preview",
+      "apiVersion": "2022-10-01",
       "name": "autoscaleHost",
       "location": "[parameters('location')]",
       "properties": {

@@ -24,7 +24,7 @@ param branch string = 'master'
 @description('Location for all resources.')
 param location string = resourceGroup().location
 
-resource hostingPlan 'Microsoft.Web/serverfarms@2021-03-01' = {
+resource hostingPlan 'Microsoft.Web/serverfarms@2023-01-01' = {
   name: hostingPlanName
   location: location
   sku: {
@@ -34,7 +34,7 @@ resource hostingPlan 'Microsoft.Web/serverfarms@2021-03-01' = {
   properties: {}
 }
 
-resource site 'Microsoft.Web/sites@2021-03-01' = {
+resource site 'Microsoft.Web/sites@2023-01-01' = {
   name: siteName
   location: location
   identity: {
@@ -54,7 +54,7 @@ resource site 'Microsoft.Web/sites@2021-03-01' = {
   ]
 }
 
-resource sourceControl 'Microsoft.Web/sites/sourcecontrols@2021-03-01' = {
+resource sourceControl 'Microsoft.Web/sites/sourcecontrols@2023-01-01'= {
   parent: site
   name: 'web'
   properties: {

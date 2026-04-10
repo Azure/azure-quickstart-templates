@@ -1,0 +1,178 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.25.53.49325",
+      "templateHash": "2024987311005731088"
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "natGatewayName": {
+      "type": "string",
+      "defaultValue": "nat-gateway",
+      "metadata": {
+        "description": "Name of the NAT gateway to be attached to the workspace subnets."
+      }
+    },
+    "publicIpName": {
+      "type": "string",
+      "defaultValue": "nat-gw-public-ip",
+      "metadata": {
+        "description": "Name of the Public IP associated with the NAT gateway."
+      }
+    },
+    "nsgId": {
+      "type": "string",
+      "metadata": {
+        "description": "The NSG id of the existing Network Security Group."
+      }
+    },
+    "privateSubnetCidr": {
+      "type": "string",
+      "defaultValue": "10.179.0.0/18",
+      "metadata": {
+        "description": "Cidr range for the private subnet."
+      }
+    },
+    "privateSubnetName": {
+      "type": "string",
+      "defaultValue": "private-subnet",
+      "metadata": {
+        "description": "The name of the private subnet to create."
+      }
+    },
+    "publicSubnetCidr": {
+      "type": "string",
+      "defaultValue": "10.179.64.0/18",
+      "metadata": {
+        "description": "Cidr range for the public subnet.."
+      }
+    },
+    "publicSubnetName": {
+      "type": "string",
+      "defaultValue": "public-subnet",
+      "metadata": {
+        "description": "The name of the public subnet to create."
+      }
+    },
+    "vnetCidr": {
+      "type": "string",
+      "defaultValue": "10.179.0.0/16",
+      "metadata": {
+        "description": "Cidr range for the vnet."
+      }
+    },
+    "vnetName": {
+      "type": "string",
+      "defaultValue": "databricks-vnet",
+      "metadata": {
+        "description": "The name of the virtual network to create."
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2023-09-01",
+      "name": "[parameters('publicIpName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard"
+      },
+      "properties": {
+        "publicIPAddressVersion": "IPv4",
+        "publicIPAllocationMethod": "Static",
+        "idleTimeoutInMinutes": 4
+      }
+    },
+    {
+      "type": "Microsoft.Network/natGateways",
+      "apiVersion": "2023-09-01",
+      "name": "[parameters('natGatewayName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard"
+      },
+      "properties": {
+        "idleTimeoutInMinutes": 4,
+        "publicIpAddresses": [
+          {
+            "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIpName'))]"
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIpName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2024-05-01",
+      "name": "[parameters('vnetName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('vnetCidr')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[parameters('publicSubnetName')]",
+            "properties": {
+              "addressPrefix": "[parameters('publicSubnetCidr')]",
+              "networkSecurityGroup": {
+                "id": "[parameters('nsgId')]"
+              },
+              "defaultOutboundAccess": false,
+              "natGateway": {
+                "id": "[resourceId('Microsoft.Network/natGateways', parameters('natGatewayName'))]"
+              },
+              "delegations": [
+                {
+                  "name": "databricks-del-public",
+                  "properties": {
+                    "serviceName": "Microsoft.Databricks/workspaces"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "[parameters('privateSubnetName')]",
+            "properties": {
+              "addressPrefix": "[parameters('privateSubnetCidr')]",
+              "networkSecurityGroup": {
+                "id": "[parameters('nsgId')]"
+              },
+              "defaultOutboundAccess": false,
+              "natGateway": {
+                "id": "[resourceId('Microsoft.Network/natGateways', parameters('natGatewayName'))]"
+              },
+              "delegations": [
+                {
+                  "name": "databricks-del-private",
+                  "properties": {
+                    "serviceName": "Microsoft.Databricks/workspaces"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/natGateways', parameters('natGatewayName'))]"
+      ]
+    }
+  ]
+}

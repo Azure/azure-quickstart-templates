@@ -16,10 +16,10 @@ resource record 'Microsoft.Network/dnsZones/A@2018-05-01' = {
     TTL: 3600
     ARecords: [
       {
-        ipv4Address: '1.2.3.4'
+        ipv4Address: '203.0.113.1'
       }
       {
-        ipv4Address: '1.2.3.5'
+        ipv4Address: '203.0.113.2'
       }
     ]
   }

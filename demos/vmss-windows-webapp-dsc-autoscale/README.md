@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: vmss-windows-webapp-dsc-autoscale
 languages:
-- json
 - bicep
+- json
 ---
 # VM Scale Set with autoscale running an IIS WebApp
 

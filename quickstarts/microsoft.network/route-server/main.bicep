@@ -12,7 +12,7 @@ param vnetIpPrefix string = '10.1.0.0/16'
 param vnetNew_or_Existing string = 'New'
 
 @description('Route Server subnet IP prefix MUST be within vnet IP prefix address space.')
-param routeServerSubnetIpPrefix string = '10.1.1.0/27'
+param routeServerSubnetIpPrefix string = '10.1.1.0/26'
 
 
 @description('Specify whether to provision new standard public IP or deploy using existing standard public IP.')

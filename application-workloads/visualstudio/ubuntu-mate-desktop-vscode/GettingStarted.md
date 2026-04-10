@@ -1,6 +1,6 @@
-# Deploy an Ubuntu Mate Desktop VM with VSCode
+# Deploy an Ubuntu Mate Desktop VM with VS Code
 
-The purpose of this ARM Template is **Deploy an Ubuntu Mate Desktop VM with VSCode** inserting a few parameters.
+The purpose of this ARM Template is **Deploy an Ubuntu Mate Desktop VM with VS Code** inserting a few parameters.
 
 ## The Template
 

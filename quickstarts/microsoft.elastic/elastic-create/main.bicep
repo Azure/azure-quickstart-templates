@@ -34,11 +34,11 @@ var tagRulesProperties = {
   }
 }
 
-resource monitor 'Microsoft.Elastic/monitors@2023-02-01-preview' = {
+resource monitor 'Microsoft.Elastic/monitors@2023-11-01-preview' = {
   name: resourceName
   location: location
   sku: {
-    name: 'ess-monthly-consumption_Monthly@TIDhjdtn7tfnxcy'
+    name: 'ess-consumption-2024_Monthly@TIDgmz7xq9ge3py'
   }
   properties: {
     userInfo: {
@@ -48,7 +48,7 @@ resource monitor 'Microsoft.Elastic/monitors@2023-02-01-preview' = {
   tags: monitorTags
 }
 
-resource tagRule 'Microsoft.Elastic/monitors/tagRules@2023-02-01-preview' = {
+resource tagRule 'Microsoft.Elastic/monitors/tagRules@2023-11-01-preview' = {
   parent: monitor
   name: 'default'
   properties: tagRulesProperties

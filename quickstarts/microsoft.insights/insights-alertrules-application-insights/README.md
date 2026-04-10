@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: insights-alertrules-application-insights
 languages:
-- json
 - bicep
+- json
 ---
 # Deploy Application Insight and create alert in it
 

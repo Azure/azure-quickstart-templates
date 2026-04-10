@@ -20,16 +20,21 @@ var storageAccountName = '${toLower(projectName)}${uniqueString(resourceGroup().
 var storageEndpoint = '${projectName}StorageEndpont'
 var storageContainerName = '${toLower(projectName)}results'
 
-resource storageAccount 'Microsoft.Storage/storageAccounts@2021-08-01' = {
+resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' = {
   name: storageAccountName
   location: location
   sku: {
     name: 'Standard_LRS'
   }
   kind: 'Storage'
+  properties: {
+    allowBlobPublicAccess: false
+    minimumTlsVersion: 'TLS1_2'
+    supportsHttpsTrafficOnly: true
+  }
 }
 
-resource container 'Microsoft.Storage/storageAccounts/blobServices/containers@2021-08-01' = {
+resource container 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-01-01' = {
   name: '${storageAccountName}/default/${storageContainerName}'
   properties: {
     publicAccess: 'None'
@@ -39,7 +44,7 @@ resource container 'Microsoft.Storage/storageAccounts/blobServices/containers@20
   ]
 }
 
-resource IoTHub 'Microsoft.Devices/IotHubs@2021-07-02' = {
+resource IoTHub 'Microsoft.Devices/IotHubs@2023-06-30' = {
   name: iotHubName
   location: location
   sku: {
@@ -107,3 +112,8 @@ resource IoTHub 'Microsoft.Devices/IotHubs@2021-07-02' = {
     }
   }
 }
+
+output name string = IoTHub.name
+output resourceId string = IoTHub.id
+output resourceGroupName string = resourceGroup().name
+output location string = location

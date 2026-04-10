@@ -29,7 +29,7 @@ param secondThreshold int = 110
 @description('The list of email addresses to send the budget notification to when the threshold is exceeded.')
 param contactEmails array
 
-resource budget 'Microsoft.Consumption/budgets@2021-10-01' = {
+resource budget 'Microsoft.Consumption/budgets@2023-11-01' = {
   name: budgetName
   properties: {
     timePeriod: {
@@ -55,3 +55,7 @@ resource budget 'Microsoft.Consumption/budgets@2021-10-01' = {
     }
   }
 }
+
+output name string = budget.name
+output resourceId string = budget.id
+

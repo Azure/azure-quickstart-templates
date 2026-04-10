@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: batchaccount-with-storage
 languages:
-- json
 - bicep
+- json
 ---
 # Create a Batch Account using a template
 

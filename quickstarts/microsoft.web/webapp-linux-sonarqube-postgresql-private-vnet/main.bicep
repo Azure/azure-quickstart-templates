@@ -15,6 +15,9 @@ param administratorLogin string
 @secure()
 param administratorLoginPassword string
 
+@description('Sonarqube docker tag')
+param sonarqubeDockerTag string = 'latest'
+
 @description('The tier of the particular SKU, e.g. Burstable')
 @allowed([
   'Burstable'
@@ -45,23 +48,23 @@ param createMode string = 'Default'
 
 @description('Sku and size of App Service Plan (F1 does not support virtual network integration)')
 @allowed([
- 'B1'
- 'B2'
- 'B3'
- 'D1'
- 'I1'
- 'I1v2'
- 'I2v2'
- 'I3v2'
- 'P1V2'
- 'P1V3'
- 'P2V2'
- 'P2V3'
- 'P3V2'
- 'P3V3'
- 'S1'
- 'S2'
- 'S3'
+  'B1'
+  'B2'
+  'B3'
+  'D1'
+  'I1'
+  'I1v2'
+  'I2v2'
+  'I3v2'
+  'P1V2'
+  'P1V3'
+  'P2V2'
+  'P2V3'
+  'P3V2'
+  'P3V3'
+  'S1'
+  'S2'
+  'S3'
 ])
 param appServicePlanSkuName string = 'B1'
 
@@ -71,7 +74,7 @@ var privateDNSZoneName = '${siteName}.private.postgres.database.azure.com'
 var privateDNSZoneLinkName = '${siteName}privatelink'
 var postgresFlexibleServersName = '${siteName}postgres'
 
-resource virtualNetwork 'Microsoft.Network/virtualNetworks@2021-08-01' = {
+resource virtualNetwork 'Microsoft.Network/virtualNetworks@2023-11-01' = {
   name: virtualNetworkName
   location: location
   properties: {
@@ -143,7 +146,7 @@ resource privateDNSZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLin
   }
 }
 
-resource postgresFlexibleServers 'Microsoft.DBforPostgreSQL/flexibleServers@2021-06-01' = {
+resource postgresFlexibleServers 'Microsoft.DBforPostgreSQL/flexibleServers@2023-12-01-preview' = {
   name: postgresFlexibleServersName
   location: location
   sku: {
@@ -181,7 +184,7 @@ resource postgresFlexibleServers 'Microsoft.DBforPostgreSQL/flexibleServers@2021
   ]
 }
 
-resource appServicePlan 'Microsoft.Web/serverfarms@2021-03-01' = {
+resource appServicePlan 'Microsoft.Web/serverfarms@2023-12-01' = {
   name: appServicePlanName
   location: location
   kind: 'linux'
@@ -193,7 +196,7 @@ resource appServicePlan 'Microsoft.Web/serverfarms@2021-03-01' = {
   }
 }
 
-resource webApplication 'Microsoft.Web/sites@2021-03-01' = {
+resource webApplication 'Microsoft.Web/sites@2023-12-01' = {
   name: siteName
   location: location
   identity: {
@@ -206,7 +209,7 @@ resource webApplication 'Microsoft.Web/sites@2021-03-01' = {
     siteConfig: {
       minTlsVersion: '1.2'
       ftpsState: 'Disabled'
-      linuxFxVersion: 'DOCKER|sonarqube'
+      linuxFxVersion: 'DOCKER|sonarqube:${sonarqubeDockerTag}'
       appSettings: [
         {
           name: 'WEBSITES_PORT'

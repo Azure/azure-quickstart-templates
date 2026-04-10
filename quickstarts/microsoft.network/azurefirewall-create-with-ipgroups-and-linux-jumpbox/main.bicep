@@ -57,6 +57,9 @@ var linuxConfiguration = {
       }
     ]
   }
+  patchSettings: {
+      patchMode: 'AutomaticByPlatform'
+  }
 }
 var networkSecurityGroupName = '${serversSubnetName}-nsg'
 var azureFirewallIpConfigurations = [for i in range(0, numberOfFirewallPublicIPAddresses): {
@@ -71,7 +74,7 @@ var azureFirewallIpConfigurations = [for i in range(0, numberOfFirewallPublicIPA
   }
 }]
 
-resource ipgroup1 'Microsoft.Network/ipGroups@2021-08-01' = {
+resource ipgroup1 'Microsoft.Network/ipGroups@2023-09-01' = {
   name: ipgroups_name1
   location: location
   properties: {
@@ -83,7 +86,7 @@ resource ipgroup1 'Microsoft.Network/ipGroups@2021-08-01' = {
   }
 }
 
-resource ipgroup2 'Microsoft.Network/ipGroups@2021-08-01' = {
+resource ipgroup2 'Microsoft.Network/ipGroups@2023-09-01' = {
   name: ipgroups_name2
   location: location
   properties: {
@@ -94,7 +97,7 @@ resource ipgroup2 'Microsoft.Network/ipGroups@2021-08-01' = {
   }
 }
 
-resource storageAccount 'Microsoft.Storage/storageAccounts@2021-09-01' = {
+resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' = {
   name: storageAccountName
   location: location
   sku: {
@@ -104,7 +107,7 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2021-09-01' = {
   properties: {}
 }
 
-resource azfwRouteTable 'Microsoft.Network/routeTables@2021-08-01' = {
+resource azfwRouteTable 'Microsoft.Network/routeTables@2023-09-01' = {
   name: azfwRouteTableName
   location: location
   properties: {
@@ -122,13 +125,13 @@ resource azfwRouteTable 'Microsoft.Network/routeTables@2021-08-01' = {
   }
 }
 
-resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2021-08-01' = {
+resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2023-09-01' = {
   name: networkSecurityGroupName
   location: location
   properties: {}
 }
 
-resource virtualNetwork 'Microsoft.Network/virtualNetworks@2021-08-01' = {
+resource virtualNetwork 'Microsoft.Network/virtualNetworks@2023-09-01' = {
   name: virtualNetworkName
   location: location
   tags: {
@@ -169,7 +172,7 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2021-08-01' = {
   }
 }
 
-resource publicIP 'Microsoft.Network/publicIPAddresses@2021-08-01' = [for i in range(0, numberOfFirewallPublicIPAddresses): {
+resource publicIP 'Microsoft.Network/publicIPAddresses@2023-09-01' = [for i in range(0, numberOfFirewallPublicIPAddresses): {
   name: '${publicIPNamePrefix}${i + 1}'
   location: location
   sku: {
@@ -181,7 +184,7 @@ resource publicIP 'Microsoft.Network/publicIPAddresses@2021-08-01' = [for i in r
   }
 }]
 
-resource jumpBoxPublicIPAddress 'Microsoft.Network/publicIPAddresses@2021-08-01' = {
+resource jumpBoxPublicIPAddress 'Microsoft.Network/publicIPAddresses@2023-09-01' = {
   name: jumpBoxPublicIPAddressName
   location: location
   properties: {
@@ -189,7 +192,7 @@ resource jumpBoxPublicIPAddress 'Microsoft.Network/publicIPAddresses@2021-08-01'
   }
 }
 
-resource jumpBoxNsg 'Microsoft.Network/networkSecurityGroups@2021-08-01' = {
+resource jumpBoxNsg 'Microsoft.Network/networkSecurityGroups@2023-09-01' = {
   name: jumpBoxNsgName
   location: location
   properties: {
@@ -211,7 +214,7 @@ resource jumpBoxNsg 'Microsoft.Network/networkSecurityGroups@2021-08-01' = {
   }
 }
 
-resource JumpBoxNic 'Microsoft.Network/networkInterfaces@2021-08-01' = {
+resource JumpBoxNic 'Microsoft.Network/networkInterfaces@2023-09-01' = {
   name: jumpBoxNicName
   location: location
   properties: {
@@ -238,7 +241,7 @@ resource JumpBoxNic 'Microsoft.Network/networkInterfaces@2021-08-01' = {
   ]
 }
 
-resource ServerNic 'Microsoft.Network/networkInterfaces@2021-08-01' = {
+resource ServerNic 'Microsoft.Network/networkInterfaces@2023-09-01' = {
   name: serverNicName
   location: location
   properties: {
@@ -259,18 +262,21 @@ resource ServerNic 'Microsoft.Network/networkInterfaces@2021-08-01' = {
   ]
 }
 
-resource JumpBoxVm 'Microsoft.Compute/virtualMachines@2022-03-01' = {
+resource JumpBoxVm 'Microsoft.Compute/virtualMachines@2023-09-01' = {
   name: 'JumpBox'
   location: location
+  tags: {
+      AzSecPackAutoConfigReady: true
+  }
   properties: {
     hardwareProfile: {
       vmSize: vmSize
     }
     storageProfile: {
       imageReference: {
-        publisher: 'Canonical'
-        offer: 'UbuntuServer'
-        sku: '18.04-LTS'
+        publisher: 'MicrosoftCBLMariner'
+        offer: 'cbl-mariner'
+        sku: 'cbl-mariner-2-gen2'
         version: 'latest'
       }
       osDisk: {
@@ -299,18 +305,21 @@ resource JumpBoxVm 'Microsoft.Compute/virtualMachines@2022-03-01' = {
   }
 }
 
-resource ServerVm 'Microsoft.Compute/virtualMachines@2022-03-01' = {
+resource ServerVm 'Microsoft.Compute/virtualMachines@2023-09-01' = {
   name: 'Server'
   location: location
+  tags: {
+      AzSecPackAutoConfigReady: true
+  }
   properties: {
     hardwareProfile: {
       vmSize: vmSize
     }
     storageProfile: {
       imageReference: {
-        publisher: 'Canonical'
-        offer: 'UbuntuServer'
-        sku: '18.04-LTS'
+        publisher: 'MicrosoftCBLMariner'
+        offer: 'cbl-mariner'
+        sku: 'cbl-mariner-2-gen2'
         version: 'latest'
       }
       osDisk: {
@@ -321,7 +330,7 @@ resource ServerVm 'Microsoft.Compute/virtualMachines@2022-03-01' = {
       computerName: 'Server'
       adminUsername: adminUsername
       adminPassword: adminPasswordOrKey
-      linuxConfiguration: ((authenticationType == 'password') ? json('null') : linuxConfiguration)
+      linuxConfiguration: ((authenticationType == 'password') ? null : linuxConfiguration)
     }
     networkProfile: {
       networkInterfaces: [
@@ -339,7 +348,7 @@ resource ServerVm 'Microsoft.Compute/virtualMachines@2022-03-01' = {
   }
 }
 
-resource firewall 'Microsoft.Network/azureFirewalls@2021-08-01' = {
+resource firewall 'Microsoft.Network/azureFirewalls@2023-09-01' = {
   name: firewallName
   location: location
   dependsOn: [
@@ -429,3 +438,8 @@ resource firewall 'Microsoft.Network/azureFirewalls@2021-08-01' = {
     ]
   }
 }
+
+output location string = location
+output name string = firewall.name
+output resourceGroupName string = resourceGroup().name
+output resourceId string = firewall.id

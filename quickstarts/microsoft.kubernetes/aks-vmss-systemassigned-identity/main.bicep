@@ -27,7 +27,7 @@ param agentVMSize string = 'Standard_D2s_v3'
 ])
 param osType string = 'Linux'
 
-resource aksCluster 'Microsoft.ContainerService/managedClusters@2022-01-02-preview' = {
+resource aksCluster 'Microsoft.ContainerService/managedClusters@2024-02-01' = {
   location: location
   name: aksClusterName
   tags: {

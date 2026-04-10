@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: aks
 languages:
-- json
 - bicep
+- json
 ---
 # Azure Container Service (AKS)
 

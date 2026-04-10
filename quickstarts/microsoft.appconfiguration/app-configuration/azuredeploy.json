@@ -40,28 +40,11 @@
         "description": "Specify the storage account name."
       }
     },
-      "appConfigStoreResourceGroup": {
+    "configStoreName": {
       "type": "string",
-      "metadata": {
-        "description": "Name of the resource group for the app config store."
-      }
-    },
-    "appConfigStoreName": {
-      "type": "string",
+      "defaultValue": "[format('appconfig{0}', uniqueString(resourceGroup().id))]",
       "metadata": {
         "description": "App configuration store name."
-      }
-    },
-    "vmSkuKey": {
-      "type": "string",
-      "metadata": {
-        "description": "Specify the name of the key in the app config store for the VM windows sku."
-      }
-    },
-    "diskSizeKey": {
-      "type": "string",
-      "metadata": {
-        "description": "Specify the name of the key in the app config store for the VM disk size"
       }
     }
   },
@@ -74,20 +57,52 @@
     "vmName": "SimpleWinVM",
     "virtualNetworkName": "MyVNET",
     "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
-    "appConfigRef": "[resourceId(parameters('appConfigStoreResourceGroup'), 'Microsoft.AppConfiguration/configurationStores', parameters('appConfigStoreName'))]",
     "windowsOSVersionParameters": {
-      "key": "[parameters('vmSkuKey')]",
-      "label": "template"
+      "key": "version",
+      "label": "template",
+      "value": "2012-R2-Datacenter"
     },
     "diskSizeGBParameters": {
-      "key": "[parameters('diskSizeKey')]",
-      "label": "template"
+      "key": "size",
+      "label": "template",
+      "value": "128"
     }
   },
   "resources": [
     {
+      "type": "Microsoft.AppConfiguration/configurationStores",
+      "apiVersion": "2024-05-01",
+      "name": "[parameters('configStoreName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "standard"
+      }
+    },
+    {
+      "type": "Microsoft.AppConfiguration/configurationStores/keyValues",
+      "apiVersion": "2024-05-01",
+      "name": "[format('{0}/{1}${2}', parameters('configStoreName'), string(variables('windowsOSVersionParameters').key), string(variables('windowsOSVersionParameters').label))]",
+      "properties": {
+        "value": "[string(variables('windowsOSVersionParameters').value)]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.AppConfiguration/configurationStores', parameters('configStoreName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.AppConfiguration/configurationStores/keyValues",
+      "apiVersion": "2024-05-01",
+      "name": "[format('{0}/{1}${2}', parameters('configStoreName'), string(variables('diskSizeGBParameters').key), string(variables('diskSizeGBParameters').label))]",
+      "properties": {
+        "value": "[string(variables('diskSizeGBParameters').value)]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.AppConfiguration/configurationStores', parameters('configStoreName'))]"
+      ]
+    },
+    {
       "type": "Microsoft.Storage/storageAccounts",
-      "apiVersion": "2019-06-01",
+      "apiVersion": "2023-01-01",
       "name": "[parameters('storageAccountName')]",
       "location": "[parameters('location')]",
       "sku": {
@@ -99,7 +114,7 @@
     },
     {
       "type": "Microsoft.Network/publicIPAddresses",
-      "apiVersion": "2020-05-01",
+      "apiVersion": "2023-11-01",
       "name": "[variables('publicIPAddressName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -111,7 +126,7 @@
     },
     {
       "type": "Microsoft.Network/virtualNetworks",
-      "apiVersion": "2020-05-01",
+      "apiVersion": "2023-11-01",
       "name": "[variables('virtualNetworkName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -132,7 +147,7 @@
     },
     {
       "type": "Microsoft.Network/networkInterfaces",
-      "apiVersion": "2020-05-01",
+      "apiVersion": "2023-11-01",
       "name": "[variables('nicName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
@@ -158,7 +173,7 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines",
-      "apiVersion": "2019-12-01",
+      "apiVersion": "2024-03-01",
       "name": "[variables('vmName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
@@ -178,7 +193,7 @@
           "imageReference": {
             "publisher": "MicrosoftWindowsServer",
             "offer": "WindowsServer",
-            "sku": "[listKeyValue(variables('appConfigRef'), '2019-10-01', variables('windowsOSVersionParameters')).value]",
+            "sku": "[reference(resourceId('Microsoft.AppConfiguration/configurationStores/keyValues', parameters('configStoreName'), format('{0}${1}',variables('windowsOSVersionParameters').key,variables('windowsOSVersionParameters').label)), '2024-05-01').value]",
             "version": "latest"
           },
           "osDisk": {
@@ -186,7 +201,7 @@
           },
           "dataDisks": [
             {
-              "diskSizeGB": "[listKeyValue(variables('appConfigRef'), '2019-10-01', variables('diskSizeGBParameters')).value]",
+              "diskSizeGB": "[reference(resourceId('Microsoft.AppConfiguration/configurationStores/keyValues', parameters('configStoreName'), format('{0}${1}',variables('diskSizeGBParameters').key,variables('diskSizeGBParameters').label)), '2024-05-01').value]",
               "lun": 0,
               "createOption": "Empty"
             }

@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: backup-vault-basic
 languages:
-- json
 - bicep
+- json
 ---
 # Create Backup Vault
 

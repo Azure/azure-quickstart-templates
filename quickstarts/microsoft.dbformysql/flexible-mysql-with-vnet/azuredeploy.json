@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.5.6.12127",
-      "templateHash": "4845672074065729646"
+      "version": "0.29.47.4906",
+      "templateHash": "9691207643115805302"
     }
   },
   "parameters": {
@@ -36,7 +36,7 @@
       }
     },
     "administratorLoginPassword": {
-      "type": "secureString",
+      "type": "securestring",
       "minLength": 8,
       "metadata": {
         "description": "Database administrator password"
@@ -44,7 +44,7 @@
     },
     "skuName": {
       "type": "string",
-      "defaultValue": "Standard_B1s",
+      "defaultValue": "Standard_D2ads_v5",
       "metadata": {
         "description": "Azure database for MySQL sku name "
       }
@@ -58,14 +58,14 @@
     },
     "StorageIops": {
       "type": "int",
-      "defaultValue": 360,
+      "defaultValue": 3200,
       "metadata": {
         "description": "Azure database for MySQL storage Iops"
       }
     },
     "SkuTier": {
       "type": "string",
-      "defaultValue": "Burstable",
+      "defaultValue": "GeneralPurpose",
       "allowedValues": [
         "GeneralPurpose",
         "MemoryOptimized",
@@ -139,7 +139,7 @@
   "resources": [
     {
       "type": "Microsoft.Network/virtualNetworks/subnets",
-      "apiVersion": "2021-05-01",
+      "apiVersion": "2024-01-01",
       "name": "[format('{0}/{1}', parameters('virtualNetworkName'), parameters('subnetName'))]",
       "properties": {
         "addressPrefix": "[parameters('mySqlSubnetPrefix')]",
@@ -160,7 +160,7 @@
     },
     {
       "type": "Microsoft.Network/virtualNetworks",
-      "apiVersion": "2021-05-01",
+      "apiVersion": "2024-01-01",
       "name": "[parameters('virtualNetworkName')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -175,7 +175,8 @@
       "type": "Microsoft.Network/privateDnsZones",
       "apiVersion": "2020-06-01",
       "name": "[parameters('dnsZoneFqdn')]",
-      "location": "global"
+      "location": "global",
+      "properties": {}
     },
     {
       "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
@@ -195,7 +196,7 @@
     },
     {
       "type": "Microsoft.DBforMySQL/flexibleServers",
-      "apiVersion": "2021-05-01",
+      "apiVersion": "2024-02-01-preview",
       "name": "[parameters('serverName')]",
       "location": "[parameters('location')]",
       "sku": {
@@ -220,7 +221,7 @@
           "mode": "Disabled"
         },
         "network": {
-          "delegatedSubnetResourceId": "[format('{0}/subnets/{1}', reference(resourceId('Microsoft.Network/privateDnsZones/virtualNetworkLinks', parameters('dnsZoneFqdn'), parameters('virtualNetworkName'))).virtualNetwork.id, parameters('subnetName'))]",
+          "delegatedSubnetResourceId": "[format('{0}/subnets/{1}', reference(resourceId('Microsoft.Network/privateDnsZones/virtualNetworkLinks', parameters('dnsZoneFqdn'), parameters('virtualNetworkName')), '2020-06-01').virtualNetwork.id, parameters('subnetName'))]",
           "privateDnsZoneResourceId": "[resourceId('Microsoft.Network/privateDnsZones', parameters('dnsZoneFqdn'))]"
         }
       },
@@ -231,13 +232,29 @@
     }
   ],
   "outputs": {
+    "location": {
+      "type": "string",
+      "value": "[parameters('location')]"
+    },
+    "name": {
+      "type": "string",
+      "value": "[parameters('serverName')]"
+    },
+    "resourceGroupName": {
+      "type": "string",
+      "value": "[resourceGroup().name]"
+    },
+    "resourceId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.DBforMySQL/flexibleServers', parameters('serverName'))]"
+    },
     "mysqlHostname": {
       "type": "string",
       "value": "[format('{0}.{1}', parameters('serverName'), parameters('dnsZoneFqdn'))]"
     },
     "mysqlSubnetId": {
       "type": "string",
-      "value": "[format('{0}/subnets/{1}', reference(resourceId('Microsoft.Network/privateDnsZones/virtualNetworkLinks', parameters('dnsZoneFqdn'), parameters('virtualNetworkName'))).virtualNetwork.id, parameters('subnetName'))]"
+      "value": "[format('{0}/subnets/{1}', reference(resourceId('Microsoft.Network/privateDnsZones/virtualNetworkLinks', parameters('dnsZoneFqdn'), parameters('virtualNetworkName')), '2020-06-01').virtualNetwork.id, parameters('subnetName'))]"
     },
     "vnetId": {
       "type": "string",

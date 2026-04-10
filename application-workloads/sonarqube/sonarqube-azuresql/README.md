@@ -86,7 +86,7 @@ This template performs the following workflow to create the SonarQube installati
 * In case of secure installation, run a PowerShell custom extension on the Virtual Machine to:
   1. Install Application Request Routing on IIS (ARR)
   2. Generate a self-signed certificate
-  3. Change SonarQube website binding to HTTPs using port 443 and the self-signed certificate.
+  3. Change SonarQube website binding to HTTPS using port 443 and the self-signed certificate.
   4. Disable HTTP firewall rule.
   5. Configure AAR proxy settings.
   6. Add rewrite rules for the website.
@@ -121,7 +121,7 @@ http://[sq\_PublicIP\_DnsPrefix].[AzureRegion].cloudapp.azure.com:9000
 | sqDB\_DBName | Name of the SonarQube DB on the Azure SQL Server | sonar |
 | sqDB\_DBEdition | Edition of Azure SQL Server to create, Allowed Values: Basic, Business, Premium, Standard, Web | Basic |
 | sqStorage_AcctType | Type of Azure Storage Acct to create, Standard\_LRS, Standard\_ZRS, Standard\_GRS, Standard\_RAGRS, Premium\_LRS   | Standard\_LRS |
-| sqVM_Installation_Type | Type of SonarQube installation: Secure (HTTPs) or nonsecure (HTTP)| Secure |
+| sqVM_Installation_Type | Type of SonarQube installation: Secure (HTTPS) or nonsecure (HTTP)| Secure |
 | sqVM_ReverseProxy_Type | Type of reverse proxy to be used in case of Secure installation | IIS |
 | sqVM_LTS_Version  | SonarQube version to install, currently support from sonarqube-5.6.4 (LTS) up to 7.4 | sonarqube-7.4 |
 

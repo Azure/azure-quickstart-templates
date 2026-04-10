@@ -6,8 +6,8 @@ products:
 - azure-resource-manager
 urlFragment: key-vault-secret-create
 languages:
-- json
 - bicep
+- json
 ---
 # Create a Key Vault and a list of secrets
 

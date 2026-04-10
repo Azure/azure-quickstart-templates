@@ -1926,3 +1926,64 @@ class InstallCA
     }
     
 }
+
+[DscResource()]
+class DownloadAndInstallvcredist
+{
+    [DscProperty(key)]
+    [Ensure] $Ensure
+
+    [void] Set()
+    {
+        $vcredist64Path = "C:\VC_redist.x64.exe"
+        $vcredist86Path = "C:\VC_redist.x86.exe"
+        
+        Write-Verbose "Downloading Microsoft Visual C++ Redistributable(x64) installation source..."
+        $vcredistUrl = "https://aka.ms/vs/17/release/vc_redist.x64.exe"
+        $WebClient = New-Object System.Net.WebClient
+        $WebClient.DownloadFile($vcredistUrl,$vcredist64Path)
+
+        Write-Verbose "installing Microsoft Visual C++ Redistributable(x64)..."
+        Start-Process -FilePath $vcredist64Path  -ArgumentList ('/install', '/quiet') -Wait
+        Write-Verbose "Microsoft Visual C++ Redistributable(x64) installed Successfully!"
+
+        Write-Verbose "Downloading Microsoft Visual C++ Redistributable(x86) installation source..."
+        $vcredistUrl = "https://aka.ms/vs/17/release/vc_redist.x86.exe"
+        $WebClient = New-Object System.Net.WebClient
+        $WebClient.DownloadFile($vcredistUrl,$vcredist86Path)
+
+        Write-Verbose "installing Microsoft Visual C++ Redistributable(x86)..."
+        Start-Process -FilePath $vcredist86Path  -ArgumentList ('/install', '/quiet') -Wait
+        Write-Verbose "Microsoft Visual C++ Redistributable(x86) installed Successfully!"
+
+    
+    }
+
+    [bool] Test()
+    {
+        #This minorVersion is the installed Microsoft Visual C++ Redistributable version.
+        $minorVersion = [version]'14.34.0.0'
+
+        $key = [Microsoft.Win32.RegistryKey]::OpenBaseKey([Microsoft.Win32.RegistryHive]::LocalMachine, [Microsoft.Win32.RegistryView]::Registry32)
+        $sub64Key =  $key.OpenSubKey("SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64")
+        $sub86Key =  $key.OpenSubKey("SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x86")
+        if($sub64Key -and $sub86Key)
+        {
+            $vcredist64Version = $sub64Key.GetValue('Version')
+            $vcredist86Version = $sub86Key.GetValue('Version')
+            if(($vcredist64Version -ne $null) -and ($vcredist86Version -ne $null))
+            {
+                $vcredist64Version = $vcredist64Version -replace '^v',''
+                $vcredist86Version = $vcredist86Version -replace '^v',''
+                return (([version]$vcredist64Version -ge $minorVersion) -and ([version]$vcredist86Version -ge $minorVersion))
+            }
+        }
+        return $false
+    
+    }
+
+    [DownloadAndInstallvcredist] Get()
+    {
+        return $this
+    }
+}

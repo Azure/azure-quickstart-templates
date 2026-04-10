@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.5.6.12127",
-      "templateHash": "5934802899125195053"
+      "version": "0.26.54.24096",
+      "templateHash": "17805408638569592847"
     }
   },
   "parameters": {
@@ -47,7 +47,7 @@
   "resources": [
     {
       "type": "Microsoft.Storage/storageAccounts",
-      "apiVersion": "2021-08-01",
+      "apiVersion": "2023-01-01",
       "name": "[parameters('storageAccountName')]",
       "location": "[parameters('location')]",
       "sku": {
@@ -55,14 +55,20 @@
       },
       "kind": "StorageV2",
       "properties": {
-        "accessTier": "Hot"
+        "accessTier": "Hot",
+        "minimumTlsVersion": "TLS1_2",
+        "supportsHttpsTrafficOnly": true,
+        "allowBlobPublicAccess": false
       }
     },
     {
       "type": "Microsoft.EventGrid/systemTopics",
-      "apiVersion": "2021-12-01",
+      "apiVersion": "2023-12-15-preview",
       "name": "[parameters('systemTopicName')]",
       "location": "[parameters('location')]",
+      "identity": {
+        "type": "SystemAssigned"
+      },
       "properties": {
         "source": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]",
         "topicType": "Microsoft.Storage.StorageAccounts"
@@ -73,7 +79,7 @@
     },
     {
       "type": "Microsoft.EventGrid/systemTopics/eventSubscriptions",
-      "apiVersion": "2021-12-01",
+      "apiVersion": "2023-12-15-preview",
       "name": "[format('{0}/{1}', parameters('systemTopicName'), parameters('eventSubName'))]",
       "properties": {
         "destination": {
@@ -93,5 +99,23 @@
         "[resourceId('Microsoft.EventGrid/systemTopics', parameters('systemTopicName'))]"
       ]
     }
-  ]
+  ],
+  "outputs": {
+    "name": {
+      "type": "string",
+      "value": "[parameters('eventSubName')]"
+    },
+    "resourceId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.EventGrid/systemTopics/eventSubscriptions', parameters('systemTopicName'), parameters('eventSubName'))]"
+    },
+    "resourceGroupName": {
+      "type": "string",
+      "value": "[resourceGroup().name]"
+    },
+    "location": {
+      "type": "string",
+      "value": "[parameters('location')]"
+    }
+  }
 }

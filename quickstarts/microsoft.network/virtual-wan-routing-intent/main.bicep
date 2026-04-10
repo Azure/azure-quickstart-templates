@@ -46,6 +46,10 @@ param hub2Spoke2AddressSpace string = '10.2.4.0/24'
 ])
 param firewallTier string = 'Standard' 
 
+@description('Default with RFC1918 prefixes, to add more use comma separated list of values in CIDR notation')
+param firewallSNATprivateRanges string[] = ['10.0.0.0/8','172.16.0.0/12','192.168.0.0/16','100.64.0.0/10'] //default values
+// param firewallSNATprivateRanges string[] = ['10.0.0.0/8','172.16.0.0/12','192.168.0.0/16','100.64.0.0/10,'11.0.0.0/8','12.0.0.0/8','13.0.0.0/8'] // example with custom values 
+
 @description('Enable vWAN Routing Intent and Policy for Internet Traffic')
 param internetTrafficRoutingPolicy bool = true
 
@@ -53,6 +57,12 @@ param internetTrafficRoutingPolicy bool = true
 param privateTrafficRoutingPolicy bool = true
 
 // NOTE: vWAN Routing Intent and Policy requires either InternetTrafficRoutingPolicy or PrivateTrafficRoutingPolicy to be true, otherwise feature will be disabled.
+
+// NOTE: specifying additional private IP prefixes will be unavaliable only if private traffic is not secured
+
+@description('Custom public IP prefixes to consider as internal for Virtual WAN - insert as comma-separated list of values in CIDR notation')
+param customPrivateTrafficPrefixes string[] = []
+// param customPrivateTrafficPrefixes string[] = ['11.0.0.0/8','12.0.0.0/8','13.0.0.0/8'] // example with custom values 
 
 @description('Deploy VPN Site-to-Site (S2S) Gateways')
 param deployS2Sgw bool = false
@@ -63,7 +73,6 @@ param deployERgw bool = false
 var vWANtype = 'Standard' // 'Standard' vWAN is required for Routing Intent and Policy
 var logAnalyticsWorkspaceName = '${vWANname}-LogAnalyticsWS' //single Log Analytics workspace for firewall logging
 var logAnalyticsWorkspaceSKU = 'pergb2018' // default value is 'pergb2018'
-// var logAnalyticsWorkspaceRetentionDays = 30 // default value is 30
 var rfc1918addressSpaces = ['10.0.0.0','172.16.0.0','192.168.0.0'] // RFC1918 address spaces
 var vpnGatewayScaleUnit = 1 // minimum value is 1
 var erGatewayScaleUnit = 1 // minimum value is 1
@@ -75,7 +84,7 @@ var vWANhubs = [
             addressSpace: hub1AddressSpace
             location: hub1Location
             routingPreference: 'ExpressRoute' // "ASPath", "ExpressRoute", "VpnGateway" - default is "ExpressRoute"
-            fwName: '${vWANname}-${hub1Name}-AzFW'
+            fwName: take('${vWANname}-${hub1Name}-AzFW',56) //maximum length for Firewall name is 56 characters
             fwTier: firewallTier // 'Standard' or 'Premium'
             fwPublicIPs: 1 // Mininum value is 1
             fwPolicyName: '${vWANname}-${hub1Name}-FirewallPolicy'
@@ -88,7 +97,7 @@ var vWANhubs = [
             addressSpace: hub2AddressSpace
             location: hub2Location
             routingPreference: 'ExpressRoute' // "ASPath", "ExpressRoute", "VpnGateway" - default is "ExpressRoute"
-            fwName: '${vWANname}-${hub2Name}-AzFW'
+            fwName: take('${vWANname}-${hub2Name}-AzFW',56)
             fwTier: firewallTier // 'Standard' or 'Premium'
             fwPublicips: 1 // Mininum value is 1
             fwPolicyName: '${vWANname}-${hub2Name}-FirewallPolicy'
@@ -105,7 +114,6 @@ module logAnalyticsWsModule './modules/loganalyticsws.bicep' = {
    logAnalyticsWorkspaceName: logAnalyticsWorkspaceName
    location: vWANhubs[0].location
    logAnalyticsWorkspaceSKU: logAnalyticsWorkspaceSKU
-   //logAnalyticsWorkspaceRetentionDays: logAnalyticsWorkspaceRetentionDays
   }
 }
 
@@ -114,7 +122,6 @@ module vNetsModule './modules/vnets.bicep' = {
   name: 'vNetsModule'
   params: {
     vWANhubs: vWANhubs
-    //vWANaddressSpaces: vWANaddressSpaces
   }
 }
 
@@ -133,6 +140,7 @@ module firewallPolicies './modules/firewallpolicies.bicep' = {
     vWANhubs: vWANhubs 
     sourceIPAddressSpaces: rfc1918addressSpaces
     destinationIPAddressSpaces: rfc1918addressSpaces
+    firewallSNATprivateRanges: firewallSNATprivateRanges
   }
 }
 
@@ -239,12 +247,24 @@ module resourceIntentModule './modules/routingintent.bicep' = if (internetTraffi
   dependsOn: [vWANHub1,vWANHub2,hub1Firewall,hub2Firewall]
 }
 
+module PrivateTrafficRouteTable './modules/PrivateTrafficRouteTable.bicep' = if ((internetTrafficRoutingPolicy == true || privateTrafficRoutingPolicy == true ) && !empty(customPrivateTrafficPrefixes)) {
+  name: 'PrivateTrafficRouteTable'
+  params: {
+    vWANhubs: vWANhubs
+    internetTrafficRoutingPolicy: internetTrafficRoutingPolicy
+    privateTrafficRoutingPolicy: privateTrafficRoutingPolicy
+    customPrivateTrafficPrefixes: customPrivateTrafficPrefixes
+  }
+  #disable-next-line no-unnecessary-depends
+  dependsOn: [resourceIntentModule]
+}
+
+
 module firewallDiagnosticsModule './modules/fwdiagnostics.bicep' = {
   name: 'firewallDiagnosticsModule'
   params: {
     vWANhubs: vWANhubs
     logAnalyticsWorkspaceID: logAnalyticsWsModule.outputs.LogAnalyticsWorkspaceID
-    // logAnalyticsWorkspaceRetentionDays: logAnalyticsWorkspaceRetentionDays
   }
   #disable-next-line no-unnecessary-depends
   dependsOn:[hub1Firewall, hub2Firewall]
@@ -268,7 +288,6 @@ module vpnS2Smodule './modules/vpns2s.bicep' = if (deployS2Sgw == true) {
     vWANHub2ID: vWANHub2.id
     vpnGatewayScaleUnit: vpnGatewayScaleUnit
     logAnalyticsWorkspaceID: logAnalyticsWsModule.outputs.LogAnalyticsWorkspaceID
-    // logAnalyticsWorkspaceRetentionDays: logAnalyticsWorkspaceRetentionDays
   }
   #disable-next-line no-unnecessary-dependson // This is required to avoid conflicts in vWAN RP, some resources must be created in a certain order
   dependsOn: [resourceIntentModule]
@@ -282,7 +301,6 @@ module erModule './modules/er.bicep' = if (deployERgw == true) {
     vWANHub2ID: vWANHub2.id
     ErGatewayScaleUnit: erGatewayScaleUnit
     LogAnalyticsWorkspaceID: logAnalyticsWsModule.outputs.LogAnalyticsWorkspaceID
-    //LogAnalyticsWorkspaceRetentionDays: logAnalyticsWorkspaceRetentionDays
   }
   #disable-next-line no-unnecessary-dependson
   dependsOn: [resourceIntentModule]

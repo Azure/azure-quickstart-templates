@@ -1,0 +1,208 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
+//======================================================================================================================
+// Common utility functions
+//
+// TIP: Use Ctrl+K,Ctrl+0 to collapse all regions in VS Code
+//======================================================================================================================
+
+
+//===| Date functions |=================================================================================================
+
+// monthstring
+.create-or-alter function 
+with (docstring = @'Returns the name of the month for the specified date (e.g. Jan or January)', folder =@'Common') 
+monthstring(['date']: datetime, length: int = 9)
+{
+    substring(dynamic(['January','February','March','April','May','June','July','August','September','October','November','December'])[getmonth(['date']) - 1], 0, length)
+}
+
+// datestring
+.create-or-alter function 
+with (docstring = @'Converts 2 dates into a simple, user-friendly date range (e.g. Jan 1-Jan 3)', folder =@'Common') 
+datestring(start: datetime, end: datetime = datetime('0001-01-01'))
+{
+    let month = (d: datetime) { monthstring(d, 3) };
+    let endDate = iff(end == datetime('0001-01-01'), start, end);
+    let sameDate = startofday(start) == startofday(endDate);
+    let sameMonth = startofmonth(start) == startofmonth(endDate);
+    let sameYear = startofyear(start) == startofyear(endDate);
+    let fullMonth = startofday(start) == startofmonth(start) and startofday(endDate) == startofday(endofmonth(endDate));
+    let fullYear = startofday(start) == startofyear(start) and startofday(endDate) == startofday(endofyear(endDate));
+    let currentYear = sameYear and startofyear(start) == startofyear(now());
+    case(
+        // Full year             | yyyy (same year) / yyyy-yyyy (diff years)
+        fullYear,
+            strcat(getyear(start), iff(sameYear, '', strcat('-', getyear(endDate)))),
+        // 1 full mo, same year  | Mmm yyyy
+        fullMonth and sameMonth and sameYear,
+            strcat(month(start), ' ', getyear(start)),
+        // 2+ full mo, same year | Mmm-Mmm (current year) / Mmm-Mmm yyyy (other year)
+        fullMonth and sameYear,
+            strcat(month(start), '-', month(endDate), iff(currentYear, '', strcat(' ', getyear(endDate)))),
+        // Full mo, diff year    | Mmm yyyy-Mmm yyyy
+        fullMonth and not(sameYear),
+            strcat(month(start), ' ', getyear(start), '-', month(endDate), ' ', getyear(endDate)),
+        // Same date             | Mmm d (current year) / Mmm d, yyyy (other year)
+        sameDate,
+            strcat(month(start), ' ', dayofmonth(start), iff(currentYear, '', strcat(', ', getyear(endDate)))),
+        // 1 partial M, same Y   | Mmm d-d (current year) / Mmm d-d, yyyy (other year)
+        not(fullMonth) and sameMonth and sameYear,
+            strcat(month(start), ' ', dayofmonth(start), '-', dayofmonth(endDate), iff(currentYear, '', strcat(' ', getyear(endDate)))),
+        // 2+ partial M, same Y  | Mmm d-Mmm d (current year) / Mmm d-Mmm d, yyyy (other year)
+        not(fullMonth) and not(sameMonth) and sameYear,
+            strcat(month(start), ' ', dayofmonth(start), '-', month(endDate), ' ', dayofmonth(endDate), iff(currentYear, '', strcat(', ', getyear(endDate)))),
+        // All other cases       | Mmm d, yyyy-Mmm d, yyyy
+        strcat(month(start), ' ', dayofmonth(start), ', ', getyear(start), '-', month(endDate), ' ', dayofmonth(endDate), ', ', getyear(endDate))
+    )
+}
+
+// daterange
+.create-or-alter function 
+with (docstring = @'DEPRECATED: Please use datestring(); function will be removed on or after the Jan 2026 release', folder =@'Common') 
+daterange(start: datetime, end: datetime = datetime('0001-01-01'))
+{
+    datestring(start, end)
+}
+
+// monthsago
+.create-or-alter function 
+with (docstring = 'DEPRECATED: Please use startofmonth(now(), -<# of months>); function will be removed on or after the Jan 2026 release', folder = 'Common')
+monthsago(months: int)
+{
+    datetime_add('month', -months, startofmonth(now()))
+}
+
+
+//===| Number functions |===============================================================================================
+// NOTE: Must be defined before string converters
+
+// delta
+.create-or-alter function 
+with (docstring = @'Compares 2 values and returns the percentage change from oldval to newval', folder =@'Common') 
+delta(oldval: double, newval: double)
+{
+    (newval - todouble(oldval))/oldval
+}
+
+// percentOfTotal
+// NOTE: Must be before percent() function
+.create-or-alter function 
+with (docstring = @'Calculates the percentage of each record based on a required Count column', folder =@'Common') 
+percentOfTotal(t: (Count: long), tot: long)
+{
+    let total = todouble(tot);
+    t 
+    | extend Percent = round(Count / total * 100, 3) 
+    | order by Count desc
+}
+
+// percent
+.create-or-alter function 
+with (docstring = @'Calculates the percentage of each record based on a required Count column', folder =@'Common') 
+percent(t: (Count: long))
+{
+    let total = todouble(toscalar(t | summarize sum(Count)));
+    percentOfTotal(t, total)
+}
+
+// plusminus
+.create-or-alter function 
+with (docstring = 'Shows a +/- sign based on the direction of the number', folder = 'Common')
+plusminus(val: string)
+{
+    let neg = substring(val, 0, 1) == '-';
+    iff(neg, val, strcat('+', val))
+}
+
+// updown
+.create-or-alter function 
+with (docstring = 'Shows an up/down arrow based on the direction of the number', folder = 'Common')
+updown(val: string)
+{
+    // TODO: Handle 0
+    let neg = substring(val, 0, 1) == '-';
+    iff(neg, strcat('↓', substring(val, 1)), strcat('↑', val))
+}
+
+
+//===| String functions |===============================================================================================
+
+// percentstring
+// NOTE: Must be defined before deltastring
+.create-or-alter function 
+with (docstring = 'Calculate a percentage and render as a string', folder = 'Common')
+percentstring(num: double, total: double = 1.0, places: int = 9)
+{
+    let value = 1.0 * num / total * 100;
+    strcat(case(
+        places != 9, round(value, places),
+        value < 10,  round(value, 2),
+        round(value, 1)
+    ), '%')
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
+// arraystring
+.create-or-alter function 
+with (docstring = 'Convert an array to a comma-delimited string', folder = 'Common')
+arraystring(arr: dynamic)
+{
+    replace_string(replace_regex(replace_regex(replace_regex(replace_regex(replace_regex(
+        tostring(arr)
+        , @'^\["', '')
+        , @'"\]$', '')
+        , @'^, ', '')
+        , @', $', '')
+        , @'^\[]$', '')
+        , '","', ', ')
+}
+
+// deltastring
+.create-or-alter function 
+with (docstring = 'Calculate a delta percentage and render as a string', folder = 'Common')
+deltastring(oldval: double, newval: double, places: int = 1, useArrows: bool = false)
+{
+    let d = delta(oldval, newval);
+    strcat(case(useArrows and d > 0, '↑', useArrows and d < 0, '↓', d < 0, '-', ''), percentstring(abs(d), 1, places))
+}
+
+// diffstring
+.create-or-alter function 
+with (docstring = 'Calculate the difference and render as a string', folder = 'Common')
+diffstring(oldval: double, newval: double, places: int = 1)
+{
+    plusminus(round(newval - oldval, places))
+}
+
+// numberstring
+.create-or-alter function 
+with (docstring = 'Convert a number to a string', folder = 'Common')
+numberstring(num: double, abbrev: bool = true)
+{
+    replace_regex(case(
+        num >= 10000000000000, strcat(round(1.0 * num / 1000000000000, 1), 'T'),
+        num >= 1000000000000,  strcat(round(1.0 * num / 1000000000000, 2), 'T'),
+        num >= 10000000000,    strcat(round(1.0 * num / 1000000000, 1), 'B'),
+        num >= 1000000000,     strcat(round(1.0 * num / 1000000000, 2), 'B'),
+        num >= 10000000,       strcat(round(1.0 * num / 1000000, 1), 'M'),
+        num >= 1000000,        strcat(round(1.0 * num / 1000000, 2), 'M'),
+        num >= 10000,          strcat(round(1.0 * num / 1000, 1), 'K'),
+        // Kusto doesn't support back-refs yet -- num > 1000, replace_regex(tostring(num), @'(\d)(?=(\d{3})+\.)', @'\1,'), // See https://docs.microsoft.com/azure/data-explorer/kusto/query/re2-library
+        num > 1000, replace_regex(tostring(num), @'([0-9]{3})$', @',\1'), //num / 1000, ',', substring(tostring(num), 0) - (num / 1000 * 1000)),
+        tostring(num)
+    ), @'\.0$', '')
+}
+
+
+//===| Other |==========================================================================================================
+
+// ifempty
+.create-or-alter function 
+with (docstring = 'Replaces an empty value with the specified default value', folder = 'Common')
+ifempty(val: dynamic, defaultVal: dynamic)
+{
+    iff(isempty(val), defaultVal, val)
+}

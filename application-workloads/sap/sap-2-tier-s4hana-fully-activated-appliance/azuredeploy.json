@@ -1,0 +1,241 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.29.47.4906",
+      "templateHash": "3322526311843241668"
+    }
+  },
+  "parameters": {
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "User name for the Virtual Machine."
+      }
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "sshPublicKey",
+      "allowedValues": [
+        "sshPublicKey",
+        "password"
+      ],
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "adminPasswordOrKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
+      }
+    },
+    "existingVirtualNetworkResourceGroupName": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().name]",
+      "metadata": {
+        "description": "The resource group of the existing Virtual Network."
+      }
+    },
+    "existingVirtualNetworkName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the existing Virtual Network."
+      }
+    },
+    "existingSubnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the existing subnet."
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_E16-4ds_v5",
+      "metadata": {
+        "description": "The VM size for the Virtual Machine."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "The location where the Virtual Machine will be created."
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "defaultValue": "[deployment().properties.templateLink.uri]",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation. When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      }
+    }
+  },
+  "variables": {
+    "imagePublisher": "SUSE",
+    "imageOffer": "sles-sap-15-sp3",
+    "imageSku": "gen2",
+    "vmName": "vhcals4hci",
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[format('/home/{0}/.ssh/authorized_keys', parameters('adminUsername'))]",
+            "keyData": "[parameters('adminPasswordOrKey')]"
+          }
+        ]
+      }
+    },
+    "s4ScriptFileUri": "[uri(parameters('_artifactsLocation'), format('scripts/s4install.sh{0}', parameters('_artifactsLocationSasToken')))]",
+    "s4InifileUri": "[uri(parameters('_artifactsLocation'), format('scripts/inifile.params{0}', parameters('_artifactsLocationSasToken')))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2023-09-01",
+      "name": "[variables('vmName')]",
+      "location": "[parameters('location')]",
+      "tags": {
+        "Database": "HANA",
+        "Application": "S4HANA Fully Activated Appliance"
+      },
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[variables('vmName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPasswordOrKey')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), null(), variables('linuxConfiguration'))]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('imagePublisher')]",
+            "offer": "[variables('imageOffer')]",
+            "sku": "[variables('imageSku')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[format('{0}_OsDisk', variables('vmName'))]",
+            "osType": "Linux",
+            "createOption": "FromImage",
+            "deleteOption": "Delete",
+            "managedDisk": {
+              "storageAccountType": "Premium_LRS"
+            }
+          },
+          "dataDisks": [
+            {
+              "name": "[format('{0}_hanaData', variables('vmName'))]",
+              "lun": 0,
+              "createOption": "Empty",
+              "deleteOption": "Delete",
+              "diskSizeGB": 512,
+              "managedDisk": {
+                "storageAccountType": "Premium_LRS"
+              }
+            },
+            {
+              "name": "[format('{0}_hanaLog', variables('vmName'))]",
+              "lun": 1,
+              "createOption": "Empty",
+              "deleteOption": "Delete",
+              "diskSizeGB": 128,
+              "managedDisk": {
+                "storageAccountType": "Premium_LRS"
+              }
+            },
+            {
+              "name": "[format('{0}_sapMedia', variables('vmName'))]",
+              "lun": 2,
+              "createOption": "Empty",
+              "deleteOption": "Delete",
+              "diskSizeGB": 512,
+              "managedDisk": {
+                "storageAccountType": "Premium_LRS"
+              }
+            },
+            {
+              "name": "[format('{0}_sapMnt', variables('vmName'))]",
+              "lun": 3,
+              "createOption": "Empty",
+              "deleteOption": "Delete",
+              "diskSizeGB": 64,
+              "managedDisk": {
+                "storageAccountType": "Premium_LRS"
+              }
+            }
+          ],
+          "diskControllerType": "SCSI"
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', format('{0}Nic', variables('vmName')))]",
+              "properties": {
+                "deleteOption": "Delete"
+              }
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', format('{0}Nic', variables('vmName')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2023-06-01",
+      "name": "[format('{0}Nic', variables('vmName'))]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "subnet": {
+                "id": "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('existingVirtualNetworkResourceGroupName')), 'Microsoft.Network/virtualNetworks/subnets', split(format('{0}/{1}', parameters('existingVirtualNetworkName'), parameters('existingSubnetName')), '/')[0], split(format('{0}/{1}', parameters('existingVirtualNetworkName'), parameters('existingSubnetName')), '/')[1])]"
+              },
+              "privateIPAllocationMethod": "Dynamic"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "apiVersion": "2023-09-01",
+      "name": "[format('{0}/{1}', variables('vmName'), format('{0}Installscript', variables('vmName')))]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
+        "protectedSettings": {
+          "fileUris": [
+            "[uri(parameters('_artifactsLocation'), format('scripts/install.sh{0}', parameters('_artifactsLocationSasToken')))]"
+          ],
+          "commandToExecute": "[format('sh install.sh {0} {1}', variables('s4ScriptFileUri'), variables('s4InifileUri'))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]"
+      ]
+    }
+  ]
+}
