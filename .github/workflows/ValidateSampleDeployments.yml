@@ -9,12 +9,13 @@ permissions:
   pull-requests: read
   issues: read
   id-token: write
+  actions: read
 
 jobs:
-  validate-deployments:
+  selected-pipeline:
     runs-on: ubuntu-latest
     environment: adx-readonly  # require reviewers in repo settings
-    # Only run when comment is exactly /verify and it is on a PR
+    # Only run when comment starts with /verify and it is on a PR
     if: >-
       github.event.issue.pull_request &&
       startsWith(github.event.comment.body, '/verify')
@@ -38,6 +39,37 @@ jobs:
         shell: bash
         run: |
           echo "number=${{ github.event.issue.number }}" >> "$GITHUB_OUTPUT"
+
+      - name: Gate – verify validate-samples.yml passed for PR HEAD
+        id: check-validate-samples
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          PR_NUMBER="${{ steps.pr.outputs.number }}"
+          REPO="${{ github.repository }}"
+
+          # Get the PR HEAD SHA
+          HEAD_SHA=$(gh api "/repos/${REPO}/pulls/${PR_NUMBER}" --jq '.head.sha')
+          echo "PR HEAD SHA: ${HEAD_SHA}"
+
+          # Find the most recent workflow run for validate-samples.yml on this SHA
+          CONCLUSION=$(gh api \
+            "/repos/${REPO}/actions/workflows/validate-samples.yml/runs?head_sha=${HEAD_SHA}&per_page=1" \
+            --jq '.workflow_runs[0].conclusion // empty')
+
+          echo "validate-samples.yml conclusion for SHA ${HEAD_SHA}: ${CONCLUSION:-<none>}"
+
+          if [[ "${CONCLUSION}" == "success" ]]; then
+            echo "validate_samples_success=true" >> "$GITHUB_OUTPUT"
+            echo "✅ validate-samples.yml passed."
+          else
+            echo "validate_samples_success=false" >> "$GITHUB_OUTPUT"
+            echo "❌ validate-samples.yml has not passed for this PR commit (conclusion='${CONCLUSION:-not found}')." >&2
+            echo "   Ensure the PR's validate-samples checks are green before running /verify." >&2
+            exit 1
+          fi
 
       - name: Safeguard – block ValidateSampleDeployments.yml edits by non MEMBER/OWNER
         uses: actions/github-script@v7
@@ -124,6 +156,84 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           client-id: ${{ secrets.AZURE_UAMI_CLIENT_ID }}
+
+      # ── Ensure azuredeploy.json exists (compile Bicep if needed) ────────────
+      - name: Ensure azuredeploy.json exists (compile Bicep if needed)
+        shell: bash
+        env:
+          SAMPLE_PATH: ${{ steps.find-metadata.outputs.sample_path }}
+        run: |
+          set -euo pipefail
+          cd "${SAMPLE_PATH}"
+
+          echo "──────────────────────────────────────────"
+          echo "  Sample folder: ${SAMPLE_PATH}"
+          echo "──────────────────────────────────────────"
+
+          if [[ -f "azuredeploy.json" ]]; then
+            echo "azuredeploy.json already exists — no compilation needed."
+            exit 0
+          fi
+
+          if [[ ! -f "main.bicep" ]]; then
+            echo "Neither azuredeploy.json nor main.bicep found — skipping (validation step will catch this)."
+            exit 0
+          fi
+
+          echo "azuredeploy.json not found but main.bicep exists — compiling..."
+          command -v bicep >/dev/null 2>&1 || az bicep install
+          bicep build main.bicep --outfile azuredeploy.json
+          echo "✅ Compiled main.bicep → azuredeploy.json"
+
+      # ── Calculate templateHash and validate against metadata.json ───────────
+      - name: Calculate templateHash and validate against metadata.json
+        shell: bash
+        env:
+          SAMPLE_PATH: ${{ steps.find-metadata.outputs.sample_path }}
+        run: |
+          set -euo pipefail
+          cd "${SAMPLE_PATH}"
+
+          echo "──────────────────────────────────────────"
+          echo "  templateHash validation (main template)"
+          echo "──────────────────────────────────────────"
+
+          if [[ ! -f "azuredeploy.json" ]]; then
+            echo "ERROR: azuredeploy.json not found in '${SAMPLE_PATH}' — cannot compute templateHash." >&2
+            exit 1
+          fi
+
+          # Compute hash via ARM public API
+          COMPUTED_HASH=$(az rest --method post \
+            --url "https://management.azure.com/providers/Microsoft.Resources/calculateTemplateHash?api-version=2025-04-01" \
+            --body @azuredeploy.json | jq -r '.templateHash')
+
+          echo "Computed templateHash: ${COMPUTED_HASH}"
+
+          # Read expected hash from metadata.json (main deployment entry)
+          # We are cd'd into SAMPLE_PATH, so metadata.json is local
+          EXPECTED_HASH=$(jq -r '
+            if (.testResult.deployments | type) == "array" then
+              [.testResult.deployments[] | select((.templateFileName // "") | startswith("prereqs/") | not)] | .[0].templateHash // empty
+            else
+              .testResult.deployments.templateHash // empty
+            end' "metadata.json")
+
+          if [[ -z "${EXPECTED_HASH}" ]]; then
+            echo "ERROR: 'templateHash' not found in metadata.json for the main deployment entry." >&2
+            exit 1
+          fi
+
+          echo "Expected templateHash: ${EXPECTED_HASH}"
+
+          if [[ "${COMPUTED_HASH}" != "${EXPECTED_HASH}" ]]; then
+            echo "ERROR: templateHash mismatch for main template." >&2
+            echo "  computed : ${COMPUTED_HASH}" >&2
+            echo "  expected : ${EXPECTED_HASH}" >&2
+            exit 1
+          fi
+
+          echo "✅ templateHash matches for main template."
 
       - name: Validate deployments via ADX
         shell: bash
@@ -314,6 +424,145 @@ jobs:
             echo "NOTE: Multiple matching template files found. Deployment selection is external;"
             echo "      the pipeline relies on metadata.json for validation."
           fi
+
+      # ── Prereqs: ensure azuredeploy.json exists (compile Bicep if needed) ───
+      - name: Prereqs – ensure azuredeploy.json exists (compile Bicep if needed)
+        if: steps.check-prereqs.outputs.has_prereqs == 'true'
+        shell: bash
+        env:
+          SAMPLE_PATH: ${{ steps.find-metadata.outputs.sample_path }}
+        run: |
+          set -euo pipefail
+          PREREQS_DIR="${SAMPLE_PATH}/prereqs"
+          cd "${PREREQS_DIR}"
+
+          echo "──────────────────────────────────────────"
+          echo "  Prereqs folder: ${PREREQS_DIR}"
+          echo "──────────────────────────────────────────"
+
+          # Determine which ARM template file to target
+          # prereqs may use prereq.azuredeploy.json or azuredeploy.json
+          ARM_FILE=""
+          for candidate in prereq.azuredeploy.json azuredeploy.json; do
+            if [[ -f "${candidate}" ]]; then
+              ARM_FILE="${candidate}"
+              break
+            fi
+          done
+
+          if [[ -n "${ARM_FILE}" ]]; then
+            echo "${ARM_FILE} already exists — no compilation needed."
+            exit 0
+          fi
+
+          # No ARM file found — try to compile from Bicep
+          BICEP_FILE=""
+          for candidate in prereq.main.bicep main.bicep; do
+            if [[ -f "${candidate}" ]]; then
+              BICEP_FILE="${candidate}"
+              break
+            fi
+          done
+
+          if [[ -z "${BICEP_FILE}" ]]; then
+            echo "No ARM or Bicep template found in prereqs/ — skipping (validation step will catch this)."
+            exit 0
+          fi
+
+          # Derive output name: prereq.main.bicep → prereq.azuredeploy.json, main.bicep → azuredeploy.json
+          if [[ "${BICEP_FILE}" == prereq.* ]]; then
+            OUT_FILE="prereq.azuredeploy.json"
+          else
+            OUT_FILE="azuredeploy.json"
+          fi
+
+          echo "${OUT_FILE} not found but ${BICEP_FILE} exists — compiling..."
+          command -v bicep >/dev/null 2>&1 || az bicep install
+          bicep build "${BICEP_FILE}" --outfile "${OUT_FILE}"
+          echo "✅ Compiled ${BICEP_FILE} → ${OUT_FILE}"
+
+      # ── Prereqs: calculate templateHash and validate per entry ──────────────
+      - name: Prereqs – calculate templateHash and validate against metadata.json
+        if: steps.check-prereqs.outputs.has_prereqs == 'true'
+        shell: bash
+        env:
+          SAMPLE_PATH: ${{ steps.find-metadata.outputs.sample_path }}
+          METADATA_FILE: ${{ steps.find-metadata.outputs.metadata_file }}
+        run: |
+          set -euo pipefail
+          PREREQS_DIR="${SAMPLE_PATH}/prereqs"
+          METADATA_PATH="${METADATA_FILE}"
+
+          echo "──────────────────────────────────────────"
+          echo "  templateHash validation (prereqs)"
+          echo "──────────────────────────────────────────"
+
+          # Gather prereqs deployment entries from metadata.json
+          PREREQ_DEPLOYMENTS=$(jq -c \
+            '[.testResult.deployments[] | select(.templateFileName | startswith("prereqs/"))]' \
+            "${METADATA_PATH}")
+          PREREQ_COUNT=$(echo "${PREREQ_DEPLOYMENTS}" | jq 'length')
+
+          if [[ "${PREREQ_COUNT}" -eq 0 ]]; then
+            echo "No prereqs entries in metadata.json — skipping hash validation."
+            exit 0
+          fi
+
+          OVERALL_PASS=true
+
+          for i in $(seq 0 $((PREREQ_COUNT - 1))); do
+            ENTRY=$(echo "${PREREQ_DEPLOYMENTS}" | jq -c ".[${i}]")
+            ENTRY_LABEL="$((i + 1))/${PREREQ_COUNT}"
+            TEMPLATE_FILE_NAME=$(echo "${ENTRY}" | jq -r '.templateFileName // empty')
+            EXPECTED_HASH=$(echo "${ENTRY}" | jq -r '.templateHash // empty')
+
+            echo ""
+            echo "  [prereqs entry ${ENTRY_LABEL}] ${TEMPLATE_FILE_NAME}"
+
+            if [[ -z "${EXPECTED_HASH}" ]]; then
+              echo "  ERROR: templateHash missing for '${TEMPLATE_FILE_NAME}'" >&2
+              OVERALL_PASS=false
+              continue
+            fi
+
+            # Determine which ARM JSON file corresponds to this entry
+            # templateFileName is e.g. "prereqs/main.bicep" or "prereqs/prereq.azuredeploy.json"
+            BASENAME=$(basename "${TEMPLATE_FILE_NAME}")
+            case "${BASENAME}" in
+              prereq.main.bicep)       ARM_FILE="${PREREQS_DIR}/prereq.azuredeploy.json" ;;
+              main.bicep)              ARM_FILE="${PREREQS_DIR}/azuredeploy.json" ;;
+              prereq.azuredeploy.json) ARM_FILE="${PREREQS_DIR}/prereq.azuredeploy.json" ;;
+              azuredeploy.json)        ARM_FILE="${PREREQS_DIR}/azuredeploy.json" ;;
+              *)                       ARM_FILE="${PREREQS_DIR}/${BASENAME}" ;;
+            esac
+
+            if [[ ! -f "${ARM_FILE}" ]]; then
+              echo "  ERROR: ARM template '${ARM_FILE}' not found (needed for hash computation)." >&2
+              OVERALL_PASS=false
+              continue
+            fi
+
+            COMPUTED_HASH=$(az rest --method post \
+              --url "https://management.azure.com/providers/Microsoft.Resources/calculateTemplateHash?api-version=2025-04-01" \
+              --body @"${ARM_FILE}" | jq -r '.templateHash')
+
+            echo "  computed : ${COMPUTED_HASH}"
+            echo "  expected : ${EXPECTED_HASH}"
+
+            if [[ "${COMPUTED_HASH}" != "${EXPECTED_HASH}" ]]; then
+              echo "  FAIL: templateHash mismatch for prereqs entry '${TEMPLATE_FILE_NAME}'" >&2
+              OVERALL_PASS=false
+            else
+              echo "  ✅ templateHash matches."
+            fi
+          done
+
+          echo ""
+          if [[ "${OVERALL_PASS}" != "true" ]]; then
+            echo "PREREQS templateHash VALIDATION FAILED." >&2
+            exit 1
+          fi
+          echo "✅ All prereqs templateHash values match."
 
       # ── Prereqs B+C: validate metadata entries and run Kusto per entry ──────
       - name: Validate prereqs deployments via ADX
