@@ -49,6 +49,10 @@ $GovButton = $null
 
 Write-Host "Supported Environments Found: $supportedEnvironmentsJson"
 $supportedEnvironments = ($supportedEnvironmentsJson | ConvertFrom-JSON -AsHashTable)
+if (-not $supportedEnvironments) {
+    Write-Error "supportedEnvironments is null or empty! Value of input: '$supportedEnvironmentsJson'"
+    exit 1
+}
 #$supportedEnvironments | Out-string
 #Write-Host $supportedEnvironments.GetType()
 
