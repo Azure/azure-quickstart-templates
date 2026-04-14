@@ -1,5 +1,5 @@
 ---
-description: This template demonstrate how to use deployment stack to create and manage storage account
+description: This template demonstrate how to use deployment stack to create and manage storage account it is just a sample test
 page_type: sample
 products:
 - azure
