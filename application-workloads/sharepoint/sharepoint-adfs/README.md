@@ -30,7 +30,7 @@ This template creates a secure, highly customizable SharePoint Subscription / 20
 - A SharePoint farm installed with the PU of your choice (including the latest one), and up-to-date Windows and softwares before you first log-in.
 - Eliminate the burden of doing tedious configuration: Many SharePoint features and services are configured, doing this manually would take ages.
 - Truly ready-to-use virtual machines right at the first log-in, with everything a SharePoint administrator needs.
-- A state-of-the-art configuration that showcases the best practices for a a well-configured SharePoint farm.
+- A state-of-the-art configuration that showcases the best practices for a well-configured SharePoint farm.
 - A fast deployment time: A fully configured SharePoint farm installed with the latest PU takes only about 1h15 mins to be fully ready (if you think it is not so fast, compare this with the time it takes to install a SharePoint PU in your farm).
 - Easy to create, use, and destroy. You want to test a SharePoint setting/config but you are afraid to mess your existing farm? You want to test a specific SharePoint build? Or test OIDC? Use this template.
 
@@ -72,7 +72,7 @@ About SharePoint legacy: SharePoint 2016 / 2019 use outdated images ([2016](http
     - Extends the web application in zone `Intranet`.
   - `Full`: Everything in `Medium`, plus:
     - Configures all the resources to run and deploy add-ins.
-    - Creates addditional host-named site collections.
+    - Creates additional host-named site collections.
 - Parameter `defaultZoneMustBeHttps`: `true` if the default zone must use HTTPS, `false` if it may use HTTP (if compatible with the configuration selected).
 - Parameter `frontEndServersCount` lets you add up to 4 additional SharePoint servers to the farm with the [MinRole Front-end](https://learn.microsoft.com/sharepoint/install/planning-for-a-minrole-server-deployment-in-sharepoint-server).
 
@@ -92,7 +92,7 @@ The remote access to the virtual machines depends on the following parameters:
     - `*` or `Internet`: RDP traffic is allowed from everywhere.
     - CIDR notation (e.g. `192.168.99.0/24` or `2001:1234::/64`) or an IP address (e.g. `192.168.99.0` or `2001:1234::`): RDP traffic is allowed from the IP address / pattern specified.
 - Parameter `enableAzureBastion`:
-  - if `true`: Configure service [Azure Bastion](https://azure.microsoft.com/services/azure-bastion/) with Basic SKU, to allow a secure remote access to virtual machines.
+  - if `true`: Configure service [Azure Bastion](https://azure.microsoft.com/services/azure-bastion/) with Developer SKU, to allow a secure remote access to virtual machines.
   - if `false` (default): Service [Azure Bastion](https://azure.microsoft.com/services/azure-bastion/) is not created.
 
 IMPORTANT: If you set parameter `outboundAccessMethod` to `AzureFirewallProxy`, you have to either enable Azure Bastion, or manually add a public IP address later, to be able to connect to a virtual machine.
