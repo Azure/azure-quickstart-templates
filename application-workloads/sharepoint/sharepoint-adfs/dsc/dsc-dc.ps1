@@ -236,17 +236,18 @@
         #**********************************************************
         # Create AD domain
         #**********************************************************
-        # Install AD FS early (before reboot) to workaround error below on resource AdfsApplicationGroup:
-        # "System.InvalidOperationException: The test script threw an error. ---> System.IO.FileNotFoundException: Could not load file or assembly 'Microsoft.IdentityServer.Diagnostics, Version=10.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35' or one of its dependencie"
-        WindowsFeature AddADFS {
-            Name = "ADFS-Federation"; Ensure = "Present"; 
-        }
         WindowsFeature AddADDS {
             Name = "AD-Domain-Services"; Ensure = "Present" 
         }
 
         DnsServerAddress SetDNS {
             Address = '127.0.0.1' ; InterfaceAlias = $InterfaceAlias; AddressFamily = 'IPv4' 
+        }
+
+        # Avoids rare error in [ADDomain]CreateADForest resource, that fails because a reboot is necessary before forest can be created
+        PendingReboot RebootBeforeCreateADForest {
+            Name      = "RebootBeforeCreateADForest"
+            DependsOn = "[DnsServerAddress]SetDNS", "[WindowsFeature]AddADDS"
         }
 
         ADDomain CreateADForest {
@@ -256,12 +257,17 @@
             DatabasePath                  = "C:\NTDS"
             LogPath                       = "C:\NTDS"
             SysvolPath                    = "C:\SYSVOL"
-            DependsOn                     = "[DnsServerAddress]SetDNS", "[WindowsFeature]AddADDS"
+            DependsOn                     = "[PendingReboot]RebootBeforeCreateADForest"
         }
 
         PendingReboot RebootOnSignalFromCreateADForest {
             Name      = "RebootOnSignalFromCreateADForest"
             DependsOn = "[ADDomain]CreateADForest"
+        }
+
+        # Install AD FS early to avoid error on resource AdfsApplicationGroup: "System.IO.FileNotFoundException: Could not load file or assembly 'Microsoft.IdentityServer.Diagnostics, Version=10.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35' or one of its dependencie"
+        WindowsFeature AddADFS {
+            Name = "ADFS-Federation"; Ensure = "Present"; DependsOn = "[PendingReboot]RebootOnSignalFromCreateADForest"
         }
 
         WaitForADDomain WaitForDCReady {
@@ -422,7 +428,7 @@
             PasswordAuthentication = 'Negotiate'
             PasswordNeverExpires   = $true
             Ensure                 = "Present"
-            DependsOn              = "[CertReq]GenerateADFSSiteCertificate", "[CertReq]GenerateADFSSigningCertificate", "[CertReq]GenerateADFSDecryptionCertificate"
+            DependsOn              = "[WaitForADDomain]WaitForDCReady"
         }
 
         # https://docs.microsoft.com/en-us/windows-server/identity/ad-fs/deployment/configure-corporate-dns-for-the-federation-service-and-drs
@@ -434,6 +440,7 @@
             DependsOn     = "[WaitForADDomain]WaitForDCReady"
         }
 
+        # This will do a reboot
         AdfsFarm CreateADFSFarm {
             FederationServiceName        = "$ADFSSiteName.$DomainFQDN"
             FederationServiceDisplayName = "$ADFSSiteName.$DomainFQDN"
@@ -442,11 +449,11 @@
             DecryptionCertificateDnsName = "$ADFSSiteName.Decryption"
             ServiceAccountCredential     = $AdfsSvcCredsQualified
             Credential                   = $DomainCredsNetbios
-            DependsOn                    = "[WindowsFeature]AddADFS"
+            DependsOn                    = "[WindowsFeature]AddADFS", "[ADUser]CreateAdfsSvcAccount", "[Script]ExportCertificates"
         }
 
-        # This DNS record is tested by other VMs to join AD only after it was found
-        # It is added after DSC resource AdfsFarm, because it is the last operation that triggers a reboot of the DC
+        # This DNS record is tested by other VMs, to join the domain once it is found
+        # Added after DSC resource AdfsFarm, because it is the last operation that triggers a reboot
         DnsRecordA AddADFSHostDNS {
             Name        = $ADFSSiteName
             ZoneName    = $DomainFQDN
@@ -671,6 +678,7 @@
                     return $true
                 }
             }
+            DependsOn = "[WaitForADDomain]WaitForDCReady"
         }
 
         ADOrganizationalUnit AdditionalUsersOU {
@@ -707,9 +715,9 @@
         # WindowsFeature AddADLDS {
         #     Name = "RSAT-ADLDS"; Ensure = "Present"; 
         # }
-        WindowsFeature AddADCSManagementTools {
-            Name = "RSAT-ADCS-Mgmt"; Ensure = "Present"; 
-        }
+        # WindowsFeature AddADCSManagementTools {
+        #     Name = "RSAT-ADCS-Mgmt"; Ensure = "Present"; 
+        # }
     }
 }
 

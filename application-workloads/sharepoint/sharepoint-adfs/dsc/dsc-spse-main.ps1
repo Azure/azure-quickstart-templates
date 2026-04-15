@@ -134,9 +134,6 @@ configuration ConfigSpMain
         #**********************************************************
         # Initialization of VM - Do as much work as possible before waiting on AD domain to be available
         #**********************************************************
-        WindowsFeature AddADTools {
-            Name = "RSAT-AD-Tools"; Ensure = "Present"; 
-        }
         WindowsFeature AddDnsTools {
             Name = "RSAT-DNS-Server"; Ensure = "Present"; 
         }
@@ -510,25 +507,6 @@ configuration ConfigSpMain
             DependsOn  = "[DnsServerAddress]SetDNS", "[SPInstall]InstallBinaries"
         }
 
-        # # If WaitForADDomain does not find the domain whtin "WaitTimeout" secs, it will signal a restart to DSC engine "RestartCount" times
-        # WaitForADDomain WaitForDCReady
-        # {
-        #     DomainName              = $DomainFQDN
-        #     WaitTimeout             = 1800
-        #     RestartCount            = 2
-        #     WaitForValidCredentials = $True
-        #     Credential              = $DomainAdminCredsQualified
-        #     DependsOn               = "[Script]WaitForADFSFarmReady"
-        # }
-
-        # # WaitForADDomain sets reboot signal only if WaitForADDomain did not find domain within "WaitTimeout" secs
-        # PendingReboot RebootOnSignalFromWaitForDCReady
-        # {
-        #     Name             = "RebootOnSignalFromWaitForDCReady"
-        #     SkipCcmClientSDK = $true
-        #     DependsOn        = "[WaitForADDomain]WaitForDCReady"
-        # }
-
         Computer JoinDomain {
             Name       = $ComputerName
             DomainName = $DomainFQDN
@@ -560,6 +538,10 @@ configuration ConfigSpMain
         #     Key = "HKCU:\Software\Microsoft\OneDrive\PreSignInSettingsOverrides"; ValueName = "204"; ValueType = "String"; ValueData = "-1835"
         #     PsDscRunAsCredential = $DomainAdminCredsQualified; Ensure = "Present" 
         # }
+
+        WindowsFeature AddADTools {
+            Name = "RSAT-AD-Tools"; IncludeAllSubFeature = $true; Ensure = "Present"; 
+        }
 
         # This script is still needed
         Script CreateWSManSPNsIfNeeded {

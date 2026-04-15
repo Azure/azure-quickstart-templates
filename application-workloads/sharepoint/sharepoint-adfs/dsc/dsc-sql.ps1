@@ -468,10 +468,13 @@ function Get-NetBIOSName {
 
 function WaitForSqlSetup {
     # Wait for SQL Server Setup to finish before proceeding.
-    while ($true) {
+    $maxAttempts = 20
+    $attemptsCounter = 0
+    while ($attemptsCounter -lt $maxAttempts) {
         try {
+            $attemptsCounter++
             $taskResult = Get-ScheduledTaskInfo "\ConfigureSqlImageTasks\RunConfigureImage" -ErrorAction Stop
-            Write-Verbose -Verbose -Message "ScheduledTaskInfo results: LastRunTime: $($taskResult.LastRunTime); LastTaskResult: $($taskResult.LastTaskResult); NextRunTime: $($taskResult.NextRunTime); NumberOfMissedRuns: $($taskResult.NumberOfMissedRuns);"
+            Write-Verbose -Verbose -Message "Attempt $($attemptsCounter): ScheduledTaskInfo results: LastRunTime: $($taskResult.LastRunTime); LastTaskResult: $($taskResult.LastTaskResult); NextRunTime: $($taskResult.NextRunTime); NumberOfMissedRuns: $($taskResult.NumberOfMissedRuns);"
             Start-Sleep -Seconds 5
         }
         catch {
