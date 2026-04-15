@@ -208,6 +208,80 @@ jobs:
           echo "  Validating sample: ${{ matrix.sample }}"
           echo "══════════════════════════════════════════════════════════"
 
+      # ── (0b) Early gate – template change requires metadata.json update ───
+      - name: Check metadata.json is updated when templates change
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          SAMPLE_DIR="${{ matrix.sample }}"
+
+          echo "──────────────────────────────────────────"
+          echo "CHECK 0b – metadata.json updated with template changes"
+          echo "  sample: ${SAMPLE_DIR}"
+          echo "──────────────────────────────────────────"
+
+          # ── Compute changed files scoped to this sample folder ─────
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            CHANGED=$(git diff --name-only "origin/${{ github.base_ref }}...${{ github.sha }}" -- "$SAMPLE_DIR/")
+          else
+            if [[ "${{ github.event.before }}" == "0000000000000000000000000000000000000000" ]]; then
+              CHANGED=$(git diff --name-only HEAD~1 HEAD -- "$SAMPLE_DIR/" 2>/dev/null \
+                || git show --name-only --format="" HEAD -- "$SAMPLE_DIR/")
+            else
+              CHANGED=$(git diff --name-only "${{ github.event.before }}..${{ github.sha }}" -- "$SAMPLE_DIR/")
+            fi
+          fi
+
+          TEMPLATE_CHANGED=false
+          METADATA_CHANGED=false
+          CHANGED_TEMPLATES=()
+
+          while IFS= read -r f; do
+            [[ -z "$f" ]] && continue
+            fname=$(basename "$f")
+
+            if [[ "$fname" == "metadata.json" ]]; then
+              METADATA_CHANGED=true
+              continue
+            fi
+
+            # Any .bicep or .json file (excluding metadata.json) is a template file
+            if [[ "$f" == *.bicep || "$f" == *.json ]]; then
+              TEMPLATE_CHANGED=true
+              CHANGED_TEMPLATES+=("$f")
+            fi
+          done <<< "$CHANGED"
+
+          if [[ "$TEMPLATE_CHANGED" == true && "$METADATA_CHANGED" == false ]]; then
+            echo ""
+            echo "❌ ERROR – Template file(s) changed but metadata.json was NOT updated."
+            echo ""
+            echo "  The following template files were modified:"
+            for t in "${CHANGED_TEMPLATES[@]}"; do echo "    - $t"; done
+            echo ""
+            echo "  metadata.json must include a 'testResult' section with deployment"
+            echo "  results for every deployment template in the sample."
+            echo "  Any change to a .bicep or .json template requires re-running the"
+            echo "  deployment and updating testResult in metadata.json accordingly."
+            echo ""
+            echo "  This check exists because the second validation workflow"
+            echo "  (Validate ARM Deployments via ADX) will fail if testResult"
+            echo "  does not match the current template content."
+            echo ""
+            echo "  To fix: deploy your updated template(s) and add the deployment"
+            echo "  results to the 'testResult.deployments' array in metadata.json."
+            echo ""
+            echo "  Reference: https://github.com/Azure/azure-quickstart-templates/blob/master/1-CONTRIBUTION-GUIDE/README.md#metadatajson"
+            exit 1
+          fi
+
+          if [[ "$TEMPLATE_CHANGED" == false ]]; then
+            echo "✅ No template files (.bicep/.json) changed – skipping metadata.json gate."
+          else
+            echo "✅ Template files changed and metadata.json is also updated."
+          fi
+
       # ── (1) Duplicate folder name check ────────────────────────────────────
       - name: Check for duplicate folder name
         shell: bash
