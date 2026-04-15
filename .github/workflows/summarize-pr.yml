@@ -64,71 +64,63 @@ jobs:
       # ── 3. Detect changed sample folders ────────────────────────────────
       - name: Detect changed sample folders
         id: detect
-        shell: bash
-        run: |
-          set -euo pipefail
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
 
-          PR_NUMBER=${{ github.event.issue.number }}
-          echo "Detecting changed samples for PR #${PR_NUMBER}..."
+            const owner = context.repo.owner;
+            const repo  = context.repo.repo;
+            const pull_number = context.issue.number;
 
-          # Fetch the base branch so we can diff
-          git fetch origin master --depth=1 2>/dev/null || true
+            core.info(`Detecting changed samples for PR #${pull_number}...`);
 
-          CHANGED=$(gh pr diff "${PR_NUMBER}" --name-only 2>/dev/null || \
-            git diff --name-only origin/master...HEAD)
+            // Use the GitHub API to get changed files — reliable for fork PRs
+            const files = await github.paginate(
+              github.rest.pulls.listFiles,
+              { owner, repo, pull_number, per_page: 100 }
+            );
+            const changedFiles = files.map(f => f.filename);
 
-          echo "Changed files:"
-          echo "${CHANGED:-<none>}"
+            core.info(`Changed files (${changedFiles.length}):`);
+            changedFiles.forEach(f => core.info(`  ${f}`));
 
-          SAMPLE_ROOTS=(
-            "quickstarts/"
-            "demos/"
-            "application-workloads/"
-            "modules/"
-            "subscription-deployments/"
-            "managementgroup-deployments/"
-            "tenant-deployments/"
-          )
+            const SAMPLE_ROOTS = [
+              'quickstarts/',
+              'demos/',
+              'application-workloads/',
+              'modules/',
+              'subscription-deployments/',
+              'managementgroup-deployments/',
+              'tenant-deployments/'
+            ];
 
-          declare -A SEEN_DIRS
+            const seenDirs = new Set();
+            const workspace = process.env.GITHUB_WORKSPACE;
 
-          while IFS= read -r changed_file; do
-            [[ -z "$changed_file" ]] && continue
-            matched_root=""
-            for root in "${SAMPLE_ROOTS[@]}"; do
-              if [[ "$changed_file" == ${root}* ]]; then
-                matched_root="$root"
-                break
-              fi
-            done
-            [[ -z "$matched_root" ]] && continue
+            for (const changedFile of changedFiles) {
+              const matchedRoot = SAMPLE_ROOTS.find(r => changedFile.startsWith(r));
+              if (!matchedRoot) continue;
 
-            dir=$(dirname "$changed_file")
-            while true; do
-              rel_root="${matched_root%/}"
-              if [[ "$dir" == "$rel_root" || "$dir" == "." ]]; then
-                break
-              fi
-              if [[ -f "${dir}/metadata.json" && -f "${dir}/README.md" ]]; then
-                SEEN_DIRS["$dir"]=1
-                break
-              fi
-              dir=$(dirname "$dir")
-            done
-          done <<< "$CHANGED"
+              const relRoot = matchedRoot.replace(/\/$/, '');
+              let dir = path.posix.dirname(changedFile);
 
-          JSON_ARRAY="["
-          first=true
-          for dir in "${!SEEN_DIRS[@]}"; do
-            if [[ "$first" == true ]]; then first=false; else JSON_ARRAY+=","; fi
-            JSON_ARRAY+="\"${dir}\""
-          done
-          JSON_ARRAY+="]"
+              while (dir !== relRoot && dir !== '.') {
+                const metaPath = path.join(workspace, dir, 'metadata.json');
+                const readmePath = path.join(workspace, dir, 'README.md');
 
-          echo "Detected sample folders: ${JSON_ARRAY}"
-          echo "samples_json=${JSON_ARRAY}" >> "$GITHUB_OUTPUT"
-        env:
-          GH_TOKEN: ${{ github.token }}
+                if (fs.existsSync(metaPath) && fs.existsSync(readmePath)) {
+                  seenDirs.add(dir);
+                  break;
+                }
+                dir = path.posix.dirname(dir);
+              }
+            }
+
+            const samplesJson = JSON.stringify([...seenDirs]);
+            core.info(`Detected sample folders: ${samplesJson}`);
+            core.setOutput('samples_json', samplesJson);
 
       # ── 4. Add reaction to acknowledge the command ──────────────────────
       - name: React to comment
