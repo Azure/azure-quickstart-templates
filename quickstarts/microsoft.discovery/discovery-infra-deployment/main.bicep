@@ -1,4 +1,4 @@
-@description('Location for all resources. Discovery is currently supported in eastus, eastus2, swedencentral and uksouth.')
+@description('Location for all resources. Discovery is currently supported in eastus, swedencentral and uksouth.')
 param location string = resourceGroup().location
 
 @description('Name of the Microsoft Discovery Supercomputer. Must be 3-24 characters, alphanumeric and hyphens only.')
