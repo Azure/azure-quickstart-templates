@@ -21,11 +21,19 @@ param location string = resourceGroup().location
 ])
 param sharePointVersion string = 'Subscription-Latest'
 
-@description('FQDN of the Active Directory forest.')
-@minLength(5)
-param domainFqdn string = 'contoso.local'
+@description('Level of configuration to apply on the SharePoint farm.')
+@allowed([
+  'Minimum'
+  'Light'
+  'Medium'
+  'Full'
+])
+param sharePointConfigurationLevel string = 'Light'
 
-@description('Number of servers with MinRole Front-end to add to the farm.')
+@description('Set to true if the default zone of the main web application must use HTTPS protocol.')
+param defaultZoneMustBeHttps bool = false
+
+@description('Number of additional servers with the MinRole front-end to add to the farm.')
 @allowed([
   0
   1
@@ -34,6 +42,10 @@ param domainFqdn string = 'contoso.local'
   4
 ])
 param frontEndServersCount int = 0
+
+@description('FQDN of the Active Directory forest.')
+@minLength(5)
+param domainFqdn string = 'contoso.local'
 
 @description('Name of the Active Directory and SharePoint administrator. "admin" and "administrator" are not allowed.')
 @minLength(1)
@@ -68,7 +80,7 @@ IMPORTANT: With AzureFirewallProxy, you need to either enable Azure Bastion, or 
 ])
 param outboundAccessMethod string = 'PublicIPAddress'
 
-@description('Set if the Public IP addresses of virtual machines should have a name label.')
+@description('If a virtual machine has a public IP address, specify if it should also have a public DNS name.')
 @allowed([
   'No'
   'SharePointVMsOnly'
@@ -76,13 +88,13 @@ param outboundAccessMethod string = 'PublicIPAddress'
 ])
 param addNameToPublicIpAddresses string = 'SharePointVMsOnly'
 
-@description('Specify if Azure Bastion should be provisioned. See https://azure.microsoft.com/en-us/services/azure-bastion for more information.')
+@description('Specify if Azure Bastion Developer should be provisioned. See https://go.microsoft.com/fwlink/?linkid=2249215 for more information.')
 param enableAzureBastion bool = false
 
 @description('Enable the Azure Hybrid Benefit on virtual machines, to use your on-premises Windows Server licenses and reduce cost. See https://docs.microsoft.com/en-us/azure/virtual-machines/windows/hybrid-use-benefit-licensing for more information.')
 param enableHybridBenefitServerLicenses bool = false
 
-@description('Time zone of the virtual machines. Type "[TimeZoneInfo]::GetSystemTimeZones().Id" in PowerShell to get the list.')
+@description('Time zone of the virtual machines (also used for the parameter autoShutdownTime).')
 @minLength(2)
 @allowed([
   'Dateline Standard Time'
@@ -277,8 +289,8 @@ param vmSharePointSize string = 'Standard_B4as_v2'
 ])
 param vmSharePointStorage string = 'StandardSSD_LRS'
 
-@description('The base URI where artifacts required by this template are located including a trailing \'/\'')
-param _artifactsLocation string = deployment().properties.templateLink.uri
+@description('The base URI where artifacts required by this template are located.')
+param _artifactsLocation string = uri(deployment().properties.templateLink.uri, 'dsc/')
 
 @secure()
 @description('The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured.')
@@ -310,7 +322,7 @@ var sharePointSettings = {
   }
   sharePointSubscriptionBits: [
     {
-      Label: 'RTM'
+      Label: 'SPRTM'
       Packages: [
         {
           DownloadUrl: 'https://download.microsoft.com/download/3/f/5/3f5f8a7e-462b-41ff-a5b2-04bdf5821ceb/OfficeServer.iso'
@@ -320,7 +332,7 @@ var sharePointSettings = {
       ]
     }
     {
-      Label: '22H2'
+      Label: 'SP22H2'
       Packages: [
         {
           DownloadUrl: 'https://download.microsoft.com/download/8/d/f/8dfcb515-6e49-42e5-b20f-5ebdfd19d8e7/wssloc-subscription-kb5002270-fullfile-x64-glb.exe'
@@ -335,7 +347,7 @@ var sharePointSettings = {
       ]
     }
     {
-      Label: '23H1'
+      Label: 'SP23H1'
       Packages: [
         {
           DownloadUrl: 'https://download.microsoft.com/download/c/6/a/c6a17105-3d86-42ad-888d-49b22383bfa1/uber-subscription-kb5002355-fullfile-x64-glb.exe'
@@ -343,7 +355,7 @@ var sharePointSettings = {
       ]
     }
     {
-      Label: '23H2'
+      Label: 'SP23H2'
       Packages: [
         {
           DownloadUrl: 'https://download.microsoft.com/download/f/5/5/f5559e3f-8b24-419f-b238-b09cf986e927/uber-subscription-kb5002474-fullfile-x64-glb.exe'
@@ -351,7 +363,7 @@ var sharePointSettings = {
       ]
     }
     {
-      Label: '24H1'
+      Label: 'SP24H1'
       Packages: [
         {
           DownloadUrl: 'https://download.microsoft.com/download/b/a/b/bab0c7cc-0454-474b-8538-7927f75e6486/uber-subscription-kb5002564-fullfile-x64-glb.exe'
@@ -359,7 +371,7 @@ var sharePointSettings = {
       ]
     }
     {
-      Label: '24H2'
+      Label: 'SP24H2'
       Packages: [
         {
           DownloadUrl: 'https://download.microsoft.com/download/6/6/a/66a0057f-79af-4307-8263-103ee75ef5c6/uber-subscription-kb5002640-fullfile-x64-glb.exe'
@@ -367,7 +379,7 @@ var sharePointSettings = {
       ]
     }
     {
-      Label: '25H1'
+      Label: 'SP25H1'
       Packages: [
         {
           DownloadUrl: 'https://download.microsoft.com/download/0b131072-7ee6-41ea-b33a-b3410865f3a0/uber-subscription-kb5002698-fullfile-x64-glb.exe'
@@ -375,7 +387,7 @@ var sharePointSettings = {
       ]
     }
     {
-      Label: '25H2'
+      Label: 'SP25H2'
       Packages: [
         {
           DownloadUrl: 'https://download.microsoft.com/download/0ae39b29-890d-428c-bcee-c93eeca2053b/uber-subscription-kb5002784-fullfile-x64-glb.exe'
@@ -383,10 +395,10 @@ var sharePointSettings = {
       ]
     }
     {
-      Label: 'Latest'
+      Label: 'SPLatest'
       Packages: [
         {
-          DownloadUrl: 'https://download.microsoft.com/download/2ac104e1-555a-4186-9f83-ffca3ec88258/uber-subscription-kb5002800-fullfile-x64-glb.exe'
+          DownloadUrl: 'https://download.microsoft.com/download/f839c57c-7b4e-4213-b03b-2c1508e13588/uber-subscription-kb5002853-fullfile-x64-glb.exe'
         }
       ]
     }
@@ -414,9 +426,12 @@ var environmentSettings = {
   dcPrivateIPAddress: '10.1.1.100'
   sharePointSitesAuthority: 'spsites'
   sharePointCentralAdminPort: 5000
-  sharePointBitsSelected: (sharePointSettings.isSharePointSubscription
+  sharePointBitsDsc: (sharePointSettings.isSharePointSubscription
     ? sharePointSettings.sharePointSubscriptionBits
     : '')
+  sharePointVersion: (sharePointSettings.isSharePointSubscription
+    ? 'SP${split(sharePointVersion, '-')[1]}'
+    : sharePointVersion)
   localAdminUserName: 'l-${uniqueString(subscription().subscriptionId)}'
   enableAnalysis: false
   applyBrowserPolicies: true
@@ -503,9 +518,9 @@ var baseVirtualMachines = [
     dscSettings: {
       wmfVersion: 'latest'
       configuration: {
-        url: uri(_artifactsLocation, 'dsc/ConfigureDCVM.zip${_artifactsLocationSasToken}')
-        script: 'ConfigureDCVM.ps1'
-        function: 'ConfigureDCVM'
+        url: uri(_artifactsLocation, 'dsc-dc.zip${_artifactsLocationSasToken}')
+        script: 'dsc-dc.ps1'
+        function: 'ConfigDc'
       }
       configurationArguments: {
         domainFQDN: domainFqdn
@@ -527,6 +542,14 @@ var baseVirtualMachines = [
         }
         AdfsSvcCreds: {
           UserName: environmentSettings.adfsSvcUserName
+          Password: otherAccountsPassword
+        }
+        SqlSvcCreds: {
+          UserName: environmentSettings.sqlSvcUserName
+          Password: otherAccountsPassword
+        }
+        SPSetupCreds: {
+          UserName: environmentSettings.spSetupUserName
           Password: otherAccountsPassword
         }
       }
@@ -565,13 +588,14 @@ var baseVirtualMachines = [
     dscSettings: {
       wmfVersion: 'latest'
       configuration: {
-        url: uri(_artifactsLocation, 'dsc/ConfigureSQLVM.zip${_artifactsLocationSasToken}')
-        script: 'ConfigureSQLVM.ps1'
-        function: 'ConfigureSQLVM'
+        url: uri(_artifactsLocation, 'dsc-sql.zip${_artifactsLocationSasToken}')
+        script: 'dsc-sql.ps1'
+        function: 'ConfigSql'
       }
       configurationArguments: {
         DNSServerIP: environmentSettings.dcPrivateIPAddress
         DomainFQDN: domainFqdn
+        SPSetupUserName: environmentSettings.spSetupUserName
       }
       privacy: {
         dataCollection: 'enable'
@@ -585,10 +609,6 @@ var baseVirtualMachines = [
         }
         SqlSvcCreds: {
           UserName: environmentSettings.sqlSvcUserName
-          Password: otherAccountsPassword
-        }
-        SPSetupCreds: {
-          UserName: environmentSettings.spSetupUserName
           Password: otherAccountsPassword
         }
       }
@@ -629,10 +649,10 @@ var baseVirtualMachines = [
       configuration: {
         url: uri(
           _artifactsLocation,
-          '${sharePointSettings.isSharePointSubscription ? 'dsc/ConfigureSPSE.zip' : 'dsc/ConfigureSPLegacy.zip'}${_artifactsLocationSasToken}'
+          '${sharePointSettings.isSharePointSubscription ? 'dsc-spse-main.zip' : 'dsc-splegacy-main.zip'}${_artifactsLocationSasToken}'
         )
-        script: (sharePointSettings.isSharePointSubscription ? 'ConfigureSPSE.ps1' : 'ConfigureSPLegacy.ps1')
-        function: 'ConfigureSPVM'
+        script: (sharePointSettings.isSharePointSubscription ? 'dsc-spse-main.ps1' : 'dsc-splegacy-main.ps1')
+        function: 'ConfigSpMain'
       }
       configurationArguments: {
         DNSServerIP: environmentSettings.dcPrivateIPAddress
@@ -640,11 +660,13 @@ var baseVirtualMachines = [
         DCServerName: templateSettings.vmDCName
         SQLServerName: templateSettings.vmSQLName
         SQLAlias: environmentSettings.sqlAlias
-        SharePointVersion: sharePointVersion
+        SharePointVersion: environmentSettings.sharePointVersion
         SharePointSitesAuthority: environmentSettings.sharePointSitesAuthority
         SharePointCentralAdminPort: environmentSettings.sharePointCentralAdminPort
         EnableAnalysis: environmentSettings.enableAnalysis
-        SharePointBits: environmentSettings.sharePointBitsSelected
+        SharePointBits: environmentSettings.sharePointBitsDsc
+        DefaultZoneMustBeHttp: defaultZoneMustBeHttps
+        ConfigurationLevel: sharePointConfigurationLevel
       }
       privacy: {
         dataCollection: 'enable'
@@ -714,10 +736,10 @@ var frontendVirtualMachinesSettings = {
     configuration: {
       url: uri(
         _artifactsLocation,
-        '${(sharePointSettings.isSharePointSubscription ? 'dsc/ConfigureFESE.zip' : 'dsc/ConfigureFELegacy.zip')}${_artifactsLocationSasToken}'
+        '${(sharePointSettings.isSharePointSubscription ? 'dsc-spse-frontend.zip' : 'dsc-splegacy-frontend.zip')}${_artifactsLocationSasToken}'
       )
-      script: (sharePointSettings.isSharePointSubscription ? 'ConfigureFESE.ps1' : 'ConfigureFELegacy.ps1')
-      function: 'ConfigureFEVM'
+      script: (sharePointSettings.isSharePointSubscription ? 'dsc-spse-frontend.ps1' : 'dsc-splegacy-frontend.ps1')
+      function: 'ConfigSpFrontend'
     }
     configurationArguments: {
       DNSServerIP: environmentSettings.dcPrivateIPAddress
@@ -725,10 +747,12 @@ var frontendVirtualMachinesSettings = {
       DCServerName: templateSettings.vmDCName
       SQLServerName: templateSettings.vmSQLName
       SQLAlias: environmentSettings.sqlAlias
-      SharePointVersion: sharePointVersion
+      SharePointVersion: environmentSettings.sharePointVersion
       SharePointSitesAuthority: environmentSettings.sharePointSitesAuthority
       EnableAnalysis: environmentSettings.enableAnalysis
-      SharePointBits: environmentSettings.sharePointBitsSelected
+      SharePointBits: environmentSettings.sharePointBitsDsc
+      DefaultZoneMustBeHttp: defaultZoneMustBeHttps
+      ConfigurationLevel: sharePointConfigurationLevel
     }
     privacy: {
       dataCollection: 'enable'

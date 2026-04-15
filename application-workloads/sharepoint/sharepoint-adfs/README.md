@@ -22,9 +22,7 @@ languages:
 
 ![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sharepoint/sharepoint-adfs/BicepVersion.svg)
 
-This template creates a secure, highly customizable SharePoint Subscription / 2019 / 2016 farm, in your own Azure subscription.
-
-The Azure resources are provisioned using [Azure Verified Modules](https://azure.github.io/Azure-Verified-Modules/), and the virtual machines are configured with DSC (desired state configuration), using the [project SharePointInfraDsc](https://github.com/Yvand/SharePointInfraDsc).
+This template creates a secure, highly customizable SharePoint Subscription / 2019 / 2016 farm, using [Azure Verified Modules](https://azure.github.io/Azure-Verified-Modules/), and the [project SharePointInfraDsc](https://github.com/Yvand/SharePointInfraDsc) to apply the DSC (desired state configuration) to the virtual machines.
 
 ## Main objectives
 
