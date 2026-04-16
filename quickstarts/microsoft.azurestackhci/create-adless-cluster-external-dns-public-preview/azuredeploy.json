@@ -50,14 +50,7 @@
       "type": "string",
       "defaultValue": "Standard_LRS",
       "allowedValues": [
-        "Premium_LRS",
-        "Premium_ZRS",
-        "Standard_GRS",
-        "Standard_GZRS",
-        "Standard_LRS",
-        "Standard_RAGRS",
-        "Standard_RAGZRS",
-        "Standard_ZRS"
+        "Standard_LRS"
       ],
       "metadata": {
         "description": "Storage Account type"
@@ -472,10 +465,11 @@
     "LocalAdminCredentialECEName": "LocalAdminCredential",
     "storageWitnessSecretName": "[concat( parameters('clusterName'), '-', 'WitnessStorageKey')]",
     "LocalAdminCredentialSecretName": "[concat( parameters('clusterName'), '-', 'LocalAdminCredential')]",
-    "secretsLocationVar": "[concat('https://',parameters('keyVaultName'), '.vault.azure.net')]",
+    "KeyVaultDNS": "[if(equals(environment().name, 'AzureCloud'), 'vault.azure.net', 'vault.usgovcloudapi.net')]",
+    "secretsLocationVar": "[concat('https://',parameters('keyVaultName'), '.', variables('KeyVaultDNS'))]",
     "witnessTypeVar": "[if(equals(parameters('witnessType'), 'No Witness'), '','Cloud')]",
     "clusterWitnessStorageAccountNameVar": "[if(equals(parameters('witnessType'), 'No Witness'), '', parameters('clusterWitnessStorageAccountName'))]",
-    "AzureServiceEndpointVar": "[if(equals(parameters('witnessType'), 'No Witness'), '', 'core.windows.net')]",
+    "AzureServiceEndpointVar": "[if(equals(parameters('witnessType'), 'No Witness'), '', if(equals(environment().name, 'AzureCloud'), 'core.windows.net', 'core.usgovcloudapi.net'))]",
     "localAdminSecretValue": "[base64(concat(parameters('localAdminUserName'),':',parameters('localAdminPassword')))]",
     "CloudWithnessStorageAccountIdVar": "[resourceId('Microsoft.Storage/storageAccounts', parameters('clusterWitnessStorageAccountName'))]",
     "copy": [
@@ -485,7 +479,7 @@
           "input": {
               "secretName": "[parameters('partnerCredentialList')[copyIndex('answerfileSBESecrets')].secretName]",
               "eceSecretName": "[parameters('partnerCredentialList')[copyIndex('answerfileSBESecrets')].secretName]",
-              "secretLocation": "[concat('https://', parameters('keyVaultName'), '.vault.azure.net/secrets/', parameters('partnerCredentialList')[copyIndex('answerfileSBESecrets')].secretName)]"
+              "secretLocation": "[concat('https://', parameters('keyVaultName'), '.', variables('KeyVaultDNS'), '/secrets/', parameters('partnerCredentialList')[copyIndex('answerfileSBESecrets')].secretName)]"
           }
       },
       {
@@ -498,12 +492,12 @@
       {
         "secretName": "[variables('storageWitnessSecretName')]",
         "eceSecretName" : "[variables('storageWitnessECEName')]",
-        "secretLocation": "[concat('https://', parameters('keyVaultName'), '.vault.azure.net/secrets/', variables('storageWitnessSecretName'))]"
+        "secretLocation": "[concat('https://', parameters('keyVaultName'), '.', variables('KeyVaultDNS'), '/secrets/', variables('storageWitnessSecretName'))]"
       },
       {
         "secretName":  "[variables('LocalAdminCredentialSecretName')]",
         "eceSecretName" :  "[variables('LocalAdminCredentialECEName')]",
-         "secretLocation": "[concat('https://', parameters('keyVaultName'), '.vault.azure.net/secrets/', variables('LocalAdminCredentialSecretName'))]"
+        "secretLocation": "[concat('https://', parameters('keyVaultName'), '.', variables('KeyVaultDNS'), '/secrets/', variables('LocalAdminCredentialSecretName'))]"
       }
 
     ]
@@ -743,7 +737,7 @@
         "enabledForDeployment": true,
         "enabledForTemplateDeployment": true,
         "enabledForDiskEncryption": true,
-        "enableSoftDelete": true,
+        "enableSoftDelete": false,
         "softDeleteRetentionInDays": "[parameters('softDeleteRetentionDays')]",
         "enableRbacAuthorization": true,
         "publicNetworkAccess": "Enabled",

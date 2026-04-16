@@ -1,0 +1,734 @@
+name: Validate ARM Deployments via ADX
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  pull-requests: read
+  issues: read
+  id-token: write
+  actions: read
+
+jobs:
+  selected-pipeline:
+    runs-on: ubuntu-latest
+    environment: adx-readonly  # require reviewers in repo settings
+    # Only run when comment starts with /verify and it is on a PR
+    if: >-
+      github.event.issue.pull_request &&
+      startsWith(github.event.comment.body, '/verify')
+
+    steps:
+      - name: Check commenter permission (basic)
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Comment author association: ${{ github.event.comment.author_association }}"
+          case "${{ github.event.comment.author_association }}" in
+            MEMBER|OWNER|COLLABORATOR) ;;
+            *)
+              echo "Not authorized to /verify"
+              exit 1
+              ;;
+          esac
+
+      - name: Get PR number
+        id: pr
+        shell: bash
+        run: |
+          echo "number=${{ github.event.issue.number }}" >> "$GITHUB_OUTPUT"
+
+      - name: Gate – verify validate-samples.yml passed for PR HEAD
+        id: check-validate-samples
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          PR_NUMBER="${{ steps.pr.outputs.number }}"
+          REPO="${{ github.repository }}"
+
+          # Get the PR HEAD SHA
+          HEAD_SHA=$(gh api "/repos/${REPO}/pulls/${PR_NUMBER}" --jq '.head.sha')
+          echo "PR HEAD SHA: ${HEAD_SHA}"
+
+          # Find the most recent workflow run for validate-samples.yml on this SHA
+          CONCLUSION=$(gh api \
+            "/repos/${REPO}/actions/workflows/validate-samples.yml/runs?head_sha=${HEAD_SHA}&per_page=1" \
+            --jq '.workflow_runs[0].conclusion // empty')
+
+          echo "validate-samples.yml conclusion for SHA ${HEAD_SHA}: ${CONCLUSION:-<none>}"
+
+          if [[ "${CONCLUSION}" == "success" ]]; then
+            echo "validate_samples_success=true" >> "$GITHUB_OUTPUT"
+            echo "✅ validate-samples.yml passed."
+          else
+            echo "validate_samples_success=false" >> "$GITHUB_OUTPUT"
+            echo "❌ validate-samples.yml has not passed for this PR commit (conclusion='${CONCLUSION:-not found}')." >&2
+            echo "   Ensure the PR's validate-samples checks are green before running /verify." >&2
+            exit 1
+          fi
+
+      - name: Safeguard – block ValidateSampleDeployments.yml edits by non MEMBER/OWNER
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const allowed = new Set(["MEMBER", "OWNER"]);
+            const pull_number = parseInt("${{ steps.pr.outputs.number }}", 10);
+            const owner = context.repo.owner;
+            const repo  = context.repo.repo;
+
+            const [prData, files] = await Promise.all([
+              github.rest.pulls.get({ owner, repo, pull_number }),
+              github.paginate(
+                github.rest.pulls.listFiles,
+                { owner, repo, pull_number, per_page: 100 }
+              )
+            ]);
+
+            const assoc = prData.data.author_association;
+            const touched = files.some(f =>
+              f.filename === ".github/workflows/ValidateSampleDeployments.yml" ||
+              f.filename.endsWith("/ValidateSampleDeployments.yml") ||
+              f.filename === "ValidateSampleDeployments.yml"
+            );
+
+            core.info(`PR author_association=${assoc}; ValidateSampleDeployments.yml touched=${touched}`);
+
+            if (touched && !allowed.has(assoc)) {
+              core.setFailed(
+                `Blocked: ValidateSampleDeployments.yml was modified by PR author with ` +
+                `author_association='${assoc}'. Only MEMBER or OWNER may modify this file.`
+              );
+            }
+
+      - name: Checkout PR HEAD
+        uses: actions/checkout@v4
+        with:
+          ref: refs/pull/${{ steps.pr.outputs.number }}/head
+
+      # Paginate PR changed files to locate the single added/modified metadata.json
+      - name: Find metadata.json from PR changed files
+        id: find-metadata
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          PR_NUMBER="${{ steps.pr.outputs.number }}"
+          REPO="${{ github.repository }}"
+
+          METADATA_FILES=()
+          PAGE=1
+          while true; do
+            RESP=$(gh api \
+              "/repos/${REPO}/pulls/${PR_NUMBER}/files?per_page=100&page=${PAGE}" \
+              --jq '[.[] | select(.status=="added" or .status=="modified" or .status=="renamed") | select(.filename == "metadata.json" or (.filename | endswith("/metadata.json"))) | .filename] | .[]')
+            [[ -z "${RESP}" ]] && break
+            while IFS= read -r f; do
+              METADATA_FILES+=("$f")
+            done <<< "${RESP}"
+            (( PAGE++ ))
+          done
+
+          COUNT=${#METADATA_FILES[@]}
+          if [[ "${COUNT}" -eq 0 ]]; then
+            echo "ERROR: No metadata.json added/modified in this PR." >&2
+            exit 1
+          fi
+          if [[ "${COUNT}" -gt 1 ]]; then
+            echo "ERROR: More than one metadata.json found in PR changed files:" >&2
+            printf '  %s\n' "${METADATA_FILES[@]}" >&2
+            exit 1
+          fi
+
+          METADATA_FILE="${METADATA_FILES[0]}"
+          SAMPLE_PATH="$(dirname "${METADATA_FILE}")"
+          echo "metadata_file=${METADATA_FILE}" >> "$GITHUB_OUTPUT"
+          echo "sample_path=${SAMPLE_PATH}"     >> "$GITHUB_OUTPUT"
+          echo "Found metadata.json: ${METADATA_FILE}"
+
+      - name: Azure login via OIDC (federated to UAMI)
+        uses: azure/login@v2
+        with:
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          client-id: ${{ secrets.AZURE_UAMI_CLIENT_ID }}
+
+      # ── Ensure azuredeploy.json exists (compile Bicep if needed) ────────────
+      - name: Ensure azuredeploy.json exists (compile Bicep if needed)
+        shell: bash
+        env:
+          SAMPLE_PATH: ${{ steps.find-metadata.outputs.sample_path }}
+        run: |
+          set -euo pipefail
+          cd "${SAMPLE_PATH}"
+
+          echo "──────────────────────────────────────────"
+          echo "  Sample folder: ${SAMPLE_PATH}"
+          echo "──────────────────────────────────────────"
+
+          if [[ -f "azuredeploy.json" ]]; then
+            echo "azuredeploy.json already exists — no compilation needed."
+            exit 0
+          fi
+
+          if [[ ! -f "main.bicep" ]]; then
+            echo "Neither azuredeploy.json nor main.bicep found — skipping (validation step will catch this)."
+            exit 0
+          fi
+
+          echo "azuredeploy.json not found but main.bicep exists — compiling..."
+          command -v bicep >/dev/null 2>&1 || az bicep install
+          bicep build main.bicep --outfile azuredeploy.json
+          echo "✅ Compiled main.bicep → azuredeploy.json"
+
+      # ── Calculate templateHash and validate against metadata.json ───────────
+      - name: Calculate templateHash and validate against metadata.json
+        shell: bash
+        env:
+          SAMPLE_PATH: ${{ steps.find-metadata.outputs.sample_path }}
+        run: |
+          set -euo pipefail
+          cd "${SAMPLE_PATH}"
+
+          echo "──────────────────────────────────────────"
+          echo "  templateHash validation (main template)"
+          echo "──────────────────────────────────────────"
+
+          if [[ ! -f "azuredeploy.json" ]]; then
+            echo "ERROR: azuredeploy.json not found in '${SAMPLE_PATH}' — cannot compute templateHash." >&2
+            exit 1
+          fi
+
+          # Compute hash via ARM public API
+          COMPUTED_HASH=$(az rest --method post \
+            --url "https://management.azure.com/providers/Microsoft.Resources/calculateTemplateHash?api-version=2025-04-01" \
+            --body @azuredeploy.json | jq -r '.templateHash')
+
+          echo "Computed templateHash: ${COMPUTED_HASH}"
+
+          # Read expected hash from metadata.json (main deployment entry)
+          # We are cd'd into SAMPLE_PATH, so metadata.json is local
+          EXPECTED_HASH=$(jq -r '
+            if (.testResult.deployments | type) == "array" then
+              [.testResult.deployments[] | select((.templateFileName // "") | startswith("prereqs/") | not)] | .[0].templateHash // empty
+            else
+              .testResult.deployments.templateHash // empty
+            end' "metadata.json")
+
+          if [[ -z "${EXPECTED_HASH}" ]]; then
+            echo "ERROR: 'templateHash' not found in metadata.json for the main deployment entry." >&2
+            exit 1
+          fi
+
+          echo "Expected templateHash: ${EXPECTED_HASH}"
+
+          if [[ "${COMPUTED_HASH}" != "${EXPECTED_HASH}" ]]; then
+            echo "ERROR: templateHash mismatch for main template." >&2
+            echo "  computed : ${COMPUTED_HASH}" >&2
+            echo "  expected : ${EXPECTED_HASH}" >&2
+            exit 1
+          fi
+
+          echo "✅ templateHash matches for main template."
+
+      - name: Validate deployments via ADX
+        shell: bash
+        env:
+          CLUSTER_URL: "https://armprodeus.eastus.kusto.windows.net"
+          DATABASE: ${{ secrets.ADX_DATABASE }}
+          # Path resolved from PR changed files by the find-metadata step above
+          METADATA_FILE: ${{ steps.find-metadata.outputs.metadata_file }}
+        run: |
+          set -euo pipefail
+
+          # metadata.json path comes from PR changed files; no backslash normalization needed
+          METADATA_PATH="${METADATA_FILE}"
+
+          # ── Validate file exists ──────────────────────────────────────────
+          if [[ ! -f "${METADATA_PATH}" ]]; then
+            echo "ERROR: metadata.json not found at '${METADATA_PATH}'" >&2
+            exit 1
+          fi
+          echo "== Parsing metadata: ${METADATA_PATH} =="
+
+          # ── Validate .testResult.deployments block is present ─────────────
+          DEPLOYMENTS=$(jq -c '.testResult.deployments // empty' "${METADATA_PATH}")
+          if [[ -z "${DEPLOYMENTS}" ]]; then
+            echo "ERROR: '.testResult.deployments' not found in '${METADATA_PATH}'" >&2
+            exit 1
+          fi
+
+          # ── Helper: POST a pre-built JSON body to the Kusto REST endpoint ──
+          run_kusto_query () {
+            local body="$1"
+            az rest \
+              --method POST \
+              --url "${CLUSTER_URL}/v1/rest/query" \
+              --headers "Content-Type=application/json" \
+              --body "${body}" \
+              --resource "https://kusto.kusto.windows.net"
+          }
+
+          # ── If array, pick the non-prereqs entry; otherwise use the flat object ───
+          DEPLOYMENTS=$(echo "${DEPLOYMENTS}" | jq -c '
+            if type == "array" then
+              map(select((.templateFileName // "") | startswith("prereqs/") | not)) | .[0]
+            else
+              .
+            end // empty')
+          if [[ -z "${DEPLOYMENTS}" ]]; then
+            echo "ERROR: No main template deployment entry found in '.testResult.deployments'" >&2
+            exit 1
+          fi
+
+          # ── Extract fields from the deployments entry ────────────────────
+          TEMPLATE_FILE_NAME=$(echo "${DEPLOYMENTS}" | jq -r '.templateFileName // empty')
+          CORRELATION_ID=$(echo "${DEPLOYMENTS}"     | jq -r '.correlationId    // empty')
+          DEPLOYMENT_NAME=$(echo "${DEPLOYMENTS}"    | jq -r '.deploymentName   // empty')
+          ENTRY_TIMESTAMP=$(echo "${DEPLOYMENTS}"    | jq -r '.TIMESTAMP        // "N/A"')
+          EXPECTED_HASH=$(echo "${DEPLOYMENTS}"      | jq -r '.templateHash     // empty')
+
+          echo ""
+          echo "================================================================"
+          echo "  Template file : ${TEMPLATE_FILE_NAME:-<missing>}"
+          echo "  correlationId : ${CORRELATION_ID:-<missing>}"
+          echo "  deploymentName: ${DEPLOYMENT_NAME:-<missing>}"
+          echo "  timestamp     : ${ENTRY_TIMESTAMP}"
+          echo "  expected hash : ${EXPECTED_HASH:-<missing>}"
+          echo "================================================================"
+
+          # ── Validate templateFileName is an allowed value ─────────────────
+          if [[ -z "${TEMPLATE_FILE_NAME}" ]]; then
+            echo "ERROR: 'templateFileName' is missing from '.testResult.deployments'" >&2
+            exit 1
+          fi
+          if [[ "${TEMPLATE_FILE_NAME}" != "azuredeploy.json" && "${TEMPLATE_FILE_NAME}" != "main.bicep" ]]; then
+            echo "ERROR: 'templateFileName' is '${TEMPLATE_FILE_NAME}' — must be 'azuredeploy.json' or 'main.bicep'" >&2
+            exit 1
+          fi
+
+          # ── Validate remaining required fields ────────────────────────────
+          if [[ -z "${CORRELATION_ID}" ]]; then
+            echo "ERROR: 'correlationId' is missing from '.testResult.deployments'" >&2
+            exit 1
+          fi
+          if [[ -z "${DEPLOYMENT_NAME}" ]]; then
+            echo "ERROR: 'deploymentName' is missing from '.testResult.deployments'" >&2
+            exit 1
+          fi
+          if [[ -z "${EXPECTED_HASH}" ]]; then
+            echo "ERROR: 'templateHash' is missing from '.testResult.deployments'" >&2
+            exit 1
+          fi
+
+          # ── Run Kusto query ───────────────────────────────────────────────
+          # jq handles JSON-escaping of all KQL string values
+          REQUEST_BODY=$(jq -n \
+            --arg db  "${DATABASE}" \
+            --arg cid "${CORRELATION_ID}" \
+            --arg dn  "${DEPLOYMENT_NAME}" \
+            '{db: $db, csl: "Deployments | where correlationId == \"\($cid)\" | where deploymentName == \"\($dn)\" | project timestamp=TIMESTAMP, deploymentName, executionStatus, templateHash | top 1 by timestamp desc"}')
+
+          echo "Running Kusto query for '${TEMPLATE_FILE_NAME}'..."
+          RESPONSE=$(run_kusto_query "${REQUEST_BODY}")
+
+          ROW_COUNT=$(echo "${RESPONSE}" | jq '(.Tables[0].Rows // []) | length')
+          if [[ "${ROW_COUNT}" -eq 0 ]]; then
+            echo "ERROR: No ADX record found — correlationId='${CORRELATION_ID}' deploymentName='${DEPLOYMENT_NAME}'" >&2
+            exit 1
+          fi
+
+          # Extract field values by column name (robust against column-order changes)
+          ACTUAL_STATUS=$(echo "${RESPONSE}" | jq -r \
+            '.Tables[0] as $t | ($t.Columns | map(.ColumnName) | index("executionStatus")) as $i | $t.Rows[0][$i]')
+          ACTUAL_HASH=$(echo "${RESPONSE}" | jq -r \
+            '.Tables[0] as $t | ($t.Columns | map(.ColumnName) | index("templateHash")) as $i | $t.Rows[0][$i]')
+
+          echo "  actual status : ${ACTUAL_STATUS}"
+          echo "  actual hash   : ${ACTUAL_HASH}"
+
+          # ── Compare results ───────────────────────────────────────────────
+          OVERALL_PASS=true
+
+          if [[ "${ACTUAL_STATUS}" != "Succeeded" ]]; then
+            echo "FAIL: executionStatus='${ACTUAL_STATUS}' (expected 'Succeeded') — correlationId='${CORRELATION_ID}' deploymentName='${DEPLOYMENT_NAME}'" >&2
+            OVERALL_PASS=false
+          else
+            echo "PASS: executionStatus = Succeeded"
+          fi
+
+          if [[ "${ACTUAL_HASH}" != "${EXPECTED_HASH}" ]]; then
+            echo "FAIL: templateHash mismatch for '${TEMPLATE_FILE_NAME}'" >&2
+            echo "      expected : ${EXPECTED_HASH}" >&2
+            echo "      actual   : ${ACTUAL_HASH}" >&2
+            OVERALL_PASS=false
+          else
+            echo "PASS: templateHash matches"
+          fi
+
+          echo ""
+          if [[ "${OVERALL_PASS}" != "true" ]]; then
+            echo "VALIDATION FAILED: deployment did not pass." >&2
+            exit 1
+          fi
+          echo "== Deployment validation PASSED =="
+
+      # ── Prereqs A: verify at least one recognized template exists ──────────
+      - name: Validate prereqs template files
+        id: check-prereqs
+        shell: bash
+        env:
+          SAMPLE_PATH: ${{ steps.find-metadata.outputs.sample_path }}
+        run: |
+          set -euo pipefail
+          PREREQS_DIR="${SAMPLE_PATH}/prereqs"
+
+          if [[ ! -d "${PREREQS_DIR}" ]]; then
+            echo "No prereqs/ folder found under '${SAMPLE_PATH}' — skipping prereqs validation."
+            echo "has_prereqs=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "has_prereqs=true" >> "$GITHUB_OUTPUT"
+          echo "== prereqs/ folder found: ${PREREQS_DIR} =="
+
+          EXPECTED_FILES=("prereq.azuredeploy.json" "prereq.main.bicep" "azuredeploy.json" "main.bicep")
+          FOUND_FILES=()
+          for f in "${EXPECTED_FILES[@]}"; do
+            [[ -f "${PREREQS_DIR}/${f}" ]] && FOUND_FILES+=("$f")
+          done
+
+          if [[ ${#FOUND_FILES[@]} -eq 0 ]]; then
+            echo "ERROR: No valid template file found in prereqs/ folder." >&2
+            echo "  Sample folder : ${SAMPLE_PATH}" >&2
+            echo "  Prereqs folder: ${PREREQS_DIR}" >&2
+            echo "  Expected one of: ${EXPECTED_FILES[*]}" >&2
+            ACTUAL_CONTENTS=$(ls "${PREREQS_DIR}" 2>/dev/null || true)
+            if [[ -z "${ACTUAL_CONTENTS}" ]]; then
+              echo "  Actual contents: (empty)" >&2
+            else
+              echo "  Actual contents:" >&2
+              while IFS= read -r entry; do
+                echo "    ${entry}" >&2
+              done <<< "${ACTUAL_CONTENTS}"
+            fi
+            exit 1
+          fi
+
+          printf 'Found prereqs template(s): %s\n' "${FOUND_FILES[*]}"
+          if [[ ${#FOUND_FILES[@]} -gt 1 ]]; then
+            echo "NOTE: Multiple matching template files found. Deployment selection is external;"
+            echo "      the pipeline relies on metadata.json for validation."
+          fi
+
+      # ── Prereqs: ensure azuredeploy.json exists (compile Bicep if needed) ───
+      - name: Prereqs – ensure azuredeploy.json exists (compile Bicep if needed)
+        if: steps.check-prereqs.outputs.has_prereqs == 'true'
+        shell: bash
+        env:
+          SAMPLE_PATH: ${{ steps.find-metadata.outputs.sample_path }}
+        run: |
+          set -euo pipefail
+          PREREQS_DIR="${SAMPLE_PATH}/prereqs"
+          cd "${PREREQS_DIR}"
+
+          echo "──────────────────────────────────────────"
+          echo "  Prereqs folder: ${PREREQS_DIR}"
+          echo "──────────────────────────────────────────"
+
+          # Determine which ARM template file to target
+          # prereqs may use prereq.azuredeploy.json or azuredeploy.json
+          ARM_FILE=""
+          for candidate in prereq.azuredeploy.json azuredeploy.json; do
+            if [[ -f "${candidate}" ]]; then
+              ARM_FILE="${candidate}"
+              break
+            fi
+          done
+
+          if [[ -n "${ARM_FILE}" ]]; then
+            echo "${ARM_FILE} already exists — no compilation needed."
+            exit 0
+          fi
+
+          # No ARM file found — try to compile from Bicep
+          BICEP_FILE=""
+          for candidate in prereq.main.bicep main.bicep; do
+            if [[ -f "${candidate}" ]]; then
+              BICEP_FILE="${candidate}"
+              break
+            fi
+          done
+
+          if [[ -z "${BICEP_FILE}" ]]; then
+            echo "No ARM or Bicep template found in prereqs/ — skipping (validation step will catch this)."
+            exit 0
+          fi
+
+          # Derive output name: prereq.main.bicep → prereq.azuredeploy.json, main.bicep → azuredeploy.json
+          if [[ "${BICEP_FILE}" == prereq.* ]]; then
+            OUT_FILE="prereq.azuredeploy.json"
+          else
+            OUT_FILE="azuredeploy.json"
+          fi
+
+          echo "${OUT_FILE} not found but ${BICEP_FILE} exists — compiling..."
+          command -v bicep >/dev/null 2>&1 || az bicep install
+          bicep build "${BICEP_FILE}" --outfile "${OUT_FILE}"
+          echo "✅ Compiled ${BICEP_FILE} → ${OUT_FILE}"
+
+      # ── Prereqs: calculate templateHash and validate per entry ──────────────
+      - name: Prereqs – calculate templateHash and validate against metadata.json
+        if: steps.check-prereqs.outputs.has_prereqs == 'true'
+        shell: bash
+        env:
+          SAMPLE_PATH: ${{ steps.find-metadata.outputs.sample_path }}
+          METADATA_FILE: ${{ steps.find-metadata.outputs.metadata_file }}
+        run: |
+          set -euo pipefail
+          PREREQS_DIR="${SAMPLE_PATH}/prereqs"
+          METADATA_PATH="${METADATA_FILE}"
+
+          echo "──────────────────────────────────────────"
+          echo "  templateHash validation (prereqs)"
+          echo "──────────────────────────────────────────"
+
+          # Gather prereqs deployment entries from metadata.json
+          PREREQ_DEPLOYMENTS=$(jq -c \
+            '[.testResult.deployments[] | select(.templateFileName | startswith("prereqs/"))]' \
+            "${METADATA_PATH}")
+          PREREQ_COUNT=$(echo "${PREREQ_DEPLOYMENTS}" | jq 'length')
+
+          if [[ "${PREREQ_COUNT}" -eq 0 ]]; then
+            echo "No prereqs entries in metadata.json — skipping hash validation."
+            exit 0
+          fi
+
+          OVERALL_PASS=true
+
+          for i in $(seq 0 $((PREREQ_COUNT - 1))); do
+            ENTRY=$(echo "${PREREQ_DEPLOYMENTS}" | jq -c ".[${i}]")
+            ENTRY_LABEL="$((i + 1))/${PREREQ_COUNT}"
+            TEMPLATE_FILE_NAME=$(echo "${ENTRY}" | jq -r '.templateFileName // empty')
+            EXPECTED_HASH=$(echo "${ENTRY}" | jq -r '.templateHash // empty')
+
+            echo ""
+            echo "  [prereqs entry ${ENTRY_LABEL}] ${TEMPLATE_FILE_NAME}"
+
+            if [[ -z "${EXPECTED_HASH}" ]]; then
+              echo "  ERROR: templateHash missing for '${TEMPLATE_FILE_NAME}'" >&2
+              OVERALL_PASS=false
+              continue
+            fi
+
+            # Determine which ARM JSON file corresponds to this entry
+            # templateFileName is e.g. "prereqs/main.bicep" or "prereqs/prereq.azuredeploy.json"
+            BASENAME=$(basename "${TEMPLATE_FILE_NAME}")
+            case "${BASENAME}" in
+              prereq.main.bicep)       ARM_FILE="${PREREQS_DIR}/prereq.azuredeploy.json" ;;
+              main.bicep)              ARM_FILE="${PREREQS_DIR}/azuredeploy.json" ;;
+              prereq.azuredeploy.json) ARM_FILE="${PREREQS_DIR}/prereq.azuredeploy.json" ;;
+              azuredeploy.json)        ARM_FILE="${PREREQS_DIR}/azuredeploy.json" ;;
+              *)                       ARM_FILE="${PREREQS_DIR}/${BASENAME}" ;;
+            esac
+
+            if [[ ! -f "${ARM_FILE}" ]]; then
+              echo "  ERROR: ARM template '${ARM_FILE}' not found (needed for hash computation)." >&2
+              OVERALL_PASS=false
+              continue
+            fi
+
+            COMPUTED_HASH=$(az rest --method post \
+              --url "https://management.azure.com/providers/Microsoft.Resources/calculateTemplateHash?api-version=2025-04-01" \
+              --body @"${ARM_FILE}" | jq -r '.templateHash')
+
+            echo "  computed : ${COMPUTED_HASH}"
+            echo "  expected : ${EXPECTED_HASH}"
+
+            if [[ "${COMPUTED_HASH}" != "${EXPECTED_HASH}" ]]; then
+              echo "  FAIL: templateHash mismatch for prereqs entry '${TEMPLATE_FILE_NAME}'" >&2
+              OVERALL_PASS=false
+            else
+              echo "  ✅ templateHash matches."
+            fi
+          done
+
+          echo ""
+          if [[ "${OVERALL_PASS}" != "true" ]]; then
+            echo "PREREQS templateHash VALIDATION FAILED." >&2
+            exit 1
+          fi
+          echo "✅ All prereqs templateHash values match."
+
+      # ── Prereqs B+C: validate metadata entries and run Kusto per entry ──────
+      - name: Validate prereqs deployments via ADX
+        if: steps.check-prereqs.outputs.has_prereqs == 'true'
+        shell: bash
+        env:
+          CLUSTER_URL: "https://armprodeus.eastus.kusto.windows.net"
+          DATABASE: ${{ secrets.ADX_DATABASE }}
+          METADATA_FILE: ${{ steps.find-metadata.outputs.metadata_file }}
+        run: |
+          set -euo pipefail
+          METADATA_PATH="${METADATA_FILE}"
+
+          # ── Validate file exists ──────────────────────────────────────────
+          if [[ ! -f "${METADATA_PATH}" ]]; then
+            echo "ERROR: metadata.json not found at '${METADATA_PATH}'" >&2
+            exit 1
+          fi
+          echo "== Validating prereqs deployments from: ${METADATA_PATH} =="
+
+          # ── Validate .testResult ──────────────────────────────────────────
+          TEST_RESULT=$(jq -c '.testResult // empty' "${METADATA_PATH}")
+          if [[ -z "${TEST_RESULT}" ]]; then
+            echo "ERROR: '.testResult' not found in '${METADATA_PATH}'" >&2
+            echo "  metadata file: ${METADATA_PATH}" >&2
+            exit 1
+          fi
+
+          # ── Validate .testResult.deployments is an array ──────────────────
+          DEPLOYMENTS_TYPE=$(jq -r '(.testResult.deployments // null) | type' "${METADATA_PATH}")
+          if [[ "${DEPLOYMENTS_TYPE}" != "array" ]]; then
+            echo "ERROR: '.testResult.deployments' must be an array (got '${DEPLOYMENTS_TYPE}') in '${METADATA_PATH}'" >&2
+            echo "  metadata file   : ${METADATA_PATH}" >&2
+            echo "  offending value : $(jq -c '.testResult.deployments // "missing"' "${METADATA_PATH}")" >&2
+            exit 1
+          fi
+
+          # ── Filter prereqs entries ────────────────────────────────────────
+          PREREQ_DEPLOYMENTS=$(jq -c \
+            '[.testResult.deployments[] | select(.templateFileName | startswith("prereqs/"))]' \
+            "${METADATA_PATH}")
+          PREREQ_COUNT=$(echo "${PREREQ_DEPLOYMENTS}" | jq 'length')
+
+          if [[ "${PREREQ_COUNT}" -eq 0 ]]; then
+            echo "ERROR: prereqs/ folder exists but no prereqs entries found in '.testResult.deployments'" >&2
+            echo "  metadata file: ${METADATA_PATH}" >&2
+            echo "  (looked for entries where templateFileName starts with 'prereqs/')" >&2
+            exit 1
+          fi
+
+          echo "Found ${PREREQ_COUNT} prereqs deployment entry/entries."
+
+          # ── Helper: POST a pre-built JSON body to the Kusto REST endpoint ──
+          run_kusto_query () {
+            local body="$1"
+            az rest \
+              --method POST \
+              --url "${CLUSTER_URL}/v1/rest/query" \
+              --headers "Content-Type=application/json" \
+              --body "${body}" \
+              --resource "https://kusto.kusto.windows.net"
+          }
+
+          OVERALL_PASS=true
+
+          for i in $(seq 0 $((PREREQ_COUNT - 1))); do
+            ENTRY=$(echo "${PREREQ_DEPLOYMENTS}" | jq -c ".[$i]")
+            ENTRY_LABEL="$((i + 1))/${PREREQ_COUNT}"
+
+            TEMPLATE_FILE_NAME=$(echo "${ENTRY}" | jq -r '.templateFileName // empty')
+            CORRELATION_ID=$(echo "${ENTRY}"     | jq -r '.correlationId    // empty')
+            DEPLOYMENT_NAME=$(echo "${ENTRY}"    | jq -r '.deploymentName   // empty')
+            ENTRY_TIMESTAMP=$(echo "${ENTRY}"    | jq -r '.TIMESTAMP        // "N/A"')
+            EXPECTED_HASH=$(echo "${ENTRY}"      | jq -r '.templateHash     // empty')
+
+            echo ""
+            echo "================================================================"
+            echo "  [prereqs entry ${ENTRY_LABEL}]"
+            echo "  Template file : ${TEMPLATE_FILE_NAME:-<missing>}"
+            echo "  correlationId : ${CORRELATION_ID:-<missing>}"
+            echo "  deploymentName: ${DEPLOYMENT_NAME:-<missing>}"
+            echo "  timestamp     : ${ENTRY_TIMESTAMP}"
+            echo "  expected hash : ${EXPECTED_HASH:-<missing>}"
+            echo "================================================================"
+
+            # ── Validate all required fields ──────────────────────────────
+            ENTRY_VALID=true
+            for FIELD_NAME in templateFileName correlationId deploymentName TIMESTAMP templateHash; do
+              FIELD_VAL=$(echo "${ENTRY}" | jq -r --arg f "${FIELD_NAME}" '.[$f] // empty')
+              if [[ -z "${FIELD_VAL}" ]]; then
+                echo "ERROR [prereqs ${ENTRY_LABEL}]: '${FIELD_NAME}' is missing or empty" >&2
+                echo "  metadata file   : ${METADATA_PATH}" >&2
+                echo "  offending entry : ${ENTRY}" >&2
+                ENTRY_VALID=false
+              fi
+            done
+
+            if [[ "${ENTRY_VALID}" != "true" ]]; then
+              OVERALL_PASS=false
+              continue
+            fi
+
+            # ── Run Kusto query ───────────────────────────────────────────
+            REQUEST_BODY=$(jq -n \
+              --arg db  "${DATABASE}" \
+              --arg cid "${CORRELATION_ID}" \
+              --arg dn  "${DEPLOYMENT_NAME}" \
+              '{db: $db, csl: "Deployments | where correlationId == \"\($cid)\" | where deploymentName == \"\($dn)\" | project timestamp=TIMESTAMP, deploymentName, executionStatus, templateHash | top 1 by timestamp desc"}')
+
+            echo "Running Kusto query for prereqs entry '${TEMPLATE_FILE_NAME}'..."
+            RESPONSE=$(run_kusto_query "${REQUEST_BODY}")
+
+            ROW_COUNT=$(echo "${RESPONSE}" | jq '(.Tables[0].Rows // []) | length')
+            if [[ "${ROW_COUNT}" -eq 0 ]]; then
+              echo "ERROR [prereqs ${ENTRY_LABEL}]: No ADX record found" >&2
+              echo "  templateFileName : ${TEMPLATE_FILE_NAME}" >&2
+              echo "  correlationId    : ${CORRELATION_ID}" >&2
+              echo "  deploymentName   : ${DEPLOYMENT_NAME}" >&2
+              echo "  Kusto parameters : correlationId='${CORRELATION_ID}' deploymentName='${DEPLOYMENT_NAME}'" >&2
+              OVERALL_PASS=false
+              continue
+            fi
+
+            # Extract field values by column name (robust against column-order changes)
+            ACTUAL_STATUS=$(echo "${RESPONSE}" | jq -r \
+              '.Tables[0] as $t | ($t.Columns | map(.ColumnName) | index("executionStatus")) as $i | $t.Rows[0][$i]')
+            ACTUAL_HASH=$(echo "${RESPONSE}" | jq -r \
+              '.Tables[0] as $t | ($t.Columns | map(.ColumnName) | index("templateHash")) as $i | $t.Rows[0][$i]')
+
+            echo "  actual status : ${ACTUAL_STATUS}"
+            echo "  actual hash   : ${ACTUAL_HASH}"
+
+            # ── Compare results ───────────────────────────────────────────
+            ENTRY_PASS=true
+
+            if [[ "${ACTUAL_STATUS}" != "Succeeded" ]]; then
+              echo "FAIL [prereqs ${ENTRY_LABEL}]: executionStatus='${ACTUAL_STATUS}' (expected 'Succeeded')" >&2
+              echo "  templateFileName : ${TEMPLATE_FILE_NAME}" >&2
+              echo "  correlationId    : ${CORRELATION_ID}" >&2
+              echo "  deploymentName   : ${DEPLOYMENT_NAME}" >&2
+              echo "  Kusto parameters : correlationId='${CORRELATION_ID}' deploymentName='${DEPLOYMENT_NAME}'" >&2
+              ENTRY_PASS=false
+            else
+              echo "PASS: executionStatus = Succeeded"
+            fi
+
+            if [[ "${ACTUAL_HASH}" != "${EXPECTED_HASH}" ]]; then
+              echo "FAIL [prereqs ${ENTRY_LABEL}]: templateHash mismatch" >&2
+              echo "  templateFileName : ${TEMPLATE_FILE_NAME}" >&2
+              echo "  expected         : ${EXPECTED_HASH}" >&2
+              echo "  actual           : ${ACTUAL_HASH}" >&2
+              echo "  correlationId    : ${CORRELATION_ID}" >&2
+              echo "  deploymentName   : ${DEPLOYMENT_NAME}" >&2
+              ENTRY_PASS=false
+            else
+              echo "PASS: templateHash matches"
+            fi
+
+            if [[ "${ENTRY_PASS}" != "true" ]]; then
+              OVERALL_PASS=false
+            fi
+          done
+
+          echo ""
+          if [[ "${OVERALL_PASS}" != "true" ]]; then
+            echo "PREREQS VALIDATION FAILED: one or more prereqs deployments did not pass." >&2
+            exit 1
+          fi
+          echo "== Prereqs deployment validation PASSED =="

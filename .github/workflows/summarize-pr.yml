@@ -1,0 +1,314 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# summarize-pr.yml
+#
+# Posts an AI-generated reviewer-friendly summary comment on a PR using the
+# instructions in .github/agents/summarizer.agent.md.
+#
+# Triggered by a "/summarize" comment on a pull request.  Runs with base repo
+# permissions so GITHUB_TOKEN has full models:read and pull-requests:write
+# access — works for fork PRs unlike the pull_request event.
+# ──────────────────────────────────────────────────────────────────────────────
+
+name: Summarize PR
+
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  summarize:
+    name: Summarize PR sample
+    runs-on: ubuntu-latest
+
+    # Only run when:
+    #   1. The comment is on a pull request (not a plain issue)
+    #   2. The comment body starts with /summarize
+    if: >-
+      github.event.issue.pull_request &&
+      startsWith(github.event.comment.body, '/summarize')
+    continue-on-error: true
+
+    permissions:
+      contents: read
+      pull-requests: write
+      models: read
+
+    concurrency:
+      group: summarizer-pr-${{ github.event.issue.number }}
+      cancel-in-progress: true
+
+    steps:
+      # ── 1. Resolve the PR head ref ──────────────────────────────────────
+      - name: Get PR details
+        id: pr
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number
+            });
+            core.setOutput('head_ref', pr.data.head.ref);
+            core.setOutput('head_sha', pr.data.head.sha);
+            core.setOutput('head_repo', pr.data.head.repo.full_name);
+
+      # ── 2. Checkout the PR head ─────────────────────────────────────────
+      - name: Checkout PR head
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ steps.pr.outputs.head_repo }}
+          ref: ${{ steps.pr.outputs.head_sha }}
+          fetch-depth: 0
+
+      # ── 3. Detect changed sample folders ────────────────────────────────
+      - name: Detect changed sample folders
+        id: detect
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+
+            const owner = context.repo.owner;
+            const repo  = context.repo.repo;
+            const pull_number = context.issue.number;
+
+            core.info(`Detecting changed samples for PR #${pull_number}...`);
+
+            // Use the GitHub API to get changed files — reliable for fork PRs
+            const files = await github.paginate(
+              github.rest.pulls.listFiles,
+              { owner, repo, pull_number, per_page: 100 }
+            );
+            const changedFiles = files.map(f => f.filename);
+
+            core.info(`Changed files (${changedFiles.length}):`);
+            changedFiles.forEach(f => core.info(`  ${f}`));
+
+            const SAMPLE_ROOTS = [
+              'quickstarts/',
+              'demos/',
+              'application-workloads/',
+              'modules/',
+              'subscription-deployments/',
+              'managementgroup-deployments/',
+              'tenant-deployments/'
+            ];
+
+            const seenDirs = new Set();
+            const workspace = process.env.GITHUB_WORKSPACE;
+
+            for (const changedFile of changedFiles) {
+              const matchedRoot = SAMPLE_ROOTS.find(r => changedFile.startsWith(r));
+              if (!matchedRoot) continue;
+
+              const relRoot = matchedRoot.replace(/\/$/, '');
+              let dir = path.posix.dirname(changedFile);
+
+              while (dir !== relRoot && dir !== '.') {
+                const metaPath = path.join(workspace, dir, 'metadata.json');
+                const readmePath = path.join(workspace, dir, 'README.md');
+
+                if (fs.existsSync(metaPath) && fs.existsSync(readmePath)) {
+                  seenDirs.add(dir);
+                  break;
+                }
+                dir = path.posix.dirname(dir);
+              }
+            }
+
+            const samplesJson = JSON.stringify([...seenDirs]);
+            core.info(`Detected sample folders: ${samplesJson}`);
+            core.setOutput('samples_json', samplesJson);
+
+      # ── 4. Add reaction to acknowledge the command ──────────────────────
+      - name: React to comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.reactions.createForIssueComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: context.payload.comment.id,
+              content: 'eyes'
+            });
+
+      # ── 5. Generate and post summary ────────────────────────────────────
+      - name: Generate and post summary
+        uses: actions/github-script@v7
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          SAMPLES_JSON: ${{ steps.detect.outputs.samples_json }}
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+
+            // ── 1. Read summarizer agent instructions ──────────────────
+            const agentPath = path.join(
+              process.env.GITHUB_WORKSPACE,
+              '.github', 'agents', 'summarizer.agent.md'
+            );
+            if (!fs.existsSync(agentPath)) {
+              core.warning('summarizer.agent.md not found – skipping summary.');
+              return;
+            }
+            const systemPrompt = fs.readFileSync(agentPath, 'utf8');
+
+            // ── 2. Parse sample folders ────────────────────────────────
+            const samples = JSON.parse(process.env.SAMPLES_JSON || '[]');
+            if (!samples.length) {
+              core.warning('No sample folders detected – skipping summary.');
+              return;
+            }
+
+            // ── 3. Gather PR context via API ───────────────────────────
+            const owner = context.repo.owner;
+            const repo  = context.repo.repo;
+            const pull_number = context.issue.number;
+
+            const prData = await github.rest.pulls.get({
+              owner, repo, pull_number
+            });
+
+            // Changed files
+            const files = await github.paginate(
+              github.rest.pulls.listFiles,
+              { owner, repo, pull_number, per_page: 100 }
+            );
+            const changedFilesList = files.map(f => f.filename);
+
+            // Diff excerpt (truncated to stay within model context)
+            const MAX_DIFF_CHARS = 4000;
+            const diffResp = await github.rest.pulls.get({
+              owner, repo, pull_number,
+              mediaType: { format: 'diff' }
+            });
+            const fullDiff = typeof diffResp.data === 'string'
+              ? diffResp.data
+              : '';
+            const diffExcerpt = fullDiff.length > MAX_DIFF_CHARS
+              ? fullDiff.substring(0, MAX_DIFF_CHARS) + '\n... (truncated)'
+              : fullDiff;
+
+            // ── 4. Read local sample files ─────────────────────────────
+            const sampleSections = [];
+            for (const sample of samples) {
+              const sampleDir = path.join(process.env.GITHUB_WORKSPACE, sample);
+              let section = `## Sample: ${sample}\n`;
+
+              // README.md
+              const readmePath = path.join(sampleDir, 'README.md');
+              if (fs.existsSync(readmePath)) {
+                const readme = fs.readFileSync(readmePath, 'utf8');
+                const truncated = readme.length > 3000
+                  ? readme.substring(0, 3000) + '\n... (truncated)'
+                  : readme;
+                section += `\n### README.md\n${truncated}\n`;
+              } else {
+                section += '\n### README.md\nNot provided in PR content.\n';
+              }
+
+              // metadata.json
+              const metaPath = path.join(sampleDir, 'metadata.json');
+              if (fs.existsSync(metaPath)) {
+                const meta = fs.readFileSync(metaPath, 'utf8');
+                section += `\n### metadata.json\n\`\`\`json\n${meta}\n\`\`\`\n`;
+              } else {
+                section += '\n### metadata.json\nNot provided in PR content.\n';
+              }
+
+              // Relevant changed files for this sample
+              const relevantFiles = changedFilesList.filter(
+                f => f.startsWith(sample + '/')
+              );
+              section += `\n### Changed files in this sample\n`;
+              section += relevantFiles.map(f => `- ${f}`).join('\n') || '- None';
+
+              sampleSections.push(section);
+            }
+
+            // ── 5. Build the user message ──────────────────────────────
+            const userMessage = [
+              '# PR Context',
+              '',
+              `PR #${pull_number}: ${prData.data.title}`,
+              '',
+              '## All changed files',
+              changedFilesList.map(f => `- ${f}`).join('\n'),
+              '',
+              ...sampleSections,
+              '',
+              '## Diff excerpt',
+              '```diff',
+              diffExcerpt,
+              '```'
+            ].join('\n');
+
+            // ── 6. Call GitHub Models API ───────────────────────────────
+            const modelEndpoint = 'https://models.github.ai/inference/chat/completions';
+            const resp = await fetch(modelEndpoint, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${process.env.GITHUB_TOKEN}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                model: 'openai/gpt-4o-mini',
+                messages: [
+                  { role: 'system', content: systemPrompt },
+                  { role: 'user',   content: userMessage }
+                ],
+                temperature: 0.3,
+                max_tokens: 2000
+              })
+            });
+
+            if (!resp.ok) {
+              const body = await resp.text();
+              core.setFailed(`GitHub Models API returned ${resp.status}: ${body}`);
+              return;
+            }
+
+            const result = await resp.json();
+            const summary = result.choices?.[0]?.message?.content;
+            if (!summary) {
+              core.setFailed('GitHub Models API returned an empty summary.');
+              return;
+            }
+
+            // ── 7. Post or update PR comment ───────────────────────────
+            const MARKER = '<!-- quickstart-summarizer-bot -->';
+            const commentBody = `${MARKER}\n## 🤖 Quickstart Sample Summary\n\n${summary}\n\n---\n*Generated by the quickstart summarizer agent · triggered by /summarize*`;
+
+            // Find existing bot comment
+            const comments = await github.paginate(
+              github.rest.issues.listComments,
+              { owner, repo, issue_number: pull_number, per_page: 100 }
+            );
+            const existing = comments.find(c => c.body && c.body.includes(MARKER));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner, repo,
+                comment_id: existing.id,
+                body: commentBody
+              });
+              core.info(`Updated existing summary comment (id=${existing.id}).`);
+            } else {
+              await github.rest.issues.createComment({
+                owner, repo,
+                issue_number: pull_number,
+                body: commentBody
+              });
+              core.info('Created new summary comment on PR.');
+            }
+
+            // Add rocket reaction to signal completion
+            await github.rest.reactions.createForIssueComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: context.payload.comment.id,
+              content: 'rocket'
+            });

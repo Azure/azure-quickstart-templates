@@ -1,5 +1,5 @@
 ---
-description: CoScale is a full-stack monitoring solution tailored towards production environments running microservices, see https&#58;//www.coscale.com/ for more information. This template install the CoScale platform on a single VM and should only be used for Proof-Of-Concept environments.
+description: CoScale is a full-stack monitoring solution tailored towards production environments running microservices, see https&#58;//newrelic.com/ for more information. This template install the CoScale platform on a single VM and should only be used for Proof-Of-Concept environments.
 page_type: sample
 products:
 - azure
@@ -23,7 +23,7 @@ languages:
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fcoscale%2Fcoscale-dev-env%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fcoscale%2Fcoscale-dev-env%2Fazuredeploy.json)
 
-CoScale is a full-stack monitoring solution tailored towards production environments running microservices, see https://www.coscale.com/ for more information.
+CoScale is a full-stack monitoring solution tailored towards production environments running microservices, see https://newrelic.com/ for more information.
 This template installs the CoScale platform on a single VM and should only be used for Proof-Of-Concept environments.
 
 This template automatically creates all required objects, such as a storage account, virtual network, nic, load balancer, public ip.

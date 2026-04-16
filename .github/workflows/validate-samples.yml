@@ -1,0 +1,760 @@
+                  # ──────────────────────────────────────────────────────────────────────────────
+# validate-samples.yml
+#
+# Validates every changed Azure Quickstart Template sample folder in a PR or
+# push to master.  Uses only bash + jq; no Azure DevOps scripts are called.
+#
+# Jobs
+#   1. detect_changed_samples  – finds which sample folders were touched
+#   2. validate_samples        – matrix job; one runner per sample folder
+#   (Summarization is handled by the separate summarize-pr.yml workflow)
+# ──────────────────────────────────────────────────────────────────────────────
+
+name: Validate Sample Contributions
+
+on:
+  pull_request:
+    branches:
+      - master
+  push:
+    branches:
+      - master
+
+jobs:
+  # ============================================================================
+  # JOB 1 – detect_changed_samples
+  #
+  # Diffs changed files against the base ref, then walks the path hierarchy to
+  # find the nearest ancestor directory that contains BOTH metadata.json AND
+  # README.md (= a "sample folder").  Outputs the result as a JSON array.
+  # ============================================================================
+  detect_changed_samples:
+    name: Detect changed sample folders
+    runs-on: ubuntu-latest
+
+    outputs:
+      samples_json: ${{ steps.detect.outputs.samples_json }}
+
+    steps:
+      - name: Checkout repository (full history)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect changed sample folders
+        id: detect
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # ── 1. Compute the list of changed files ──────────────────────────
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            echo "Event: pull_request – diffing against origin/${{ github.base_ref }}"
+            CHANGED=$(git diff --name-only "origin/${{ github.base_ref }}...${{ github.sha }}")
+          else
+            echo "Event: push – diffing ${{ github.event.before }}..${{ github.sha }}"
+            # On the very first push (empty tree), github.event.before is all-zeros.
+            if [[ "${{ github.event.before }}" == "0000000000000000000000000000000000000000" ]]; then
+              CHANGED=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || git show --name-only --format="" HEAD)
+            else
+              CHANGED=$(git diff --name-only "${{ github.event.before }}..${{ github.sha }}")
+            fi
+          fi
+
+          echo "──────────────────────────────────────────"
+          echo "Changed files:"
+          echo "${CHANGED:-<none>}"
+          echo "──────────────────────────────────────────"
+
+          # ── 2. Filter to recognised sample roots ─────────────────────────
+          SAMPLE_ROOTS=(
+            "quickstarts/"
+            "demos/"
+            "application-workloads/"
+            "modules/"
+            "subscription-deployments/"
+            "managementgroup-deployments/"
+            "tenant-deployments/"
+          )
+
+          declare -A SEEN_DIRS
+
+          while IFS= read -r changed_file; do
+            [[ -z "$changed_file" ]] && continue
+
+            # Check if the file is under a recognised root
+            matched_root=""
+            for root in "${SAMPLE_ROOTS[@]}"; do
+              if [[ "$changed_file" == ${root}* ]]; then
+                matched_root="$root"
+                break
+              fi
+            done
+            [[ -z "$matched_root" ]] && continue
+
+            # Walk up the directory tree from the file's directory, stopping at
+            # the root prefix, until we find a directory containing both
+            # metadata.json AND README.md.
+            dir=$(dirname "$changed_file")
+            while true; do
+              # Never go above the recognised root
+              rel_root="${matched_root%/}"   # strip trailing slash for comparison
+              if [[ "$dir" == "$rel_root" || "$dir" == "." ]]; then
+                break
+              fi
+
+              if [[ -f "${dir}/metadata.json" && -f "${dir}/README.md" ]]; then
+                SEEN_DIRS["$dir"]=1
+                break
+              fi
+
+              dir=$(dirname "$dir")
+            done
+          done <<< "$CHANGED"
+
+          # ── 3. Build JSON array ───────────────────────────────────────────
+          JSON_ARRAY="["
+          first=true
+          for dir in "${!SEEN_DIRS[@]}"; do
+            if [[ "$first" == true ]]; then
+              first=false
+            else
+              JSON_ARRAY+=","
+            fi
+            JSON_ARRAY+="\"${dir}\""
+          done
+          JSON_ARRAY+="]"
+
+          if [[ "$JSON_ARRAY" == "[]" ]]; then
+            echo "No sample folders changed."
+          else
+            echo "Detected sample folders:"
+            echo "$JSON_ARRAY" | jq .
+          fi
+
+          # Expose as a job output (must be a single line)
+          echo "samples_json=${JSON_ARRAY}" >> "$GITHUB_OUTPUT"
+
+  # ============================================================================
+  # JOB 2 – validate_samples
+  #
+  # Matrix job – one runner per sample folder detected by job 1.
+  # Runs three ordered validations (duplicate name, metadata.json, README.md).
+  # ============================================================================
+  validate_samples:
+    name: Validate – ${{ matrix.sample }}
+    runs-on: ubuntu-latest
+    needs: detect_changed_samples
+    permissions:
+      pull-requests: read
+
+    # Skip the whole job when nothing changed
+    if: needs.detect_changed_samples.outputs.samples_json != '[]'
+
+    strategy:
+      fail-fast: false
+      matrix:
+        sample: ${{ fromJson(needs.detect_changed_samples.outputs.samples_json) }}
+
+    steps:
+      # ── (0) Safeguard ────────────────────────────────────────────────────────
+      - name: Safeguard – block ValidateSampleDeployments.yml edits by non MEMBER/OWNER
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const allowed = new Set(["MEMBER", "OWNER"]);
+            const pr = context.payload.pull_request;
+            if (!pr) {
+              core.info("No pull_request payload; skipping safeguard.");
+              return;
+            }
+
+            const assoc = pr.author_association;
+            const owner = context.repo.owner;
+            const repo  = context.repo.repo;
+            const pull_number = pr.number;
+
+            const files = await github.paginate(
+              github.rest.pulls.listFiles,
+              { owner, repo, pull_number, per_page: 100 }
+            );
+
+            const touched = files.some(f =>
+              f.filename === ".github/workflows/ValidateSampleDeployments.yml" ||
+              f.filename.endsWith("/ValidateSampleDeployments.yml") ||
+              f.filename === "ValidateSampleDeployments.yml"
+            );
+
+            core.info(`author_association=${assoc}; ValidateSampleDeployments.yml touched=${touched}`);
+
+            if (touched && !allowed.has(assoc)) {
+              core.setFailed(
+                `Blocked: ValidateSampleDeployments.yml was modified but author_association='${assoc}'. ` +
+                `Only MEMBER or OWNER may modify this file.`
+              );
+            }
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # ── (0) Setup ───────────────────────────────────────────────────────────
+      - name: Set up environment
+        shell: bash
+        run: |
+          echo "══════════════════════════════════════════════════════════"
+          echo "  Validating sample: ${{ matrix.sample }}"
+          echo "══════════════════════════════════════════════════════════"
+
+      # ── (0b) Early gate – template change requires metadata.json update ───
+      - name: Check metadata.json is updated when templates change
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          SAMPLE_DIR="${{ matrix.sample }}"
+
+          echo "──────────────────────────────────────────"
+          echo "CHECK 0b – metadata.json updated with template changes"
+          echo "  sample: ${SAMPLE_DIR}"
+          echo "──────────────────────────────────────────"
+
+          # ── Compute changed files scoped to this sample folder ─────
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            CHANGED=$(git diff --name-only "origin/${{ github.base_ref }}...${{ github.sha }}" -- "$SAMPLE_DIR/")
+          else
+            if [[ "${{ github.event.before }}" == "0000000000000000000000000000000000000000" ]]; then
+              CHANGED=$(git diff --name-only HEAD~1 HEAD -- "$SAMPLE_DIR/" 2>/dev/null \
+                || git show --name-only --format="" HEAD -- "$SAMPLE_DIR/")
+            else
+              CHANGED=$(git diff --name-only "${{ github.event.before }}..${{ github.sha }}" -- "$SAMPLE_DIR/")
+            fi
+          fi
+
+          TEMPLATE_CHANGED=false
+          METADATA_CHANGED=false
+          CHANGED_TEMPLATES=()
+
+          while IFS= read -r f; do
+            [[ -z "$f" ]] && continue
+            fname=$(basename "$f")
+
+            if [[ "$fname" == "metadata.json" ]]; then
+              METADATA_CHANGED=true
+              continue
+            fi
+
+            # Any .bicep or .json file (excluding metadata.json) is a template file
+            if [[ "$f" == *.bicep || "$f" == *.json ]]; then
+              TEMPLATE_CHANGED=true
+              CHANGED_TEMPLATES+=("$f")
+            fi
+          done <<< "$CHANGED"
+
+          if [[ "$TEMPLATE_CHANGED" == true && "$METADATA_CHANGED" == false ]]; then
+            echo ""
+            echo "❌ ERROR – Template file(s) changed but metadata.json was NOT updated."
+            echo ""
+            echo "  The following template files were modified:"
+            for t in "${CHANGED_TEMPLATES[@]}"; do echo "    - $t"; done
+            echo ""
+            echo "  metadata.json must include a 'testResult' section with deployment"
+            echo "  results for every deployment template in the sample."
+            echo "  Any change to a .bicep or .json template requires re-running the"
+            echo "  deployment and updating testResult in metadata.json accordingly."
+            echo ""
+            echo "  This check exists because the second validation workflow"
+            echo "  (Validate ARM Deployments via ADX) will fail if testResult"
+            echo "  does not match the current template content."
+            echo ""
+            echo "  To fix: deploy your updated template(s) and add the deployment"
+            echo "  results to the 'testResult.deployments' array in metadata.json."
+            echo ""
+            echo "  Reference: https://github.com/Azure/azure-quickstart-templates/blob/master/1-CONTRIBUTION-GUIDE/README.md#metadatajson"
+            exit 1
+          fi
+
+          if [[ "$TEMPLATE_CHANGED" == false ]]; then
+            echo "✅ No template files (.bicep/.json) changed – skipping metadata.json gate."
+          else
+            echo "✅ Template files changed and metadata.json is also updated."
+          fi
+
+      # ── (1) Duplicate folder name check ────────────────────────────────────
+      - name: Check for duplicate folder name
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          SAMPLE_DIR="${{ matrix.sample }}"
+          FRAGMENT=$(basename "$SAMPLE_DIR")
+
+          echo "──────────────────────────────────────────"
+          echo "CHECK 1 – Duplicate folder name"
+          echo "  sample : ${SAMPLE_DIR}"
+          echo "  fragment: ${FRAGMENT}"
+          echo "──────────────────────────────────────────"
+
+          # Exception: modules/ may contain version sub-folders with repeated names
+          if [[ "$SAMPLE_DIR" == modules/* ]]; then
+            echo "SKIP: Sample is under modules/ – duplicate folder check not enforced."
+            exit 0
+          fi
+
+          # Find all directories with the same basename across the entire repo
+          mapfile -t MATCHES < <(find . -type d -name "$FRAGMENT" ! -path './.git/*' -print | sort)
+
+          COUNT=${#MATCHES[@]}
+          echo "Directories named '${FRAGMENT}': ${COUNT}"
+          for m in "${MATCHES[@]}"; do echo "  $m"; done
+
+          if [[ $COUNT -gt 1 ]]; then
+            echo ""
+            echo "❌ ERROR – Duplicate folder name detected!"
+            echo ""
+            echo "  The sample folder '${FRAGMENT}' exists in ${COUNT} locations."
+            echo "  This causes urlFragment collisions in the Azure Quickstart index"
+            echo "  and will break template ingestion."
+            echo ""
+            echo "  Conflicting paths:"
+            for m in "${MATCHES[@]}"; do echo "    $m"; done
+            echo ""
+            echo "  Resolution: rename your sample folder to a unique name."
+            exit 1
+          fi
+
+          echo "✅ No duplicate folder name found."
+
+      # ── (2) metadata.json validation ───────────────────────────────────────
+      - name: Validate metadata.json
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          SAMPLE_DIR="${{ matrix.sample }}"
+          META="${SAMPLE_DIR}/metadata.json"
+
+          echo "──────────────────────────────────────────"
+          echo "CHECK 2 – metadata.json"
+          echo "  file: ${META}"
+          echo "──────────────────────────────────────────"
+
+          # 2a. File must exist
+          if [[ ! -f "$META" ]]; then
+            echo ""
+            echo "❌ ERROR – metadata.json is missing from '${SAMPLE_DIR}'."
+            echo ""
+            echo "  Every sample folder must contain a metadata.json file."
+            echo "  See the contribution guide:"
+            echo "  https://github.com/Azure/azure-quickstart-templates/blob/master/1-CONTRIBUTION-GUIDE/README.md#metadatajson"
+            exit 1
+          fi
+
+          # 2b. File must be valid JSON
+          if ! jq -e '.' "$META" > /dev/null 2>&1; then
+            echo ""
+            echo "❌ ERROR – metadata.json is not valid JSON."
+            echo ""
+            echo "  Please validate your JSON with a linter (e.g. jq, jsonlint)."
+            echo "  File: ${META}"
+            # Show a more descriptive parse error
+            jq '.' "$META" || true
+            exit 1
+          fi
+
+          echo "✅ JSON syntax valid."
+
+          # 2c. Required fields must exist and be non-empty strings
+          REQUIRED_FIELDS=(itemDisplayName description summary githubUsername dateUpdated type testResult)
+
+          all_ok=true
+          for field in "${REQUIRED_FIELDS[@]}"; do
+            value=$(jq -r --arg f "$field" '.[$f] // empty' "$META")
+            if [[ -z "$value" ]]; then
+              echo "❌ Required field missing or empty: '${field}'"
+              all_ok=false
+            else
+              echo "✅ ${field}: present"
+            fi
+          done
+
+          if [[ "$all_ok" == false ]]; then
+            echo ""
+            echo "  All of the following fields must be present and non-empty in metadata.json:"
+            for f in "${REQUIRED_FIELDS[@]}"; do echo "    - $f"; done
+            echo ""
+            echo "  Reference: https://github.com/Azure/azure-quickstart-templates/blob/master/1-CONTRIBUTION-GUIDE/README.md#metadatajson"
+            exit 1
+          fi
+
+          # 2d. Length constraints (per contributor guide)
+          DISPLAY_NAME=$(jq -r '.itemDisplayName' "$META")
+          SUMMARY=$(jq -r '.summary' "$META")
+          DESCRIPTION=$(jq -r '.description' "$META")
+
+          FAIL=false
+
+          DISPLAY_LEN=${#DISPLAY_NAME}
+          if [[ $DISPLAY_LEN -gt 60 ]]; then
+            echo "❌ 'itemDisplayName' is ${DISPLAY_LEN} characters (limit: 60)."
+            echo "   Value: ${DISPLAY_NAME}"
+            FAIL=true
+          else
+            echo "✅ itemDisplayName length: ${DISPLAY_LEN}/60"
+          fi
+
+          SUMMARY_LEN=${#SUMMARY}
+          if [[ $SUMMARY_LEN -gt 200 ]]; then
+            echo "❌ 'summary' is ${SUMMARY_LEN} characters (limit: 200)."
+            FAIL=true
+          else
+            echo "✅ summary length: ${SUMMARY_LEN}/200"
+          fi
+
+          DESC_LEN=${#DESCRIPTION}
+          if [[ $DESC_LEN -gt 1000 ]]; then
+            echo "❌ 'description' is ${DESC_LEN} characters (limit: 1000)."
+            FAIL=true
+          else
+            echo "✅ description length: ${DESC_LEN}/1000"
+          fi
+
+          if [[ "$FAIL" == true ]]; then
+            echo ""
+            echo "  Please shorten the fields above to meet the contributor guide limits."
+            exit 1
+          fi
+
+          # 2e. Optional field: environments must be an array of strings (when present)
+          if jq -e 'has("environments")' "$META" > /dev/null 2>&1; then
+            ENV_TYPE=$(jq -r '.environments | type' "$META")
+            if [[ "$ENV_TYPE" != "array" ]]; then
+              echo "❌ 'environments' must be an array (got: ${ENV_TYPE})."
+              exit 1
+            fi
+            # Every element must be a string
+            NON_STRING=$(jq '[.environments[] | type] | map(select(. != "string")) | length' "$META")
+            if [[ "$NON_STRING" -gt 0 ]]; then
+              echo "❌ 'environments' array contains non-string elements."
+              echo "   Each entry must be a string, e.g. [\"AzureCloud\",\"AzureUSGovernment\"]"
+              exit 1
+            fi
+            echo "✅ environments: valid array of strings"
+          fi
+
+          # 2f. Optional field: validationType must be a string (when present)
+          if jq -e 'has("validationType")' "$META" > /dev/null 2>&1; then
+            VT_TYPE=$(jq -r '.validationType | type' "$META")
+            if [[ "$VT_TYPE" != "string" ]]; then
+              echo "❌ 'validationType' must be a string (got: ${VT_TYPE})."
+              exit 1
+            fi
+            echo "✅ validationType: valid string"
+          fi
+
+          echo ""
+          echo "✅ metadata.json passed all checks."
+
+      # ── (2b) Ensure README contains the public "Deploy to Azure" button ────
+      - name: Ensure README public deploy button
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          SAMPLE_DIR="${{ matrix.sample }}"
+          README="${SAMPLE_DIR}/README.md"
+          META="${SAMPLE_DIR}/metadata.json"
+
+          echo "──────────────────────────────────────────"
+          echo "CHECK 2b – Ensure public deploy button"
+          echo "  sample: ${SAMPLE_DIR}"
+          echo "──────────────────────────────────────────"
+
+          # Skip if README or metadata doesn't exist (later steps will catch that)
+          if [[ ! -f "${README}" ]] || [[ ! -f "${META}" ]]; then
+            echo "README.md or metadata.json not found — skipping button insertion."
+            exit 0
+          fi
+
+          # ── Read supported environments from metadata.json ────────────────
+          SUPPORTED_ENVS=$(jq -r '(.environments // ["AzureCloud"]) | .[]' "${META}")
+          if ! echo "${SUPPORTED_ENVS}" | grep -qx "AzureCloud"; then
+            echo "AzureCloud not in supported environments — skipping."
+            exit 0
+          fi
+
+          # ── Compute sEncoded (match Validate-ReadMe.ps1 logic) ────────────
+          # Replace both \ and / with %2F
+          S_ENCODED=$(echo "${SAMPLE_DIR}" | sed 's|\\|%2F|g; s|/|%2F|g')
+
+          IMAGE_URL="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true"
+          PORTAL_URL="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F${S_ENCODED}%2Fazuredeploy.json"
+          BUTTON_LINE="[![Deploy To Azure](${IMAGE_URL})](${PORTAL_URL})"
+
+          # ── Idempotency check ─────────────────────────────────────────────
+          if grep -qF "${PORTAL_URL}" "${README}" || grep -qF "${IMAGE_URL}" "${README}"; then
+            echo "✅ Public deploy button already present — no changes needed."
+            exit 0
+          fi
+
+          echo "Public deploy button not found — inserting..."
+
+          # ── Determine insertion point ─────────────────────────────────────
+          INSERT_AFTER=0
+
+          # Check for YAML front matter (starts with --- on line 1)
+          if head -1 "${README}" | grep -qx '\-\-\-'; then
+            # Find the closing --- (second occurrence)
+            CLOSING_LINE=$(awk 'NR>1 && /^---$/ { print NR; exit }' "${README}")
+            if [[ -n "${CLOSING_LINE}" ]]; then
+              INSERT_AFTER=${CLOSING_LINE}
+            fi
+          fi
+
+          # If no front matter, find the first # heading
+          if [[ ${INSERT_AFTER} -eq 0 ]]; then
+            HEADING_LINE=$(grep -n '^# ' "${README}" | head -1 | cut -d: -f1)
+            if [[ -n "${HEADING_LINE}" ]]; then
+              INSERT_AFTER=${HEADING_LINE}
+            else
+              INSERT_AFTER=1
+            fi
+          fi
+
+          # ── Insert the button line ────────────────────────────────────────
+          {
+            head -n "${INSERT_AFTER}" "${README}"
+            echo ""
+            echo "${BUTTON_LINE}"
+            echo ""
+            tail -n +"$((INSERT_AFTER + 1))" "${README}"
+          } > "${README}.tmp"
+          mv "${README}.tmp" "${README}"
+
+          echo "✅ Inserted public deploy button after line ${INSERT_AFTER}."
+
+      # ── (3) README.md validation ────────────────────────────────────────────
+      - name: Validate README.md
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          SAMPLE_DIR="${{ matrix.sample }}"
+          README="${SAMPLE_DIR}/README.md"
+
+          echo "──────────────────────────────────────────"
+          echo "CHECK 3 – README.md"
+          echo "  expected: ${README}"
+          echo "──────────────────────────────────────────"
+
+          # 3a. File must exist with exact casing (README.md)
+          if [[ ! -f "$README" ]]; then
+            echo ""
+            echo "❌ ERROR – README.md not found at '${README}'."
+            echo ""
+
+            # Helpful: detect wrong-cased alternatives
+            shopt -s nocasematch
+            WRONG=""
+            for f in "${SAMPLE_DIR}/readme.md" \
+                     "${SAMPLE_DIR}/Readme.md" \
+                     "${SAMPLE_DIR}/ReadMe.md" \
+                     "${SAMPLE_DIR}/README.MD"; do
+              if [[ -f "$f" ]]; then
+                WRONG="$f"
+                break
+              fi
+            done
+            shopt -u nocasematch
+
+            if [[ -n "$WRONG" ]]; then
+              echo "  Found '${WRONG}' – rename it to 'README.md' (exact casing required)."
+            else
+              echo "  Create a README.md file in '${SAMPLE_DIR}'."
+              echo "  Use the sample template:"
+              echo "  https://github.com/Azure/azure-quickstart-templates/blob/master/1-CONTRIBUTION-GUIDE/sample-README.md"
+            fi
+            exit 1
+          fi
+
+          echo "✅ README.md exists."
+
+          FAIL=false
+
+          # 3b. Must contain a "Deploy to Azure" button or text
+          if ! grep -qiE 'deploy[[:space:]]*to[[:space:]]*azure' "$README"; then
+            echo "❌ README.md is missing a 'Deploy to Azure' button/link."
+            echo "   Add the standard deploy button from the sample README:"
+            echo "   https://github.com/Azure/azure-quickstart-templates/blob/master/1-CONTRIBUTION-GUIDE/sample-README.md"
+            FAIL=true
+          else
+            echo "✅ 'Deploy to Azure' found."
+          fi
+
+          # 3c. Must contain a portal deployment link referencing raw.githubusercontent.com
+          if ! grep -qiE 'portal\.azure\.(com|us).*raw\.githubusercontent\.com|raw\.githubusercontent\.com.*portal\.azure\.(com|us)' "$README"; then
+            echo "❌ README.md does not contain a portal deployment link that references raw.githubusercontent.com."
+            echo "   The Deploy to Azure button must use a URI like:"
+            echo "   https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2F..."
+            FAIL=true
+          else
+            echo "✅ portal.azure.com raw.githubusercontent.com deployment URI found."
+          fi
+
+          # 3e. If main.bicep exists, README must mention Bicep
+          if [[ -f "${SAMPLE_DIR}/main.bicep" ]]; then
+            if ! grep -qiE 'bicep' "$README"; then
+              echo "❌ main.bicep exists but README.md does not mention Bicep."
+              echo "   Add the Bicep version badge and a reference to main.bicep."
+              echo "   Example badge:"
+              echo "   ![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/path-to-sample/BicepVersion.svg)"
+              FAIL=true
+            else
+              echo "✅ Bicep reference found in README.md."
+            fi
+          fi
+
+          if [[ "$FAIL" == true ]]; then
+            echo ""
+            echo "  Fix the README.md issues listed above."
+            echo "  Reference: https://github.com/Azure/azure-quickstart-templates/blob/master/1-CONTRIBUTION-GUIDE/README.md#readmemd"
+            exit 1
+          fi
+
+          echo ""
+          echo "✅ README.md passed all checks."
+
+      # ── (4) Prereqs A: verify at least one recognized template exists ───────
+      - name: Validate prereqs/ template files
+        id: check-prereqs
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          SAMPLE_DIR="${{ matrix.sample }}"
+          PREREQS_DIR="${SAMPLE_DIR}/prereqs"
+
+          echo "──────────────────────────────────────────"
+          echo "CHECK 4 – prereqs/ template files"
+          echo "  sample: ${SAMPLE_DIR}"
+          echo "──────────────────────────────────────────"
+
+          if [[ ! -d "${PREREQS_DIR}" ]]; then
+            echo "No prereqs/ folder found — skipping prereqs validation."
+            echo "has_prereqs=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "has_prereqs=true" >> "$GITHUB_OUTPUT"
+          echo "== prereqs/ folder found: ${PREREQS_DIR} =="
+
+          EXPECTED_FILES=("prereq.azuredeploy.json" "prereq.main.bicep" "azuredeploy.json" "main.bicep")
+          FOUND_FILES=()
+          for f in "${EXPECTED_FILES[@]}"; do
+            [[ -f "${PREREQS_DIR}/${f}" ]] && FOUND_FILES+=("$f")
+          done
+
+          if [[ ${#FOUND_FILES[@]} -eq 0 ]]; then
+            echo ""
+            echo "❌ ERROR – No valid template file found in prereqs/ folder."
+            echo ""
+            echo "  Sample folder : ${SAMPLE_DIR}"
+            echo "  Prereqs folder: ${PREREQS_DIR}"
+            echo "  Expected one of: ${EXPECTED_FILES[*]}"
+            echo "  Actual contents:"
+            ls "${PREREQS_DIR}" 2>/dev/null | while IFS= read -r entry; do
+              echo "    ${entry}"
+            done || echo "    (empty)"
+            exit 1
+          fi
+
+          printf '✅ Found prereqs template(s): %s\n' "${FOUND_FILES[*]}"
+          if [[ ${#FOUND_FILES[@]} -gt 1 ]]; then
+            echo "NOTE: Multiple matching template files found. The pipeline relies on metadata.json for validation."
+          fi
+
+      # ── (5) Prereqs B: validate metadata.json prereqs entries ───────────────
+      - name: Validate prereqs entries in metadata.json
+        if: steps.check-prereqs.outputs.has_prereqs == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          SAMPLE_DIR="${{ matrix.sample }}"
+          META="${SAMPLE_DIR}/metadata.json"
+
+          echo "──────────────────────────────────────────"
+          echo "CHECK 5 – prereqs entries in metadata.json"
+          echo "  file: ${META}"
+          echo "──────────────────────────────────────────"
+
+          # When prereqs/ exists, testResult.deployments must be an array
+          DEPLOYMENTS_TYPE=$(jq -r '(.testResult.deployments // null) | type' "${META}")
+          if [[ "${DEPLOYMENTS_TYPE}" != "array" ]]; then
+            echo ""
+            echo "❌ ERROR – prereqs/ folder exists but '.testResult.deployments' is not an array (got '${DEPLOYMENTS_TYPE}')."
+            echo ""
+            echo "  When a prereqs/ folder is present, 'testResult.deployments' must be a JSON array"
+            echo "  containing one entry per deployed template (main + each prereqs template)."
+            echo "  Current value: $(jq -c '.testResult.deployments // "missing"' "${META}")"
+            exit 1
+          fi
+
+          # At least one entry must have templateFileName starting with "prereqs/"
+          PREREQ_DEPLOYMENTS=$(jq -c \
+            '[.testResult.deployments[] | select(.templateFileName | startswith("prereqs/"))]' \
+            "${META}")
+          PREREQ_COUNT=$(echo "${PREREQ_DEPLOYMENTS}" | jq 'length')
+
+          if [[ "${PREREQ_COUNT}" -eq 0 ]]; then
+            echo ""
+            echo "❌ ERROR – prereqs/ folder exists but no prereqs entries found in '.testResult.deployments'."
+            echo ""
+            echo "  Add one entry per prereqs template with 'templateFileName' starting with 'prereqs/'."
+            echo "  Example: \"templateFileName\": \"prereqs/prereq.main.bicep\""
+            exit 1
+          fi
+
+          echo "Found ${PREREQ_COUNT} prereqs deployment entry/entries."
+
+          REQUIRED_FIELDS=(templateFileName correlationId deploymentName TIMESTAMP templateHash)
+          OVERALL_PASS=true
+
+          for i in $(seq 0 $((PREREQ_COUNT - 1))); do
+            ENTRY=$(echo "${PREREQ_DEPLOYMENTS}" | jq -c ".[$i]")
+            ENTRY_LABEL="$((i + 1))/${PREREQ_COUNT}"
+            TEMPLATE_FILE_NAME=$(echo "${ENTRY}" | jq -r '.templateFileName // empty')
+
+            echo ""
+            echo "  [prereqs entry ${ENTRY_LABEL}] ${TEMPLATE_FILE_NAME}"
+
+            for FIELD_NAME in "${REQUIRED_FIELDS[@]}"; do
+              FIELD_VAL=$(echo "${ENTRY}" | jq -r --arg f "${FIELD_NAME}" '.[$f] // empty')
+              if [[ -z "${FIELD_VAL}" ]]; then
+                echo "  ❌ '${FIELD_NAME}' is missing or empty"
+                echo "     offending entry: ${ENTRY}"
+                OVERALL_PASS=false
+              else
+                echo "  ✅ ${FIELD_NAME}: present"
+              fi
+            done
+          done
+
+          echo ""
+          if [[ "${OVERALL_PASS}" != "true" ]]; then
+            echo "❌ One or more prereqs entries in metadata.json are missing required fields."
+            exit 1
+          fi
+          echo "✅ All prereqs metadata.json entries are valid."
+
+      # ── Summary ─────────────────────────────────────────────────────────────
+      - name: Validation summary
+        if: success()
+        shell: bash
+        run: |
+          echo "══════════════════════════════════════════════════════════"
+          echo "  ✅  All validations passed for: ${{ matrix.sample }}"
+          echo "══════════════════════════════════════════════════════════"
+
