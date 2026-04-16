@@ -180,7 +180,7 @@ jobs:
             const changedFilesList = files.map(f => f.filename);
 
             // Diff excerpt (truncated to stay within model context)
-            const MAX_DIFF_CHARS = 4000;
+            const MAX_DIFF_CHARS = 2000;
             const diffResp = await github.rest.pulls.get({
               owner, repo, pull_number,
               mediaType: { format: 'diff' }
@@ -217,6 +217,86 @@ jobs:
                 section += `\n### metadata.json\n\`\`\`json\n${meta}\n\`\`\`\n`;
               } else {
                 section += '\n### metadata.json\nNot provided in PR content.\n';
+              }
+
+              // ARM/Bicep template files — scan recursively
+              const TEMPLATE_EXTENSIONS = ['.bicep', '.json'];
+              const SKIP_PATTERNS = [
+                'metadata.json',
+                '.parameters.json',
+                'parameters.json',
+                'package.json',
+                'package-lock.json'
+              ];
+              const MAX_TEMPLATE_CHARS = 6000;
+              const MAX_TOTAL_TEMPLATE_CHARS = 20000;
+              let totalTemplateChars = 0;
+
+              function findTemplateFiles(dir) {
+                const results = [];
+                if (!fs.existsSync(dir)) return results;
+                const entries = fs.readdirSync(dir, { withFileTypes: true });
+                for (const entry of entries) {
+                  const fullPath = path.join(dir, entry.name);
+                  if (entry.isDirectory()) {
+                    results.push(...findTemplateFiles(fullPath));
+                  } else if (entry.isFile()) {
+                    const ext = path.extname(entry.name).toLowerCase();
+                    if (!TEMPLATE_EXTENSIONS.includes(ext)) continue;
+                    const skip = SKIP_PATTERNS.some(p => entry.name.toLowerCase().endsWith(p));
+                    if (skip) continue;
+                    // For .json files, only include if they look like ARM templates
+                    if (ext === '.json') {
+                      try {
+                        const head = fs.readFileSync(fullPath, 'utf8').substring(0, 500);
+                        if (!head.includes('deploymentTemplate.json') &&
+                            !head.includes('subscriptionDeploymentTemplate.json') &&
+                            !head.includes('managementGroupDeploymentTemplate.json') &&
+                            !head.includes('tenantDeploymentTemplate.json')) {
+                          continue;
+                        }
+                      } catch { continue; }
+                    }
+                    results.push(fullPath);
+                  }
+                }
+                return results;
+              }
+
+              const templateFiles = findTemplateFiles(sampleDir);
+              // Prioritize: root-level main/azuredeploy first, then prereqs, then nested
+              templateFiles.sort((a, b) => {
+                const aRel = path.relative(sampleDir, a);
+                const bRel = path.relative(sampleDir, b);
+                const aDepth = aRel.split(path.sep).length;
+                const bDepth = bRel.split(path.sep).length;
+                if (aDepth !== bDepth) return aDepth - bDepth;
+                // Within same depth, prioritize main.bicep and azuredeploy.json
+                const priority = name => {
+                  const base = path.basename(name).toLowerCase();
+                  if (base === 'main.bicep' || base.startsWith('azuredeploy')) return 0;
+                  if (base.startsWith('prereq')) return 1;
+                  return 2;
+                };
+                return priority(a) - priority(b);
+              });
+              if (templateFiles.length > 0) {
+                section += `\n### Template files\n`;
+                for (const tplPath of templateFiles) {
+                  if (totalTemplateChars >= MAX_TOTAL_TEMPLATE_CHARS) {
+                    section += `\n*(Additional template files omitted — context budget reached)*\n`;
+                    break;
+                  }
+                  const relPath = path.relative(sampleDir, tplPath).replace(/\\/g, '/');
+                  let content = fs.readFileSync(tplPath, 'utf8');
+                  const budget = Math.min(MAX_TEMPLATE_CHARS, MAX_TOTAL_TEMPLATE_CHARS - totalTemplateChars);
+                  if (content.length > budget) {
+                    content = content.substring(0, budget) + '\n... (truncated)';
+                  }
+                  totalTemplateChars += content.length;
+                  const lang = tplPath.endsWith('.bicep') ? 'bicep' : 'json';
+                  section += `\n#### ${relPath}\n\`\`\`${lang}\n${content}\n\`\`\`\n`;
+                }
               }
 
               // Relevant changed files for this sample
@@ -261,7 +341,7 @@ jobs:
                   { role: 'user',   content: userMessage }
                 ],
                 temperature: 0.3,
-                max_tokens: 2000
+                max_tokens: 3000
               })
             });
 
