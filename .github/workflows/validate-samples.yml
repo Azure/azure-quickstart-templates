@@ -719,7 +719,9 @@ jobs:
 
           echo "Found ${PREREQ_COUNT} prereqs deployment entry/entries."
 
-          REQUIRED_FIELDS=(templateFileName correlationId deploymentName TIMESTAMP templateHash)
+          # Only templateFileName, correlationId, and deploymentName are required.
+          # TIMESTAMP and templateHash are optional (templateHash is computed from the template file).
+          REQUIRED_FIELDS=(templateFileName correlationId deploymentName)
           OVERALL_PASS=true
 
           for i in $(seq 0 $((PREREQ_COUNT - 1))); do
@@ -740,11 +742,21 @@ jobs:
                 echo "  ✅ ${FIELD_NAME}: present"
               fi
             done
+
+            # Note optional fields if present
+            for OPT_FIELD in TIMESTAMP templateHash; do
+              OPT_VAL=$(echo "${ENTRY}" | jq -r --arg f "${OPT_FIELD}" '.[$f] // empty')
+              if [[ -n "${OPT_VAL}" ]]; then
+                echo "  ℹ️  ${OPT_FIELD}: present (optional, ignored — hash is computed from the template file)"
+              fi
+            done
           done
 
           echo ""
           if [[ "${OVERALL_PASS}" != "true" ]]; then
             echo "❌ One or more prereqs entries in metadata.json are missing required fields."
+            echo "  Required fields per entry: templateFileName, correlationId, deploymentName"
+            echo "  (TIMESTAMP and templateHash are optional — the hash is derived from the template file.)"
             exit 1
           fi
           echo "✅ All prereqs metadata.json entries are valid."

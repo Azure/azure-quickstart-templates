@@ -185,8 +185,9 @@ jobs:
           bicep build main.bicep --outfile azuredeploy.json
           echo "✅ Compiled main.bicep → azuredeploy.json"
 
-      # ── Calculate templateHash and validate against metadata.json ───────────
-      - name: Calculate templateHash and validate against metadata.json
+      # ── Calculate templateHash from template file ─────────────────────────────
+      - name: Calculate templateHash for main template
+        id: main-template-hash
         shell: bash
         env:
           SAMPLE_PATH: ${{ steps.find-metadata.outputs.sample_path }}
@@ -195,7 +196,7 @@ jobs:
           cd "${SAMPLE_PATH}"
 
           echo "──────────────────────────────────────────"
-          echo "  templateHash validation (main template)"
+          echo "  templateHash computation (main template)"
           echo "──────────────────────────────────────────"
 
           if [[ ! -f "azuredeploy.json" ]]; then
@@ -209,31 +210,30 @@ jobs:
             --body @azuredeploy.json | jq -r '.templateHash')
 
           echo "Computed templateHash: ${COMPUTED_HASH}"
+          echo "computed_hash=${COMPUTED_HASH}" >> "$GITHUB_OUTPUT"
 
-          # Read expected hash from metadata.json (main deployment entry)
-          # We are cd'd into SAMPLE_PATH, so metadata.json is local
-          EXPECTED_HASH=$(jq -r '
+          # Read optional templateHash from metadata.json (for backwards-compat warning)
+          METADATA_HASH=$(jq -r '
             if (.testResult.deployments | type) == "array" then
               [.testResult.deployments[] | select((.templateFileName // "") | startswith("prereqs/") | not)] | .[0].templateHash // empty
             else
               .testResult.deployments.templateHash // empty
             end' "metadata.json")
 
-          if [[ -z "${EXPECTED_HASH}" ]]; then
-            echo "ERROR: 'templateHash' not found in metadata.json for the main deployment entry." >&2
-            exit 1
+          if [[ -n "${METADATA_HASH}" ]]; then
+            if [[ "${COMPUTED_HASH}" != "${METADATA_HASH}" ]]; then
+              echo "⚠️  WARNING: templateHash in metadata.json differs from computed hash (metadata is ignored)." >&2
+              echo "  metadata : ${METADATA_HASH}" >&2
+              echo "  computed : ${COMPUTED_HASH}" >&2
+              echo "  Note: templateHash no longer needs to be in metadata.json — it is derived from the template file." >&2
+            else
+              echo "ℹ️  templateHash in metadata.json matches computed hash (field is optional)."
+            fi
+          else
+            echo "ℹ️  No templateHash in metadata.json — this is fine, the hash is computed from the template file."
           fi
 
-          echo "Expected templateHash: ${EXPECTED_HASH}"
-
-          if [[ "${COMPUTED_HASH}" != "${EXPECTED_HASH}" ]]; then
-            echo "ERROR: templateHash mismatch for main template." >&2
-            echo "  computed : ${COMPUTED_HASH}" >&2
-            echo "  expected : ${EXPECTED_HASH}" >&2
-            exit 1
-          fi
-
-          echo "✅ templateHash matches for main template."
+          echo "✅ templateHash computed for main template."
 
       - name: Validate deployments via ADX
         shell: bash
@@ -242,6 +242,7 @@ jobs:
           DATABASE: ${{ secrets.ADX_DATABASE }}
           # Path resolved from PR changed files by the find-metadata step above
           METADATA_FILE: ${{ steps.find-metadata.outputs.metadata_file }}
+          COMPUTED_HASH: ${{ steps.main-template-hash.outputs.computed_hash }}
         run: |
           set -euo pipefail
 
@@ -286,24 +287,30 @@ jobs:
           fi
 
           # ── Extract fields from the deployments entry ────────────────────
+          # Required: templateFileName, correlationId, deploymentName
+          # Optional: TIMESTAMP (informational), templateHash (ignored — computed from template)
           TEMPLATE_FILE_NAME=$(echo "${DEPLOYMENTS}" | jq -r '.templateFileName // empty')
           CORRELATION_ID=$(echo "${DEPLOYMENTS}"     | jq -r '.correlationId    // empty')
           DEPLOYMENT_NAME=$(echo "${DEPLOYMENTS}"    | jq -r '.deploymentName   // empty')
           ENTRY_TIMESTAMP=$(echo "${DEPLOYMENTS}"    | jq -r '.TIMESTAMP        // "N/A"')
-          EXPECTED_HASH=$(echo "${DEPLOYMENTS}"      | jq -r '.templateHash     // empty')
+          METADATA_HASH=$(echo "${DEPLOYMENTS}"      | jq -r '.templateHash     // empty')
 
           echo ""
           echo "================================================================"
-          echo "  Template file : ${TEMPLATE_FILE_NAME:-<missing>}"
-          echo "  correlationId : ${CORRELATION_ID:-<missing>}"
-          echo "  deploymentName: ${DEPLOYMENT_NAME:-<missing>}"
-          echo "  timestamp     : ${ENTRY_TIMESTAMP}"
-          echo "  expected hash : ${EXPECTED_HASH:-<missing>}"
+          echo "  Template file  : ${TEMPLATE_FILE_NAME:-<missing>}"
+          echo "  correlationId  : ${CORRELATION_ID:-<missing>}"
+          echo "  deploymentName : ${DEPLOYMENT_NAME:-<missing>}"
+          echo "  timestamp      : ${ENTRY_TIMESTAMP} (optional)"
+          echo "  computed hash  : ${COMPUTED_HASH}"
+          if [[ -n "${METADATA_HASH}" ]]; then
+          echo "  metadata hash  : ${METADATA_HASH} (optional, not used for comparison)"
+          fi
           echo "================================================================"
 
           # ── Validate templateFileName is an allowed value ─────────────────
           if [[ -z "${TEMPLATE_FILE_NAME}" ]]; then
             echo "ERROR: 'templateFileName' is missing from '.testResult.deployments'" >&2
+            echo "  Required fields: templateFileName, correlationId, deploymentName" >&2
             exit 1
           fi
           if [[ "${TEMPLATE_FILE_NAME}" != "azuredeploy.json" && "${TEMPLATE_FILE_NAME}" != "main.bicep" ]]; then
@@ -312,17 +319,25 @@ jobs:
           fi
 
           # ── Validate remaining required fields ────────────────────────────
+          # Only templateFileName, correlationId, and deploymentName are required.
+          # TIMESTAMP and templateHash are optional.
           if [[ -z "${CORRELATION_ID}" ]]; then
             echo "ERROR: 'correlationId' is missing from '.testResult.deployments'" >&2
+            echo "  Required fields: templateFileName, correlationId, deploymentName" >&2
             exit 1
           fi
           if [[ -z "${DEPLOYMENT_NAME}" ]]; then
             echo "ERROR: 'deploymentName' is missing from '.testResult.deployments'" >&2
+            echo "  Required fields: templateFileName, correlationId, deploymentName" >&2
             exit 1
           fi
-          if [[ -z "${EXPECTED_HASH}" ]]; then
-            echo "ERROR: 'templateHash' is missing from '.testResult.deployments'" >&2
-            exit 1
+
+          # Warn if metadata templateHash is present but differs from computed
+          if [[ -n "${METADATA_HASH}" && "${METADATA_HASH}" != "${COMPUTED_HASH}" ]]; then
+            echo "⚠️  WARNING: templateHash in metadata.json differs from computed hash." >&2
+            echo "  metadata : ${METADATA_HASH}" >&2
+            echo "  computed : ${COMPUTED_HASH}" >&2
+            echo "  Note: templateHash no longer needs to be in metadata.json — the computed hash is used." >&2
           fi
 
           # ── Run Kusto query ───────────────────────────────────────────────
@@ -352,6 +367,7 @@ jobs:
           echo "  actual hash   : ${ACTUAL_HASH}"
 
           # ── Compare results ───────────────────────────────────────────────
+          # Compare ADX log hash against the COMPUTED hash (not metadata hash)
           OVERALL_PASS=true
 
           if [[ "${ACTUAL_STATUS}" != "Succeeded" ]]; then
@@ -361,13 +377,13 @@ jobs:
             echo "PASS: executionStatus = Succeeded"
           fi
 
-          if [[ "${ACTUAL_HASH}" != "${EXPECTED_HASH}" ]]; then
+          if [[ "${ACTUAL_HASH}" != "${COMPUTED_HASH}" ]]; then
             echo "FAIL: templateHash mismatch for '${TEMPLATE_FILE_NAME}'" >&2
-            echo "      expected : ${EXPECTED_HASH}" >&2
-            echo "      actual   : ${ACTUAL_HASH}" >&2
+            echo "      computed (from template file) : ${COMPUTED_HASH}" >&2
+            echo "      actual   (from ADX log)       : ${ACTUAL_HASH}" >&2
             OVERALL_PASS=false
           else
-            echo "PASS: templateHash matches"
+            echo "PASS: templateHash matches (computed vs ADX log)"
           fi
 
           echo ""
@@ -481,8 +497,9 @@ jobs:
           bicep build "${BICEP_FILE}" --outfile "${OUT_FILE}"
           echo "✅ Compiled ${BICEP_FILE} → ${OUT_FILE}"
 
-      # ── Prereqs: calculate templateHash and validate per entry ──────────────
-      - name: Prereqs – calculate templateHash and validate against metadata.json
+      # ── Prereqs: calculate templateHash from template files ──────────────────
+      - name: Prereqs – calculate templateHash from template files
+        id: prereqs-template-hash
         if: steps.check-prereqs.outputs.has_prereqs == 'true'
         shell: bash
         env:
@@ -494,7 +511,7 @@ jobs:
           METADATA_PATH="${METADATA_FILE}"
 
           echo "──────────────────────────────────────────"
-          echo "  templateHash validation (prereqs)"
+          echo "  templateHash computation (prereqs)"
           echo "──────────────────────────────────────────"
 
           # Gather prereqs deployment entries from metadata.json
@@ -504,26 +521,23 @@ jobs:
           PREREQ_COUNT=$(echo "${PREREQ_DEPLOYMENTS}" | jq 'length')
 
           if [[ "${PREREQ_COUNT}" -eq 0 ]]; then
-            echo "No prereqs entries in metadata.json — skipping hash validation."
+            echo "No prereqs entries in metadata.json — skipping hash computation."
+            echo "computed_hashes={}" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
           OVERALL_PASS=true
+          # Build computed hashes JSON using jq for safe serialization
+          HASHES_JSON="{}"
 
           for i in $(seq 0 $((PREREQ_COUNT - 1))); do
             ENTRY=$(echo "${PREREQ_DEPLOYMENTS}" | jq -c ".[${i}]")
             ENTRY_LABEL="$((i + 1))/${PREREQ_COUNT}"
             TEMPLATE_FILE_NAME=$(echo "${ENTRY}" | jq -r '.templateFileName // empty')
-            EXPECTED_HASH=$(echo "${ENTRY}" | jq -r '.templateHash // empty')
+            METADATA_HASH=$(echo "${ENTRY}" | jq -r '.templateHash // empty')
 
             echo ""
             echo "  [prereqs entry ${ENTRY_LABEL}] ${TEMPLATE_FILE_NAME}"
-
-            if [[ -z "${EXPECTED_HASH}" ]]; then
-              echo "  ERROR: templateHash missing for '${TEMPLATE_FILE_NAME}'" >&2
-              OVERALL_PASS=false
-              continue
-            fi
 
             # Determine which ARM JSON file corresponds to this entry
             # templateFileName is e.g. "prereqs/main.bicep" or "prereqs/prereq.azuredeploy.json"
@@ -547,22 +561,30 @@ jobs:
               --body @"${ARM_FILE}" | jq -r '.templateHash')
 
             echo "  computed : ${COMPUTED_HASH}"
-            echo "  expected : ${EXPECTED_HASH}"
+            HASHES_JSON=$(echo "${HASHES_JSON}" | jq --arg k "${TEMPLATE_FILE_NAME}" --arg v "${COMPUTED_HASH}" '. + {($k): $v}')
 
-            if [[ "${COMPUTED_HASH}" != "${EXPECTED_HASH}" ]]; then
-              echo "  FAIL: templateHash mismatch for prereqs entry '${TEMPLATE_FILE_NAME}'" >&2
-              OVERALL_PASS=false
+            # Warn if metadata hash is present and differs (backwards compatibility)
+            if [[ -n "${METADATA_HASH}" ]]; then
+              if [[ "${COMPUTED_HASH}" != "${METADATA_HASH}" ]]; then
+                echo "  ⚠️  WARNING: templateHash in metadata.json differs from computed (metadata is ignored)." >&2
+                echo "    metadata : ${METADATA_HASH}" >&2
+                echo "    computed : ${COMPUTED_HASH}" >&2
+              else
+                echo "  ℹ️  templateHash in metadata.json matches computed (field is optional)."
+              fi
             else
-              echo "  ✅ templateHash matches."
+              echo "  ℹ️  No templateHash in metadata.json — this is fine, the hash is computed from the template file."
             fi
           done
 
+          echo "computed_hashes=${HASHES_JSON}" >> "$GITHUB_OUTPUT"
+
           echo ""
           if [[ "${OVERALL_PASS}" != "true" ]]; then
-            echo "PREREQS templateHash VALIDATION FAILED." >&2
+            echo "PREREQS templateHash COMPUTATION FAILED — missing ARM template files." >&2
             exit 1
           fi
-          echo "✅ All prereqs templateHash values match."
+          echo "✅ All prereqs templateHash values computed."
 
       # ── Prereqs B+C: validate metadata entries and run Kusto per entry ──────
       - name: Validate prereqs deployments via ADX
@@ -572,6 +594,7 @@ jobs:
           CLUSTER_URL: "https://armprodeus.eastus.kusto.windows.net"
           DATABASE: ${{ secrets.ADX_DATABASE }}
           METADATA_FILE: ${{ steps.find-metadata.outputs.metadata_file }}
+          COMPUTED_HASHES: ${{ steps.prereqs-template-hash.outputs.computed_hashes }}
         run: |
           set -euo pipefail
           METADATA_PATH="${METADATA_FILE}"
@@ -632,35 +655,47 @@ jobs:
             ENTRY=$(echo "${PREREQ_DEPLOYMENTS}" | jq -c ".[$i]")
             ENTRY_LABEL="$((i + 1))/${PREREQ_COUNT}"
 
+            # Required fields: templateFileName, correlationId, deploymentName
+            # Optional fields: TIMESTAMP (informational), templateHash (ignored)
             TEMPLATE_FILE_NAME=$(echo "${ENTRY}" | jq -r '.templateFileName // empty')
             CORRELATION_ID=$(echo "${ENTRY}"     | jq -r '.correlationId    // empty')
             DEPLOYMENT_NAME=$(echo "${ENTRY}"    | jq -r '.deploymentName   // empty')
             ENTRY_TIMESTAMP=$(echo "${ENTRY}"    | jq -r '.TIMESTAMP        // "N/A"')
-            EXPECTED_HASH=$(echo "${ENTRY}"      | jq -r '.templateHash     // empty')
+
+            # Look up the computed hash for this entry from the previous step
+            EXPECTED_HASH=$(echo "${COMPUTED_HASHES}" | jq -r --arg k "${TEMPLATE_FILE_NAME}" '.[$k] // empty')
 
             echo ""
             echo "================================================================"
             echo "  [prereqs entry ${ENTRY_LABEL}]"
-            echo "  Template file : ${TEMPLATE_FILE_NAME:-<missing>}"
-            echo "  correlationId : ${CORRELATION_ID:-<missing>}"
-            echo "  deploymentName: ${DEPLOYMENT_NAME:-<missing>}"
-            echo "  timestamp     : ${ENTRY_TIMESTAMP}"
-            echo "  expected hash : ${EXPECTED_HASH:-<missing>}"
+            echo "  Template file  : ${TEMPLATE_FILE_NAME:-<missing>}"
+            echo "  correlationId  : ${CORRELATION_ID:-<missing>}"
+            echo "  deploymentName : ${DEPLOYMENT_NAME:-<missing>}"
+            echo "  timestamp      : ${ENTRY_TIMESTAMP} (optional)"
+            echo "  computed hash  : ${EXPECTED_HASH:-<not computed>}"
             echo "================================================================"
 
-            # ── Validate all required fields ──────────────────────────────
+            # ── Validate required fields only ─────────────────────────────
+            # Only templateFileName, correlationId, and deploymentName are required.
             ENTRY_VALID=true
-            for FIELD_NAME in templateFileName correlationId deploymentName TIMESTAMP templateHash; do
+            for FIELD_NAME in templateFileName correlationId deploymentName; do
               FIELD_VAL=$(echo "${ENTRY}" | jq -r --arg f "${FIELD_NAME}" '.[$f] // empty')
               if [[ -z "${FIELD_VAL}" ]]; then
                 echo "ERROR [prereqs ${ENTRY_LABEL}]: '${FIELD_NAME}' is missing or empty" >&2
                 echo "  metadata file   : ${METADATA_PATH}" >&2
                 echo "  offending entry : ${ENTRY}" >&2
+                echo "  Required fields: templateFileName, correlationId, deploymentName" >&2
                 ENTRY_VALID=false
               fi
             done
 
             if [[ "${ENTRY_VALID}" != "true" ]]; then
+              OVERALL_PASS=false
+              continue
+            fi
+
+            if [[ -z "${EXPECTED_HASH}" ]]; then
+              echo "ERROR: No computed hash available for '${TEMPLATE_FILE_NAME}' — cannot validate." >&2
               OVERALL_PASS=false
               continue
             fi
@@ -696,6 +731,7 @@ jobs:
             echo "  actual hash   : ${ACTUAL_HASH}"
 
             # ── Compare results ───────────────────────────────────────────
+            # Compare ADX log hash against the COMPUTED hash (not metadata hash)
             ENTRY_PASS=true
 
             if [[ "${ACTUAL_STATUS}" != "Succeeded" ]]; then
@@ -709,16 +745,16 @@ jobs:
               echo "PASS: executionStatus = Succeeded"
             fi
 
-            if [[ "${ACTUAL_HASH}" != "${EXPECTED_HASH}" ]]; then
+            if [[ -n "${EXPECTED_HASH}" && "${ACTUAL_HASH}" != "${EXPECTED_HASH}" ]]; then
               echo "FAIL [prereqs ${ENTRY_LABEL}]: templateHash mismatch" >&2
-              echo "  templateFileName : ${TEMPLATE_FILE_NAME}" >&2
-              echo "  expected         : ${EXPECTED_HASH}" >&2
-              echo "  actual           : ${ACTUAL_HASH}" >&2
-              echo "  correlationId    : ${CORRELATION_ID}" >&2
-              echo "  deploymentName   : ${DEPLOYMENT_NAME}" >&2
+              echo "  templateFileName                   : ${TEMPLATE_FILE_NAME}" >&2
+              echo "  computed (from template file)      : ${EXPECTED_HASH}" >&2
+              echo "  actual   (from ADX log)            : ${ACTUAL_HASH}" >&2
+              echo "  correlationId                      : ${CORRELATION_ID}" >&2
+              echo "  deploymentName                     : ${DEPLOYMENT_NAME}" >&2
               ENTRY_PASS=false
-            else
-              echo "PASS: templateHash matches"
+            elif [[ -n "${EXPECTED_HASH}" ]]; then
+              echo "PASS: templateHash matches (computed vs ADX log)"
             fi
 
             if [[ "${ENTRY_PASS}" != "true" ]]; then
