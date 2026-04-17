@@ -561,7 +561,7 @@ jobs:
               --body @"${ARM_FILE}" | jq -r '.templateHash')
 
             echo "  computed : ${COMPUTED_HASH}"
-            HASHES_JSON=$(echo "${HASHES_JSON}" | jq --arg k "${TEMPLATE_FILE_NAME}" --arg v "${COMPUTED_HASH}" '. + {($k): $v}')
+            HASHES_JSON=$(echo "${HASHES_JSON}" | jq -c --arg k "${TEMPLATE_FILE_NAME}" --arg v "${COMPUTED_HASH}" '. + {($k): $v}')
 
             # Warn if metadata hash is present and differs (backwards compatibility)
             if [[ -n "${METADATA_HASH}" ]]; then
@@ -577,7 +577,12 @@ jobs:
             fi
           done
 
-          echo "computed_hashes=${HASHES_JSON}" >> "$GITHUB_OUTPUT"
+          # Use heredoc delimiter to safely write JSON to GITHUB_OUTPUT
+          {
+            echo "computed_hashes<<HASHES_EOF"
+            echo "${HASHES_JSON}"
+            echo "HASHES_EOF"
+          } >> "$GITHUB_OUTPUT"
 
           echo ""
           if [[ "${OVERALL_PASS}" != "true" ]]; then
