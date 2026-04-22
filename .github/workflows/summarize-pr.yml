@@ -4,6 +4,10 @@
 # Posts an AI-generated reviewer-friendly summary comment on a PR using the
 # instructions in .github/agents/summarizer.agent.md.
 #
+# Phase 2: Agentic architecture with tool calling and MSDO security scanning.
+# The model autonomously reads files via tools and incorporates security
+# findings from Microsoft Security DevOps (Template Analyzer + Checkov).
+#
 # Triggered by a "/summarize" comment on a pull request.  Runs with base repo
 # permissions so GITHUB_TOKEN has full models:read and pull-requests:write
 # access — works for fork PRs unlike the pull_request event.
@@ -32,6 +36,7 @@ jobs:
       contents: read
       pull-requests: write
       models: read
+      security-events: write
 
     concurrency:
       group: summarizer-pr-${{ github.event.issue.number }}
@@ -76,7 +81,6 @@ jobs:
 
             core.info(`Detecting changed samples for PR #${pull_number}...`);
 
-            // Use the GitHub API to get changed files — reliable for fork PRs
             const files = await github.paginate(
               github.rest.pulls.listFiles,
               { owner, repo, pull_number, per_page: 100 }
@@ -134,12 +138,108 @@ jobs:
               content: 'eyes'
             });
 
-      # ── 5. Generate and post summary ────────────────────────────────────
+      # ── 5. Run Microsoft Security DevOps (Template Analyzer + Checkov) ──
+      - name: Run MSDO security scan
+        id: msdo
+        uses: microsoft/security-devops-action@latest
+        continue-on-error: true
+        with:
+          tools: templateanalyzer,checkov
+          categories: IaC
+
+      # ── 6. Parse SARIF security findings ────────────────────────────────
+      - name: Parse SARIF findings
+        id: security
+        uses: actions/github-script@v7
+        env:
+          SARIF_FILE: ${{ steps.msdo.outputs.sarifFile }}
+          SAMPLES_JSON: ${{ steps.detect.outputs.samples_json }}
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+
+            const sarifPath = process.env.SARIF_FILE;
+            const samples = JSON.parse(process.env.SAMPLES_JSON || '[]');
+            const findings = [];
+
+            if (!sarifPath || !fs.existsSync(sarifPath)) {
+              core.warning('SARIF file not found – security scan may have failed.');
+              core.setOutput('findings_json', JSON.stringify(findings));
+              core.setOutput('scan_status', 'unavailable');
+              return;
+            }
+
+            try {
+              const sarif = JSON.parse(fs.readFileSync(sarifPath, 'utf8'));
+              const workspace = process.env.GITHUB_WORKSPACE;
+
+              for (const run of (sarif.runs || [])) {
+                const toolName = run.tool?.driver?.name || 'unknown';
+                const rulesById = {};
+                for (const rule of (run.tool?.driver?.rules || [])) {
+                  rulesById[rule.id] = rule;
+                }
+
+                for (const result of (run.results || [])) {
+                  const ruleId = result.ruleId || 'unknown';
+                  const rule = rulesById[ruleId] || {};
+                  const level = result.level || rule.defaultConfiguration?.level || 'warning';
+
+                  // Map SARIF levels to severity
+                  const severityMap = { error: 'high', warning: 'medium', note: 'low', none: 'info' };
+                  const severity = severityMap[level] || 'medium';
+
+                  const location = result.locations?.[0]?.physicalLocation;
+                  let filePath = location?.artifactLocation?.uri || '';
+                  // Normalize file path relative to workspace
+                  if (filePath.startsWith('file://')) {
+                    filePath = filePath.replace('file://', '');
+                  }
+                  if (workspace && filePath.startsWith(workspace)) {
+                    filePath = filePath.substring(workspace.length + 1);
+                  }
+
+                  // Only include findings in changed sample folders
+                  const inSample = samples.length === 0 ||
+                    samples.some(s => filePath.startsWith(s + '/') || filePath === s);
+
+                  if (!inSample) continue;
+
+                  findings.push({
+                    tool: toolName,
+                    ruleId,
+                    severity,
+                    message: result.message?.text || rule.shortDescription?.text || ruleId,
+                    file: filePath,
+                    startLine: location?.region?.startLine || null,
+                    helpUri: rule.helpUri || null
+                  });
+                }
+              }
+
+              // Sort: high → medium → low (use ?? to handle 0 correctly)
+              const severityOrder = { high: 0, medium: 1, low: 2, info: 3 };
+              findings.sort((a, b) => (severityOrder[a.severity] ?? 3) - (severityOrder[b.severity] ?? 3));
+
+              core.info(`Parsed ${findings.length} security finding(s) in sample folders.`);
+            } catch (err) {
+              core.warning(`Failed to parse SARIF: ${err.message}`);
+            }
+
+            // Cap findings to avoid blowing up the context
+            const capped = findings.slice(0, 50);
+            core.setOutput('findings_json', JSON.stringify(capped));
+            core.setOutput('scan_status', 'completed');
+
+      # ── 7. Agentic summary with tool calling ────────────────────────────
       - name: Generate and post summary
         uses: actions/github-script@v7
         env:
           GITHUB_TOKEN: ${{ github.token }}
           SAMPLES_JSON: ${{ steps.detect.outputs.samples_json }}
+          SECURITY_FINDINGS_JSON: ${{ steps.security.outputs.findings_json }}
+          SCAN_STATUS: ${{ steps.security.outputs.scan_status }}
         with:
           script: |
             const fs = require('fs');
@@ -156,46 +256,73 @@ jobs:
             }
             const systemPrompt = fs.readFileSync(agentPath, 'utf8');
 
-            // ── 2. Parse sample folders ────────────────────────────────
+            // ── 2. Parse inputs ────────────────────────────────────────
             const samples = JSON.parse(process.env.SAMPLES_JSON || '[]');
             if (!samples.length) {
               core.warning('No sample folders detected – skipping summary.');
               return;
             }
 
-            // ── 3. Gather PR context via API ───────────────────────────
+            const securityFindings = JSON.parse(
+              process.env.SECURITY_FINDINGS_JSON || '[]'
+            );
+            const scanStatus = process.env.SCAN_STATUS || 'unavailable';
+
             const owner = context.repo.owner;
             const repo  = context.repo.repo;
             const pull_number = context.issue.number;
+            const workspace = process.env.GITHUB_WORKSPACE;
 
+            // ── 3. Gather PR context via API ───────────────────────────
             const prData = await github.rest.pulls.get({
               owner, repo, pull_number
             });
 
-            // Changed files
             const files = await github.paginate(
               github.rest.pulls.listFiles,
               { owner, repo, pull_number, per_page: 100 }
             );
             const changedFilesList = files.map(f => f.filename);
 
-            // Diff excerpt (truncated to stay within model context)
             const MAX_DIFF_CHARS = 2000;
             const diffResp = await github.rest.pulls.get({
               owner, repo, pull_number,
               mediaType: { format: 'diff' }
             });
             const fullDiff = typeof diffResp.data === 'string'
-              ? diffResp.data
-              : '';
+              ? diffResp.data : '';
             const diffExcerpt = fullDiff.length > MAX_DIFF_CHARS
               ? fullDiff.substring(0, MAX_DIFF_CHARS) + '\n... (truncated)'
               : fullDiff;
 
-            // ── 4. Read local sample files ─────────────────────────────
+            // ── 4. Build file manifest for each sample ─────────────────
+            function buildManifest(dir, relBase) {
+              const entries = [];
+              if (!fs.existsSync(dir)) return entries;
+              for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+                const fullPath = path.join(dir, entry.name);
+                const relPath = path.posix.join(relBase, entry.name);
+                if (entry.name.startsWith('.')) continue;
+                if (entry.isDirectory()) {
+                  entries.push({ path: relPath + '/', type: 'dir' });
+                  entries.push(...buildManifest(fullPath, relPath));
+                } else if (entry.isFile()) {
+                  try {
+                    const stat = fs.statSync(fullPath);
+                    entries.push({
+                      path: relPath,
+                      type: 'file',
+                      size: stat.size
+                    });
+                  } catch { /* skip unreadable files */ }
+                }
+              }
+              return entries;
+            }
+
             const sampleSections = [];
             for (const sample of samples) {
-              const sampleDir = path.join(process.env.GITHUB_WORKSPACE, sample);
+              const sampleDir = path.join(workspace, sample);
               let section = `## Sample: ${sample}\n`;
 
               // README.md
@@ -219,97 +346,37 @@ jobs:
                 section += '\n### metadata.json\nNot provided in PR content.\n';
               }
 
-              // ARM/Bicep template files — scan recursively
-              const TEMPLATE_EXTENSIONS = ['.bicep', '.json'];
-              const SKIP_PATTERNS = [
-                'metadata.json',
-                '.parameters.json',
-                'parameters.json',
-                'package.json',
-                'package-lock.json'
-              ];
-              const MAX_TEMPLATE_CHARS = 6000;
-              const MAX_TOTAL_TEMPLATE_CHARS = 20000;
-              let totalTemplateChars = 0;
+              // File manifest
+              const manifest = buildManifest(sampleDir, '.');
+              section += `\n### File manifest\n`;
+              section += manifest.map(e => {
+                if (e.type === 'dir') return `- 📁 ${e.path}`;
+                return `- 📄 ${e.path} (${e.size} bytes)`;
+              }).join('\n');
 
-              function findTemplateFiles(dir) {
-                const results = [];
-                if (!fs.existsSync(dir)) return results;
-                const entries = fs.readdirSync(dir, { withFileTypes: true });
-                for (const entry of entries) {
-                  const fullPath = path.join(dir, entry.name);
-                  if (entry.isDirectory()) {
-                    results.push(...findTemplateFiles(fullPath));
-                  } else if (entry.isFile()) {
-                    const ext = path.extname(entry.name).toLowerCase();
-                    if (!TEMPLATE_EXTENSIONS.includes(ext)) continue;
-                    const skip = SKIP_PATTERNS.some(p => entry.name.toLowerCase().endsWith(p));
-                    if (skip) continue;
-                    // For .json files, only include if they look like ARM templates
-                    if (ext === '.json') {
-                      try {
-                        const head = fs.readFileSync(fullPath, 'utf8').substring(0, 500);
-                        if (!head.includes('deploymentTemplate.json') &&
-                            !head.includes('subscriptionDeploymentTemplate.json') &&
-                            !head.includes('managementGroupDeploymentTemplate.json') &&
-                            !head.includes('tenantDeploymentTemplate.json')) {
-                          continue;
-                        }
-                      } catch { continue; }
-                    }
-                    results.push(fullPath);
-                  }
-                }
-                return results;
-              }
-
-              const templateFiles = findTemplateFiles(sampleDir);
-              // Prioritize: root-level main/azuredeploy first, then prereqs, then nested
-              templateFiles.sort((a, b) => {
-                const aRel = path.relative(sampleDir, a);
-                const bRel = path.relative(sampleDir, b);
-                const aDepth = aRel.split(path.sep).length;
-                const bDepth = bRel.split(path.sep).length;
-                if (aDepth !== bDepth) return aDepth - bDepth;
-                // Within same depth, prioritize main.bicep and azuredeploy.json
-                const priority = name => {
-                  const base = path.basename(name).toLowerCase();
-                  if (base === 'main.bicep' || base.startsWith('azuredeploy')) return 0;
-                  if (base.startsWith('prereq')) return 1;
-                  return 2;
-                };
-                return priority(a) - priority(b);
-              });
-              if (templateFiles.length > 0) {
-                section += `\n### Template files\n`;
-                for (const tplPath of templateFiles) {
-                  if (totalTemplateChars >= MAX_TOTAL_TEMPLATE_CHARS) {
-                    section += `\n*(Additional template files omitted — context budget reached)*\n`;
-                    break;
-                  }
-                  const relPath = path.relative(sampleDir, tplPath).replace(/\\/g, '/');
-                  let content = fs.readFileSync(tplPath, 'utf8');
-                  const budget = Math.min(MAX_TEMPLATE_CHARS, MAX_TOTAL_TEMPLATE_CHARS - totalTemplateChars);
-                  if (content.length > budget) {
-                    content = content.substring(0, budget) + '\n... (truncated)';
-                  }
-                  totalTemplateChars += content.length;
-                  const lang = tplPath.endsWith('.bicep') ? 'bicep' : 'json';
-                  section += `\n#### ${relPath}\n\`\`\`${lang}\n${content}\n\`\`\`\n`;
-                }
-              }
-
-              // Relevant changed files for this sample
+              // Changed files in this sample
               const relevantFiles = changedFilesList.filter(
                 f => f.startsWith(sample + '/')
               );
-              section += `\n### Changed files in this sample\n`;
+              section += `\n\n### Changed files\n`;
               section += relevantFiles.map(f => `- ${f}`).join('\n') || '- None';
 
               sampleSections.push(section);
             }
 
-            // ── 5. Build the user message ──────────────────────────────
+            // ── 5. Build initial user message ──────────────────────────
+            let securitySection = '';
+            if (scanStatus !== 'completed') {
+              securitySection = '\n## Security scan results\n⚠️ MSDO security scan was unavailable or failed. Security findings could not be produced for this run.\n';
+            } else if (securityFindings.length > 0) {
+              securitySection = '\n## Security scan results (MSDO: Template Analyzer + Checkov)\n';
+              securitySection += securityFindings.map(f =>
+                `- **[${f.severity.toUpperCase()}]** ${f.ruleId}: ${f.message} (${f.file}${f.startLine ? ':' + f.startLine : ''})`
+              ).join('\n');
+            } else {
+              securitySection = '\n## Security scan results\n✅ No findings from MSDO (Template Analyzer + Checkov).\n';
+            }
+
             const userMessage = [
               '# PR Context',
               '',
@@ -320,49 +387,445 @@ jobs:
               '',
               ...sampleSections,
               '',
+              securitySection,
+              '',
               '## Diff excerpt',
               '```diff',
               diffExcerpt,
-              '```'
+              '```',
+              '',
+              'Use the available tools to read template files and produce a complete summary.',
+              'Start by reading the main template file (main.bicep or azuredeploy.json).',
+              'Then read any prereq, nested, or module templates listed in the manifest.'
             ].join('\n');
 
-            // ── 6. Call GitHub Models API ───────────────────────────────
-            const modelEndpoint = 'https://models.github.ai/inference/chat/completions';
-            const resp = await fetch(modelEndpoint, {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${process.env.GITHUB_TOKEN}`,
-                'Content-Type': 'application/json'
+            // ── 6. Define tool schemas ─────────────────────────────────
+            const tools = [
+              {
+                type: 'function',
+                function: {
+                  name: 'read_file',
+                  description: 'Read a file from the sample directory. Returns the file content. For large files, use start_line and max_lines to read a specific range.',
+                  parameters: {
+                    type: 'object',
+                    properties: {
+                      sample: {
+                        type: 'string',
+                        description: 'The sample folder path (e.g., "quickstarts/my-sample")'
+                      },
+                      path: {
+                        type: 'string',
+                        description: 'Relative path within the sample folder (e.g., "main.bicep", "prereqs/prereq.main.bicep")'
+                      },
+                      start_line: {
+                        type: 'integer',
+                        description: 'Optional 1-based start line for partial reads. Defaults to 1.'
+                      },
+                      max_lines: {
+                        type: 'integer',
+                        description: 'Optional max lines to return. Defaults to all lines up to 50KB.'
+                      }
+                    },
+                    required: ['sample', 'path']
+                  }
+                }
               },
-              body: JSON.stringify({
-                model: 'openai/gpt-4o-mini',
-                messages: [
-                  { role: 'system', content: systemPrompt },
-                  { role: 'user',   content: userMessage }
-                ],
-                temperature: 0.3,
-                max_tokens: 3000
-              })
-            });
+              {
+                type: 'function',
+                function: {
+                  name: 'list_directory',
+                  description: 'List files and subdirectories in a path within the sample directory. Returns names, types, and sizes.',
+                  parameters: {
+                    type: 'object',
+                    properties: {
+                      sample: {
+                        type: 'string',
+                        description: 'The sample folder path'
+                      },
+                      path: {
+                        type: 'string',
+                        description: 'Relative path within the sample folder. Use "." for the root.'
+                      }
+                    },
+                    required: ['sample', 'path']
+                  }
+                }
+              },
+              {
+                type: 'function',
+                function: {
+                  name: 'search_files',
+                  description: 'Search for files matching a glob pattern within the sample directory. Returns matching file paths and sizes.',
+                  parameters: {
+                    type: 'object',
+                    properties: {
+                      sample: {
+                        type: 'string',
+                        description: 'The sample folder path'
+                      },
+                      pattern: {
+                        type: 'string',
+                        description: 'Glob pattern (e.g., "**/*.bicep", "**/*.json")'
+                      }
+                    },
+                    required: ['sample', 'pattern']
+                  }
+                }
+              },
+              {
+                type: 'function',
+                function: {
+                  name: 'get_security_findings',
+                  description: 'Retrieve security findings from the MSDO scan (Template Analyzer + Checkov). Optionally filter by severity.',
+                  parameters: {
+                    type: 'object',
+                    properties: {
+                      severity: {
+                        type: 'string',
+                        enum: ['high', 'medium', 'low', 'all'],
+                        description: 'Filter by severity. Defaults to "all".'
+                      }
+                    }
+                  }
+                }
+              }
+            ];
 
-            if (!resp.ok) {
-              const body = await resp.text();
-              core.setFailed(`GitHub Models API returned ${resp.status}: ${body}`);
-              return;
+            // ── 7. Tool executor with path sandboxing ──────────────────
+            const MAX_FILE_BYTES = 50 * 1024;
+            const MAX_LIST_ENTRIES = 200;
+            const MAX_SEARCH_RESULTS = 50;
+            const TOTAL_CONTENT_BUDGET = 100 * 1024;
+            let totalContentBytes = 0;
+
+            // Cache tool results to avoid repeated reads
+            const toolCache = new Map();
+
+            function sanitizePath(sample, relPath) {
+              // Validate sample is in our known list
+              if (!samples.includes(sample)) {
+                return { error: `Unknown sample folder: ${sample}` };
+              }
+
+              // Normalize and validate the relative path
+              const normalized = path.posix.normalize(relPath || '.');
+
+              // Reject path traversal, absolute paths, hidden dirs
+              if (normalized.startsWith('/') || normalized.startsWith('\\')) {
+                return { error: 'Absolute paths are not allowed.' };
+              }
+              if (normalized.includes('..')) {
+                return { error: 'Path traversal ("..") is not allowed.' };
+              }
+              // Allow "." as root, but reject other hidden paths
+              if (normalized.split('/').some(p => p.startsWith('.') && p !== '.')) {
+                return { error: 'Hidden files/directories are not allowed.' };
+              }
+
+              const fullPath = path.join(workspace, sample, normalized);
+
+              // Resolve realpath and verify it stays under sample root
+              const sampleRoot = path.join(workspace, sample);
+              try {
+                const resolved = fs.realpathSync(fullPath);
+                const resolvedRoot = fs.realpathSync(sampleRoot);
+                if (!resolved.startsWith(resolvedRoot + path.sep) && resolved !== resolvedRoot) {
+                  return { error: 'Path escapes the sample directory (symlink?).' };
+                }
+                return { fullPath: resolved, relPath: normalized };
+              } catch {
+                return { fullPath, relPath: normalized };
+              }
             }
 
-            const result = await resp.json();
-            const summary = result.choices?.[0]?.message?.content;
+            function executeTool(name, args) {
+              const cacheKey = JSON.stringify({ name, args });
+              if (toolCache.has(cacheKey)) {
+                core.info(`  [cache hit] ${name}(${JSON.stringify(args)})`);
+                return toolCache.get(cacheKey);
+              }
+
+              let result;
+              switch (name) {
+                case 'read_file': {
+                  const check = sanitizePath(args.sample, args.path);
+                  if (check.error) { result = check.error; break; }
+
+                  if (!fs.existsSync(check.fullPath)) {
+                    result = `File not found: ${args.path}`; break;
+                  }
+                  const stat = fs.statSync(check.fullPath);
+                  if (!stat.isFile()) {
+                    result = `Not a file: ${args.path}`; break;
+                  }
+
+                  // Content budget check
+                  if (totalContentBytes >= TOTAL_CONTENT_BUDGET) {
+                    result = 'Content budget exhausted (100KB total). No more file reads available.';
+                    break;
+                  }
+
+                  let content = fs.readFileSync(check.fullPath, 'utf8');
+                  const lines = content.split('\n');
+                  const startLine = Math.max(1, args.start_line || 1);
+                  const maxLines = args.max_lines || lines.length;
+                  const sliced = lines.slice(startLine - 1, startLine - 1 + maxLines);
+                  content = sliced.join('\n');
+
+                  const budget = Math.min(MAX_FILE_BYTES, TOTAL_CONTENT_BUDGET - totalContentBytes);
+                  let truncated = false;
+                  if (content.length > budget) {
+                    content = content.substring(0, budget);
+                    truncated = true;
+                  }
+                  totalContentBytes += content.length;
+
+                  const totalLines = lines.length;
+                  const returnedRange = `lines ${startLine}-${startLine + sliced.length - 1} of ${totalLines}`;
+                  result = content;
+                  if (truncated) {
+                    result += `\n\n[TRUNCATED — ${returnedRange}, content budget remaining: ${TOTAL_CONTENT_BUDGET - totalContentBytes} bytes. Use start_line/max_lines to read more.]`;
+                  } else if (sliced.length < totalLines) {
+                    result += `\n\n[Returned ${returnedRange}. Use start_line/max_lines for other sections.]`;
+                  }
+                  break;
+                }
+
+                case 'list_directory': {
+                  const check = sanitizePath(args.sample, args.path || '.');
+                  if (check.error) { result = check.error; break; }
+
+                  if (!fs.existsSync(check.fullPath)) {
+                    result = `Directory not found: ${args.path}`; break;
+                  }
+                  const stat = fs.statSync(check.fullPath);
+                  if (!stat.isDirectory()) {
+                    result = `Not a directory: ${args.path}`; break;
+                  }
+
+                  const entries = fs.readdirSync(check.fullPath, { withFileTypes: true });
+                  const items = [];
+                  for (const entry of entries.slice(0, MAX_LIST_ENTRIES)) {
+                    if (entry.name.startsWith('.')) continue;
+                    const entryPath = path.join(check.fullPath, entry.name);
+                    if (entry.isDirectory()) {
+                      items.push({ name: entry.name, type: 'directory' });
+                    } else if (entry.isFile()) {
+                      try {
+                        const s = fs.statSync(entryPath);
+                        items.push({ name: entry.name, type: 'file', size: s.size });
+                      } catch {
+                        items.push({ name: entry.name, type: 'file', size: null });
+                      }
+                    }
+                  }
+                  const truncMsg = entries.length > MAX_LIST_ENTRIES
+                    ? `\n(Showing first ${MAX_LIST_ENTRIES} of ${entries.length} entries)`
+                    : '';
+                  result = JSON.stringify(items, null, 2) + truncMsg;
+                  break;
+                }
+
+                case 'search_files': {
+                  if (!args.sample || !samples.includes(args.sample)) {
+                    result = `Unknown sample folder: ${args.sample}`; break;
+                  }
+                  // Simple glob implementation using recursive scan
+                  const sampleDir = path.join(workspace, args.sample);
+                  const pattern = (args.pattern || '*').replace(/\\/g, '/');
+
+                  // Reject dangerous patterns
+                  if (pattern.includes('..') || pattern.startsWith('/')) {
+                    result = 'Invalid pattern: must be relative, no ".."'; break;
+                  }
+
+                  function matchGlob(str, pat) {
+                    const regex = new RegExp(
+                      '^' + pat.split('**').map(segment =>
+                        segment.split('*').map(s =>
+                          s.replace(/[.+^${}()|[\]\\]/g, '\\$&')
+                        ).join('[^/]*')
+                      ).join('.*') + '$'
+                    );
+                    return regex.test(str);
+                  }
+
+                  function scanDir(dir, relBase) {
+                    const results = [];
+                    if (!fs.existsSync(dir)) return results;
+                    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+                      if (entry.name.startsWith('.')) continue;
+                      const fullP = path.join(dir, entry.name);
+                      const relP = path.posix.join(relBase, entry.name);
+                      if (entry.isDirectory()) {
+                        results.push(...scanDir(fullP, relP));
+                      } else if (entry.isFile() && matchGlob(relP, pattern)) {
+                        try {
+                          const s = fs.statSync(fullP);
+                          results.push({ path: relP, size: s.size });
+                        } catch {
+                          results.push({ path: relP, size: null });
+                        }
+                      }
+                      if (results.length >= MAX_SEARCH_RESULTS) break;
+                    }
+                    return results;
+                  }
+
+                  const matches = scanDir(sampleDir, '.').slice(0, MAX_SEARCH_RESULTS);
+                  result = JSON.stringify(matches, null, 2);
+                  if (matches.length >= MAX_SEARCH_RESULTS) {
+                    result += `\n(Results capped at ${MAX_SEARCH_RESULTS})`;
+                  }
+                  break;
+                }
+
+                case 'get_security_findings': {
+                  const severity = args.severity || 'all';
+                  const filtered = severity === 'all'
+                    ? securityFindings
+                    : securityFindings.filter(f => f.severity === severity);
+                  if (filtered.length === 0) {
+                    result = severity === 'all'
+                      ? 'No security findings from MSDO scan.'
+                      : `No ${severity}-severity findings from MSDO scan.`;
+                  } else {
+                    result = JSON.stringify(filtered, null, 2);
+                  }
+                  break;
+                }
+
+                default:
+                  result = `Unknown tool: ${name}`;
+              }
+
+              toolCache.set(cacheKey, result);
+              return result;
+            }
+
+            // ── 8. Agentic tool-calling loop ───────────────────────────
+            const MODEL_ENDPOINT = 'https://models.github.ai/inference/chat/completions';
+            const MAX_ROUNDS = 8;
+            const messages = [
+              { role: 'system', content: systemPrompt },
+              { role: 'user',   content: userMessage }
+            ];
+
+            let summary = null;
+
+            for (let round = 0; round < MAX_ROUNDS; round++) {
+              core.info(`\n── Agent round ${round + 1}/${MAX_ROUNDS} ──`);
+
+              const resp = await fetch(MODEL_ENDPOINT, {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${process.env.GITHUB_TOKEN}`,
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                  model: 'openai/gpt-4o-mini',
+                  messages,
+                  tools,
+                  tool_choice: round === 0 ? 'auto' : 'auto',
+                  temperature: 0.3,
+                  max_tokens: 4000
+                })
+              });
+
+              if (!resp.ok) {
+                const body = await resp.text();
+                core.setFailed(`GitHub Models API returned ${resp.status}: ${body}`);
+                return;
+              }
+
+              const result = await resp.json();
+              const choice = result.choices?.[0];
+              if (!choice) {
+                core.setFailed('GitHub Models API returned no choices.');
+                return;
+              }
+
+              const assistantMsg = choice.message;
+              messages.push(assistantMsg);
+
+              // If the model produced a final text response (no tool calls)
+              if (choice.finish_reason === 'stop') {
+                summary = assistantMsg.content;
+                core.info('Agent produced final summary.');
+                break;
+              }
+
+              // If model stopped for token limit or has no tool calls, treat as incomplete
+              if (!assistantMsg.tool_calls?.length) {
+                if (choice.finish_reason === 'length') {
+                  core.warning('Model response truncated (max_tokens). Will request finalization.');
+                } else {
+                  summary = assistantMsg.content;
+                  core.info('Agent produced final summary (no tool calls).');
+                }
+                break;
+              }
+
+              // Execute tool calls
+              core.info(`  Model requested ${assistantMsg.tool_calls.length} tool call(s).`);
+              for (const toolCall of assistantMsg.tool_calls) {
+                const fnName = toolCall.function.name;
+                let fnArgs;
+                try {
+                  fnArgs = JSON.parse(toolCall.function.arguments);
+                } catch {
+                  fnArgs = {};
+                  core.warning(`  Malformed tool args for ${fnName}`);
+                }
+
+                core.info(`  → ${fnName}(${JSON.stringify(fnArgs)})`);
+                const toolResult = executeTool(fnName, fnArgs);
+
+                messages.push({
+                  role: 'tool',
+                  tool_call_id: toolCall.id,
+                  content: typeof toolResult === 'string'
+                    ? toolResult
+                    : JSON.stringify(toolResult)
+                });
+              }
+            }
+
             if (!summary) {
-              core.setFailed('GitHub Models API returned an empty summary.');
+              // If we exhausted rounds, ask for final answer without tools
+              core.info('Max rounds reached – requesting final summary without tools.');
+              messages.push({
+                role: 'user',
+                content: 'You have reached the tool call limit. Please produce your final summary now using the information gathered so far.'
+              });
+              const finalResp = await fetch(MODEL_ENDPOINT, {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${process.env.GITHUB_TOKEN}`,
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                  model: 'openai/gpt-4o-mini',
+                  messages,
+                  temperature: 0.3,
+                  max_tokens: 4000
+                })
+              });
+              if (finalResp.ok) {
+                const finalResult = await finalResp.json();
+                summary = finalResult.choices?.[0]?.message?.content;
+              }
+            }
+
+            if (!summary) {
+              core.setFailed('Agent failed to produce a summary after all rounds.');
               return;
             }
 
-            // ── 7. Post or update PR comment ───────────────────────────
+            // ── 9. Post or update PR comment ───────────────────────────
             const MARKER = '<!-- quickstart-summarizer-bot -->';
-            const commentBody = `${MARKER}\n## 🤖 Quickstart Sample Summary\n\n${summary}\n\n---\n*Generated by the quickstart summarizer agent · triggered by /summarize*`;
+            const commentBody = `${MARKER}\n## 🤖 Quickstart Sample Summary\n\n${summary}\n\n---\n*Generated by the quickstart summarizer agent (v2 — agentic + MSDO security) · triggered by /summarize*`;
 
-            // Find existing bot comment
             const comments = await github.paginate(
               github.rest.issues.listComments,
               { owner, repo, issue_number: pull_number, per_page: 100 }
@@ -385,7 +848,6 @@ jobs:
               core.info('Created new summary comment on PR.');
             }
 
-            // Add rocket reaction to signal completion
             await github.rest.reactions.createForIssueComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
