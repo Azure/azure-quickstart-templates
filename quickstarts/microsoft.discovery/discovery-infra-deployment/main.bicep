@@ -1,7 +1,6 @@
 @description('Azure region for all resources. Must be a Discovery-supported region.')
 @allowed([
   'eastus'
-  'eastus2'
   'swedencentral'
   'uksouth'
 ])
@@ -25,7 +24,7 @@ param workspaceName string = 'ws-${uniqueString(resourceGroup().id)}'
 @description('Name of the Chat Model Deployment created under the Workspace.')
 @minLength(3)
 @maxLength(24)
-param chatModelDeploymentName string = 'gpt-5-1'
+param chatModelDeploymentName string = 'gpt-5-2'
 
 @description('Name of the Microsoft Discovery Storage Container resource. Must be 3-24 characters, alphanumeric and hyphens only.')
 @minLength(3)
@@ -91,7 +90,7 @@ param nodePoolScaleSetPriority string = 'Regular'
 param chatModelFormat string = 'OpenAI'
 
 @description('Chat model name to deploy.')
-param chatModelName string = 'gpt-5.1'
+param chatModelName string = 'gpt-5.2'
 
 // Built-in role definition IDs
 var storageBlobDataContributorRoleId = 'ba92f5b4-2d11-453d-a403-e96b0029c9fe'
