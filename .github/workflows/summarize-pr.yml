@@ -58,29 +58,22 @@ jobs:
             core.setOutput('head_sha', pr.data.head.sha);
             core.setOutput('head_repo', pr.data.head.repo.full_name);
 
-      # ── 2. Checkout the PR head ─────────────────────────────────────────
-      - name: Checkout PR head
-        uses: actions/checkout@v4
-        with:
-          repository: ${{ steps.pr.outputs.head_repo }}
-          ref: ${{ steps.pr.outputs.head_sha }}
-          fetch-depth: 0
-
-      # ── 3. Detect changed sample folders ────────────────────────────────
+      # ── 2. Detect changed sample folders (API only, no checkout) ────────
       - name: Detect changed sample folders
         id: detect
         uses: actions/github-script@v7
         with:
           script: |
-            const fs = require('fs');
             const path = require('path');
 
             const owner = context.repo.owner;
             const repo  = context.repo.repo;
             const pull_number = context.issue.number;
+            const headSha = '${{ steps.pr.outputs.head_sha }}';
 
             core.info(`Detecting changed samples for PR #${pull_number}...`);
 
+            // Get changed files via API (no checkout needed)
             const files = await github.paginate(
               github.rest.pulls.listFiles,
               { owner, repo, pull_number, per_page: 100 }
@@ -100,8 +93,32 @@ jobs:
               'tenant-deployments/'
             ];
 
+            // Build a set of all changed file paths for quick lookup
+            const changedSet = new Set(changedFiles);
+
+            // Use the Git tree API to check file existence at the PR head
+            // Cache tree lookups to avoid redundant API calls
+            const treeCache = new Map();
+            async function dirContains(dirPath, filename) {
+              if (treeCache.has(dirPath)) {
+                return treeCache.get(dirPath).has(filename);
+              }
+              try {
+                // Get the tree for this directory at the PR head commit
+                const { data } = await github.rest.git.getTree({
+                  owner, repo,
+                  tree_sha: `${headSha}:${dirPath}`
+                });
+                const names = new Set(data.tree.map(e => e.path));
+                treeCache.set(dirPath, names);
+                return names.has(filename);
+              } catch {
+                treeCache.set(dirPath, new Set());
+                return false;
+              }
+            }
+
             const seenDirs = new Set();
-            const workspace = process.env.GITHUB_WORKSPACE;
 
             for (const changedFile of changedFiles) {
               const matchedRoot = SAMPLE_ROOTS.find(r => changedFile.startsWith(r));
@@ -111,10 +128,13 @@ jobs:
               let dir = path.posix.dirname(changedFile);
 
               while (dir !== relRoot && dir !== '.') {
-                const metaPath = path.join(workspace, dir, 'metadata.json');
-                const readmePath = path.join(workspace, dir, 'README.md');
+                if (seenDirs.has(dir)) break;
 
-                if (fs.existsSync(metaPath) && fs.existsSync(readmePath)) {
+                // Check if metadata.json and README.md exist via Git tree API
+                const hasMeta = await dirContains(dir, 'metadata.json');
+                const hasReadme = await dirContains(dir, 'README.md');
+
+                if (hasMeta && hasReadme) {
                   seenDirs.add(dir);
                   break;
                 }
@@ -122,9 +142,27 @@ jobs:
               }
             }
 
-            const samplesJson = JSON.stringify([...seenDirs]);
+            const samplesList = [...seenDirs];
+            const samplesJson = JSON.stringify(samplesList);
             core.info(`Detected sample folders: ${samplesJson}`);
             core.setOutput('samples_json', samplesJson);
+
+            // Build sparse-checkout paths: agent instructions + sample folders
+            const sparsePaths = ['.github/agents/'];
+            for (const s of samplesList) {
+              sparsePaths.push(s + '/');
+            }
+            core.setOutput('sparse_paths', sparsePaths.join('\n'));
+            core.info(`Sparse checkout paths:\n${sparsePaths.join('\n')}`);
+
+      # ── 3. Sparse checkout PR head (only agent files + sample folders) ──
+      - name: Checkout PR head (sparse)
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ steps.pr.outputs.head_repo }}
+          ref: ${{ steps.pr.outputs.head_sha }}
+          fetch-depth: 1
+          sparse-checkout: ${{ steps.detect.outputs.sparse_paths }}
 
       # ── 4. Add reaction to acknowledge the command ──────────────────────
       - name: React to comment
