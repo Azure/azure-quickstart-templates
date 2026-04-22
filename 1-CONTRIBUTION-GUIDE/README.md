@@ -99,8 +99,9 @@ To make sure your template is added to Azure.com index, please follow these guid
 
 1. A single PR should reference a single template.  There shouldn't be multiple templates/samples being updated in a single PR.  Testing will block samples that update more than one sample.
 1. For each PR created the contributor needs to acknowledge the Contribution and Best Practices Guide.
-1. Each PR will run through the [arm-ttk](https://github.com/Azure/arm-ttk) and [Template Analyzer](https://github.com/Azure/template-analyzer) to ensure best practices
-1. Part of the pre-merge checks will be a deployment to both the Public and USGov Clouds unless otherwise indicated by metadata.json.  All clouds must be supported unless the platform support is incomplete.
+1. **Contributors must deploy their template(s) to Azure before submitting a PR.** After a successful deployment, capture the deployment results (correlationId, deploymentName) and add them to the `testResult` section of **metadata.json**.  See the [metadata.json](#metadatajson) section below for the required format.
+1. Each PR will be validated by GitHub Actions workflows that check structural correctness ([validate-samples.yml](../.github/workflows/validate-samples.yml)) and verify the deployment results against Azure logs ([ValidateSampleDeployments.yml](../.github/workflows/ValidateSampleDeployments.yml)).
+1. If you change any `.bicep` or `.json` template file, you **must** re-deploy and update `testResult` in metadata.json — the validation workflow will fail otherwise.
 
 ## Target Scopes
 
@@ -174,13 +175,20 @@ A valid metadata.json must adhere to the following structure
 
 ```json
 {
-  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/...",
+  "$schema": "https://aka.ms/azure-quickstart-templates-metadata-schema#",
   "itemDisplayName": "60 char limit",
   "description": "1000 char limit",
   "summary": "200 char limit",
   "githubUsername": "<e.g. bmoore-msft>",
   "dateUpdated": "<e.g. 2015-12-20>",
-  "type": "QuickStart"
+  "type": "QuickStart",
+  "testResult": {
+    "deployments": {
+      "templateFileName": "main.bicep",
+      "correlationId": "<deployment-correlation-id>",
+      "deploymentName": "<deployment-name>"
+    }
+  }
 }
 ```
 
@@ -196,6 +204,97 @@ Guidelines on the metadata.json:
 + **type:** type of sample, see the schema for possible value
 + **environments:** list of supported clouds, if omitted, all clouds will be tested and listed as supported
 + **dateUpdated:** the date the sample was last updated, this will be automatically updated when the PR is merged
++ **testResult:** deployment test results — see [testResult](#testresult) below
+
+### testResult
+
+The `testResult` field is **required** for all samples and must contain a `deployments` property with the results of your deployment(s).  Contributors are expected to deploy their template(s) to Azure and capture the deployment results before submitting a PR.
+
+**Required fields** per deployment entry:
+
+| Field              | Description                                                         |
+| :----------------- | :------------------------------------------------------------------ |
+| `templateFileName` | The template file name: `azuredeploy.json` or `main.bicep`         |
+| `correlationId`    | The Azure deployment correlation ID (a GUID)                        |
+| `deploymentName`   | The Azure deployment name                                           |
+
+**Optional fields:**
+
+| Field           | Description                                                                        |
+| :-------------- | :--------------------------------------------------------------------------------- |
+| `TIMESTAMP`     | Deployment timestamp (informational only)                                          |
+| `templateHash`  | Template hash (optional — computed automatically from the template file by the CI)  |
+
+#### How to obtain deployment results
+
+After deploying your template using Azure CLI, PowerShell or the portal, you can retrieve the `correlationId` and `deploymentName`:
+
+**Azure CLI:**
+
+```bash
+# Deploy the template
+az deployment group create \
+  --resource-group <resource-group> \
+  --template-file main.bicep \
+  --name <deployment-name> \
+  --parameters @azuredeploy.parameters.json
+
+# Get the correlationId
+az deployment group show \
+  --resource-group <resource-group> \
+  --name <deployment-name> \
+  --query properties.correlationId -o tsv
+```
+
+**Azure PowerShell:**
+
+```powershell
+# Deploy the template
+New-AzResourceGroupDeployment `
+  -ResourceGroupName <resource-group> `
+  -TemplateFile main.bicep `
+  -Name <deployment-name>
+
+# Get the correlationId
+(Get-AzResourceGroupDeployment -ResourceGroupName <resource-group> -Name <deployment-name>).CorrelationId
+```
+
+**Azure Portal:** Navigate to the resource group → Deployments → select the deployment → Overview. The correlation ID and deployment name are displayed in the deployment details.
+
+#### Single deployment (no prereqs)
+
+For samples without a `prereqs/` folder, `deployments` can be a single object:
+
+```json
+"testResult": {
+  "deployments": {
+    "templateFileName": "main.bicep",
+    "correlationId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+    "deploymentName": "my-deployment-name"
+  }
+}
+```
+
+#### Samples with prereqs
+
+When your sample has a `prereqs/` folder, `deployments` **must** be an array with one entry per deployed template (prereqs and main):
+
+```json
+"testResult": {
+  "deployments": [
+    {
+      "templateFileName": "prereqs/prereq.main.bicep",
+      "correlationId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+      "deploymentName": "prereqs-deployment-name"
+    },
+    {
+      "templateFileName": "main.bicep",
+      "correlationId": "yyyyyyyy-yyyy-yyyy-yyyy-yyyyyyyyyyyy",
+      "deploymentName": "main-deployment-name"
+    }
+  ]
+}
+```
 
 ### Cloud Specific Parameter Files
 
@@ -208,9 +307,43 @@ If the sample needs separate parameter files for each cloud you can add each to 
 
 If only one is provided it will be used for testing in all clouds.
 
-## Azure DevOps CI
+## GitHub Actions CI
 
-We have automated template validation through Azure DevOps CI. These builds can be accessed by clicking the 'Details' link at the bottom of the pull-request dialog. This process will ensure that your template conforms to all the rules mentioned above and will also deploy your template to our test subscription.
+We have automated template validation through GitHub Actions.  Three workflows run as part of the PR process:
+
+### 1. Validate Sample Contributions (`validate-samples.yml`)
+
+This workflow runs automatically on every PR to `master`. It validates:
+
++ **Structural checks:** metadata.json exists, is valid JSON, and contains all required fields (including `testResult`)
++ **Duplicate folder names:** ensures your sample folder name is unique across the repo
++ **README.md checks:** verifies deploy buttons, portal links and Bicep references are present
++ **Template-metadata consistency:** if any `.bicep` or `.json` template file is modified, metadata.json must also be updated with fresh `testResult` data
++ **Prereqs validation:** if a `prereqs/` folder exists, validates that `testResult.deployments` is an array with matching entries
+
+### 2. Validate ARM Deployments (`ValidateSampleDeployments.yml`)
+
+This workflow is triggered by a repo maintainer posting a `/verify` comment on your PR.  It validates the deployment results you provided in `testResult`:
+
++ Verifies that the `correlationId` and `deploymentName` exist in the Azure deployment logs
++ Confirms the deployment `executionStatus` is `Succeeded`
++ Computes a `templateHash` from the template file in the PR and verifies it matches the hash recorded in the deployment logs — this ensures the template you deployed is the same one in the PR
+
+The `/verify` command can only be run after `validate-samples.yml` passes.
+
+### 3. Summarize PR (`summarize-pr.yml`)
+
+Triggered by a `/summarize` comment on a PR, this workflow generates an AI-powered summary of the sample changes to help reviewers.
+
+### Contributor Workflow Summary
+
+1. **Create or update** your sample template (main.bicep or azuredeploy.json)
+2. **Deploy** the template to Azure using the CLI, PowerShell or the portal
+3. **Capture** the deployment results: `correlationId`, `deploymentName`, and `templateFileName`
+4. **Update** `metadata.json` with the `testResult` section containing the deployment results
+5. **Submit** your PR — `validate-samples.yml` runs automatically
+6. A **maintainer** runs `/verify` to validate your deployment results against Azure logs
+7. Optionally, a reviewer runs `/summarize` for an AI-generated PR summary
 
 ### Parameters File Placeholders
 
@@ -350,6 +483,16 @@ More information can be found at the links below - the documentation is tailored
 
 ### Diagnosing Failures
 
-If your deployment fails, check the details link of the Azure DevOps build, which will take you to the log. If the template deployment was attempted, you can see what parameters were used and the error that was encountered during deployment.  These values are the values you need to reproduce the error. Keep in mind, that depending on the resources allocated, it can take a few minutes for the CI system to cleanup provisioned resources.
+If your PR checks fail, click the **Details** link next to the failed check in the pull-request dialog to view the GitHub Actions workflow log. The log will show which validation step failed and provide specific error messages.
+
+Common failure reasons:
+
++ **metadata.json missing `testResult`:** You must deploy your template and add the deployment results to metadata.json before submitting the PR.  See [testResult](#testresult) for the required format.
++ **Template changed but metadata.json not updated:** If you modify any `.bicep` or `.json` file, you must re-deploy and update the `testResult` section with fresh deployment results.
++ **`/verify` fails with "No ADX record found":** The `correlationId` or `deploymentName` in your metadata.json does not match any Azure deployment log.  Double-check the values are correct.
++ **`/verify` fails with templateHash mismatch:** The template you deployed is different from the template in your PR.  Re-deploy the exact template from your PR branch and update the deployment results.
++ **`/verify` fails with executionStatus not Succeeded:** Your deployment did not succeed.  Fix the template, re-deploy, and update the deployment results.
+
+Keep in mind that depending on the resources allocated, it can take a few minutes for the CI system to cleanup provisioned resources.
 
 This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/). For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
