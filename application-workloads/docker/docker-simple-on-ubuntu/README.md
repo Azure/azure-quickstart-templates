@@ -1,5 +1,5 @@
 ---
-description: This template allows you to deploy an Ubuntu VM with Docker (using the Docker Extension). You can later SSH into the VM and run Docker containers.
+description: This template allows you to deploy an Ubuntu VM with Docker Engine installed via CustomScript extension. Supports Ubuntu 20.04, 22.04 and 24.04 LTS. You can SSH into the VM and run Docker containers immediately after deployment.
 page_type: sample
 products:
 - azure
@@ -22,7 +22,7 @@ languages:
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fdocker%2Fdocker-simple-on-ubuntu%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fdocker%2Fdocker-simple-on-ubuntu%2Fazuredeploy.json)
 
-This template allows you to deploy an Ubuntu VM with Docker (using the Docker Extension) installed.
-You can run `docker` commands by connecting to the virtual machine with SSH.
+This template deploys an Ubuntu VM (20.04, 22.04, or 24.04 LTS) with Docker Engine installed automatically via the CustomScript extension using the official Docker install script.
+You can run `docker` commands immediately after connecting to the virtual machine with SSH.
 
-`Tags: Microsoft.Network/publicIPAddresses, Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, DockerExtension`
+`Tags: Microsoft.Network/publicIPAddresses, Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Network/networkInterfaces, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, CustomScript`
