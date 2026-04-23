@@ -6,7 +6,8 @@
 #
 # Phase 2: Agentic architecture with tool calling and MSDO security scanning.
 # The model autonomously reads files via tools and incorporates security
-# findings from Microsoft Security DevOps (Template Analyzer + Checkov).
+# findings from Microsoft Security DevOps (Template Analyzer, Checkov,
+# PSRule for Azure, Trivy, and Terrascan).
 #
 # Triggered by a "/summarize" comment on a pull request.  Runs with base repo
 # permissions so GITHUB_TOKEN has full models:read and pull-requests:write
@@ -176,13 +177,13 @@ jobs:
               content: 'eyes'
             });
 
-      # ── 5. Run Microsoft Security DevOps (Template Analyzer + Checkov) ──
+      # ── 5. Run Microsoft Security DevOps (Template Analyzer, Checkov, PSRule, Trivy, Terrascan) ──
       - name: Run MSDO security scan
         id: msdo
         uses: microsoft/security-devops-action@latest
         continue-on-error: true
         with:
-          tools: templateanalyzer,checkov
+          tools: templateanalyzer,checkov,psrule,trivy,terrascan
           categories: IaC
 
       # ── 6. Parse SARIF security findings ────────────────────────────────
@@ -407,12 +408,12 @@ jobs:
             if (scanStatus !== 'completed') {
               securitySection = '\n## Security scan results\n⚠️ MSDO security scan was unavailable or failed. Security findings could not be produced for this run.\n';
             } else if (securityFindings.length > 0) {
-              securitySection = '\n## Security scan results (MSDO: Template Analyzer + Checkov)\n';
+              securitySection = '\n## Security scan results (MSDO: Template Analyzer, Checkov, PSRule, Trivy, Terrascan)\n';
               securitySection += securityFindings.map(f =>
                 `- **[${f.severity.toUpperCase()}]** ${f.ruleId}: ${f.message} (${f.file}${f.startLine ? ':' + f.startLine : ''})`
               ).join('\n');
             } else {
-              securitySection = '\n## Security scan results\n✅ No findings from MSDO (Template Analyzer + Checkov).\n';
+              securitySection = '\n## Security scan results\n✅ No findings from MSDO (Template Analyzer, Checkov, PSRule, Trivy, Terrascan).\n';
             }
 
             const userMessage = [
@@ -514,7 +515,7 @@ jobs:
                 type: 'function',
                 function: {
                   name: 'get_security_findings',
-                  description: 'Retrieve security findings from the MSDO scan (Template Analyzer + Checkov). Optionally filter by severity.',
+                  description: 'Retrieve security findings from the MSDO scan (Template Analyzer, Checkov, PSRule, Trivy, Terrascan). Optionally filter by severity.',
                   parameters: {
                     type: 'object',
                     properties: {
