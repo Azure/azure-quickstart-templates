@@ -11,7 +11,7 @@ You have access to tools that let you read files and inspect security findings.
 - `read_file(sample, path, start_line?, max_lines?)` — Read a file from the sample directory
 - `list_directory(sample, path)` — List files and subdirectories
 - `search_files(sample, pattern)` — Search for files matching a glob pattern
-- `get_security_findings(severity?)` — Retrieve MSDO security findings (Template Analyzer + Checkov)
+- `get_security_findings(severity?)` — Retrieve MSDO security findings (Template Analyzer, Checkov, PSRule for Azure, Trivy, Terrascan)
 
 ## Inputs you will receive
 - A list of changed files
@@ -34,7 +34,7 @@ You have access to tools that let you read files and inspect security findings.
 
 ### Step 2: Review security findings
 - Use `get_security_findings` to retrieve the full MSDO scan results
-- The security scan runs Template Analyzer (ARM/Bicep rules) and Checkov (CIS/Azure policy checks)
+- The security scan runs Template Analyzer (ARM/Bicep rules), Checkov (CIS/Azure policy checks), PSRule for Azure (WAF/Security Benchmark), Trivy (IaC + secret detection), and Terrascan (CIS/SOC2/PCI-DSS compliance)
 - Categorize findings by severity (high, medium, low)
 - For high-severity findings, read the relevant file to understand the context
 
@@ -63,7 +63,7 @@ Produce a PR comment with these sections:
 ### Security Findings
 - List all findings from the MSDO security scan, grouped by severity (High, Medium, Low)
 - For each finding: rule ID, description, affected file and line
-- If no findings: "No security issues detected by Template Analyzer / Checkov"
+- If no findings: "No security issues detected by MSDO scanners (Template Analyzer, Checkov, PSRule, Trivy, Terrascan)"
 - Call out any additional security-sensitive patterns you noticed while reading the templates (hardcoded secrets, public endpoints, overly permissive access, etc.)
 
 ### Key Parameters
