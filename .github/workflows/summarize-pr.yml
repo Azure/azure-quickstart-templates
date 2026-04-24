@@ -755,22 +755,51 @@ jobs:
             for (let round = 0; round < MAX_ROUNDS; round++) {
               core.info(`\n── Agent round ${round + 1}/${MAX_ROUNDS} ──`);
 
-              const resp = await fetch(MODEL_ENDPOINT, {
-                method: 'POST',
-                headers: {
-                  'Authorization': `Bearer ${process.env.GITHUB_TOKEN}`,
-                  'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                  model: 'openai/gpt-4o-mini',
-                  messages,
-                  tools,
-                  tool_choice: round === 0 ? 'auto' : 'auto',
-                  temperature: 0.3,
-                  max_tokens: 4000
-                })
-              });
+              // Retry with exponential backoff on 5xx / network errors
+              const MAX_RETRIES = 3;
+              let resp = null;
+              let lastError = null;
+              for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+                try {
+                  resp = await fetch(MODEL_ENDPOINT, {
+                    method: 'POST',
+                    headers: {
+                      'Authorization': `Bearer ${process.env.GITHUB_TOKEN}`,
+                      'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                      model: 'openai/gpt-4o-mini',
+                      messages,
+                      tools,
+                      tool_choice: 'auto',
+                      temperature: 0.3,
+                      max_tokens: 4000
+                    })
+                  });
+                  lastError = null;
 
+                  if (resp.ok || resp.status < 500) break; // success or client error — don't retry
+
+                  if (attempt < MAX_RETRIES) {
+                    const delay = Math.pow(2, attempt + 1) * 1000; // 2s, 4s, 8s
+                    core.warning(`GitHub Models API returned ${resp.status} — retrying in ${delay / 1000}s (attempt ${attempt + 1}/${MAX_RETRIES})...`);
+                    await new Promise(r => setTimeout(r, delay));
+                  }
+                } catch (fetchErr) {
+                  lastError = fetchErr;
+                  resp = null;
+                  if (attempt < MAX_RETRIES) {
+                    const delay = Math.pow(2, attempt + 1) * 1000;
+                    core.warning(`GitHub Models API network error: ${fetchErr.message} — retrying in ${delay / 1000}s (attempt ${attempt + 1}/${MAX_RETRIES})...`);
+                    await new Promise(r => setTimeout(r, delay));
+                  }
+                }
+              }
+
+              if (lastError) {
+                core.setFailed(`GitHub Models API network error after ${MAX_RETRIES} retries: ${lastError.message}`);
+                return;
+              }
               if (!resp.ok) {
                 const body = await resp.text();
                 core.setFailed(`GitHub Models API returned ${resp.status}: ${body}`);
