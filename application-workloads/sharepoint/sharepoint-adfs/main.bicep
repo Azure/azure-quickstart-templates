@@ -665,7 +665,7 @@ var baseVirtualMachines = [
         SharePointCentralAdminPort: environmentSettings.sharePointCentralAdminPort
         EnableAnalysis: environmentSettings.enableAnalysis
         SharePointBits: environmentSettings.sharePointBitsDsc
-        DefaultZoneMustBeHttp: defaultZoneMustBeHttps
+        DefaultZoneMustBeHttps: defaultZoneMustBeHttps
         ConfigurationLevel: sharePointConfigurationLevel
       }
       privacy: {
@@ -751,7 +751,7 @@ var frontendVirtualMachinesSettings = {
       SharePointSitesAuthority: environmentSettings.sharePointSitesAuthority
       EnableAnalysis: environmentSettings.enableAnalysis
       SharePointBits: environmentSettings.sharePointBitsDsc
-      DefaultZoneMustBeHttp: defaultZoneMustBeHttps
+      DefaultZoneMustBeHttps: defaultZoneMustBeHttps
       ConfigurationLevel: sharePointConfigurationLevel
     }
     privacy: {
