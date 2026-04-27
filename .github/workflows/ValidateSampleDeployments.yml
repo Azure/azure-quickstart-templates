@@ -295,7 +295,13 @@ jobs:
               core.warning('summarizer.agent.md not found – skipping summary.');
               return;
             }
-            const systemPrompt = fs.readFileSync(agentPath, 'utf8');
+            // Cap system prompt to ~2000 chars (~500 tokens) to stay within
+            // GitHub Models per-request token budget (~8000 for gpt-4o-mini).
+            let systemPrompt = fs.readFileSync(agentPath, 'utf8');
+            if (systemPrompt.length > 2000) {
+              systemPrompt = systemPrompt.substring(0, 2000) + '\n... (prompt truncated for token budget)';
+              core.warning(`System prompt truncated to 2000 chars (was ${systemPrompt.length})`);
+            }
 
             // ── 2. Parse inputs ────────────────────────────────────────
             const samples = JSON.parse(process.env.SAMPLES_JSON || '[]');
@@ -325,7 +331,7 @@ jobs:
             );
             const changedFilesList = files.map(f => f.filename);
 
-            const MAX_DIFF_CHARS = 2000;
+            const MAX_DIFF_CHARS = 500;
             const diffResp = await github.rest.pulls.get({
               owner, repo, pull_number,
               mediaType: { format: 'diff' }
@@ -336,26 +342,24 @@ jobs:
               ? fullDiff.substring(0, MAX_DIFF_CHARS) + '\n... (truncated)'
               : fullDiff;
 
-            // ── 4. Build file manifest for each sample ─────────────────
-            function buildManifest(dir, relBase) {
+            // ── 4. Build compact file manifest for each sample ──────────
+            // Only list template-relevant files to keep the prompt small;
+            // the model can use list_directory / search_files for more.
+            function buildCompactManifest(dir, relBase) {
               const entries = [];
               if (!fs.existsSync(dir)) return entries;
+              const TEMPLATE_EXTS = new Set(['.bicep', '.json', '.bicepparam']);
               for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
                 const fullPath = path.join(dir, entry.name);
                 const relPath = path.posix.join(relBase, entry.name);
                 if (entry.name.startsWith('.')) continue;
                 if (entry.isDirectory()) {
-                  entries.push({ path: relPath + '/', type: 'dir' });
-                  entries.push(...buildManifest(fullPath, relPath));
+                  entries.push(...buildCompactManifest(fullPath, relPath));
                 } else if (entry.isFile()) {
-                  try {
-                    const stat = fs.statSync(fullPath);
-                    entries.push({
-                      path: relPath,
-                      type: 'file',
-                      size: stat.size
-                    });
-                  } catch { /* skip unreadable files */ }
+                  const ext = path.extname(entry.name).toLowerCase();
+                  if (TEMPLATE_EXTS.has(ext) || entry.name === 'README.md' || entry.name === 'metadata.json') {
+                    entries.push(relPath);
+                  }
                 }
               }
               return entries;
@@ -366,78 +370,40 @@ jobs:
               const sampleDir = path.join(workspace, sample);
               let section = `## Sample: ${sample}\n`;
 
-              // README.md
-              const readmePath = path.join(sampleDir, 'README.md');
-              if (fs.existsSync(readmePath)) {
-                const readme = fs.readFileSync(readmePath, 'utf8');
-                const truncated = readme.length > 3000
-                  ? readme.substring(0, 3000) + '\n... (truncated)'
-                  : readme;
-                section += `\n### README.md\n${truncated}\n`;
-              } else {
-                section += '\n### README.md\nNot provided in PR content.\n';
-              }
-
-              // metadata.json
-              const metaPath = path.join(sampleDir, 'metadata.json');
-              if (fs.existsSync(metaPath)) {
-                const meta = fs.readFileSync(metaPath, 'utf8');
-                section += `\n### metadata.json\n\`\`\`json\n${meta}\n\`\`\`\n`;
-              } else {
-                section += '\n### metadata.json\nNot provided in PR content.\n';
-              }
-
-              // File manifest
-              const manifest = buildManifest(sampleDir, '.');
-              section += `\n### File manifest\n`;
-              section += manifest.map(e => {
-                if (e.type === 'dir') return `- 📁 ${e.path}`;
-                return `- 📄 ${e.path} (${e.size} bytes)`;
-              }).join('\n');
+              // Compact file manifest (template files only)
+              const manifest = buildCompactManifest(sampleDir, '.');
+              section += `Key files: ${manifest.join(', ')}\n`;
 
               // Changed files in this sample
               const relevantFiles = changedFilesList.filter(
                 f => f.startsWith(sample + '/')
               );
-              section += `\n\n### Changed files\n`;
-              section += relevantFiles.map(f => `- ${f}`).join('\n') || '- None';
+              section += `Changed: ${relevantFiles.join(', ') || 'None'}`;
 
               sampleSections.push(section);
             }
 
             // ── 5. Build initial user message ──────────────────────────
+            // Keep this minimal — the model uses tools to read file content.
             let securitySection = '';
             if (scanStatus !== 'completed') {
-              securitySection = '\n## Security scan results\n⚠️ MSDO security scan was unavailable or failed. Security findings could not be produced for this run.\n';
+              securitySection = 'Security scan: unavailable (use get_security_findings tool).';
             } else if (securityFindings.length > 0) {
-              securitySection = '\n## Security scan results (MSDO: Template Analyzer, Checkov, Trivy, Terrascan)\n';
-              securitySection += securityFindings.map(f =>
-                `- **[${f.severity.toUpperCase()}]** ${f.ruleId}: ${f.message} (${f.file}${f.startLine ? ':' + f.startLine : ''})`
-              ).join('\n');
+              securitySection = `Security scan: ${securityFindings.length} finding(s) detected. Use get_security_findings tool for details.`;
             } else {
-              securitySection = '\n## Security scan results\n✅ No findings from MSDO (Template Analyzer, Checkov, Trivy, Terrascan).\n';
+              securitySection = 'Security scan: ✅ No findings from MSDO.';
             }
 
             const userMessage = [
-              '# PR Context',
-              '',
               `PR #${pull_number}: ${prData.data.title}`,
-              '',
-              '## All changed files',
-              changedFilesList.map(f => `- ${f}`).join('\n'),
               '',
               ...sampleSections,
               '',
               securitySection,
               '',
-              '## Diff excerpt',
-              '```diff',
-              diffExcerpt,
-              '```',
+              diffExcerpt ? `Diff excerpt:\n\`\`\`diff\n${diffExcerpt}\n\`\`\`` : '',
               '',
-              'Use the available tools to read template files and produce a complete summary.',
-              'Start by reading the main template file (main.bicep or azuredeploy.json).',
-              'Then read any prereq, nested, or module templates listed in the manifest.'
+              'Use the tools to read template files (main.bicep or azuredeploy.json first), then produce a complete summary.'
             ].join('\n');
 
             // ── 6. Define tool schemas ─────────────────────────────────
@@ -747,15 +713,54 @@ jobs:
             // ── 8. Agentic tool-calling loop ───────────────────────────
             const MODEL_ENDPOINT = 'https://models.github.ai/inference/chat/completions';
             const MAX_ROUNDS = 8;
+            // Rough token budget: GitHub Models allows ~8000 input tokens
+            // for gpt-4o-mini. Reserve headroom for tools schema + response.
+            const MAX_REQUEST_BYTES = 24_000; // ~6000 tokens at ~4 chars/token
             const messages = [
               { role: 'system', content: systemPrompt },
               { role: 'user',   content: userMessage }
             ];
 
+            // Compact old tool-call turns when payload exceeds budget.
+            // Removes complete assistant+tool turn pairs from the middle,
+            // preserving the system prompt, initial user message, and recent turns.
+            function compactMessages() {
+              const serialized = JSON.stringify(messages);
+              if (serialized.length <= MAX_REQUEST_BYTES) return;
+
+              core.info(`  Compacting messages (${(serialized.length / 1024).toFixed(1)} KB > ${(MAX_REQUEST_BYTES / 1024).toFixed(1)} KB limit)...`);
+
+              // Find assistant messages with tool_calls (complete turns to remove)
+              // Keep system (0), user (1), and the most recent 4 messages
+              const KEEP_TAIL = 4;
+              const KEEP_HEAD = 2; // system + user
+              while (messages.length > KEEP_HEAD + KEEP_TAIL) {
+                const check = JSON.stringify(messages);
+                if (check.length <= MAX_REQUEST_BYTES) break;
+
+                // Find the first removable assistant+tool turn after HEAD
+                let i = KEEP_HEAD;
+                if (messages[i]?.role === 'assistant' && messages[i]?.tool_calls?.length) {
+                  // Remove this assistant msg and all its consecutive tool responses
+                  let end = i + 1;
+                  while (end < messages.length && messages[end].role === 'tool') end++;
+                  const removed = end - i;
+                  messages.splice(i, removed);
+                  core.info(`    Removed ${removed} messages (1 assistant + ${removed - 1} tool results)`);
+                } else {
+                  break; // Can't compact further safely
+                }
+              }
+              core.info(`  After compaction: ${(JSON.stringify(messages).length / 1024).toFixed(1)} KB, ${messages.length} messages`);
+            }
+
             let summary = null;
 
             for (let round = 0; round < MAX_ROUNDS; round++) {
               core.info(`\n── Agent round ${round + 1}/${MAX_ROUNDS} ──`);
+
+              // Compact conversation history if it's grown too large
+              compactMessages();
 
               // Retry with exponential backoff + jitter on 5xx / network errors
               const MAX_RETRIES = 5;
@@ -764,7 +769,7 @@ jobs:
               let lastError = null;
 
               const requestBody = JSON.stringify({
-                model: 'openai/gpt-5-mini',
+                model: 'openai/gpt-4o-mini',
                 messages,
                 tools,
                 tool_choice: 'auto',
@@ -848,6 +853,7 @@ jobs:
 
               // Execute tool calls
               core.info(`  Model requested ${assistantMsg.tool_calls.length} tool call(s).`);
+              const MAX_TOOL_RESULT_CHARS = 3000;
               for (const toolCall of assistantMsg.tool_calls) {
                 const fnName = toolCall.function.name;
                 let fnArgs;
@@ -859,14 +865,21 @@ jobs:
                 }
 
                 core.info(`  → ${fnName}(${JSON.stringify(fnArgs)})`);
-                const toolResult = executeTool(fnName, fnArgs);
+                let toolResult = executeTool(fnName, fnArgs);
+                let content = typeof toolResult === 'string'
+                  ? toolResult
+                  : JSON.stringify(toolResult);
+
+                // Cap individual tool results to stay within token budget
+                if (content.length > MAX_TOOL_RESULT_CHARS) {
+                  content = content.substring(0, MAX_TOOL_RESULT_CHARS) +
+                    '\n... [truncated — use start_line/max_lines for more]';
+                }
 
                 messages.push({
                   role: 'tool',
                   tool_call_id: toolCall.id,
-                  content: typeof toolResult === 'string'
-                    ? toolResult
-                    : JSON.stringify(toolResult)
+                  content
                 });
               }
             }
@@ -878,8 +891,9 @@ jobs:
                 role: 'user',
                 content: 'You have reached the tool call limit. Please produce your final summary now using the information gathered so far.'
               });
+              compactMessages();
               const finalBody = JSON.stringify({
-                model: 'openai/gpt-5-mini',
+                model: 'openai/gpt-4o-mini',
                 messages,
                 temperature: 0.3,
                 max_tokens: 4000
