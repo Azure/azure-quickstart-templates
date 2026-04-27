@@ -762,6 +762,17 @@ jobs:
               const FETCH_TIMEOUT_MS = 60_000;
               let resp = null;
               let lastError = null;
+
+              const requestBody = JSON.stringify({
+                model: 'openai/gpt-5-mini',
+                messages,
+                tools,
+                tool_choice: 'auto',
+                temperature: 0.3,
+                max_tokens: 4000
+              });
+              core.info(`  Request payload: ${(requestBody.length / 1024).toFixed(1)} KB, ${messages.length} messages`);
+
               for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
                 try {
                   resp = await fetch(MODEL_ENDPOINT, {
@@ -771,14 +782,7 @@ jobs:
                       'Authorization': `Bearer ${process.env.GITHUB_TOKEN}`,
                       'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({
-                      model: 'openai/gpt-4o-mini',
-                      messages,
-                      tools,
-                      tool_choice: 'auto',
-                      temperature: 0.3,
-                      max_tokens: 4000
-                    })
+                    body: requestBody
                   });
                   lastError = null;
 
@@ -874,22 +878,28 @@ jobs:
                 role: 'user',
                 content: 'You have reached the tool call limit. Please produce your final summary now using the information gathered so far.'
               });
+              const finalBody = JSON.stringify({
+                model: 'openai/gpt-5-mini',
+                messages,
+                temperature: 0.3,
+                max_tokens: 4000
+              });
+              core.info(`  Final request payload: ${(finalBody.length / 1024).toFixed(1)} KB, ${messages.length} messages`);
               const finalResp = await fetch(MODEL_ENDPOINT, {
                 method: 'POST',
+                signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
                 headers: {
                   'Authorization': `Bearer ${process.env.GITHUB_TOKEN}`,
                   'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({
-                  model: 'openai/gpt-4o-mini',
-                  messages,
-                  temperature: 0.3,
-                  max_tokens: 4000
-                })
+                body: finalBody
               });
               if (finalResp.ok) {
                 const finalResult = await finalResp.json();
                 summary = finalResult.choices?.[0]?.message?.content;
+              } else {
+                const errBody = await finalResp.text();
+                core.warning(`Final summary request failed (${finalResp.status}): ${errBody}`);
               }
             }
 
