@@ -759,7 +759,7 @@ jobs:
                   model,
                   messages,
                   temperature: 0.3,
-                  max_tokens: 4000,
+                  max_completion_tokens: 4000,
                   ...extraBody
                 });
                 core.info(`  Request: model=${model}, payload=${(body.length / 1024).toFixed(1)} KB, ${messages.length} messages`);
@@ -787,8 +787,9 @@ jobs:
                     }
                     if (resp.status < 500) {
                       // Client error (4xx) — don't retry, but try fallback model
-                      const errBody = await resp.text();
-                      core.warning(`  ${model} returned ${resp.status}: ${errBody}`);
+                      lastError = new Error(`HTTP ${resp.status}: ${await resp.text()}`);
+                      core.warning(`  ${model} returned ${resp.status}: ${lastError.message.slice(9)}`);
+                      resp = null;
                       break; // break retry loop, try fallback
                     }
 
@@ -819,9 +820,10 @@ jobs:
                 } else {
                   // Fallback also failed
                   if (lastError) {
-                    return { error: `Network error after all retries: ${lastError.message}` };
+                    return { error: lastError.message };
                   }
-                  const errBody = resp ? await resp.text() : 'no response';
+                  let errBody = 'no response';
+                  try { errBody = resp ? await resp.text() : 'no response'; } catch (e) { /* body consumed */ }
                   return { error: `${model} returned ${resp?.status}: ${errBody}` };
                 }
               }
@@ -861,7 +863,7 @@ jobs:
               // If model stopped for token limit or has no tool calls, treat as incomplete
               if (!assistantMsg.tool_calls?.length) {
                 if (choice.finish_reason === 'length') {
-                  core.warning('Model response truncated (max_tokens). Will request finalization.');
+                  core.warning('Model response truncated (max_completion_tokens). Will request finalization.');
                 } else {
                   summary = assistantMsg.content;
                   core.info('Agent produced final summary (no tool calls).');
