@@ -295,13 +295,7 @@ jobs:
               core.warning('summarizer.agent.md not found – skipping summary.');
               return;
             }
-            // Cap system prompt to ~2000 chars (~500 tokens) to stay within
-            // GitHub Models per-request token budget (~8000 for gpt-4o-mini).
-            let systemPrompt = fs.readFileSync(agentPath, 'utf8');
-            if (systemPrompt.length > 2000) {
-              systemPrompt = systemPrompt.substring(0, 2000) + '\n... (prompt truncated for token budget)';
-              core.warning(`System prompt truncated to 2000 chars (was ${systemPrompt.length})`);
-            }
+            const systemPrompt = fs.readFileSync(agentPath, 'utf8');
 
             // ── 2. Parse inputs ────────────────────────────────────────
             const samples = JSON.parse(process.env.SAMPLES_JSON || '[]');
@@ -331,7 +325,7 @@ jobs:
             );
             const changedFilesList = files.map(f => f.filename);
 
-            const MAX_DIFF_CHARS = 500;
+            const MAX_DIFF_CHARS = 2000;
             const diffResp = await github.rest.pulls.get({
               owner, repo, pull_number,
               mediaType: { format: 'diff' }
@@ -712,10 +706,11 @@ jobs:
 
             // ── 8. Agentic tool-calling loop ───────────────────────────
             const MODEL_ENDPOINT = 'https://models.github.ai/inference/chat/completions';
+            const PRIMARY_MODEL = 'openai/gpt-5-mini';
+            const FALLBACK_MODEL = 'openai/gpt-5';
             const MAX_ROUNDS = 8;
-            // Rough token budget: GitHub Models allows ~8000 input tokens
-            // for gpt-4o-mini. Reserve headroom for tools schema + response.
-            const MAX_REQUEST_BYTES = 24_000; // ~6000 tokens at ~4 chars/token
+            const MAX_REQUEST_BYTES = 100_000;
+            const FETCH_TIMEOUT_MS = 60_000;
             const messages = [
               { role: 'system', content: systemPrompt },
               { role: 'user',   content: userMessage }
@@ -730,28 +725,106 @@ jobs:
 
               core.info(`  Compacting messages (${(serialized.length / 1024).toFixed(1)} KB > ${(MAX_REQUEST_BYTES / 1024).toFixed(1)} KB limit)...`);
 
-              // Find assistant messages with tool_calls (complete turns to remove)
-              // Keep system (0), user (1), and the most recent 4 messages
               const KEEP_TAIL = 4;
               const KEEP_HEAD = 2; // system + user
               while (messages.length > KEEP_HEAD + KEEP_TAIL) {
                 const check = JSON.stringify(messages);
                 if (check.length <= MAX_REQUEST_BYTES) break;
 
-                // Find the first removable assistant+tool turn after HEAD
                 let i = KEEP_HEAD;
                 if (messages[i]?.role === 'assistant' && messages[i]?.tool_calls?.length) {
-                  // Remove this assistant msg and all its consecutive tool responses
                   let end = i + 1;
                   while (end < messages.length && messages[end].role === 'tool') end++;
                   const removed = end - i;
                   messages.splice(i, removed);
                   core.info(`    Removed ${removed} messages (1 assistant + ${removed - 1} tool results)`);
                 } else {
-                  break; // Can't compact further safely
+                  break;
                 }
               }
               core.info(`  After compaction: ${(JSON.stringify(messages).length / 1024).toFixed(1)} KB, ${messages.length} messages`);
+            }
+
+            // Send a chat completion request with automatic model fallback.
+            // Tries PRIMARY_MODEL first; on persistent failure, retries with FALLBACK_MODEL.
+            async function chatCompletion(extraBody = {}) {
+              const MAX_RETRIES = 5;
+              const modelsToTry = [PRIMARY_MODEL, FALLBACK_MODEL];
+
+              for (const model of modelsToTry) {
+                let resp = null;
+                let lastError = null;
+
+                const body = JSON.stringify({
+                  model,
+                  messages,
+                  temperature: 0.3,
+                  max_tokens: 4000,
+                  ...extraBody
+                });
+                core.info(`  Request: model=${model}, payload=${(body.length / 1024).toFixed(1)} KB, ${messages.length} messages`);
+
+                for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+                  try {
+                    resp = await fetch(MODEL_ENDPOINT, {
+                      method: 'POST',
+                      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+                      headers: {
+                        'Authorization': `Bearer ${process.env.GITHUB_TOKEN}`,
+                        'Content-Type': 'application/json'
+                      },
+                      body
+                    });
+                    lastError = null;
+
+                    // Log rate-limit headers for diagnostics
+                    const rl = resp.headers.get('x-ratelimit-remaining');
+                    if (rl !== null) core.info(`  Rate-limit remaining: ${rl}`);
+
+                    if (resp.ok) {
+                      core.info(`  ✓ Success with ${model}`);
+                      return { resp, model };
+                    }
+                    if (resp.status < 500) {
+                      // Client error (4xx) — don't retry, but try fallback model
+                      const errBody = await resp.text();
+                      core.warning(`  ${model} returned ${resp.status}: ${errBody}`);
+                      break; // break retry loop, try fallback
+                    }
+
+                    if (attempt < MAX_RETRIES - 1) {
+                      const base = Math.pow(2, attempt + 1) * 1000;
+                      const jitter = Math.floor(Math.random() * 1000);
+                      const delay = base + jitter;
+                      core.warning(`GitHub Models API (${model}) returned ${resp.status} — retrying in ${(delay / 1000).toFixed(1)}s (attempt ${attempt + 1}/${MAX_RETRIES})...`);
+                      await new Promise(r => setTimeout(r, delay));
+                    }
+                  } catch (fetchErr) {
+                    lastError = fetchErr;
+                    resp = null;
+                    if (attempt < MAX_RETRIES - 1) {
+                      const base = Math.pow(2, attempt + 1) * 1000;
+                      const jitter = Math.floor(Math.random() * 1000);
+                      const delay = base + jitter;
+                      core.warning(`GitHub Models API (${model}) network error: ${fetchErr.message} — retrying in ${(delay / 1000).toFixed(1)}s (attempt ${attempt + 1}/${MAX_RETRIES})...`);
+                      await new Promise(r => setTimeout(r, delay));
+                    }
+                  }
+                }
+
+                // If primary failed, log and try fallback
+                if (model === PRIMARY_MODEL) {
+                  const reason = lastError ? lastError.message : `HTTP ${resp?.status}`;
+                  core.warning(`Primary model ${model} failed (${reason}). Falling back to ${FALLBACK_MODEL}...`);
+                } else {
+                  // Fallback also failed
+                  if (lastError) {
+                    return { error: `Network error after all retries: ${lastError.message}` };
+                  }
+                  const errBody = resp ? await resp.text() : 'no response';
+                  return { error: `${model} returned ${resp?.status}: ${errBody}` };
+                }
+              }
             }
 
             let summary = null;
@@ -762,68 +835,13 @@ jobs:
               // Compact conversation history if it's grown too large
               compactMessages();
 
-              // Retry with exponential backoff + jitter on 5xx / network errors
-              const MAX_RETRIES = 5;
-              const FETCH_TIMEOUT_MS = 60_000;
-              let resp = null;
-              let lastError = null;
-
-              const requestBody = JSON.stringify({
-                model: 'openai/gpt-4o-mini',
-                messages,
-                tools,
-                tool_choice: 'auto',
-                temperature: 0.3,
-                max_tokens: 4000
-              });
-              core.info(`  Request payload: ${(requestBody.length / 1024).toFixed(1)} KB, ${messages.length} messages`);
-
-              for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
-                try {
-                  resp = await fetch(MODEL_ENDPOINT, {
-                    method: 'POST',
-                    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-                    headers: {
-                      'Authorization': `Bearer ${process.env.GITHUB_TOKEN}`,
-                      'Content-Type': 'application/json'
-                    },
-                    body: requestBody
-                  });
-                  lastError = null;
-
-                  if (resp.ok || resp.status < 500) break; // success or client error — don't retry
-
-                  if (attempt < MAX_RETRIES - 1) {
-                    const base = Math.pow(2, attempt + 1) * 1000;       // 2s, 4s, 8s, 16s
-                    const jitter = Math.floor(Math.random() * 1000);    // 0-1s random jitter
-                    const delay = base + jitter;
-                    core.warning(`GitHub Models API returned ${resp.status} — retrying in ${(delay / 1000).toFixed(1)}s (attempt ${attempt + 1}/${MAX_RETRIES})...`);
-                    await new Promise(r => setTimeout(r, delay));
-                  }
-                } catch (fetchErr) {
-                  lastError = fetchErr;
-                  resp = null;
-                  if (attempt < MAX_RETRIES - 1) {
-                    const base = Math.pow(2, attempt + 1) * 1000;
-                    const jitter = Math.floor(Math.random() * 1000);
-                    const delay = base + jitter;
-                    core.warning(`GitHub Models API network error: ${fetchErr.message} — retrying in ${(delay / 1000).toFixed(1)}s (attempt ${attempt + 1}/${MAX_RETRIES})...`);
-                    await new Promise(r => setTimeout(r, delay));
-                  }
-                }
-              }
-
-              if (lastError) {
-                core.setFailed(`GitHub Models API network error after ${MAX_RETRIES} attempts: ${lastError.message}`);
-                return;
-              }
-              if (!resp.ok) {
-                const body = await resp.text();
-                core.setFailed(`GitHub Models API returned ${resp.status}: ${body}`);
+              const completion = await chatCompletion({ tools, tool_choice: 'auto' });
+              if (completion.error) {
+                core.setFailed(`GitHub Models API failed: ${completion.error}`);
                 return;
               }
 
-              const result = await resp.json();
+              const result = await completion.resp.json();
               const choice = result.choices?.[0];
               if (!choice) {
                 core.setFailed('GitHub Models API returned no choices.');
@@ -853,7 +871,7 @@ jobs:
 
               // Execute tool calls
               core.info(`  Model requested ${assistantMsg.tool_calls.length} tool call(s).`);
-              const MAX_TOOL_RESULT_CHARS = 3000;
+              const MAX_TOOL_RESULT_CHARS = 8000;
               for (const toolCall of assistantMsg.tool_calls) {
                 const fnName = toolCall.function.name;
                 let fnArgs;
@@ -870,7 +888,7 @@ jobs:
                   ? toolResult
                   : JSON.stringify(toolResult);
 
-                // Cap individual tool results to stay within token budget
+                // Cap individual tool results to manage conversation size
                 if (content.length > MAX_TOOL_RESULT_CHARS) {
                   content = content.substring(0, MAX_TOOL_RESULT_CHARS) +
                     '\n... [truncated — use start_line/max_lines for more]';
@@ -892,28 +910,13 @@ jobs:
                 content: 'You have reached the tool call limit. Please produce your final summary now using the information gathered so far.'
               });
               compactMessages();
-              const finalBody = JSON.stringify({
-                model: 'openai/gpt-4o-mini',
-                messages,
-                temperature: 0.3,
-                max_tokens: 4000
-              });
-              core.info(`  Final request payload: ${(finalBody.length / 1024).toFixed(1)} KB, ${messages.length} messages`);
-              const finalResp = await fetch(MODEL_ENDPOINT, {
-                method: 'POST',
-                signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-                headers: {
-                  'Authorization': `Bearer ${process.env.GITHUB_TOKEN}`,
-                  'Content-Type': 'application/json'
-                },
-                body: finalBody
-              });
-              if (finalResp.ok) {
-                const finalResult = await finalResp.json();
-                summary = finalResult.choices?.[0]?.message?.content;
+
+              const completion = await chatCompletion();
+              if (completion.error) {
+                core.warning(`Final summary request failed: ${completion.error}`);
               } else {
-                const errBody = await finalResp.text();
-                core.warning(`Final summary request failed (${finalResp.status}): ${errBody}`);
+                const finalResult = await completion.resp.json();
+                summary = finalResult.choices?.[0]?.message?.content;
               }
             }
 
