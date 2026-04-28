@@ -748,7 +748,7 @@ jobs:
             // Send a chat completion request with automatic model fallback.
             // Tries PRIMARY_MODEL first; on persistent failure, retries with FALLBACK_MODEL.
             async function chatCompletion(extraBody = {}) {
-              const MAX_RETRIES = 5;
+              const MAX_RETRIES = 3;          // per model (lower to preserve rate budget for fallback)
               const modelsToTry = [PRIMARY_MODEL, FALLBACK_MODEL];
 
               for (const model of modelsToTry) {
@@ -784,21 +784,31 @@ jobs:
                       core.info(`  ✓ Success with ${model}`);
                       return { resp, model };
                     }
-                    if (resp.status < 500) {
-                      // Client error (4xx) — don't retry, but try fallback model
-                      lastError = new Error(`HTTP ${resp.status}: ${await resp.text()}`);
-                      core.warning(`  ${model} returned ${resp.status}: ${lastError.message.slice(9)}`);
-                      resp = null;
-                      break; // break retry loop, try fallback
+
+                    // 429 and 5xx are retryable
+                    if (resp.status === 429 || resp.status >= 500) {
+                      // Respect Retry-After header for 429, else exponential backoff
+                      let delay;
+                      const retryAfter = resp.headers.get('retry-after');
+                      if (resp.status === 429 && retryAfter) {
+                        delay = (parseInt(retryAfter, 10) || 30) * 1000;
+                      } else {
+                        const base = Math.pow(2, attempt + 1) * 1000;
+                        const jitter = Math.floor(Math.random() * 1000);
+                        delay = base + jitter;
+                      }
+                      if (attempt < MAX_RETRIES - 1) {
+                        core.warning(`GitHub Models API (${model}) returned ${resp.status} — retrying in ${(delay / 1000).toFixed(1)}s (attempt ${attempt + 1}/${MAX_RETRIES})...`);
+                        await new Promise(r => setTimeout(r, delay));
+                      }
+                      continue;
                     }
 
-                    if (attempt < MAX_RETRIES - 1) {
-                      const base = Math.pow(2, attempt + 1) * 1000;
-                      const jitter = Math.floor(Math.random() * 1000);
-                      const delay = base + jitter;
-                      core.warning(`GitHub Models API (${model}) returned ${resp.status} — retrying in ${(delay / 1000).toFixed(1)}s (attempt ${attempt + 1}/${MAX_RETRIES})...`);
-                      await new Promise(r => setTimeout(r, delay));
-                    }
+                    // Other 4xx — don't retry, try fallback model
+                    lastError = new Error(`HTTP ${resp.status}: ${await resp.text()}`);
+                    core.warning(`  ${model} returned ${resp.status}: ${lastError.message.slice(9)}`);
+                    resp = null;
+                    break;
                   } catch (fetchErr) {
                     lastError = fetchErr;
                     resp = null;
@@ -812,10 +822,11 @@ jobs:
                   }
                 }
 
-                // If primary failed, log and try fallback
+                // If primary failed, pause before fallback to let rate limits reset
                 if (model === PRIMARY_MODEL) {
                   const reason = lastError ? lastError.message : `HTTP ${resp?.status}`;
-                  core.warning(`Primary model ${model} failed (${reason}). Falling back to ${FALLBACK_MODEL}...`);
+                  core.warning(`Primary model ${model} failed (${reason}). Waiting 10s then falling back to ${FALLBACK_MODEL}...`);
+                  await new Promise(r => setTimeout(r, 10_000));
                 } else {
                   // Fallback also failed
                   if (lastError) {
