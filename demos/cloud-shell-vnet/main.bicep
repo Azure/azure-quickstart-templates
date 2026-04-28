@@ -57,6 +57,15 @@ resource existingVNET 'Microsoft.Network/virtualNetworks@2023-05-01' existing = 
   name: existingVNETName
 }
 
+resource existingVNET_roleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  scope: existingVNET
+  name: guid(networkRoleDefinitionId, azureContainerInstanceOID, vnetResourceId)
+  properties: {
+    roleDefinitionId: networkRoleDefinitionId
+    principalId: azureContainerInstanceOID
+  }
+}
+
 resource containerSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-05-01' = {
   parent: existingVNET
   name: containerSubnetName
