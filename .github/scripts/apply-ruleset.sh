@@ -75,16 +75,16 @@ fi
 
 EXISTING_ID=$(gh api \
   -H "Accept: application/vnd.github+json" \
-  "/repos/${REPO}/rulesets" \
+  "repos/${REPO}/rulesets" \
   --jq ".[] | select(.name == \"${NAME}\") | .id" \
-  2>/dev/null | head -n1 || true)
+  | head -n1 || true)
 
 if [[ -n "${EXISTING_ID}" ]]; then
   echo "Updating existing ruleset id=${EXISTING_ID}"
   printf '%s' "${BODY}" | gh api \
     --method PUT \
     -H "Accept: application/vnd.github+json" \
-    "/repos/${REPO}/rulesets/${EXISTING_ID}" \
+    "repos/${REPO}/rulesets/${EXISTING_ID}" \
     --input - >/dev/null
   echo "✅ Updated ruleset '${NAME}' (id=${EXISTING_ID}, enforcement=${ENFORCEMENT})"
 else
@@ -92,7 +92,7 @@ else
   printf '%s' "${BODY}" | gh api \
     --method POST \
     -H "Accept: application/vnd.github+json" \
-    "/repos/${REPO}/rulesets" \
+    "repos/${REPO}/rulesets" \
     --input - >/dev/null
   echo "✅ Created ruleset '${NAME}' (enforcement=${ENFORCEMENT})"
 fi
