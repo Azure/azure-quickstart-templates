@@ -64,5 +64,5 @@ output location string = location
 output name string = vault.name
 output resourceGroupName string = resourceGroup().name
 output resourceId string = vault.id
-output certificateSecretId string = certificate.outputs.certificateSecretIds[0]
-output certificateThumbprint string = certificate.outputs.certificateThumbprintHexs[0]
+output certificateSecretId string = certificate.outputs.certificateSecretIds[0][0]
+output certificateThumbprint string = certificate.outputs.certificateThumbprintHexs[0][0]
