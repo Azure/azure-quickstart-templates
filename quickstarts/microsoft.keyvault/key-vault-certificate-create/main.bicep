@@ -14,10 +14,12 @@ param location string = resourceGroup().location
 ])
 param skuName string = 'standard'
 
-@description('The subject name for the certificate (e.g., CN=contoso.com).')
-param subjectName string = 'CN=contoso.com'
+@description('The common name (subject) for the self-signed certificate. Defaults to the certificate name.')
+param certificateCommonName string = certificateName
 
 @description('The validity of the certificate in months.')
+@minValue(1)
+@maxValue(1200)
 param validityInMonths int = 12
 
 resource vault 'Microsoft.KeyVault/vaults@2023-07-01' = {
@@ -42,27 +44,19 @@ resource vault 'Microsoft.KeyVault/vaults@2023-07-01' = {
   }
 }
 
-#disable-next-line BCP081
-resource certificate 'Microsoft.KeyVault/vaults/certificates@2023-07-01' = {
-  parent: vault
-  name: certificateName
-  properties: {
-    issuerParameters: {
-      name: 'Self'
-    }
-    keyProperties: {
-      exportable: true
-      keySize: 2048
-      keyType: 'RSA'
-      reuseKey: true
-    }
-    secretProperties: {
-      contentType: 'application/x-pkcs12'
-    }
-    x509CertificateProperties: {
-      subject: subjectName
-      validityInMonths: validityInMonths
-    }
+// Key Vault certificates are a data-plane concept and cannot be created
+// directly through ARM. Use the public Bicep registry module which wraps
+// `az keyvault certificate create` in a deployment script (it provisions a
+// user-assigned managed identity with the Key Vault Certificate Officer
+// role on the vault for the duration of the deployment).
+module certificate 'br/public:deployment-scripts/create-kv-certificate:3.4.2' = {
+  name: 'create-${certificateName}'
+  params: {
+    akvName: vault.name
+    location: location
+    certificateNames: [certificateName]
+    certificateCommonNames: [certificateCommonName]
+    validity: validityInMonths
   }
 }
 
@@ -70,3 +64,5 @@ output location string = location
 output name string = vault.name
 output resourceGroupName string = resourceGroup().name
 output resourceId string = vault.id
+output certificateSecretId string = certificate.outputs.certificateSecretIds[0]
+output certificateThumbprint string = certificate.outputs.certificateThumbprintHexs[0]
