@@ -57,7 +57,15 @@ if [[ -z "${NAME}" || "${NAME}" == "null" ]]; then
   echo "ERROR: manifest has no .name field" >&2
   exit 2
 fi
+ENFORCEMENT=$(printf '%s' "${BODY}" | jq -r '.enforcement // "active"')
 echo "Ruleset name: ${NAME}"
+echo "Enforcement:  ${ENFORCEMENT}"
+case "${ENFORCEMENT}" in
+  active)   echo "  → Rules will be ENFORCED (merges blocked on violations)." ;;
+  evaluate) echo "  → Dry-run only. Violations are logged to the ruleset Insights page; nothing is blocked." ;;
+  disabled) echo "  → Ruleset will be INERT (present but does nothing)." ;;
+  *)        echo "  → WARNING: unrecognized enforcement value '${ENFORCEMENT}'." ;;
+esac
 
 if [[ "${DRY_RUN}" -eq 1 ]]; then
   echo "── Dry-run: request body that would be sent ──"
@@ -78,7 +86,7 @@ if [[ -n "${EXISTING_ID}" ]]; then
     -H "Accept: application/vnd.github+json" \
     "/repos/${REPO}/rulesets/${EXISTING_ID}" \
     --input - >/dev/null
-  echo "✅ Updated ruleset '${NAME}' (id=${EXISTING_ID})"
+  echo "✅ Updated ruleset '${NAME}' (id=${EXISTING_ID}, enforcement=${ENFORCEMENT})"
 else
   echo "Creating new ruleset"
   printf '%s' "${BODY}" | gh api \
@@ -86,5 +94,5 @@ else
     -H "Accept: application/vnd.github+json" \
     "/repos/${REPO}/rulesets" \
     --input - >/dev/null
-  echo "✅ Created ruleset '${NAME}'"
+  echo "✅ Created ruleset '${NAME}' (enforcement=${ENFORCEMENT})"
 fi
