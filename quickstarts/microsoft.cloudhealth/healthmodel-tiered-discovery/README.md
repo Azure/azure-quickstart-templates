@@ -1,0 +1,113 @@
+---
+description: This template creates an Azure Health Model with a three-tier structure combining Azure Resource Graph discovery with additional manually-created entities.
+page_type: sample
+products:
+- azure
+- azure-resource-manager
+urlFragment: healthmodel-tiered-discovery
+languages:
+- bicep
+- json
+---
+# Create a tiered health model with discovery
+
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cloudhealth/healthmodel-tiered-discovery/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cloudhealth/healthmodel-tiered-discovery/PublicDeployment.svg)
+
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cloudhealth/healthmodel-tiered-discovery/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cloudhealth/healthmodel-tiered-discovery/FairfaxDeployment.svg)
+
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cloudhealth/healthmodel-tiered-discovery/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cloudhealth/healthmodel-tiered-discovery/CredScanResult.svg)
+
+![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.cloudhealth/healthmodel-tiered-discovery/BicepVersion.svg)
+
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.cloudhealth%2Fhealthmodel-tiered-discovery%2Fazuredeploy.json)
+[![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.cloudhealth%2Fhealthmodel-tiered-discovery%2Fazuredeploy.json)
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.cloudhealth%2Fhealthmodel-tiered-discovery%2Fazuredeploy.json)
+
+## Overview
+
+This template deploys an [Azure Health Model](https://learn.microsoft.com/azure/cloud-health/) that combines a tiered entity structure with automatic resource discovery and additional manually-created entities.
+
+For more information, see the [Azure Health Models documentation](https://learn.microsoft.com/azure/cloud-health/).
+
+Discovery rules find Azure resources automatically, but not everything you care about is an Azure resource. External APIs, business workflows, cross-resource concerns, and SLA targets don't appear in Azure Resource Graph. This template shows how to combine discovered resources with additional manually-created entities that represent those concepts.
+
+The three additional entities included (custom-entity-1, custom-entity-2, custom-entity-3) are placeholders — rename or replace them to fit your workload. After deployment, attach signals to them manually (KQL queries, Prometheus metrics, or external signals via the API).
+
+## Prerequisites
+
+Before deploying, tag the resources you want discovered:
+
+```bash
+# Tag web apps for frontend discovery
+az tag update --resource-id <webapp-resource-id> --operation merge --tags healthmodel=<your-health-model-name>
+
+# Tag VMs for backend discovery
+az tag update --resource-id <vm-resource-id> --operation merge --tags healthmodel=<your-health-model-name>
+
+# Tag Cosmos DB accounts for data discovery
+az tag update --resource-id <cosmosdb-resource-id> --operation merge --tags healthmodel=<your-health-model-name>
+```
+
+## What Gets Deployed
+
+```
+Root: <healthModelName>                              (auto-created)
+│
+├── frontend                                         (tier entity + discovery rule)
+│   ├── [Web Apps with matching tag]                  (discovered, recommended signals on)
+│   └── custom-entity-1                              (placeholder — rename and add signals)
+│
+├── backend                                          (tier entity + discovery rule)
+│   ├── [VMs with matching tag]                       (discovered, recommended signals on)
+│   └── custom-entity-2                              (placeholder — rename and add signals)
+│
+└── data                                             (tier entity + discovery rule)
+    ├── [Cosmos DB accounts with matching tag]        (discovered, recommended signals on)
+    └── custom-entity-3                              (placeholder — rename and add signals)
+```
+
+| Resource | Type | Count |
+|----------|------|-------|
+| Health Model | `Microsoft.CloudHealth/healthmodels` | 1 |
+| Authentication Setting | `authenticationsettings` | 1 |
+| Tier Entities | `entities` | 3 |
+| Tier Relationships | `relationships` | 3 |
+| Discovery Rules | `discoveryrules` | 3 |
+| Additional Entities | `entities` | 3 (placeholders — rename to fit your workload) |
+| Additional Relationships | `relationships` | 3 |
+
+**Discovery rules find:**
+
+| Tier | Resource Type | ARG Query Filter |
+|------|---------------|------------------|
+| Frontend | `microsoft.web/sites` | type + tag |
+| Backend | `microsoft.compute/virtualmachines` | type + tag |
+| Data | `microsoft.documentdb/databaseaccounts` | type + tag |
+
+## Key Concepts
+
+Discovery rules query Azure Resource Graph and automatically create entities for matching resources with recommended monitoring signals (CPU, memory, disk, etc.).
+
+You can also create entities manually in the template for things that don't appear in Azure Resource Graph. Attach signals to these after deployment via the portal or API — KQL queries, Prometheus metrics, or external signals.
+
+All entities — whether created by discovery or by the template — are the same resource type. Health state rolls up through relationships to the root regardless of how the entity was created.
+
+## Next Steps
+
+After deployment:
+
+1. **Grant the managed identity** read access (Monitoring Reader) to the resources and workspaces you want to monitor.
+2. **Add signals** to the placeholder entities (custom-entity-1, custom-entity-2, custom-entity-3) via the portal or API.
+3. **Configure alerts** on tier entities to get notified when aggregated health degrades.
+
+## See Also
+
+- [healthmodel-tiered-app](../healthmodel-tiered-app) — a health model with manually-created entities and relationships, no discovery.
+- [healthmodel-vm-discovery](../healthmodel-vm-discovery) — a health model that uses Azure Resource Graph to discover VMs by tag and adds recommended signals automatically.
+- [healthmodel-appinsights-discovery](../healthmodel-appinsights-discovery) — a health model that discovers topology from Application Insights.
+- [healthmodel-servicegroup-discovery](../healthmodel-servicegroup-discovery) — a health model that discovers resources from an Azure Service Group.
+
+`Tags: Microsoft.CloudHealth/healthmodels, health model, monitoring, observability, discovery, tiered`
