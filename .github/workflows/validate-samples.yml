@@ -769,4 +769,39 @@ jobs:
           echo "══════════════════════════════════════════════════════════"
           echo "  ✅  All validations passed for: ${{ matrix.sample }}"
           echo "══════════════════════════════════════════════════════════"
-
+  # ============================================================================
+  # JOB 3 – validate-samples-results
+  #
+  # Static aggregator job. Its name is fixed (independent of the matrix), so it
+  # can be required by the repository ruleset on master. Branch protection /
+  # rulesets cannot require dynamically-named matrix jobs like
+  # "Validate – ${{ matrix.sample }}", so this job exists purely to give them
+  # a stable handle.
+  #
+  # Passes iff every preceding job concluded `success` or `skipped` (the
+  # matrix is intentionally skipped when no sample folders changed).
+  # ============================================================================
+  validate-samples-results:
+    name: validate-samples-results
+    runs-on: ubuntu-latest
+    needs: [detect_changed_samples, validate_samples]
+    if: always()
+    steps:
+      - name: Aggregate matrix outcome
+        shell: bash
+        run: |
+          set -euo pipefail
+          detect='${{ needs.detect_changed_samples.result }}'
+          matrix='${{ needs.validate_samples.result }}'
+          echo "detect_changed_samples=${detect}"
+          echo "validate_samples=${matrix}"
+          for r in "${detect}" "${matrix}"; do
+            case "${r}" in
+              success|skipped) ;;
+              *)
+                echo "::error::A required validation job concluded '${r}'"
+                exit 1
+                ;;
+            esac
+          done
+          echo "✅ All required validate-samples jobs concluded acceptably."

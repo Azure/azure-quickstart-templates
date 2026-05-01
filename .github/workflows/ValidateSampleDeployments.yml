@@ -30,11 +30,172 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # ============================================================================
+  # JOB 0 – gate
+  #
+  # Blocks the workflow until validate-samples.yml has reached a terminal
+  # success conclusion for the PR HEAD SHA.
+  #   * completed + success                              -> proceed (exit 0)
+  #   * completed + failure-like                         -> fail immediately
+  #   * non-terminal (queued/in_progress/...) or no-run  -> poll every 30s
+  #     for up to 10 min, then re-evaluate as above.
+  #
+  # Both `summarize` and `selected-pipeline` declare `needs: [gate]` so a
+  # gate failure/timeout skips them entirely.
+  # ============================================================================
+  gate:
+    name: Wait for validate-samples.yml to succeed
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+
+    # Only run on /validate comments on pull requests
+    if: >-
+      github.event.issue.pull_request &&
+      startsWith(github.event.comment.body, '/validate')
+
+    permissions:
+      contents: read
+      pull-requests: read
+      actions: read
+      checks: write
+
+    outputs:
+      head_sha: ${{ steps.pr-head.outputs.head_sha }}
+
+    steps:
+      # Sparse checkout just the helper script directory so subsequent steps
+      # can call .github/scripts/upsert-check-run.sh.
+      - name: Checkout helper scripts
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            .github/scripts
+          sparse-checkout-cone-mode: false
+
+      - name: Resolve PR HEAD SHA
+        id: pr-head
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          set -euo pipefail
+
+          gh_api_retry () {
+            local out
+            if out=$(gh api "$@" 2>&1); then
+              printf '%s' "${out}"
+              return 0
+            fi
+            echo "  (transient gh api failure, retrying once: ${out})" >&2
+            sleep 2
+            gh api "$@"
+          }
+
+          HEAD_SHA=$(gh_api_retry "/repos/${REPO}/pulls/${PR_NUMBER}" --jq '.head.sha')
+          if [[ -z "${HEAD_SHA}" ]]; then
+            echo "ERROR: Failed to resolve HEAD SHA for PR #${PR_NUMBER}." >&2
+            exit 1
+          fi
+          echo "PR #${PR_NUMBER} HEAD SHA: ${HEAD_SHA}"
+          echo "head_sha=${HEAD_SHA}" >> "$GITHUB_OUTPUT"
+
+      # Publish the required check as in_progress so reviewers see live status
+      # the moment /validate is acknowledged. The final conclusion is written
+      # by the `report-check` job at the end of the workflow.
+      - name: Mark adx-deployment-validation check in_progress
+        shell: bash
+        env:
+          GH_TOKEN:    ${{ github.token }}
+          GH_REPO:     ${{ github.repository }}
+          CHECK_NAME:  adx-deployment-validation
+          HEAD_SHA:    ${{ steps.pr-head.outputs.head_sha }}
+          STATUS:      in_progress
+          TITLE:       Validating in progress…
+          SUMMARY:     |
+            `/validate` was received. Waiting for `validate-samples.yml`
+            to succeed for this commit, then running ADX deployment
+            validation.
+          DETAILS_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: bash .github/scripts/upsert-check-run.sh
+
+      - name: Wait for validate-samples.yml on PR HEAD SHA
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          HEAD_SHA: ${{ steps.pr-head.outputs.head_sha }}
+          POLL_INTERVAL_SECONDS: '30'
+          POLL_TIMEOUT_SECONDS: '600'
+        run: |
+          set -euo pipefail
+
+          # ── Helper: gh api with one immediate retry on transient failure ──
+          gh_api_retry () {
+            local out
+            if out=$(gh api "$@" 2>&1); then
+              printf '%s' "${out}"
+              return 0
+            fi
+            echo "  (transient gh api failure, retrying once: ${out})" >&2
+            sleep 2
+            gh api "$@"
+          }
+
+          echo "Polling validate-samples.yml for SHA ${HEAD_SHA} every ${POLL_INTERVAL_SECONDS}s (timeout ${POLL_TIMEOUT_SECONDS}s)..."
+
+          # Conclusions considered terminal failures (immediate fail).
+          FAILURE_CONCLUSIONS="failure cancelled timed_out action_required startup_failure stale"
+
+          DEADLINE=$(( $(date +%s) + POLL_TIMEOUT_SECONDS ))
+          LAST_STATUS=""
+          ATTEMPT=0
+
+          while :; do
+            ATTEMPT=$((ATTEMPT + 1))
+            RUN_JSON=$(gh_api_retry \
+              "/repos/${REPO}/actions/workflows/validate-samples.yml/runs?head_sha=${HEAD_SHA}&per_page=1" \
+              --jq '.workflow_runs[0] // {}')
+
+            STATUS=$(echo "${RUN_JSON}"     | jq -r '.status // empty')
+            CONCLUSION=$(echo "${RUN_JSON}" | jq -r '.conclusion // empty')
+            LAST_STATUS="${STATUS:-no-run-yet}"
+
+            echo "[attempt ${ATTEMPT}] status='${LAST_STATUS}' conclusion='${CONCLUSION:-<none>}'"
+
+            if [[ "${STATUS}" == "completed" ]]; then
+              if [[ "${CONCLUSION}" == "success" ]]; then
+                echo "✅ validate-samples.yml succeeded for SHA ${HEAD_SHA}."
+                exit 0
+              fi
+              for f in ${FAILURE_CONCLUSIONS}; do
+                if [[ "${CONCLUSION}" == "${f}" ]]; then
+                  echo "❌ validate-samples.yml conclusion='${CONCLUSION}' for SHA ${HEAD_SHA}." >&2
+                  echo "   Fix the failures and push a new commit; once validate-samples passes, comment /validate again." >&2
+                  exit 1
+                fi
+              done
+              # Unknown/neutral/skipped — treat as not-yet-success and keep polling.
+              echo "  conclusion '${CONCLUSION}' is neither success nor a known failure; continuing to poll." >&2
+            fi
+
+            NOW=$(date +%s)
+            if (( NOW >= DEADLINE )); then
+              echo "⏱️  validate-samples.yml did not reach a terminal state within ${POLL_TIMEOUT_SECONDS} seconds (last status='${LAST_STATUS}')." >&2
+              echo "   Wait for validate-samples to complete, then comment /validate again." >&2
+              exit 1
+            fi
+
+            sleep "${POLL_INTERVAL_SECONDS}"
+          done
+
   summarize:
     name: Summarize PR sample
     runs-on: ubuntu-latest
+    needs: [gate]
 
-    # Only run on /validate comments on pull requests
+    # Only run on /validate comments on pull requests (and after gate succeeds)
     if: >-
       github.event.issue.pull_request &&
       startsWith(github.event.comment.body, '/validate')
@@ -975,12 +1136,16 @@ jobs:
   selected-pipeline:
     name: Validate ARM Deployments via ADX
     runs-on: ubuntu-latest
-    needs: [summarize]
+    needs: [gate]
     environment: adx-readonly
 
-    # Run even if summarize fails/is cancelled; still require /validate on a PR
+    # Run if the gate confirmed validate-samples.yml succeeded for the PR HEAD
+    # SHA, regardless of how `summarize` concluded. (`summarize` is a separate
+    # informational job; its failure or cancellation must not skip the
+    # deployment validation that gates merge.)
     if: >-
-      always() &&
+      !cancelled() &&
+      needs.gate.result == 'success' &&
       github.event.issue.pull_request &&
       startsWith(github.event.comment.body, '/validate')
 
@@ -990,6 +1155,12 @@ jobs:
       issues: read
       id-token: write
       actions: read
+
+    # Job-level outputs consumed by the `report-check` job to map this job's
+    # result to a GitHub Check Run conclusion.
+    outputs:
+      skip: ${{ steps.preflight.outputs.skip }}
+      sample_count: ${{ steps.preflight.outputs.sample_count }}
 
     steps:
       - name: Check commenter permission (basic)
@@ -1011,36 +1182,143 @@ jobs:
         run: |
           echo "number=${{ github.event.issue.number }}" >> "$GITHUB_OUTPUT"
 
-      - name: Gate – verify validate-samples.yml passed for PR HEAD
-        id: check-validate-samples
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          PR_NUMBER="${{ steps.pr.outputs.number }}"
-          REPO="${{ github.repository }}"
+      # ── Preflight: classify whether this PR contains deployment-affecting
+      # changes, and if so, in how many distinct sample folders.
+      #
+      # Outputs:
+      #   skip          - 'true' if the PR has NO deploy-affecting changes;
+      #                   downstream ADX steps are then skipped and the
+      #                   `report-check` job publishes a `success` check with
+      #                   "Auto-passed: no deployment-affecting changes."
+      #   sample_count  - number of distinct sample folders containing a
+      #                   deploy-affecting change.
+      #
+      # Multi-sample deployable PRs fail this step explicitly: the existing
+      # ADX validation only supports a single changed metadata.json/sample
+      # per PR. Authors are told to split the PR.
+      - name: Preflight – classify deploy-affecting changes
+        id: preflight
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo  = context.repo.repo;
+            const pull_number = parseInt('${{ steps.pr.outputs.number }}', 10);
 
-          # Get the PR HEAD SHA
-          HEAD_SHA=$(gh api "/repos/${REPO}/pulls/${PR_NUMBER}" --jq '.head.sha')
-          echo "PR HEAD SHA: ${HEAD_SHA}"
+            const prData = await github.rest.pulls.get({ owner, repo, pull_number });
+            const headSha = prData.data.head.sha;
 
-          # Find the most recent workflow run for validate-samples.yml on this SHA
-          CONCLUSION=$(gh api \
-            "/repos/${REPO}/actions/workflows/validate-samples.yml/runs?head_sha=${HEAD_SHA}&per_page=1" \
-            --jq '.workflow_runs[0].conclusion // empty')
+            const files = await github.paginate(
+              github.rest.pulls.listFiles,
+              { owner, repo, pull_number, per_page: 100 }
+            );
 
-          echo "validate-samples.yml conclusion for SHA ${HEAD_SHA}: ${CONCLUSION:-<none>}"
+            const SAMPLE_ROOTS = [
+              'quickstarts/',
+              'demos/',
+              'application-workloads/',
+              'modules/',
+              'subscription-deployments/',
+              'managementgroup-deployments/',
+              'tenant-deployments/'
+            ];
 
-          if [[ "${CONCLUSION}" == "success" ]]; then
-            echo "validate_samples_success=true" >> "$GITHUB_OUTPUT"
-            echo "✅ validate-samples.yml passed."
-          else
-            echo "validate_samples_success=false" >> "$GITHUB_OUTPUT"
-            echo "❌ validate-samples.yml has not passed for this PR commit (conclusion='${CONCLUSION:-not found}')." >&2
-            echo "   Ensure the PR's validate-samples checks are green before running /validate." >&2
-            exit 1
-          fi
+            // Predicate: does this changed-file path affect a deployment?
+            // Conservative: unknown paths under a sample root count as
+            // deploy-affecting so we don't accidentally auto-pass a real
+            // template change.
+            function isDeployAffecting(filename) {
+              const matchedRoot = SAMPLE_ROOTS.find(r => filename.startsWith(r));
+              if (!matchedRoot) return false;
+
+              const lower = filename.toLowerCase();
+              const base  = lower.split('/').pop();
+
+              // Always non-deploy-affecting (sample metadata / docs / images).
+              if (base === 'metadata.json') return false;
+              if (base === 'readme.md' || base === 'contributing.md') return false;
+              if (lower.endsWith('.md'))  return false;
+              if (lower.endsWith('.png') || lower.endsWith('.jpg') ||
+                  lower.endsWith('.jpeg') || lower.endsWith('.gif') ||
+                  lower.endsWith('.svg') || lower.endsWith('.ico')) return false;
+              if (base === '.gitignore') return false;
+
+              // Always deploy-affecting (templates, params, scripts, prereqs).
+              if (lower.endsWith('.bicep') || lower.endsWith('.bicepparam')) return true;
+              if (lower.endsWith('.json'))  return true;
+              if (lower.endsWith('.ps1') || lower.endsWith('.sh')) return true;
+              if (lower.includes('/prereqs/')) return true;
+
+              // Conservative default for anything else under a sample root.
+              return true;
+            }
+
+            const deployFiles = files
+              .filter(f => isDeployAffecting(f.filename));
+
+            core.info(`Total changed files: ${files.length}`);
+            core.info(`Deploy-affecting files: ${deployFiles.length}`);
+            for (const f of deployFiles) core.info(`  ${f.status}\t${f.filename}`);
+
+            if (deployFiles.length === 0) {
+              core.info('No deployment-affecting changes detected — skipping ADX validation.');
+              core.setOutput('skip', 'true');
+              core.setOutput('sample_count', '0');
+              return;
+            }
+
+            // Resolve each deploy-affecting file to its sample folder by
+            // walking up the directory tree until we find a dir containing
+            // both metadata.json and README.md (mirrors validate-samples.yml).
+            const treeCache = new Map();
+            async function dirContains(dirPath, filename) {
+              if (treeCache.has(dirPath)) {
+                return treeCache.get(dirPath).has(filename);
+              }
+              try {
+                const { data } = await github.rest.git.getTree({
+                  owner, repo, tree_sha: `${headSha}:${dirPath}`
+                });
+                const names = new Set(data.tree.map(e => e.path));
+                treeCache.set(dirPath, names);
+                return names.has(filename);
+              } catch {
+                treeCache.set(dirPath, new Set());
+                return false;
+              }
+            }
+
+            const sampleFolders = new Set();
+            for (const f of deployFiles) {
+              const root = SAMPLE_ROOTS.find(r => f.filename.startsWith(r));
+              const relRoot = root.replace(/\/$/, '');
+              let dir = f.filename.split('/').slice(0, -1).join('/');
+              while (dir && dir !== relRoot && dir !== '.') {
+                if (sampleFolders.has(dir)) break;
+                const hasMeta   = await dirContains(dir, 'metadata.json');
+                const hasReadme = await dirContains(dir, 'README.md');
+                if (hasMeta && hasReadme) {
+                  sampleFolders.add(dir);
+                  break;
+                }
+                dir = dir.split('/').slice(0, -1).join('/');
+              }
+            }
+
+            const folderList = [...sampleFolders];
+            core.info(`Distinct sample folders touched: ${folderList.length}`);
+            for (const d of folderList) core.info(`  ${d}`);
+
+            core.setOutput('sample_count', String(folderList.length));
+            core.setOutput('skip', 'false');
+
+            if (folderList.length > 1) {
+              core.setFailed(
+                `Multi-sample deployable PR detected (${folderList.length} sample folders). ` +
+                `The ADX validation pipeline only supports a single changed sample per PR. ` +
+                `Please split deployable changes across multiple PRs (one sample per PR).`
+              );
+            }
 
       - name: Safeguard – block ValidateSampleDeployments.yml edits by non MEMBER/OWNER
         uses: actions/github-script@v7
@@ -1081,6 +1359,7 @@ jobs:
             }
 
       - name: Checkout PR HEAD
+        if: steps.preflight.outputs.skip != 'true'
         uses: actions/checkout@v4
         with:
           ref: refs/pull/${{ steps.pr.outputs.number }}/head
@@ -1088,6 +1367,7 @@ jobs:
       # Paginate PR changed files to locate the single added/modified metadata.json
       - name: Find metadata.json from PR changed files
         id: find-metadata
+        if: steps.preflight.outputs.skip != 'true'
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
@@ -1127,6 +1407,7 @@ jobs:
           echo "Found metadata.json: ${METADATA_FILE}"
 
       - name: Azure login via OIDC (federated to UAMI)
+        if: steps.preflight.outputs.skip != 'true'
         uses: azure/login@v2
         with:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
@@ -1135,6 +1416,7 @@ jobs:
 
       # ── Ensure azuredeploy.json exists (compile Bicep if needed) ────────────
       - name: Ensure azuredeploy.json exists (compile Bicep if needed)
+        if: steps.preflight.outputs.skip != 'true'
         shell: bash
         env:
           SAMPLE_PATH: ${{ steps.find-metadata.outputs.sample_path }}
@@ -1164,6 +1446,7 @@ jobs:
       # ── Calculate templateHash from template file ─────────────────────────────
       - name: Calculate templateHash for main template
         id: main-template-hash
+        if: steps.preflight.outputs.skip != 'true'
         shell: bash
         env:
           SAMPLE_PATH: ${{ steps.find-metadata.outputs.sample_path }}
@@ -1212,6 +1495,7 @@ jobs:
           echo "✅ templateHash computed for main template."
 
       - name: Validate deployments via ADX
+        if: steps.preflight.outputs.skip != 'true'
         shell: bash
         env:
           CLUSTER_URL: "https://armprodeus.eastus.kusto.windows.net"
@@ -1372,6 +1656,7 @@ jobs:
       # ── Prereqs A: verify at least one recognized template exists ──────────
       - name: Validate prereqs template files
         id: check-prereqs
+        if: steps.preflight.outputs.skip != 'true'
         shell: bash
         env:
           SAMPLE_PATH: ${{ steps.find-metadata.outputs.sample_path }}
@@ -1419,7 +1704,7 @@ jobs:
 
       # ── Prereqs: ensure azuredeploy.json exists (compile Bicep if needed) ───
       - name: Prereqs – ensure azuredeploy.json exists (compile Bicep if needed)
-        if: steps.check-prereqs.outputs.has_prereqs == 'true'
+        if: steps.preflight.outputs.skip != 'true' && steps.check-prereqs.outputs.has_prereqs == 'true'
         shell: bash
         env:
           SAMPLE_PATH: ${{ steps.find-metadata.outputs.sample_path }}
@@ -1476,7 +1761,7 @@ jobs:
       # ── Prereqs: calculate templateHash from template files ──────────────────
       - name: Prereqs – calculate templateHash from template files
         id: prereqs-template-hash
-        if: steps.check-prereqs.outputs.has_prereqs == 'true'
+        if: steps.preflight.outputs.skip != 'true' && steps.check-prereqs.outputs.has_prereqs == 'true'
         shell: bash
         env:
           SAMPLE_PATH: ${{ steps.find-metadata.outputs.sample_path }}
@@ -1569,7 +1854,7 @@ jobs:
 
       # ── Prereqs B+C: validate metadata entries and run Kusto per entry ──────
       - name: Validate prereqs deployments via ADX
-        if: steps.check-prereqs.outputs.has_prereqs == 'true'
+        if: steps.preflight.outputs.skip != 'true' && steps.check-prereqs.outputs.has_prereqs == 'true'
         shell: bash
         env:
           CLUSTER_URL: "https://armprodeus.eastus.kusto.windows.net"
@@ -1749,3 +2034,163 @@ jobs:
             exit 1
           fi
           echo "== Prereqs deployment validation PASSED =="
+
+  # ============================================================================
+  # JOB 4 – report-check
+  #
+  # Always-runs final job that publishes the `adx-deployment-validation` GitHub
+  # Check Run on the PR head SHA. The repository ruleset on master requires
+  # this check, so the conclusion written here is what gates merge:
+  #
+  #   gate.result == 'failure'                              -> check failure
+  #     ("validate-samples.yml did not pass; fix and re-run /validate")
+  #
+  #   selected-pipeline.result == 'success' AND skip='true' -> check success
+  #     ("Auto-passed: no deployment-affecting changes")
+  #
+  #   selected-pipeline.result == 'success'                 -> check success
+  #     ("ADX deployment validation passed")
+  #
+  #   selected-pipeline.result == 'failure'                 -> check failure
+  #     (link to this run for details)
+  #
+  #   selected-pipeline.result == 'cancelled'               -> check failure
+  #     ("Validation cancelled; re-run /validate")
+  #
+  #   selected-pipeline.result == 'skipped' AND
+  #     gate.result == 'success'                            -> check failure
+  #     ("ADX validation did not run; comment /validate again")
+  #
+  # Pushing a new commit to the PR moves the head SHA. No check is published
+  # on the new SHA until /validate is re-run, so the ruleset blocks merge —
+  # this is the stale-on-push behavior, with no seed workflow required.
+  # ============================================================================
+  report-check:
+    name: Report adx-deployment-validation check
+    runs-on: ubuntu-latest
+    needs: [gate, summarize, selected-pipeline]
+    if: >-
+      always() &&
+      github.event.issue.pull_request &&
+      startsWith(github.event.comment.body, '/validate')
+
+    permissions:
+      contents: read
+      pull-requests: read
+      checks: write
+
+    steps:
+      # Sparse checkout just the helper script directory.
+      - name: Checkout helper scripts
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            .github/scripts
+          sparse-checkout-cone-mode: false
+
+      # The gate job exposes head_sha as an output, but only if it ran far
+      # enough to resolve it. Resolve here independently so this step works
+      # even if gate failed before its first step (or never ran).
+      - name: Resolve PR HEAD SHA
+        id: pr-head
+        shell: bash
+        env:
+          GH_TOKEN:  ${{ github.token }}
+          REPO:      ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+          GATE_SHA:  ${{ needs.gate.outputs.head_sha }}
+        run: |
+          set -euo pipefail
+          if [[ -n "${GATE_SHA}" ]]; then
+            HEAD_SHA="${GATE_SHA}"
+          else
+            HEAD_SHA=$(gh api "/repos/${REPO}/pulls/${PR_NUMBER}" --jq '.head.sha')
+          fi
+          if [[ -z "${HEAD_SHA}" ]]; then
+            echo "ERROR: could not resolve PR head SHA" >&2
+            exit 1
+          fi
+          echo "head_sha=${HEAD_SHA}" >> "$GITHUB_OUTPUT"
+
+      - name: Determine final check conclusion
+        id: outcome
+        shell: bash
+        env:
+          GATE_RESULT:      ${{ needs.gate.result }}
+          PIPELINE_RESULT:  ${{ needs.selected-pipeline.result }}
+          PIPELINE_SKIP:    ${{ needs.selected-pipeline.outputs.skip }}
+          PIPELINE_COUNT:   ${{ needs.selected-pipeline.outputs.sample_count }}
+          RUN_URL:          ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          echo "gate.result=${GATE_RESULT}"
+          echo "selected-pipeline.result=${PIPELINE_RESULT}"
+          echo "selected-pipeline.outputs.skip=${PIPELINE_SKIP}"
+          echo "selected-pipeline.outputs.sample_count=${PIPELINE_COUNT}"
+
+          conclusion="failure"
+          title=""
+          summary=""
+
+          if [[ "${GATE_RESULT}" == "failure" ]]; then
+            conclusion="failure"
+            title="validate-samples.yml did not pass for this commit"
+            summary=$'`validate-samples.yml` did not reach `success` for this PR head SHA, or timed out waiting (10-minute poll). Fix the failures, push a new commit, then comment `/validate` again.\n\nRun: '"${RUN_URL}"
+          elif [[ "${GATE_RESULT}" == "cancelled" ]]; then
+            conclusion="failure"
+            title="Validation was cancelled"
+            summary=$'The gate job was cancelled (likely a newer `/validate` superseded this one). Re-run `/validate` to publish a fresh check.\n\nRun: '"${RUN_URL}"
+          elif [[ "${PIPELINE_RESULT}" == "success" && "${PIPELINE_SKIP}" == "true" ]]; then
+            conclusion="success"
+            title="Auto-passed: no deployment-affecting changes"
+            summary=$'No files in this PR affect an actual deployment (only docs / images / metadata / non-sample changes), so ADX validation was skipped. The required check passes automatically.\n\nRun: '"${RUN_URL}"
+          elif [[ "${PIPELINE_RESULT}" == "success" ]]; then
+            conclusion="success"
+            title="ADX deployment validation passed"
+            summary=$'ADX confirmed a successful deployment of this sample with a matching `templateHash`.\n\nRun: '"${RUN_URL}"
+          elif [[ "${PIPELINE_RESULT}" == "failure" ]]; then
+            conclusion="failure"
+            title="ADX deployment validation failed"
+            if [[ -n "${PIPELINE_COUNT}" && "${PIPELINE_COUNT}" -gt 1 ]]; then
+              summary=$'This PR touches '"${PIPELINE_COUNT}"$' sample folders. The ADX validation pipeline only supports a single changed sample per PR. Please split deployable changes across multiple PRs (one sample per PR).\n\nRun: '"${RUN_URL}"
+            else
+              summary=$'ADX could not confirm a successful deployment for this commit. See the workflow run for the failing check.\n\nRun: '"${RUN_URL}"
+            fi
+          elif [[ "${PIPELINE_RESULT}" == "cancelled" ]]; then
+            conclusion="failure"
+            title="ADX deployment validation was cancelled"
+            summary=$'Validation was cancelled mid-run. Re-run `/validate` once any in-progress runs finish.\n\nRun: '"${RUN_URL}"
+          elif [[ "${PIPELINE_RESULT}" == "skipped" && "${GATE_RESULT}" == "success" ]]; then
+            conclusion="failure"
+            title="ADX deployment validation did not run"
+            summary=$'The ADX validation job was skipped despite the gate succeeding. This usually means the commenter is not MEMBER/OWNER/COLLABORATOR. Comment `/validate` again from a maintainer account.\n\nRun: '"${RUN_URL}"
+          else
+            conclusion="failure"
+            title="Validation did not complete"
+            summary=$'gate='"${GATE_RESULT}"$', selected-pipeline='"${PIPELINE_RESULT}"$'. Re-run `/validate` to publish a fresh check.\n\nRun: '"${RUN_URL}"
+          fi
+
+          echo "conclusion=${conclusion}" >> "$GITHUB_OUTPUT"
+          {
+            echo "title<<__EOF__"
+            echo "${title}"
+            echo "__EOF__"
+            echo "summary<<__EOF__"
+            echo "${summary}"
+            echo "__EOF__"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Upsert adx-deployment-validation check
+        shell: bash
+        env:
+          GH_TOKEN:    ${{ github.token }}
+          GH_REPO:     ${{ github.repository }}
+          CHECK_NAME:  adx-deployment-validation
+          HEAD_SHA:    ${{ steps.pr-head.outputs.head_sha }}
+          STATUS:      completed
+          CONCLUSION:  ${{ steps.outcome.outputs.conclusion }}
+          TITLE:       ${{ steps.outcome.outputs.title }}
+          SUMMARY:     ${{ steps.outcome.outputs.summary }}
+          DETAILS_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: bash .github/scripts/upsert-check-run.sh
+
