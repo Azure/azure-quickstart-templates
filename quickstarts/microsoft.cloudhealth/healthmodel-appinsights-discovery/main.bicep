@@ -48,4 +48,5 @@ resource appInsightsDiscovery 'Microsoft.CloudHealth/healthmodels/discoveryrules
 
 output healthModelName string = healthModel.name
 output healthModelId string = healthModel.id
-output location string = healthModel.location
+output healthModelPrincipalId string = healthModel.identity.principalId
+output discoveryRuleName string = appInsightsDiscovery.name
