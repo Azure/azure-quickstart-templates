@@ -349,6 +349,7 @@ jobs:
             echo "  Every sample folder must contain a metadata.json file."
             echo "  See the contribution guide:"
             echo "  https://github.com/Azure/azure-quickstart-templates/blob/master/1-CONTRIBUTION-GUIDE/README.md#metadatajson"
+            echo "::error::metadata.json is missing from '${SAMPLE_DIR}'. Every sample folder must contain a metadata.json file."
             exit 1
           fi
 
@@ -361,6 +362,7 @@ jobs:
             echo "  File: ${META}"
             # Show a more descriptive parse error
             jq '.' "$META" || true
+            echo "::error file=${META}::metadata.json is not valid JSON. Please validate it with jq or jsonlint."
             exit 1
           fi
 
@@ -370,10 +372,12 @@ jobs:
           REQUIRED_FIELDS=(itemDisplayName description summary githubUsername dateUpdated type testResult)
 
           all_ok=true
+          missing_fields=()
           for field in "${REQUIRED_FIELDS[@]}"; do
             value=$(jq -r --arg f "$field" '.[$f] // empty' "$META")
             if [[ -z "$value" ]]; then
               echo "❌ Required field missing or empty: '${field}'"
+              missing_fields+=("$field")
               all_ok=false
             else
               echo "✅ ${field}: present"
@@ -386,6 +390,8 @@ jobs:
             for f in "${REQUIRED_FIELDS[@]}"; do echo "    - $f"; done
             echo ""
             echo "  Reference: https://github.com/Azure/azure-quickstart-templates/blob/master/1-CONTRIBUTION-GUIDE/README.md#metadatajson"
+            missing_csv=$(IFS=,; echo "${missing_fields[*]}")
+            echo "::error file=${META}::metadata.json is missing or has empty required field(s): ${missing_csv}. See the contribution guide for the full list."
             exit 1
           fi
 
@@ -424,6 +430,7 @@ jobs:
           if [[ "$FAIL" == true ]]; then
             echo ""
             echo "  Please shorten the fields above to meet the contributor guide limits."
+            echo "::error file=${META}::metadata.json has field(s) exceeding length limits (itemDisplayName ≤ 60, summary ≤ 200, description ≤ 1000). See step log for details."
             exit 1
           fi
 
@@ -432,6 +439,7 @@ jobs:
             ENV_TYPE=$(jq -r '.environments | type' "$META")
             if [[ "$ENV_TYPE" != "array" ]]; then
               echo "❌ 'environments' must be an array (got: ${ENV_TYPE})."
+              echo "::error file=${META}::metadata.json field 'environments' must be an array (got: ${ENV_TYPE})."
               exit 1
             fi
             # Every element must be a string
@@ -439,6 +447,7 @@ jobs:
             if [[ "$NON_STRING" -gt 0 ]]; then
               echo "❌ 'environments' array contains non-string elements."
               echo "   Each entry must be a string, e.g. [\"AzureCloud\",\"AzureUSGovernment\"]"
+              echo "::error file=${META}::metadata.json field 'environments' contains non-string elements; each entry must be a string (e.g. [\"AzureCloud\",\"AzureUSGovernment\"])."
               exit 1
             fi
             echo "✅ environments: valid array of strings"
@@ -449,6 +458,7 @@ jobs:
             VT_TYPE=$(jq -r '.validationType | type' "$META")
             if [[ "$VT_TYPE" != "string" ]]; then
               echo "❌ 'validationType' must be a string (got: ${VT_TYPE})."
+              echo "::error file=${META}::metadata.json field 'validationType' must be a string (got: ${VT_TYPE})."
               exit 1
             fi
             echo "✅ validationType: valid string"
