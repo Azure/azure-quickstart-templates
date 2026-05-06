@@ -59,9 +59,8 @@ After deployment, the discovery rule will:
 
 ## See Also
 
-- [healthmodel-tiered-app](../healthmodel-tiered-app) — a health model with manually-created entities and relationships, no discovery.
+- [healthmodel-web-app](../healthmodel-web-app) — a health model with manually-created entities and relationships, no discovery.
 - [healthmodel-vm-discovery](../healthmodel-vm-discovery) — a health model that discovers VMs by tag.
-- [healthmodel-tiered-discovery](../healthmodel-tiered-discovery) — a tiered health model that combines ARG discovery with additional manually-created entities.
-- [healthmodel-appinsights-discovery](../healthmodel-appinsights-discovery) — a health model that discovers topology from Application Insights.
+- [healthmodel-web-app-discovery](../healthmodel-web-app-discovery) — a web app health model that combines ARG discovery with additional manually-created entities.
 
 `Tags: Microsoft.CloudHealth/healthmodels, health model, monitoring, observability, discovery, service group`

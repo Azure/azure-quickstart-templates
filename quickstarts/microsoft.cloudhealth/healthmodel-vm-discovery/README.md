@@ -57,9 +57,8 @@ After deployment, the discovery rule will find all VMs with the matching tag and
 
 ## See Also
 
-- [healthmodel-tiered-app](../healthmodel-tiered-app) — a health model with manually-created entities and relationships, no discovery.
-- [healthmodel-tiered-discovery](../healthmodel-tiered-discovery) — a tiered health model that combines discovery rules with additional manually-created entities.
-- [healthmodel-appinsights-discovery](../healthmodel-appinsights-discovery) — a health model that discovers topology from Application Insights.
+- [healthmodel-web-app](../healthmodel-web-app) — a health model with manually-created entities and relationships, no discovery.
+- [healthmodel-web-app-discovery](../healthmodel-web-app-discovery) — a web app health model that combines discovery rules with additional manually-created entities.
 - [healthmodel-servicegroup-discovery](../healthmodel-servicegroup-discovery) — a health model that discovers resources from an Azure Service Group.
 
 `Tags: Microsoft.CloudHealth/healthmodels, health model, monitoring, observability, discovery, virtual machines`
