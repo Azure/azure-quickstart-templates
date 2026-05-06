@@ -28,7 +28,9 @@ languages:
 
 ## Overview
 
-This template deploys an [Azure Health Model](https://learn.microsoft.com/azure/cloud-health/) with a three-tier application topology. Health models provide a structured, hierarchical view of your workload's health by organizing entities and their relationships into a tree that aggregates health state from the bottom up.
+This template deploys an [Azure Health Model](https://learn.microsoft.com/azure/cloud-health/) with a three-tier web application topology, complete with signal definitions and alerts on the root entity. It demonstrates the health modelling workflow — entity structure, signal definitions, and alerting — all deployable with a single parameter.
+
+After deployment, wire the signal definitions to your entities by adding `signalGroups` via the portal or API.
 
 For more information, see the [Azure Health Models documentation](https://learn.microsoft.com/azure/cloud-health/).
 
@@ -37,7 +39,7 @@ For more information, see the [Azure Health Models documentation](https://learn.
 The template creates the following resource hierarchy:
 
 ```
-Root: <healthModelName>              (auto-created)
+Root: <healthModelName>              (alert: Sev1 unhealthy, Sev3 degraded)
 ├── frontend
 │   ├── web
 │   └── api-gateway
@@ -49,21 +51,33 @@ Root: <healthModelName>              (auto-created)
     └── cache
 ```
 
-| Resource | Type | Description |
-|----------|------|-------------|
-| Health Model | `Microsoft.CloudHealth/healthmodels` | The health model with system-assigned managed identity. A root entity is automatically created with the same name. |
-| Authentication Setting | `authenticationsettings` | Configures the system-assigned identity for data source queries. |
-| 3 Tier-1 Entities | `entities` | Logical groupings: Frontend, Backend, Data. |
-| 6 Tier-2 Entities | `entities` | Components: Web, API Gateway, API, Worker, Database, Cache. |
-| 9 Relationships | `relationships` | Wires the entity hierarchy together. |
+| Resource | Type | Count | Description |
+|----------|------|-------|-------------|
+| Health Model | `healthmodels` | 1 | With system-assigned managed identity. |
+| Authentication Setting | `authenticationsettings` | 1 | Configures the managed identity for data source queries. |
+| Signal Definitions | `signaldefinitions` | 7 | Reusable signal templates (5 metric, 2 log). |
+| Entities | `entities` | 10 | Root + 3 tiers + 6 components. |
+| Relationships | `relationships` | 9 | Wires the entity hierarchy together. |
+
+### Signal Definitions
+
+These are deployed as reusable templates. After deployment, attach them to entities by adding `signalGroups` via the portal or API.
+
+| Signal | Kind | Metric / Query | Degraded | Unhealthy |
+|--------|------|----------------|----------|-----------|
+| HTTP Response Time | `AzureResourceMetric` | `HttpResponseTime` (Avg) | > 2s | > 5s |
+| HTTP Server Errors | `AzureResourceMetric` | `Http5xx` (Total/5m) | > 5 | > 25 |
+| APIM Failed Requests | `AzureResourceMetric` | `FailedRequests` (Total/5m) | > 10 | > 50 |
+| Cosmos DB Availability | `AzureResourceMetric` | `ServiceAvailability` (Avg) | < 99.9% | < 99% |
+| Redis Server Load | `AzureResourceMetric` | `serverLoad` (Avg) | > 70% | > 90% |
+| Failed Requests (Log) | `LogAnalyticsQuery` | `AppRequests` (5m window) | > 10 | > 50 |
+| Exception Rate (Log) | `LogAnalyticsQuery` | `AppExceptions` (5m window) | > 5 | > 20 |
 
 ## Next Steps
 
-After deploying this template, the entities will show **Unknown** health state because no signals are configured yet. To make the model operational:
-
-1. **Assign signals** to the Tier-2 entities by linking Azure resource metrics, Log Analytics queries, or Prometheus metrics.
-2. **Grant the managed identity** read access to the data sources you want to monitor.
-3. **Configure alerts** on entities to get notified when health degrades.
+1. **Attach signals to entities** — update each T2 entity’s `signalGroups.azureResource` with the resource ID of the Azure resource to monitor and reference the signal definitions.
+2. **Grant the managed identity** Monitoring Reader access to the monitored resources.
+3. **Add action groups** to the root entity alerts to receive notifications (email, SMS, webhook, etc.).
 
 ## See Also
 
@@ -71,4 +85,4 @@ After deploying this template, the entities will show **Unknown** health state b
 - [healthmodel-web-app-discovery](../healthmodel-web-app-discovery) — a web app health model that combines discovery rules with additional manually-created entities.
 - [healthmodel-servicegroup-discovery](../healthmodel-servicegroup-discovery) — a health model that discovers resources from an Azure Service Group.
 
-`Tags: Microsoft.CloudHealth/healthmodels, health model, monitoring, observability`
+`Tags: Microsoft.CloudHealth/healthmodels, health model, monitoring, observability, signals, alerts`
