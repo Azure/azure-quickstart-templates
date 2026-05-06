@@ -26,12 +26,13 @@ languages:
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.keyvault%2Fkey-vault-create%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.keyvault%2Fkey-vault-create%2Fazuredeploy.json)
 
-This template creates an Azure Key Vault and a secret stored inside the key vault. To learn more about how to deploy the template, see the [quickstart](https://docs.microsoft.com/azure/key-vault/secrets/quick-create-template) article.
+This template creates an Azure Key Vault with RBAC authorization enabled and a secret stored inside the key vault. The vault uses Azure role-based access control (Azure RBAC) instead of access policies for authorization. To learn more about how to deploy the template, see the [quickstart](https://docs.microsoft.com/azure/key-vault/secrets/quick-create-template) article.
 
 If you're new to Azure Key Vault, see:
 
 - [Azure Key Vault service](https://azure.microsoft.com/services/key-vault/)
 - [Azure Key Vault documentation](https://docs.microsoft.com/azure/key-vault/)
+- [Azure Key Vault RBAC guide](https://docs.microsoft.com/azure/key-vault/general/rbac-guide)
 - [Azure Key Vault template reference](https://docs.microsoft.com/azure/templates/microsoft.keyvault/allversions)
 - [Quickstart templates](https://azure.microsoft.com/resources/templates/?resourceType=Microsoft.Keyvault)
 
