@@ -106,7 +106,7 @@ After deployment:
 ## See Also
 
 - [healthmodel-web-app](../healthmodel-web-app) — a health model with manually-created entities and relationships, no discovery.
-- [healthmodel-vm-discovery](../healthmodel-vm-discovery) — a health model that uses Azure Resource Graph to discover VMs by tag and adds recommended signals automatically.
+- [healthmodel-basic-discovery](../healthmodel-basic-discovery) — a basic health model that uses Azure Resource Graph to discover VMs by tag and adds recommended signals automatically.
 - [healthmodel-servicegroup-discovery](../healthmodel-servicegroup-discovery) — a health model that discovers resources from an Azure Service Group.
 
 `Tags: Microsoft.CloudHealth/healthmodels, health model, monitoring, observability, discovery, tiered`

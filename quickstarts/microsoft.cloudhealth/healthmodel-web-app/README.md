@@ -67,7 +67,7 @@ After deploying this template, the entities will show **Unknown** health state b
 
 ## See Also
 
-- [healthmodel-vm-discovery](../healthmodel-vm-discovery) — a health model that uses Azure Resource Graph to discover VMs by tag and adds recommended signals automatically.
+- [healthmodel-basic-discovery](../healthmodel-basic-discovery) — a basic health model that uses Azure Resource Graph to discover VMs by tag and adds recommended signals automatically.
 - [healthmodel-web-app-discovery](../healthmodel-web-app-discovery) — a web app health model that combines discovery rules with additional manually-created entities.
 - [healthmodel-servicegroup-discovery](../healthmodel-servicegroup-discovery) — a health model that discovers resources from an Azure Service Group.
 
