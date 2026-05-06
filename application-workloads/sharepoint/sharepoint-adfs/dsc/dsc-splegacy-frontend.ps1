@@ -1,4 +1,4 @@
-configuration ConfigureFEVM
+configuration ConfigSpFrontend
 {
     param
     (
@@ -10,59 +10,59 @@ configuration ConfigureFEVM
         [Parameter(Mandatory)] [String]$SharePointVersion,
         [Parameter(Mandatory)] [String]$SharePointSitesAuthority,
         [Parameter(Mandatory)] [Boolean]$EnableAnalysis,
-        [Parameter(Mandatory)] [System.Object[]] $SharePointBits,
+        [Parameter()] [System.Object[]] $SharePointBits,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$DomainAdminCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSetupCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPFarmCreds,
-        [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPPassphraseCreds
+        [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPPassphraseCreds,
+        [Parameter(Mandatory = $false)] [Boolean] $DefaultZoneMustBeHttps, #not used, present to allow parameter to be passed
+        [Parameter(Mandatory = $false)] [String] $ConfigurationLevel #not used, present to allow parameter to be passed
     )
 
-    Import-DscResource -ModuleName ComputerManagementDsc -ModuleVersion 10.0.0 # Custom
+    Import-DscResource -ModuleName ComputerManagementDsc -ModuleVersion 10.0.0
     Import-DscResource -ModuleName NetworkingDsc -ModuleVersion 9.1.0
-    Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion 6.7.0
+    Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion 6.7.1
     Import-DscResource -ModuleName WebAdministrationDsc -ModuleVersion 4.2.1
-    Import-DscResource -ModuleName SharePointDsc -ModuleVersion 5.7.0 # Custom workaround on SPInstall
-    Import-DscResource -ModuleName DnsServerDsc -ModuleVersion 3.0.1
+    Import-DscResource -ModuleName SharePointDsc -ModuleVersion 5.7.0 # Custom workaround on SPInstall and SPInstallPrereqs
+    Import-DscResource -ModuleName DnsServerDsc -ModuleVersion 3.0.3
     Import-DscResource -ModuleName CertificateDsc -ModuleVersion 6.0.0
-    Import-DscResource -ModuleName SqlServerDsc -ModuleVersion 17.1.0 # Custom workaround on SqlSecureConnection
+    Import-DscResource -ModuleName SqlServerDsc -ModuleVersion 17.5.1 # Custom workaround on SqlSecureConnection
     Import-DscResource -ModuleName cChoco -ModuleVersion 2.6.0.0    # With custom changes to implement retry on package downloads
-    Import-DscResource -ModuleName StorageDsc -ModuleVersion 6.0.1
-    Import-DscResource -ModuleName xPSDesiredStateConfiguration -ModuleVersion 9.2.1
 
     # Init
     [String] $InterfaceAlias = (Get-NetAdapter| Where-Object InterfaceDescription -Like "Microsoft Hyper-V Network Adapter*" | Select-Object -First 1).Name
     [String] $ComputerName = Get-Content env:computername
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
 
+    # Format username as user@contoso.local to workaround issue https://github.com/dsccommunity/ComputerManagementDsc/issues/413
+    [System.Management.Automation.PSCredential] $DomainAdminCredsToJoinDomain = New-Object System.Management.Automation.PSCredential ("$($DomainAdminCreds.UserName)@$($DomainFQDN)", $DomainAdminCreds.Password)
     # Format credentials to be qualified by domain name: "domain\username"
     [System.Management.Automation.PSCredential] $DomainAdminCredsQualified = New-Object System.Management.Automation.PSCredential ("$DomainNetbiosName\$($DomainAdminCreds.UserName)", $DomainAdminCreds.Password)
     [System.Management.Automation.PSCredential] $SPSetupCredsQualified = New-Object System.Management.Automation.PSCredential ("$DomainNetbiosName\$($SPSetupCreds.UserName)", $SPSetupCreds.Password)
     [System.Management.Automation.PSCredential] $SPFarmCredsQualified = New-Object System.Management.Automation.PSCredential ("$DomainNetbiosName\$($SPFarmCreds.UserName)", $SPFarmCreds.Password)
-    
+
     # Setup settings
     [String] $SetupPath = "C:\DSC Data"
-    [String] $DCSetupPath = "\\$DCServerName\C$\DSC Data"
     [String] $DscStatusFilePath = "$SetupPath\dsc-status-$ComputerName.log"
-    [String] $SharePointBuildLabel = $SharePointVersion.Split("-")[1]
-    [String] $SharePointBitsPath = Join-Path -Path $SetupPath -ChildPath "Binaries" #[environment]::GetEnvironmentVariable("temp","machine")
-    [String] $SharePointIsoFullPath = Join-Path -Path $SharePointBitsPath -ChildPath "OfficeServer.iso"
-    [String] $SharePointIsoDriveLetter = "S"
     [String] $AdfsDnsEntryName = "adfs"
 
     # SharePoint settings
     [String] $SPDBPrefix = "SPDSC_"
+    [String] $AppDomainIntranetFQDN = "{0}{1}.{2}" -f $DomainFQDN.Split('.')[0], "Apps-Intranet", $DomainFQDN.Split('.')[1]
     [String] $MySiteHostAlias = "OhMy"
     [String] $HNSC1Alias = "HNSC1"
 
     Node localhost
     {
-        LocalConfigurationManager {
-            ConfigurationMode  = 'ApplyOnly'
+        LocalConfigurationManager
+        {
+            ConfigurationMode = 'ApplyOnly'
             RebootNodeIfNeeded = $true
         }
 
-        Script DscStatus_Start {
-            SetScript  =
+        Script DscStatus_Start
+        {
+            SetScript =
             {
                 $destinationFolder = $using:SetupPath
                 if (!(Test-Path $destinationFolder -PathType Container)) {
@@ -70,73 +70,78 @@ configuration ConfigureFEVM
                 }
                 "$(Get-Date -Format u)`t$($using:ComputerName)`tDSC Configuration starting..." | Out-File -FilePath $using:DscStatusFilePath -Append
             }
-            GetScript  = { } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-            TestScript = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
+            GetScript            = { } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+            TestScript           = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
         }
+
+        # cChocoInstaller fails with this error: Get-FileDownload for 'https://chocolatey.org/install.ps1' failed on attempt 1 with this error: .NET Framework 4.8 was installed, but a reboot is required.  Please reboot the system and try to install/upgrade Chocolatey again.
+        # But running it right at the beginning eventually works, and somehow it does not propagate the error to the Azure DSC extension (and doing a reboot juste before has no effect)
+        cChocoInstaller InstallChoco             { InstallDir = "C:\Chocolatey"; }
 
         #**********************************************************
         # Initialization of VM - Do as much work as possible before waiting on AD domain to be available
         #**********************************************************
-        WindowsFeature AddADTools {
-            Name = "RSAT-AD-Tools"; Ensure = "Present"; 
-        }
+        WindowsFeature AddADTools             { Name = "RSAT-AD-Tools";      Ensure = "Present"; }
+        WindowsFeature AddADPowerShell        { Name = "RSAT-AD-PowerShell"; Ensure = "Present"; }
+        WindowsFeature AddDnsTools            { Name = "RSAT-DNS-Server";    Ensure = "Present"; }
+        WindowsFeature AddADLDS               { Name = "RSAT-ADLDS";         Ensure = "Present"; }
+        WindowsFeature AddADCSManagementTools { Name = "RSAT-ADCS-Mgmt";     Ensure = "Present"; }
+        DnsServerAddress SetDNS { Address = $DNSServerIP; InterfaceAlias = $InterfaceAlias; AddressFamily  = 'IPv4' }
         
-        WindowsFeature AddDnsTools {
-            Name = "RSAT-DNS-Server"; Ensure = "Present"; 
-        }
-        WindowsFeature AddADLDS {
-            Name = "RSAT-ADLDS"; Ensure = "Present"; 
-        }
-        WindowsFeature AddADCSManagementTools {
-            Name = "RSAT-ADCS-Mgmt"; Ensure = "Present"; 
-        }
-        DnsServerAddress SetDNS {
-            Address = $DNSServerIP; InterfaceAlias = $InterfaceAlias; AddressFamily = 'IPv4' 
-        }
-        
-        # Allow NTLM on HTTPS sites when site host name is different than the machine name - https://docs.microsoft.com/en-US/troubleshoot/windows-server/networking/accessing-server-locally-with-fqdn-cname-alias-denied
-        Registry DisableLoopBackCheck {
-            Key = "HKLM:\System\CurrentControlSet\Control\Lsa"; ValueName = "DisableLoopbackCheck"; ValueData = "1"; ValueType = "Dword"; Ensure = "Present" 
-        }       
 
-        Registry DisableIESecurityRegKey1 {
-            Key = 'HKLM:\SOFTWARE\Microsoft\Active Setup\Installed Components\{A509B1A7-37EF-4b3f-8CFC-4F3A74704073}'; ValueName = 'IsInstalled'; ValueType = 'Dword'; ValueData = '0'; Force = $true ; Ensure = 'Present' 
-        }
-        Registry DisableIESecurityRegKey2 {
-            Key = 'HKLM:\Software\Policies\Microsoft\Internet Explorer\Main'; ValueName = 'DisableFirstRunCustomize'; ValueType = 'Dword'; ValueData = '1'; Force = $true ; Ensure = 'Present' 
-        }
-        Registry DisableIESecurityRegKey3 {
-            Key = 'HKLM:\Software\Policies\Microsoft\Internet Explorer\TabbedBrowsing'; ValueName = 'NewTabPageShow'; ValueType = 'Dword'; ValueData = '0'; Force = $true ; Ensure = 'Present' 
-        }
+        # # xCredSSP is required forSharePointDsc resources SPUserProfileServiceApp and SPDistributedCacheService
+        # xCredSSP CredSSPServer { Ensure = "Present"; Role = "Server"; DependsOn = "[DnsServerAddress]SetDNS" }
+        # xCredSSP CredSSPClient { Ensure = "Present"; Role = "Client"; DelegateComputers = "*.$DomainFQDN", "localhost"; DependsOn = "[xCredSSP]CredSSPServer" }
+
+        # Allow NTLM on HTTPS sites when site host name is different than the machine name - https://docs.microsoft.com/en-US/troubleshoot/windows-server/networking/accessing-server-locally-with-fqdn-cname-alias-denied
+        Registry DisableLoopBackCheck { Key = "HKLM:\System\CurrentControlSet\Control\Lsa"; ValueName = "DisableLoopbackCheck"; ValueData = "1"; ValueType = "Dword"; Ensure = "Present" }
+
+        # Enable TLS 1.2 - https://learn.microsoft.com/en-us/azure/active-directory/app-proxy/application-proxy-add-on-premises-application#tls-requirements
+        # It's a best practice, and mandatory with Windows 2012 R2 (SharePoint 2013) to allow xRemoteFile to download releases from GitHub: https://github.com/PowerShell/xPSDesiredStateConfiguration/issues/405           
+        Registry EnableTLS12RegKey1 { Key = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Client'; ValueName = 'DisabledByDefault'; ValueType = 'Dword'; ValueData = '0'; Ensure = 'Present' }
+        Registry EnableTLS12RegKey2 { Key = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Client'; ValueName = 'Enabled';           ValueType = 'Dword'; ValueData = '1'; Ensure = 'Present' }
+        Registry EnableTLS12RegKey3 { Key = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Server'; ValueName = 'DisabledByDefault'; ValueType = 'Dword'; ValueData = '0'; Ensure = 'Present' }
+        Registry EnableTLS12RegKey4 { Key = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Server'; ValueName = 'Enabled';           ValueType = 'Dword'; ValueData = '1'; Ensure = 'Present' }
+
+        # Enable strong crypto by default for .NET Framework 4 applications - https://docs.microsoft.com/en-us/dotnet/framework/network-programming/tls#configuring-security-via-the-windows-registry
+        Registry SchUseStrongCrypto         { Key = 'HKLM:\SOFTWARE\Microsoft\.NETFramework\v4.0.30319';             ValueName = 'SchUseStrongCrypto';       ValueType = 'Dword'; ValueData = '1'; Ensure = 'Present' }
+        Registry SchUseStrongCrypto32       { Key = 'HKLM:\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\v4.0.30319'; ValueName = 'SchUseStrongCrypto';       ValueType = 'Dword'; ValueData = '1'; Ensure = 'Present' }
+        Registry SystemDefaultTlsVersions   { Key = 'HKLM:\SOFTWARE\Microsoft\.NETFramework\v4.0.30319';             ValueName = 'SystemDefaultTlsVersions'; ValueType = 'Dword'; ValueData = '1'; Ensure = 'Present' }
+        Registry SystemDefaultTlsVersions32 { Key = 'HKLM:\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\v4.0.30319'; ValueName = 'SystemDefaultTlsVersions'; ValueType = 'Dword'; ValueData = '1'; Ensure = 'Present' }
+
+        Registry DisableIESecurityRegKey1 { Key = 'HKLM:\SOFTWARE\Microsoft\Active Setup\Installed Components\{A509B1A7-37EF-4b3f-8CFC-4F3A74704073}'; ValueName = 'IsInstalled'; ValueType = 'Dword'; ValueData = '0'; Force = $true ; Ensure = 'Present' }
+        Registry DisableIESecurityRegKey2 { Key = 'HKLM:\Software\Policies\Microsoft\Internet Explorer\Main'; ValueName = 'DisableFirstRunCustomize'; ValueType = 'Dword'; ValueData = '1'; Force = $true ; Ensure = 'Present' }
+        Registry DisableIESecurityRegKey3 { Key = 'HKLM:\Software\Policies\Microsoft\Internet Explorer\TabbedBrowsing'; ValueName = 'NewTabPageShow'; ValueType = 'Dword'; ValueData = '0'; Force = $true ; Ensure = 'Present' }
 
         # From https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation?tabs=powershell :
         # Starting in Windows 10, version 1607, MAX_PATH limitations have been removed from common Win32 file and directory functions. However, you must opt-in to the new behavior.
-        Registry SetLongPathsEnabled {
-            Key = "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem"; ValueName = "LongPathsEnabled"; ValueType = "DWORD"; ValueData = "1"; Force = $true; Ensure = "Present" 
-        }
+        Registry SetLongPathsEnabled { Key = "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem"; ValueName = "LongPathsEnabled"; ValueType = "DWORD"; ValueData = "1"; Force = $true; Ensure = "Present" }
         
-        Registry ShowWindowsExplorerRibbon {
-            Key = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Explorer"; ValueName = "ExplorerRibbonStartsMinimized"; ValueType = "DWORD"; ValueData = "4"; Force = $true; Ensure = "Present" 
+        Registry ShowWindowsExplorerRibbon { Key = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Explorer"; ValueName = "ExplorerRibbonStartsMinimized"; ValueType = "DWORD"; ValueData = "4"; Force = $true; Ensure = "Present" }
+
+        if ($SharePointVersion -eq "2019") {
+            # Allow OneDrive NGSC to connect to SharePoint Subscription / 2019 - https://learn.microsoft.com/en-us/sharepoint/install/configure-syncing-with-the-onedrive-sync-app
+            Registry SetOneDriveUrl { Key = "HKLM:\Software\Policies\Microsoft\OneDrive"; ValueName = "SharePointOnPremFrontDoorUrl"; ValueType = "String"; ValueData = "http://{0}" -f $MySiteHostAlias; Ensure = "Present" }
+            Registry SetOneDriveName { Key = "HKLM:\Software\Policies\Microsoft\OneDrive"; ValueName = "SharePointOnPremTenantName"; ValueType = "String"; ValueData = "{0} - {1}" -f $DomainNetbiosName, $MySiteHostAlias; Ensure = "Present" }
         }
-        
-        SqlAlias AddSqlAlias {
-            Ensure = "Present"; Name = $SQLAlias; ServerName = $SQLServerName; Protocol = "TCP"; TcpPort = 1433 
+
+        if ($SharePointVersion -eq "2013") {
+            # Those 2 registry keys are required in SPS 2013 image to fix the psconfigui timeout error - https://support.microsoft.com/en-us/topic/some-document-conversion-services-in-sharepoint-server-are-not-secure-when-they-run-in-a-particular-environment-c39cd633-1e6a-18b1-9f2f-d0e7073a26bd
+            Registry FixDocumentConversionKeyMissing  { Key = "HKLM:\SOFTWARE\Microsoft\Office Server\15.0\LauncherSettings";     ValueName = "AcknowledgedRunningOnAppServer"; ValueData = "1"; ValueType = "Dword"; Ensure = "Present" }
+            Registry FixDocumentConversionKeyMissing2 { Key = "HKLM:\SOFTWARE\Microsoft\Office Server\15.0\LoadBalancerSettings"; ValueName = "AcknowledgedRunningOnAppServer"; ValueData = "1"; ValueType = "Dword"; Ensure = "Present" }
         }
-        
+
+        SqlAlias AddSqlAlias { Ensure = "Present"; Name = $SQLAlias; ServerName = $SQLServerName; Protocol = "TCP"; TcpPort= 1433 }
+
         Script EnableFileSharing {
             GetScript  = { }
             TestScript = { return $null -ne (Get-NetFirewallRule -DisplayGroup "File And Printer Sharing" -Enabled True -ErrorAction SilentlyContinue | Where-Object { $_.Profile -eq "Domain" }) }
             SetScript  = { Set-NetFirewallRule -DisplayGroup "File And Printer Sharing" -Enabled True -Profile Domain }
         }
 
-        Script EnableRemoteEventViewerConnection {
-            GetScript  = { }
-            TestScript = { return $null -ne (Get-NetFirewallRule -DisplayGroup "Remote Event Log Management" -Enabled True -ErrorAction SilentlyContinue | Where-Object { $_.Profile -eq "Domain" }) }
-            SetScript  = { Set-NetFirewallRule -DisplayGroup "Remote Event Log Management" -Enabled True -Profile Domain }
-        }
-
         # Create the rules in the firewall required for the distributed cache - https://learn.microsoft.com/en-us/sharepoint/administration/plan-for-feeds-and-the-distributed-cache-service#firewall
-        Script CreateFirewallRulesForDistributedCache {
+        Script CreateFirewallRulesForDistributedCache
+        {
             TestScript = {
                 # Test if firewall rules already exist
                 $icmpRuleName = "File and Printer Sharing (Echo Request - ICMPv4-In)"
@@ -145,25 +150,23 @@ configuration ConfigureFEVM
                 $firewallRule = Get-NetFirewallRule -DisplayName $spRuleName -ErrorAction SilentlyContinue
                 if ($null -eq $icmpFirewallRule -or $null -eq $firewallRule) {
                     return $false   # Run SetScript
-                }
-                else {
+                } else {
                     return $true    # Rules already set
                 }
             }
-            SetScript  = {
-                # $icmpRuleName = "File and Printer Sharing (Echo Request - ICMPv4-In)"
-                # $icmpFirewallRule = Get-NetFirewallRule -DisplayName $icmpRuleName -ErrorAction SilentlyContinue
-                # if ($null -eq $icmpFirewallRule) {
-                #     New-NetFirewallRule -Name Allow_Ping -DisplayName $icmpRuleName `
-                #         -Description "Allow ICMPv4 ping" `
-                #         -Protocol ICMPv4 `
-                #         -IcmpType 8 `
-                #         -Enabled True `
-                #         -Profile Any `
-                #         -Action Allow
-                # }
-                # Enable-NetFirewallRule -DisplayName $icmpRuleName
-                Enable-NetFirewallRule -displayName "File and Printer Sharing (Echo Request - ICMPv4-In)"
+            SetScript = {
+                $icmpRuleName = "File and Printer Sharing (Echo Request - ICMPv4-In)"
+                $icmpFirewallRule = Get-NetFirewallRule -DisplayName $icmpRuleName -ErrorAction SilentlyContinue
+                if ($null -eq $icmpFirewallRule) {
+                    New-NetFirewallRule -Name Allow_Ping -DisplayName $icmpRuleName `
+                        -Description "Allow ICMPv4 ping" `
+                        -Protocol ICMPv4 `
+                        -IcmpType 8 `
+                        -Enabled True `
+                        -Profile Any `
+                        -Action Allow
+                }
+                Enable-NetFirewallRule -DisplayName $icmpRuleName
 
                 $spRuleName = "SharePoint Distributed Cache"
                 $firewallRule = Get-NetFirewallRule -DisplayName $spRuleName -ErrorAction SilentlyContinue
@@ -176,60 +179,69 @@ configuration ConfigureFEVM
                 }                
                 Enable-NetFirewallRule -DisplayName $spRuleName
             }
-            GetScript  = { }
+            GetScript = { }
         }
 
         #**********************************************************
         # Install applications using Chocolatey
         #**********************************************************
-        Script DscStatus_InstallApps {
-            SetScript  =
+        Script DscStatus_InstallApps
+        {
+            SetScript =
             {
                 "$(Get-Date -Format u)`t$($using:ComputerName)`tInstall applications..." | Out-File -FilePath $using:DscStatusFilePath -Append
             }
-            GetScript  = { } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-            TestScript = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
+            GetScript            = { } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+            TestScript           = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
         }
 
-        cChocoInstaller InstallChoco {
-            InstallDir = "C:\Chocolatey"
+        cChocoPackageInstaller InstallEdge
+        {
+            Name                 = "microsoft-edge"
+            Ensure               = "Present"
+            DependsOn            = "[cChocoInstaller]InstallChoco"
         }
 
-        cChocoPackageInstaller InstallChrome {
-            Name      = "GoogleChrome"
-            Ensure    = "Present"
-            DependsOn = "[cChocoInstaller]InstallChoco"
+        cChocoPackageInstaller InstallChrome
+        {
+            Name                 = "GoogleChrome"
+            Ensure               = "Present"
+            DependsOn            = "[cChocoInstaller]InstallChoco"
         }
 
-        cChocoPackageInstaller InstallEverything {
-            Name      = "everything"
-            Ensure    = "Present"
-            DependsOn = "[cChocoInstaller]InstallChoco"
+        cChocoPackageInstaller InstallEverything
+        {
+            Name                 = "everything"
+            Ensure               = "Present"
+            DependsOn            = "[cChocoInstaller]InstallChoco"
         }
 
-        cChocoPackageInstaller InstallILSpy {
-            Name      = "ilspy"
-            Ensure    = "Present"
-            DependsOn = "[cChocoInstaller]InstallChoco"
+        cChocoPackageInstaller InstallILSpy
+        {
+            Name                 = "ilspy"
+            Ensure               = "Present"
+            DependsOn            = "[cChocoInstaller]InstallChoco"
         }
 
-        cChocoPackageInstaller InstallNotepadpp {
-            Name      = "notepadplusplus.install"
-            Ensure    = "Present"
-            DependsOn = "[cChocoInstaller]InstallChoco"
+        cChocoPackageInstaller InstallNotepadpp
+        {
+            Name                 = "notepadplusplus.install"
+            Ensure               = "Present"
+            DependsOn            = "[cChocoInstaller]InstallChoco"
         }
 
-        cChocoPackageInstaller Install7zip {
-            Name      = "7zip.install"
-            Ensure    = "Present"
-            DependsOn = "[cChocoInstaller]InstallChoco"
+        cChocoPackageInstaller Install7zip
+        {
+            Name                 = "7zip.install"
+            Ensure               = "Present"
+            DependsOn            = "[cChocoInstaller]InstallChoco"
         }
 
-        cChocoPackageInstaller InstallVscode {
-            # Install takes about 30 secs
-            Name      = "vscode"
-            Ensure    = "Present"
-            DependsOn = "[cChocoInstaller]InstallChoco"
+        cChocoPackageInstaller InstallVscode
+        {   # Install takes about 30 secs
+            Name                 = "vscode"
+            Ensure               = "Present"
+            DependsOn            = "[cChocoInstaller]InstallChoco"
         }
 
         # if ($EnableAnalysis) {
@@ -241,132 +253,6 @@ configuration ConfigureFEVM
         #         DependsOn            = "[cChocoInstaller]InstallChoco"
         #     }
         # }
-
-        #**********************************************************
-        # Download and install for SharePoint
-        #**********************************************************
-        Script DscStatus_DownloadSharePoint {
-            SetScript  =
-            {
-                "$(Get-Date -Format u)`t$($using:ComputerName)`tDownload SharePoint bits and install it..." | Out-File -FilePath $using:DscStatusFilePath -Append
-            }
-            GetScript  = { } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-            TestScript = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
-        }
-
-        xRemoteFile DownloadSharePoint {
-            DestinationPath = $SharePointIsoFullPath
-            Uri             = ($SharePointBits | Where-Object { $_.Label -eq "RTM" }).Packages[0].DownloadUrl
-            ChecksumType    = ($SharePointBits | Where-Object { $_.Label -eq "RTM" }).Packages[0].ChecksumType
-            Checksum        = ($SharePointBits | Where-Object { $_.Label -eq "RTM" }).Packages[0].Checksum
-            MatchSource     = $false
-        }
-        
-        MountImage MountSharePointImage {
-            ImagePath   = $SharePointIsoFullPath
-            DriveLetter = $SharePointIsoDriveLetter
-            DependsOn   = "[xRemoteFile]DownloadSharePoint"
-        }
-          
-        WaitForVolume WaitForSharePointImage {
-            DriveLetter      = $SharePointIsoDriveLetter
-            RetryIntervalSec = 5
-            RetryCount       = 10
-            DependsOn        = "[MountImage]MountSharePointImage"
-        }
-
-        SPInstallPrereqs InstallPrerequisites {
-            IsSingleInstance = "Yes"
-            InstallerPath    = "$($SharePointIsoDriveLetter):\Prerequisiteinstaller.exe"
-            OnlineMode       = $true
-            DependsOn        = "[WaitForVolume]WaitForSharePointImage"
-        }
-
-        SPInstall InstallBinaries {
-            IsSingleInstance = "Yes"
-            BinaryDir        = "$($SharePointIsoDriveLetter):\"
-            ProductKey       = "VW2FM-FN9FT-H22J4-WV9GT-H8VKF"
-            DependsOn        = "[SPInstallPrereqs]InstallPrerequisites"
-        }
-
-        if ($SharePointBuildLabel -ne "RTM") {
-            foreach ($package in ($SharePointBits | Where-Object { $_.Label -eq $SharePointBuildLabel }).Packages) {
-                $packageUrl = [uri] $package.DownloadUrl
-                $packageFilename = $packageUrl.Segments[$packageUrl.Segments.Count - 1]
-                $packageFilePath = Join-Path -Path $SharePointBitsPath -ChildPath $packageFilename
-                
-                xRemoteFile "DownloadSharePointUpdate_$($SharePointBuildLabel)_$packageFilename" {
-                    DestinationPath = $packageFilePath
-                    Uri             = $packageUrl
-                    ChecksumType    = if ($null -ne $package.ChecksumType) { $package.ChecksumType } else { "None" }
-                    Checksum        = if ($null -ne $package.Checksum) { $package.Checksum } else { $null }
-                    MatchSource     = $false
-                    PsDscRunAsCredential = $DomainAdminCredsQualified;
-                }
-
-                Script "InstallSharePointUpdate_$($SharePointBuildLabel)_$packageFilename" {
-                    SetScript  = {
-                        $SharePointBuildLabel = $using:SharePointBuildLabel
-                        $packageFilePath = $using:packageFilePath
-                        $packageFile = Get-ChildItem -Path $packageFilePath
-                        
-                        $exitRebootCodes = @(3010, 17022)
-                        $needReboot = $false
-                        Write-Verbose -Verbose -Message "Starting installation of SharePoint update '$SharePointBuildLabel', file '$($packageFile.Name)'..."
-                        Unblock-File -Path $packageFile -Confirm:$false
-                        $process = Start-Process $packageFile.FullName -ArgumentList '/passive /quiet /norestart' -PassThru -Wait
-                        if ($exitRebootCodes.Contains($process.ExitCode)) {
-                            $needReboot = $true
-                        }
-                        Write-Verbose -Verbose -Message "Finished installation of SharePoint update '$($packageFile.Name)'. Exit code: $($process.ExitCode); needReboot: $needReboot"
-                        New-Item -Path "HKLM:\SOFTWARE\DscScriptExecution\flag_spupdate_$($SharePointBuildLabel)_$($packageFile.Name)" -Force
-                        Write-Verbose -Verbose -Message "Finished installation of SharePoint build '$SharePointBuildLabel'. needReboot: $needReboot"
-
-                        if ($true -eq $needReboot) {
-                            $global:DSCMachineStatus = 1
-                        }
-                    }
-                    TestScript = {
-                        $SharePointBuildLabel = $using:SharePointBuildLabel
-                        $packageFilePath = $using:packageFilePath
-                        $packageFile = Get-ChildItem -Path $packageFilePath
-                        return (Test-Path "HKLM:\SOFTWARE\DscScriptExecution\flag_spupdate_$($SharePointBuildLabel)_$($packageFile.Name)")
-                    }
-                    GetScript  = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-                    DependsOn  = "[SPInstall]InstallBinaries"
-                    PsDscRunAsCredential = $DomainAdminCredsQualified;
-                }
-
-                PendingReboot "RebootOnSignalFromInstallSharePointUpdate_$($SharePointBuildLabel)_$packageFilename" {
-                    Name             = "RebootOnSignalFromInstallSharePointUpdate_$($SharePointBuildLabel)_$packageFilename"
-                    SkipCcmClientSDK = $true
-                    DependsOn        = "[Script]InstallSharePointUpdate_$($SharePointBuildLabel)_$packageFilename"
-                }
-            }
-        }
-
-        # IIS cleanup cannot be executed earlier in SharePoint SE: It uses a base image of Windows Server without IIS (installed by SPInstallPrereqs)
-        WebAppPool RemoveDotNet2Pool {
-            Name = ".NET v2.0"; Ensure = "Absent"; 
-        }
-        WebAppPool RemoveDotNet2ClassicPool {
-            Name = ".NET v2.0 Classic"; Ensure = "Absent"; 
-        }
-        WebAppPool RemoveDotNet45Pool {
-            Name = ".NET v4.5"; Ensure = "Absent"; 
-        }
-        WebAppPool RemoveDotNet45ClassicPool {
-            Name = ".NET v4.5 Classic"; Ensure = "Absent"; 
-        }
-        WebAppPool RemoveClassicDotNetPool {
-            Name = "Classic .NET AppPool"; Ensure = "Absent"; 
-        }
-        WebAppPool RemoveDefaultAppPool {
-            Name = "DefaultAppPool"; Ensure = "Absent"; 
-        }
-        WebSite    RemoveDefaultWebSite {
-            Name = "Default Web Site"; Ensure = "Absent"; PhysicalPath = "C:\inetpub\wwwroot"; 
-        }
 
         Script CreateSPLOGSFileShare {
             SetScript  = 
@@ -397,20 +283,9 @@ configuration ConfigureFEVM
         #**********************************************************
         # Join AD forest
         #**********************************************************
-        Script DscStatus_WaitForDCReady {
-            SetScript  =
-            {
-                "$(Get-Date -Format u)`t$($using:ComputerName)`tWait for AD DC to be ready..." | Out-File -FilePath $using:DscStatusFilePath -Append
-            }
-            GetScript  = { } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-            TestScript = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
-        }
-
-        # DNS record for ADFS is created only after the ADFS farm was created and DC restarted (required by ADFS setup)
-        # This turns out to be a very reliable way to ensure that VM joins AD only when the DC is guaranteed to be ready
-        # This totally eliminates the random errors that occured in WaitForADDomain with the previous logic (and no more need of WaitForADDomain)
-        Script WaitForADFSFarmReady {
-            SetScript  =
+        Script WaitForADFSFarmReady
+        {
+            SetScript =
             {
                 $dnsRecordFQDN = "$($using:AdfsDnsEntryName).$($using:DomainFQDN)"
                 $dnsRecordFound = $false
@@ -427,9 +302,9 @@ configuration ConfigureFEVM
                     }
                 } while ($false -eq $dnsRecordFound)
             }
-            GetScript  = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-            TestScript = { try { [Net.DNS]::GetHostEntry("$($using:AdfsDnsEntryName).$($using:DomainFQDN)"); return $true } catch { return $false } }
-            DependsOn  = "[DnsServerAddress]SetDNS"
+            GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+            TestScript           = { try { [Net.DNS]::GetHostEntry("$($using:AdfsDnsEntryName).$($using:DomainFQDN)"); return $true } catch { return $false } }
+            DependsOn            = "[DnsServerAddress]SetDNS"
         }
 
         # # If WaitForADDomain does not find the domain whtin "WaitTimeout" secs, it will signar a restart to DSC engine "RestartCount" times
@@ -451,26 +326,27 @@ configuration ConfigureFEVM
         #     DependsOn        = "[WaitForADDomain]WaitForDCReady"
         # }
 
-        Computer JoinDomain {
+        Computer JoinDomain
+        {
             Name       = $ComputerName
             DomainName = $DomainFQDN
-            Credential = $DomainAdminCredsQualified
+            Credential = $DomainAdminCredsToJoinDomain
             DependsOn  = "[Script]WaitForADFSFarmReady"
         }
 
-        PendingReboot RebootOnSignalFromJoinDomain {
+        PendingReboot RebootOnSignalFromJoinDomain
+        {
             Name             = "RebootOnSignalFromJoinDomain"
             SkipCcmClientSDK = $true
             DependsOn        = "[Computer]JoinDomain"
         }
 
-        Registry ShowFileExtensions {
-            Key = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced"; ValueName = "HideFileExt"; ValueType = "DWORD"; ValueData = "0"; Force = $true; Ensure = "Present"; PsDscRunAsCredential = $DomainAdminCredsQualified 
-        }
+        Registry ShowFileExtensions { Key = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced"; ValueName = "HideFileExt"; ValueType = "DWORD"; ValueData = "0"; Force = $true; Ensure = "Present"; PsDscRunAsCredential = $DomainAdminCredsQualified }
         
         # This script is still needed
-        Script CreateWSManSPNsIfNeeded {
-            SetScript  =
+        Script CreateWSManSPNsIfNeeded
+        {
+            SetScript =
             {
                 # A few times, deployment failed because of this error:
                 # "The WinRM client cannot process the request. A computer policy does not allow the delegation of the user credentials to the target computer because the computer is not trusted."
@@ -486,13 +362,13 @@ configuration ConfigureFEVM
                 setspn.exe -S "WSMAN/$computerName" "$computerName"
                 setspn.exe -S "WSMAN/$computerName.$domainFQDN" "$computerName"
             }
-            GetScript  = { }
+            GetScript = { }
             # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
             TestScript = 
             {
                 $computerName = $using:ComputerName
                 $samAccountName = "$computerName$"
-                if ((Get-ADComputer -Filter { (SamAccountName -eq $samAccountName) } -Property serviceprincipalname | Select-Object serviceprincipalname | Where-Object { $_.ServicePrincipalName -like "WSMAN/$computerName" }) -ne $null) {
+                if ((Get-ADComputer -Filter {(SamAccountName -eq $samAccountName)} -Property serviceprincipalname | Select-Object serviceprincipalname | Where-Object {$_.ServicePrincipalName -like "WSMAN/$computerName"}) -ne $null) {
                     # SPN is present
                     return $true
                 }
@@ -501,11 +377,12 @@ configuration ConfigureFEVM
                     return $false
                 }
             }
-            DependsOn  = "[PendingReboot]RebootOnSignalFromJoinDomain"
+            DependsOn = "[PendingReboot]RebootOnSignalFromJoinDomain"
         }
 
         # Fiddler must be installed as $DomainAdminCredsQualified because it's a per-user installation
-        cChocoPackageInstaller InstallFiddler {
+        cChocoPackageInstaller InstallFiddler
+        {
             Name                 = "fiddler"
             Ensure               = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
@@ -513,7 +390,8 @@ configuration ConfigureFEVM
         }
 
         # Install ULSViewer as $DomainAdminCredsQualified to ensure that the shortcut is visible on the desktop
-        cChocoPackageInstaller InstallUlsViewer {
+        cChocoPackageInstaller InstallUlsViewer
+        {
             Name                 = "ulsviewer"
             Ensure               = "Present"
             PsDscRunAsCredential = $DomainAdminCredsQualified
@@ -523,46 +401,41 @@ configuration ConfigureFEVM
         #********************************************************************
         # Wait for SharePoint app server to be ready
         #********************************************************************
-        Script DscStatus_WaitForSPFarmReadyToJoin {
-            SetScript  =
-            {
-                "$(Get-Date -Format u)`t$($using:ComputerName)`tWait for the SharePoint farm to be ready to be joined..." | Out-File -FilePath $using:DscStatusFilePath -Append
-            }
-            GetScript  = { } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-            TestScript = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
-        }
-
         # The best test is to check the latest HTTP team site to be created, after all SharePoint services are provisioned.
         # If this server joins the farm while a SharePoint service is being created on the 1st server, it may block its creation forever.
         # Not testing HTTPS avoid potential issues with the root CA cert maybe not present in the machine store yet
-        Script WaitForSPFarmReadyToJoin {
-            SetScript            =
+        Script WaitForSPFarmReadyToJoin
+        {
+            SetScript =
             {
                 $uri = "http://$($using:SharePointSitesAuthority)/sites/team"
                 $sleepTime = 30
                 $currentStatusCode = 0
                 $expectedStatusCode = 200
                 do {
-                    try {
+                    try
+                    {
                         Write-Verbose -Verbose -Message "Trying to connect to $uri..."
                         # -UseDefaultCredentials: Does NTLM authN
                         # -UseBasicParsing: Avoid exception because IE was not first launched yet
-                        $Response = Invoke-WebRequest -Uri $uri -UseDefaultCredentials -TimeoutSec 10 -ErrorAction Stop -UseBasicParsing
+                        $Response = Invoke-WebRequest -UseBasicParsing -Uri $uri -UseDefaultCredentials -TimeoutSec 10 -ErrorAction Stop
                         # When it will be actually ready, site will respond 401/302/200, and $Response.StatusCode will be 200
                         $currentStatusCode = $Response.StatusCode
                     }
-                    catch [System.Net.WebException] {
+                    catch [System.Net.WebException]
+                    {
                         # We always expect a WebException until site is actually up. 
                         # Write-Verbose -Verbose -Message "Request failed with a WebException: $($_.Exception)"
                         if ($null -ne $_.Exception.Response) {
                             $currentStatusCode = $_.Exception.Response.StatusCode.value__
                         }
                     }
-                    catch {
+                    catch
+                    {
                         Write-Verbose -Verbose -Message "Request failed with an unexpected exception: $($_.Exception)"
                     }
 
-                    if ($currentStatusCode -ne $expectedStatusCode) {
+                    if ($currentStatusCode -ne $expectedStatusCode){
                         Write-Verbose -Verbose -Message "Connection to $uri... returned status code $currentStatusCode while $expectedStatusCode is expected, retrying in $sleepTime secs..."
                         Start-Sleep -Seconds $sleepTime
                     }
@@ -578,7 +451,8 @@ configuration ConfigureFEVM
         }
 
         # Setup account is created by SP VM so it must be added to local admins group after the waiting script, to be sure it was created
-        Group AddSPSetupAccountToAdminGroup {
+        Group AddSPSetupAccountToAdminGroup
+        {
             GroupName            = "Administrators"
             Ensure               = "Present"
             MembersToInclude     = @("$($SPSetupCredsQualified.UserName)")
@@ -589,8 +463,9 @@ configuration ConfigureFEVM
 
         # Update GPO to ensure the root certificate of the CA is present in "cert:\LocalMachine\Root\", otherwise certificate request will fail
         # At this point it is safe to assume that the DC finished provisioning AD CS
-        Script UpdateGPOToTrustRootCACert {
-            SetScript            =
+        Script UpdateGPOToTrustRootCACert
+        {
+            SetScript =
             {
                 gpupdate.exe /force
             }
@@ -604,8 +479,7 @@ configuration ConfigureFEVM
                 
                 if ($null -eq $cert) {
                     return $false   # Run SetScript
-                }
-                else {
+                } else {
                     return $true    # Root CA already present
                 }
             }
@@ -616,8 +490,9 @@ configuration ConfigureFEVM
         # If multiple servers join the SharePoint farm at the same time, resource JoinSPFarm may fail on a server with this error:
         # "Scheduling DiagnosticsService timer job failed" (SharePoint event id aitap or aitaq)
         # This script uses the computer name (FE-0 FE-1) to sequence the time when servers join the farm
-        Script WaitToAvoidServersJoiningFarmSimultaneously {
-            SetScript            =
+        Script WaitToAvoidServersJoiningFarmSimultaneously
+        {
+            SetScript =
             {                
                 $computerName = $env:computerName
                 $digitFound = $computerName -match '\d+'
@@ -633,7 +508,7 @@ configuration ConfigureFEVM
                 New-Item -Path HKLM:\SOFTWARE\DscScriptExecution\Flag_WaitToAvoidServersJoiningFarmSimultaneously -Force
             }
             GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-            TestScript           = { # Make sure this script resource runs only 1 time (and not at each reboot)
+            TestScript           = {    # Make sure this script resource runs only 1 time (and not at each reboot)
                 return (Test-Path HKLM:\SOFTWARE\DscScriptExecution\Flag_WaitToAvoidServersJoiningFarmSimultaneously)
             }
             PsDscRunAsCredential = $DomainAdminCredsQualified
@@ -643,24 +518,45 @@ configuration ConfigureFEVM
         #**********************************************************
         # Join SharePoint farm
         #**********************************************************
-        SPFarm JoinSPFarm {
-            DatabaseServer                     = $SQLAlias
-            FarmConfigDatabaseName             = $SPDBPrefix + "Config"
-            Passphrase                         = $SPPassphraseCreds
-            FarmAccount                        = $SPFarmCredsQualified
-            PsDscRunAsCredential               = $SPSetupCredsQualified
-            AdminContentDatabaseName           = $SPDBPrefix + "AdminContent"
-            # If RunCentralAdmin is false and configdb does not exist, SPFarm checks during 30 mins if configdb got created and joins the farm
-            RunCentralAdmin                    = $false
-            IsSingleInstance                   = "Yes"
-            ServerRole                         = "WebFrontEnd"
-            SkipRegisterAsDistributedCacheHost = $true
-            DatabaseConnectionEncryption       = "Optional" # required with 2025-08 PU+
-            Ensure                             = "Present"
-            DependsOn                          = "[Script]WaitToAvoidServersJoiningFarmSimultaneously"
+        if ($SharePointVersion -eq "2013") {
+            # Do not set property ServerRole as it is not supported in SharePoint 2013
+            SPFarm JoinSPFarm
+            {
+                DatabaseServer            = $SQLAlias
+                FarmConfigDatabaseName    = $SPDBPrefix + "Config"
+                Passphrase                = $SPPassphraseCreds
+                FarmAccount               = $SPFarmCredsQualified
+                PsDscRunAsCredential      = $SPSetupCredsQualified
+                AdminContentDatabaseName  = $SPDBPrefix + "AdminContent"
+                # If RunCentralAdmin is false and configdb does not exist, SPFarm checks during 30 mins if configdb got created and joins the farm
+                RunCentralAdmin           = $false
+                IsSingleInstance          = "Yes"
+                SkipRegisterAsDistributedCacheHost = $true
+                Ensure                    = "Present"
+                DependsOn                 = "[Script]WaitToAvoidServersJoiningFarmSimultaneously"
+            }
+        } else {
+            # Set property ServerRole in all SharePoint versions that support it
+            SPFarm JoinSPFarm
+            {
+                DatabaseServer            = $SQLAlias
+                FarmConfigDatabaseName    = $SPDBPrefix + "Config"
+                Passphrase                = $SPPassphraseCreds
+                FarmAccount               = $SPFarmCredsQualified
+                PsDscRunAsCredential      = $SPSetupCredsQualified
+                AdminContentDatabaseName  = $SPDBPrefix + "AdminContent"
+                # If RunCentralAdmin is false and configdb does not exist, SPFarm checks during 30 mins if configdb got created and joins the farm
+                RunCentralAdmin           = $false
+                IsSingleInstance          = "Yes"
+                ServerRole                = "WebFrontEnd"
+                SkipRegisterAsDistributedCacheHost = $true
+                Ensure                    = "Present"
+                DependsOn                 = "[Script]WaitToAvoidServersJoiningFarmSimultaneously"
+            }
         }
 
-        DnsRecordCname UpdateDNSAliasSPSites {
+        DnsRecordCname UpdateDNSAliasSPSites
+        {
             Name                 = $SharePointSitesAuthority
             ZoneName             = $DomainFQDN
             DnsServer            = $DCServerName
@@ -670,7 +566,8 @@ configuration ConfigureFEVM
             DependsOn            = "[SPFarm]JoinSPFarm"
         }
 
-        DnsRecordCname UpdateDNSAliasOhMy {
+        DnsRecordCname UpdateDNSAliasOhMy
+        {
             Name                 = $MySiteHostAlias
             ZoneName             = $DomainFQDN
             DnsServer            = $DCServerName
@@ -680,7 +577,8 @@ configuration ConfigureFEVM
             DependsOn            = "[SPFarm]JoinSPFarm"
         }
 
-        DnsRecordCname UpdateDNSAliasHNSC1 {
+        DnsRecordCname UpdateDNSAliasHNSC1
+        {
             Name                 = $HNSC1Alias
             ZoneName             = $DomainFQDN
             DnsServer            = $DCServerName
@@ -690,8 +588,42 @@ configuration ConfigureFEVM
             DependsOn            = "[SPFarm]JoinSPFarm"
         }
 
-        Script WarmupSites {
-            SetScript            =
+        CertReq SPSSiteCert
+        {
+            CARootName             = "$DomainNetbiosName-$DCServerName-CA"
+            CAServerFQDN           = "$DCServerName.$DomainFQDN"
+            Subject                = "$SharePointSitesAuthority.$DomainFQDN"
+            FriendlyName           = "$SharePointSitesAuthority.$DomainFQDN"
+            SubjectAltName         = "dns=*.$DomainFQDN&dns=*.$AppDomainIntranetFQDN"
+            KeyLength              = '2048'
+            Exportable             = $true
+            ProviderName           = '"Microsoft RSA SChannel Cryptographic Provider"'
+            OID                    = '1.3.6.1.5.5.7.3.1'
+            KeyUsage               = '0xa0'
+            CertificateTemplate    = 'WebServer'
+            AutoRenew              = $true
+            Credential             = $DomainAdminCredsQualified
+            DependsOn              = "[Script]UpdateGPOToTrustRootCACert"
+        }
+
+        Website SetHTTPSCertificate
+        {
+            Name                 = "SharePoint - 443"
+            BindingInfo          = DSC_WebBindingInformation
+            {
+                Protocol             = "HTTPS"
+                Port                 = 443
+                CertificateStoreName = "My"
+                CertificateSubject   = "$SharePointSitesAuthority.$DomainFQDN"
+            }
+            Ensure               = "Present"
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+            DependsOn            = "[CertReq]SPSSiteCert", "[SPFarm]JoinSPFarm"
+        }
+
+        Script WarmupSites
+        {
+            SetScript =
             {
                 $jobBlock = {
                     $uri = $args[0]
@@ -700,7 +632,7 @@ configuration ConfigureFEVM
                         # -UseDefaultCredentials: Does NTLM authN
                         # -UseBasicParsing: Avoid exception because IE was not first launched yet
                         # Expected traffic is HTTP 401/302/200, and $Response.StatusCode is 200
-                        Invoke-WebRequest -Uri $uri -UseDefaultCredentials -TimeoutSec 40 -UseBasicParsing -ErrorAction SilentlyContinue
+                        Invoke-WebRequest -UseBasicParsing -Uri $uri -UseDefaultCredentials -TimeoutSec 40 -ErrorAction SilentlyContinue
                         Write-Verbose -Verbose -Message "Connected successfully to $uri"
                     }
                     catch [System.Exception] {
@@ -725,54 +657,13 @@ configuration ConfigureFEVM
             DependsOn            = "[DnsRecordCname]UpdateDNSAliasSPSites"
         }
 
-        Script SetFarmPropertiesForOIDC {
-            SetScript            = 
+        Script CreateShortcuts
+        {
+            SetScript =
             {
-                # Import OIDC-specific cookie certificate and set required permissions
-                $spTrustedSitesName = $using:SharePointSitesAuthority
-                $DCSetupPath = Join-Path -Path $using:DCSetupPath -ChildPath "Certificates"
-                
-                # Import OIDC-specific cookie certificate created in 1st SharePoint Server of the farm
-                $cookieCertificateFileName = "SharePoint OIDC nonce cert.pfx"
-                $cookieCertificateFilePath = Join-Path -Path $DCSetupPath -ChildPath $cookieCertificateFileName
-                $cert = Import-PfxCertificate -FilePath $cookieCertificateFilePath -CertStoreLocation Cert:\localMachine\My -Exportable
-
-                # Grant the application pool access to the private key of the cookie certificate
-                $wa = Get-SPWebApplication "http://$spTrustedSitesName"
-                $apppoolUserName = $wa.ApplicationPool.Username
-                $rsaCert = [System.Security.Cryptography.X509Certificates.RSACertificateExtensions]::GetRSAPrivateKey($cert)
-                $fileName = $rsaCert.key.UniqueName
-                $path = "$env:ALLUSERSPROFILE\Microsoft\Crypto\RSA\MachineKeys\$fileName"
-                $permissions = Get-Acl -Path $path
-                $access_rule = New-Object System.Security.AccessControl.FileSystemAccessRule($apppoolUserName, 'Read', 'None', 'None', 'Allow')
-                $permissions.AddAccessRule($access_rule)
-                Set-Acl -Path $path -AclObject $permissions
-            }
-            GetScript            =  
-            {
-                # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-                return @{ "Result" = "false" }
-            }
-            TestScript           = 
-            {
-                # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
-                # Import-Module SharePointServer | Out-Null
-                # $f = Get-SPFarm
-                # if ($f.Farm.Properties.ContainsKey('SP-NonceCookieCertificateThumbprint') -eq $false) {
-                if ((Get-ChildItem -Path "cert:\LocalMachine\My\" | Where-Object { $_.Subject -eq "CN=SharePoint Cookie Cert" }) -eq $null) {
-                    return $false
-                }
-                else {
-                    return $true
-                }
-            }
-            DependsOn            = "[SPFarm]JoinSPFarm"
-            PsDscRunAsCredential = $DomainAdminCredsQualified
-        }
-
-        Script CreateShortcuts {
-            SetScript            =
-            {
+                $sharePointVersion = $using:SharePointVersion
+                $directoryVersion = "16"
+                if ($sharePointVersion -eq "2013") { $directoryVersion = "15" }
                 $WshShell = New-Object -comObject WScript.Shell
                 # Shortcut to the setup folder
                 $Shortcut = $WshShell.CreateShortcut("$Home\Desktop\Setup data.lnk")
@@ -780,20 +671,20 @@ configuration ConfigureFEVM
                 $Shortcut.Save()
 
                 # Shortcut for SharePoint Central Administration
-                $Shortcut = $WshShell.CreateShortcut("$Home\Desktop\SharePoint Central Administration.lnk")
-                $Shortcut.TargetPath = "C:\Program Files\Common Files\microsoft shared\Web Server Extensions\16\BIN\psconfigui.exe"
+                $Shortcut = $WshShell.CreateShortcut("$Home\Desktop\SharePoint $sharePointVersion Central Administration.lnk")
+                $Shortcut.TargetPath = "C:\Program Files\Common Files\microsoft shared\Web Server Extensions\$directoryVersion\BIN\psconfigui.exe"
                 $Shortcut.Arguments = "-cmd showcentraladmin"
                 $Shortcut.Save()
 
                 # Shortcut for SharePoint Products Configuration Wizard
-                $Shortcut = $WshShell.CreateShortcut("$Home\Desktop\SharePoint Products Configuration Wizard.lnk")
-                $Shortcut.TargetPath = "C:\Program Files\Common Files\microsoft shared\Web Server Extensions\16\BIN\psconfigui.exe"
+                $Shortcut = $WshShell.CreateShortcut("$Home\Desktop\SharePoint $sharePointVersion Products Configuration Wizard.lnk")
+                $Shortcut.TargetPath = "C:\Program Files\Common Files\microsoft shared\Web Server Extensions\$directoryVersion\BIN\psconfigui.exe"
                 $Shortcut.Save()
 
                 # Shortcut for SharePoint Management Shell
-                $Shortcut = $WshShell.CreateShortcut("$Home\Desktop\SharePoint Management Shell.lnk")
+                $Shortcut = $WshShell.CreateShortcut("$Home\Desktop\SharePoint $sharePointVersion Management Shell.lnk")
                 $Shortcut.TargetPath = "C:\Windows\System32\WindowsPowerShell\v1.0\PowerShell.exe"
-                $Shortcut.Arguments = " -NoExit -Command ""& 'C:\Program Files\WindowsPowerShell\Modules\SharePointServer\SharePoint.ps1'"
+                $Shortcut.Arguments = " -NoExit -Command ""& 'C:\Program Files\Common Files\Microsoft Shared\Web Server Extensions\$directoryVersion\CONFIG\POWERSHELL\Registration\SharePoint.ps1'"""
                 $Shortcut.Save()
             }
             GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
@@ -833,42 +724,44 @@ configuration ConfigureFEVM
 
         #             # Create shortcut to DSC configuration folder
         #             $Shortcut = $WshShell.CreateShortcut("$Home\Desktop\DSC config.lnk")
-        #             $Shortcut.TargetPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\{0}\DSCWork\ConfigureFESE.0" -f $folderWithMaxVersionNumber
+        #             $Shortcut.TargetPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\{0}\DSCWork\ConfigureFELegacy.0" -f $folderWithMaxVersionNumber
         #             $Shortcut.Save()
         #         }
         #         GetScript = { }
-        #         DependsOn = "[cChocoPackageInstaller]InstallPython"
+        #         DependsOn            = "[cChocoPackageInstaller]InstallPython"
         #         PsDscRunAsCredential = $DomainAdminCredsQualified
         #     }
         # }
 
-        Script DscStatus_Finished {
-            SetScript  =
+        Script DscStatus_Finished
+        {
+            SetScript =
             {
                 "$(Get-Date -Format u)`t$($using:ComputerName)`tDSC Configuration on finished." | Out-File -FilePath $using:DscStatusFilePath -Append
             }
-            GetScript  = { } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-            TestScript = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
+            GetScript            = { } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+            TestScript           = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
         }
     }
 }
 
-function Get-NetBIOSName {
+function Get-NetBIOSName
+{
     [OutputType([string])]
     param(
         [string]$DomainFQDN
     )
 
     if ($DomainFQDN.Contains('.')) {
-        $length = $DomainFQDN.IndexOf('.')
+        $length=$DomainFQDN.IndexOf('.')
         if ( $length -ge 16) {
-            $length = 15
+            $length=15
         }
-        return $DomainFQDN.Substring(0, $length)
+        return $DomainFQDN.Substring(0,$length)
     }
     else {
         if ($DomainFQDN.Length -gt 15) {
-            return $DomainFQDN.Substring(0, 15)
+            return $DomainFQDN.Substring(0,15)
         }
         else {
             return $DomainFQDN
@@ -876,8 +769,15 @@ function Get-NetBIOSName {
     }
 }
 
+function Get-SPDSCInstalledProductVersion
+{
+    $pathToSearch = "C:\Program Files\Common Files\microsoft shared\Web Server Extensions\*\ISAPI\Microsoft.SharePoint.dll"
+    $fullPath = Get-Item $pathToSearch | Sort-Object { $_.Directory } -Descending | Select-Object -First 1
+    return (Get-Command $fullPath).FileVersionInfo
+}
+
 <#
-help ConfigureFEVM
+help ConfigSpFrontend
 
 $password = ConvertTo-SecureString -String "mytopsecurepassword" -AsPlainText -Force
 $DomainAdminCreds = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList "yvand", $password
@@ -889,34 +789,12 @@ $DomainFQDN = "contoso.local"
 $DCServerName = "DC"
 $SQLServerName = "SQL"
 $SQLAlias = "SQLAlias"
-$SharePointVersion = "Subscription-Latest"
-$SharePointSitesAuthority = "spsites"
-$EnableAnalysis = $true
-$SharePointBits = @(
-    @{
-        Label = "RTM"; 
-        Packages = @(
-            @{ DownloadUrl = "https://go.microsoft.com/fwlink/?linkid=2171943"; ChecksumType = "SHA256"; Checksum = "C576B847C573234B68FC602A0318F5794D7A61D8149EB6AE537AF04470B7FC05" }
-        )
-    },
-    @{
-        Label = "22H2"; 
-        Packages = @(
-            @{ DownloadUrl = "https://download.microsoft.com/download/8/d/f/8dfcb515-6e49-42e5-b20f-5ebdfd19d8e7/wssloc-subscription-kb5002270-fullfile-x64-glb.exe"; ChecksumType = "SHA256"; Checksum = "7E496530EB873146650A9E0653DE835CB2CAD9AF8D154CBD7387BB0F2297C9FC" },
-            @{ DownloadUrl = "https://download.microsoft.com/download/3/f/5/3f5b1ee0-3336-45d7-b2f4-1e6af977d574/sts-subscription-kb5002271-fullfile-x64-glb.exe"; ChecksumType = "SHA256"; Checksum = "247011443AC573D4F03B1622065A7350B8B3DAE04D6A5A6DC64C8270A3BE7636" }
-        )
-    },
-    @{
-        Label = "Latest"; 
-        Packages = @(
-            @{ DownloadUrl = "https://download.microsoft.com/download/d/6/d/d6dcc9e7-744e-43e1-b4be-206a6acd4f88/sts-subscription-kb5002331-fullfile-x64-glb.exe" },
-            @{ DownloadUrl = "https://download.microsoft.com/download/d/3/5/d354b6e2-fa16-48e0-b3f8-423f7ca279a0/wssloc-subscription-kb5002326-fullfile-x64-glb.exe" }
-        )
-    }
-)
+$SharePointVersion = "2019"
+$EnableAnalysis = $false
+$SharePointBits = @()
 
-$outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.83.5\DSCWork\ConfigureFESE.0\ConfigureFEVM"
-ConfigureFEVM -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPPassphraseCreds $SPPassphraseCreds -DNSServerIP $DNSServerIP -DomainFQDN $DomainFQDN -DCServerName $DCServerName -SQLServerName $SQLServerName -SQLAlias $SQLAlias -SharePointVersion $SharePointVersion -SharePointSitesAuthority $SharePointSitesAuthority -EnableAnalysis $EnableAnalysis -SharePointBits $SharePointBits -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath $outputPath
+$outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.83.5\DSCWork\ConfigureFELegacy.0\ConfigSpFrontend"
+ConfigSpFrontend -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPPassphraseCreds $SPPassphraseCreds -DNSServerIP $DNSServerIP -DomainFQDN $DomainFQDN -DCServerName $DCServerName -SQLServerName $SQLServerName -SQLAlias $SQLAlias -SharePointVersion $SharePointVersion -EnableAnalysis $EnableAnalysis -SharePointBits $SharePointBits -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath $outputPath
 Set-DscLocalConfigurationManager -Path $outputPath
 Start-DscConfiguration -Path $outputPath -Wait -Verbose -Force
 

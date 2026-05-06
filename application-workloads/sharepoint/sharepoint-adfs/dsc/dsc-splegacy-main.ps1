@@ -1,4 +1,4 @@
-configuration ConfigureSPVM
+configuration ConfigSpMain
 {
     param
     (
@@ -20,18 +20,20 @@ configuration ConfigureSPVM
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPADDirSyncCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPPassphraseCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSuperUserCreds,
-        [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSuperReaderCreds
+        [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSuperReaderCreds,
+        [Parameter(Mandatory = $false)] [Boolean] $DefaultZoneMustBeHttps, #not used, present to allow parameter to be passed
+        [Parameter(Mandatory = $false)] [String] $ConfigurationLevel #not used, present to allow parameter to be passed
     )
 
-    Import-DscResource -ModuleName ComputerManagementDsc -ModuleVersion 10.0.0 # Custom
+    Import-DscResource -ModuleName ComputerManagementDsc -ModuleVersion 10.0.0
     Import-DscResource -ModuleName NetworkingDsc -ModuleVersion 9.1.0
-    Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion 6.7.0
+    Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion 6.7.1
     Import-DscResource -ModuleName xCredSSP -ModuleVersion 1.4.0
     Import-DscResource -ModuleName WebAdministrationDsc -ModuleVersion 4.2.1
-    Import-DscResource -ModuleName SharePointDsc -ModuleVersion 5.7.0 # Custom workaround on SPInstall
-    Import-DscResource -ModuleName DnsServerDsc -ModuleVersion 3.0.1
+    Import-DscResource -ModuleName SharePointDsc -ModuleVersion 5.7.0 # Custom workaround on SPInstall and SPInstallPrereqs
+    Import-DscResource -ModuleName DnsServerDsc -ModuleVersion 3.0.3
     Import-DscResource -ModuleName CertificateDsc -ModuleVersion 6.0.0
-    Import-DscResource -ModuleName SqlServerDsc -ModuleVersion 17.1.0 # Custom workaround on SqlSecureConnection
+    Import-DscResource -ModuleName SqlServerDsc -ModuleVersion 17.5.1 # Custom workaround on SqlSecureConnection
     Import-DscResource -ModuleName cChoco -ModuleVersion 2.6.0.0    # With custom changes to implement retry on package downloads
     Import-DscResource -ModuleName xPSDesiredStateConfiguration -ModuleVersion 9.2.1
 
@@ -42,6 +44,8 @@ configuration ConfigureSPVM
     [String] $DomainLDAPPath = "DC=$($DomainFQDN.Split(".")[0]),DC=$($DomainFQDN.Split(".")[1])"
     [String] $AdditionalUsersPath = "OU=AdditionalUsers,DC={0},DC={1}" -f $DomainFQDN.Split('.')[0], $DomainFQDN.Split('.')[1]
 
+    # Format username as user@contoso.local to workaround issue https://github.com/dsccommunity/ComputerManagementDsc/issues/413
+    [System.Management.Automation.PSCredential] $DomainAdminCredsToJoinDomain = New-Object System.Management.Automation.PSCredential ("$($DomainAdminCreds.UserName)@$($DomainFQDN)", $DomainAdminCreds.Password)
     # Format credentials to be qualified by domain name: "domain\username"
     [System.Management.Automation.PSCredential] $DomainAdminCredsQualified = New-Object System.Management.Automation.PSCredential ("$DomainNetbiosName\$($DomainAdminCreds.UserName)", $DomainAdminCreds.Password)
     [System.Management.Automation.PSCredential] $SPSetupCredsQualified = New-Object System.Management.Automation.PSCredential ("$DomainNetbiosName\$($SPSetupCreds.UserName)", $SPSetupCreds.Password)
@@ -345,7 +349,7 @@ configuration ConfigureSPVM
         {
             Name       = $ComputerName
             DomainName = $DomainFQDN
-            Credential = $DomainAdminCredsQualified
+            Credential = $DomainAdminCredsToJoinDomain
             DependsOn  = "[Script]WaitForADFSFarmReady"
         }
 
@@ -468,18 +472,6 @@ configuration ConfigureSPVM
         #**********************************************************
         # Provision required accounts for SharePoint
         #**********************************************************
-        ADUser CreateSPSetupAccount
-        {   # Both SQL and SharePoint DSCs run this SPSetupAccount AD account creation
-            DomainName           = $DomainFQDN
-            UserName             = $SPSetupCreds.UserName
-            UserPrincipalName    = "$($SPSetupCreds.UserName)@$DomainFQDN"
-            Password             = $SPSetupCreds
-            PasswordNeverExpires = $true
-            Ensure               = "Present"
-            PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[PendingReboot]RebootOnSignalFromJoinDomain"
-        }
-
         ADUser CreateSParmAccount
         {
             DomainName                    = $DomainFQDN
@@ -499,7 +491,7 @@ configuration ConfigureSPVM
             MembersToInclude     = @("$($SPSetupCredsQualified.UserName)")
             Credential           = $DomainAdminCredsQualified
             PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[ADUser]CreateSPSetupAccount"
+            DependsOn            = "[PendingReboot]RebootOnSignalFromJoinDomain"
         }
 
         ADUser CreateSPSvcAccount
@@ -1379,7 +1371,7 @@ configuration ConfigureSPVM
                         # -UseDefaultCredentials: Does NTLM authN
                         # -UseBasicParsing: Avoid exception because IE was not first launched yet
                         # Expected traffic is HTTP 401/302/200, and $Response.StatusCode is 200
-                        Invoke-WebRequest -Uri $uri -UseDefaultCredentials -TimeoutSec 40 -UseBasicParsing -ErrorAction SilentlyContinue
+                        Invoke-WebRequest -UseBasicParsing -Uri $uri -UseDefaultCredentials -TimeoutSec 40 -ErrorAction SilentlyContinue
                         Write-Verbose -Verbose -Message "Connected successfully to $uri"
                     }
                     catch [System.Exception] {
@@ -1443,25 +1435,25 @@ configuration ConfigureSPVM
                     }
 
                     foreach ($accountName in $accounts) {
-                        $profile = $null
+                        $userProfile = $null
                         try {
-                            $profile = $upm.GetUserProfile($accountName)
+                            $userProfile = $upm.GetUserProfile($accountName)
                             Write-Verbose -Verbose -Message "Got existing user profile for '$accountName'"
                         }
                         catch {
-                            $profile = $upm.CreateUserProfile($accountName);
+                            $userProfile = $upm.CreateUserProfile($accountName);
                             Write-Verbose -Verbose -Message "Successfully created user profile for '$accountName'"
                         }
                     
-                        if ($null -eq $profile) {
+                        if ($null -eq $userProfile) {
                             Write-Verbose -Verbose -Message "Unable to get/create the profile for '$accountName', give up"
                             continue
                         }
                         
-                        if ($null -eq $profile.PersonalSite) {
+                        if ($null -eq $userProfile.PersonalSite) {
                             Write-Verbose -Verbose -Message "Adding creation of personal site for '$accountName' to the queue..."
                             try {
-                                $profile.CreatePersonalSiteEnque($false)
+                                $userProfile.CreatePersonalSiteEnque($false)
                                 Write-Verbose -Verbose -Message "Successfully enqueued the creation of personal site for '$accountName'"
                             }
                             catch {
@@ -1584,7 +1576,7 @@ function Get-LatestGitHubRelease
     # Force protocol TLS 1.2 in Invoke-WebRequest to fix TLS/SSL connection error with GitHub in Windows Server 2012 R2, as documented in https://docs.microsoft.com/en-us/azure/azure-stack/azure-stack-update-1802
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
-    $latestRelease = Invoke-WebRequest "https://api.github.com/repos/$Repo/releases/$ReleaseId" -Headers @{"Accept"="application/json"} -UseBasicParsing
+    $latestRelease = Invoke-WebRequest -UseBasicParsing "https://api.github.com/repos/$Repo/releases/$ReleaseId" -Headers @{"Accept"="application/json"}
     $json = $latestRelease.Content | ConvertFrom-Json
     $asset = $json.assets | Where-Object{$_.name -like $Artifact}
     $assetUrl = $asset.browser_download_url
@@ -1623,7 +1615,7 @@ function Get-SPDSCInstalledProductVersion
 }
 
 <#
-help ConfigureSPVM
+help ConfigSpMain
 
 $password = ConvertTo-SecureString -String "mytopsecurepassword" -AsPlainText -Force
 $DomainAdminCreds = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList "yvand", $password
@@ -1645,8 +1637,8 @@ $SharePointSitesAuthority = "spsites"
 $SharePointCentralAdminPort = 5000
 $EnableAnalysis = $true
 
-$outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.83.5\DSCWork\ConfigureSPLegacy.0\ConfigureSPVM"
-ConfigureSPVM -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPSvcCreds $SPSvcCreds -SPAppPoolCreds $SPAppPoolCreds -SPADDirSyncCreds $SPADDirSyncCreds -SPPassphraseCreds $SPPassphraseCreds -SPSuperUserCreds $SPSuperUserCreds -SPSuperReaderCreds $SPSuperReaderCreds -DNSServerIP $DNSServerIP -DomainFQDN $DomainFQDN -DCServerName $DCServerName -SQLServerName $SQLServerName -SQLAlias $SQLAlias -SharePointVersion $SharePointVersion -SharePointSitesAuthority $SharePointSitesAuthority -SharePointCentralAdminPort $SharePointCentralAdminPort -EnableAnalysis $EnableAnalysis -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath $outputPath
+$outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.83.5\DSCWork\ConfigureSPLegacy.0\ConfigSpMain"
+ConfigSpMain -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPSvcCreds $SPSvcCreds -SPAppPoolCreds $SPAppPoolCreds -SPADDirSyncCreds $SPADDirSyncCreds -SPPassphraseCreds $SPPassphraseCreds -SPSuperUserCreds $SPSuperUserCreds -SPSuperReaderCreds $SPSuperReaderCreds -DNSServerIP $DNSServerIP -DomainFQDN $DomainFQDN -DCServerName $DCServerName -SQLServerName $SQLServerName -SQLAlias $SQLAlias -SharePointVersion $SharePointVersion -SharePointSitesAuthority $SharePointSitesAuthority -SharePointCentralAdminPort $SharePointCentralAdminPort -EnableAnalysis $EnableAnalysis -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath $outputPath
 Set-DscLocalConfigurationManager -Path $outputPath
 Start-DscConfiguration -Path $outputPath -Wait -Verbose -Force
 
