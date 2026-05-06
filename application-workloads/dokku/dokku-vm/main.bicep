@@ -14,7 +14,7 @@ param dnsLabelPrefix string
 param ubuntuOSVersion string = 'ubuntu-24_04-lts'
 
 @description('The Dokku version to launch')
-param dokkuVersion string = '0.37.9'
+param dokkuVersion string = '0.38.0'
 
 @description('Size of the virtual machine')
 param vmSize string = 'Standard_D2S_V6'
