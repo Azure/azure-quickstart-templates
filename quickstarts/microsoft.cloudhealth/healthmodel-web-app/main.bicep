@@ -211,6 +211,10 @@ resource frontendEntity 'Microsoft.CloudHealth/healthmodels/entities@2026-05-01-
   name: 'frontend'
   properties: {
     displayName: 'Frontend'
+    canvasPosition: {
+      x: 100
+      y: 200
+    }
   }
 }
 
@@ -219,6 +223,10 @@ resource backendEntity 'Microsoft.CloudHealth/healthmodels/entities@2026-05-01-p
   name: 'backend'
   properties: {
     displayName: 'Backend'
+    canvasPosition: {
+      x: 400
+      y: 200
+    }
   }
 }
 
@@ -227,6 +235,10 @@ resource dataEntity 'Microsoft.CloudHealth/healthmodels/entities@2026-05-01-prev
   name: 'data'
   properties: {
     displayName: 'Data'
+    canvasPosition: {
+      x: 700
+      y: 200
+    }
   }
 }
 
@@ -239,6 +251,10 @@ resource webEntity 'Microsoft.CloudHealth/healthmodels/entities@2026-05-01-previ
   name: 'web'
   properties: {
     displayName: 'Web'
+    canvasPosition: {
+      x: 0
+      y: 400
+    }
   }
 }
 
@@ -247,6 +263,10 @@ resource apiGatewayEntity 'Microsoft.CloudHealth/healthmodels/entities@2026-05-0
   name: 'api-gateway'
   properties: {
     displayName: 'API Gateway'
+    canvasPosition: {
+      x: 200
+      y: 400
+    }
   }
 }
 
@@ -255,6 +275,10 @@ resource apiEntity 'Microsoft.CloudHealth/healthmodels/entities@2026-05-01-previ
   name: 'api'
   properties: {
     displayName: 'API'
+    canvasPosition: {
+      x: 350
+      y: 400
+    }
   }
 }
 
@@ -263,6 +287,10 @@ resource workerEntity 'Microsoft.CloudHealth/healthmodels/entities@2026-05-01-pr
   name: 'worker'
   properties: {
     displayName: 'Worker'
+    canvasPosition: {
+      x: 500
+      y: 400
+    }
   }
 }
 
@@ -271,6 +299,10 @@ resource databaseEntity 'Microsoft.CloudHealth/healthmodels/entities@2026-05-01-
   name: 'database'
   properties: {
     displayName: 'Database'
+    canvasPosition: {
+      x: 600
+      y: 400
+    }
   }
 }
 
@@ -279,6 +311,10 @@ resource cacheEntity 'Microsoft.CloudHealth/healthmodels/entities@2026-05-01-pre
   name: 'cache'
   properties: {
     displayName: 'Cache'
+    canvasPosition: {
+      x: 800
+      y: 400
+    }
   }
 }
 
@@ -291,6 +327,10 @@ resource rootEntity 'Microsoft.CloudHealth/healthmodels/entities@2026-05-01-prev
   name: healthModelName
   properties: {
     displayName: healthModelName
+    canvasPosition: {
+      x: 400
+      y: 0
+    }
     alerts: {
       unhealthy: {
         severity: 'Sev1'
