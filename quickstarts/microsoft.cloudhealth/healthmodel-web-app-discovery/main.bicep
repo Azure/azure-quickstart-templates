@@ -41,6 +41,10 @@ resource frontendEntity 'Microsoft.CloudHealth/healthmodels/entities@2026-05-01-
   name: 'frontend'
   properties: {
     displayName: 'Frontend'
+    canvasPosition: {
+      x: 0
+      y: 200
+    }
   }
 }
 
@@ -49,6 +53,10 @@ resource backendEntity 'Microsoft.CloudHealth/healthmodels/entities@2026-05-01-p
   name: 'backend'
   properties: {
     displayName: 'Backend'
+    canvasPosition: {
+      x: 450
+      y: 200
+    }
   }
 }
 
@@ -57,6 +65,10 @@ resource dataEntity 'Microsoft.CloudHealth/healthmodels/entities@2026-05-01-prev
   name: 'data'
   properties: {
     displayName: 'Data'
+    canvasPosition: {
+      x: 900
+      y: 200
+    }
   }
 }
 
@@ -101,6 +113,10 @@ resource customEntity1 'Microsoft.CloudHealth/healthmodels/entities@2026-05-01-p
   name: 'custom-entity-1'
   properties: {
     displayName: 'Custom Entity 1'
+    canvasPosition: {
+      x: 0
+      y: 400
+    }
   }
 }
 
@@ -109,6 +125,10 @@ resource customEntity2 'Microsoft.CloudHealth/healthmodels/entities@2026-05-01-p
   name: 'custom-entity-2'
   properties: {
     displayName: 'Custom Entity 2'
+    canvasPosition: {
+      x: 450
+      y: 400
+    }
   }
 }
 
@@ -117,6 +137,10 @@ resource customEntity3 'Microsoft.CloudHealth/healthmodels/entities@2026-05-01-p
   name: 'custom-entity-3'
   properties: {
     displayName: 'Custom Entity 3'
+    canvasPosition: {
+      x: 900
+      y: 400
+    }
   }
 }
 
