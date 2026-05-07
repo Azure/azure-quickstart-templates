@@ -118,7 +118,7 @@ resource cosmosDbAvailabilitySignal 'Microsoft.CloudHealth/healthmodels/signalde
     evaluationRules: {
       degradedRule: {
         operator: 'LessThan'
-        threshold: 99.9
+        threshold: json('99.9')
       }
       unhealthyRule: {
         operator: 'LessThan'
