@@ -34,7 +34,7 @@ For more information, see the [Azure Health Models documentation](https://learn.
 
 Discovery rules find Azure resources automatically, but not everything you care about is an Azure resource. External APIs, business workflows, cross-resource concerns, and SLA targets don't appear in Azure Resource Graph. This template shows how to combine discovered resources with additional manually-created entities that represent those concepts.
 
-The three additional entities included (custom-entity-1, custom-entity-2, custom-entity-3) are placeholders — rename or replace them to fit your workload. After deployment, attach signals to them manually (KQL queries, Prometheus metrics, or external signals via the API).
+The three additional entities included (custom-entity-1, custom-entity-2, custom-entity-3) are placeholders — rename or replace them to fit your workload. After deployment, attach signals to them manually (KQL queries, Azure Monitor workspace Prometheus metrics, or external signals via the API).
 
 ## Prerequisites
 
@@ -82,7 +82,7 @@ Root: <healthModelName>                              (auto-created)
 
 Discovery rules query Azure Resource Graph and automatically create entities for matching resources with recommended monitoring signals (CPU, memory, disk, etc.).
 
-You can also create entities manually in the template for things that don't appear in Azure Resource Graph. Attach signals to these after deployment via the portal or API — KQL queries, Prometheus metrics, or external signals.
+You can also create entities manually in the template for things that don't appear in Azure Resource Graph. Attach signals to these after deployment via the portal or API — KQL queries, Azure Monitor workspace Prometheus metrics, or external signals.
 
 All entities — whether created by discovery or by the template — are the same resource type. Health state rolls up through relationships to the root regardless of how the entity was created.
 
