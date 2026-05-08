@@ -4,10 +4,10 @@ param healthModelName string
 @description('Location for all resources.')
 param location string = resourceGroup().location
 
-@description('Tag name used to identify resources for discovery.')
+@description('Tag name used to identify resources for discovery. Defaults to workload.')
 param tagName string = 'workload'
 
-@description('Tag value to match.')
+@description('Tag value to match. Defaults to my-web-app.')
 param tagValue string = 'my-web-app'
 
 // Health Model
