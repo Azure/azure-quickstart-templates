@@ -58,7 +58,7 @@ param licenseType string = 'LicenseIncluded'
 var networkSecurityGroupName = 'SQLMI-${managedInstanceName}-NSG'
 var routeTableName = 'SQLMI-${managedInstanceName}-Route-Table'
 
-resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2021-08-01' = {
+resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2025-05-01' = {
   name: networkSecurityGroupName
   location: location
   properties: {
@@ -109,7 +109,7 @@ resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2021-08-0
   }
 }
 
-resource routeTable 'Microsoft.Network/routeTables@2021-08-01' = {
+resource routeTable 'Microsoft.Network/routeTables@2025-05-01' = {
   name: routeTableName
   location: location
   properties: {
@@ -117,7 +117,7 @@ resource routeTable 'Microsoft.Network/routeTables@2021-08-01' = {
   }
 }
 
-resource virtualNetwork 'Microsoft.Network/virtualNetworks@2021-08-01' = {
+resource virtualNetwork 'Microsoft.Network/virtualNetworks@2025-05-01' = {
   name: virtualNetworkName
   location: location
   properties: {
@@ -151,7 +151,7 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2021-08-01' = {
   }
 }
 
-resource managedInstance 'Microsoft.Sql/managedInstances@2021-11-01-preview' = {
+resource managedInstance 'Microsoft.Sql/managedInstances@2025-01-01' = {
   name: managedInstanceName
   location: location
   sku: {
