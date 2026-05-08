@@ -51,10 +51,10 @@ resource rootToCompute 'Microsoft.CloudHealth/healthmodels/relationships@2026-05
 }
 
 // Discovery Rule — discovers VMs by tag, adds recommended signals automatically.
-// Named 'compute' so discovered resources parent under the compute entity.
+// Named after the compute entity so discovered resources parent under it.
 resource discoveryRule 'Microsoft.CloudHealth/healthmodels/discoveryrules@2026-05-01-preview' = {
   parent: healthModel
-  name: 'compute'
+  name: computeEntity.name
   properties: {
     displayName: 'Discover VMs'
     authenticationSetting: authSetting.name

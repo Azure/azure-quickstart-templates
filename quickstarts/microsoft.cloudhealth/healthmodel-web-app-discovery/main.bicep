@@ -177,7 +177,7 @@ resource dataToCustom3 'Microsoft.CloudHealth/healthmodels/relationships@2026-05
 
 resource frontendDiscovery 'Microsoft.CloudHealth/healthmodels/discoveryrules@2026-05-01-preview' = {
   parent: healthModel
-  name: 'frontend'
+  name: frontendEntity.name
   properties: {
     displayName: 'Discover Frontend Web Apps'
     authenticationSetting: authSetting.name
@@ -192,7 +192,7 @@ resource frontendDiscovery 'Microsoft.CloudHealth/healthmodels/discoveryrules@20
 
 resource backendDiscovery 'Microsoft.CloudHealth/healthmodels/discoveryrules@2026-05-01-preview' = {
   parent: healthModel
-  name: 'backend'
+  name: backendEntity.name
   properties: {
     displayName: 'Discover Backend VMs'
     authenticationSetting: authSetting.name
@@ -207,7 +207,7 @@ resource backendDiscovery 'Microsoft.CloudHealth/healthmodels/discoveryrules@202
 
 resource dataDiscovery 'Microsoft.CloudHealth/healthmodels/discoveryrules@2026-05-01-preview' = {
   parent: healthModel
-  name: 'data'
+  name: dataEntity.name
   properties: {
     displayName: 'Discover Data Cosmos DB Accounts'
     authenticationSetting: authSetting.name
