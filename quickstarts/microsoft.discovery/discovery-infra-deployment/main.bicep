@@ -68,6 +68,9 @@ param privateEndpointSubnetPrefix string = '10.0.4.0/24'
 @description('Address prefix for the Agent subnet.')
 param agentSubnetPrefix string = '10.0.5.0/24'
 
+@description('Address prefix for Search Subnet.')
+param searchSubnetPrefix string = '10.0.6.0/24'
+
 @description('VM SKU for the Node Pool.')
 param nodePoolVmSize string = 'Standard_D4s_v6'
 
@@ -143,6 +146,20 @@ resource vnet 'Microsoft.Network/virtualNetworks@2024-05-01' = {
         name: 'agentSubnet'
         properties: {
           addressPrefix: agentSubnetPrefix
+          delegations: [
+            {
+              name: 'Microsoft.App.environments'
+              properties: {
+                serviceName: 'Microsoft.App/environments'
+              }
+            }
+          ]
+        }
+      }
+      {
+        name: 'searchSubnet'
+        properties: {
+          addressPrefix: searchSubnetPrefix
           delegations: [
             {
               name: 'Microsoft.App.environments'
@@ -251,6 +268,9 @@ resource acrPullAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' 
 resource supercomputer 'Microsoft.Discovery/supercomputers@2026-02-01-preview' = {
   name: supercomputerName
   location: location
+  tags: {
+    version: 'v2'
+  }
   dependsOn: [
     vnet
   ]
