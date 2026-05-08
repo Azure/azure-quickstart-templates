@@ -23,10 +23,12 @@ name: Validate PR (Summarize + ADX)
 on:
   issue_comment:
     types: [created]
+  pull_request:
+    types: [closed]
 
 # Workflow-level concurrency: one run per PR
 concurrency:
-  group: validate-pr-${{ github.event.issue.number }}
+  group: validate-pr-${{ github.event.issue.number || github.event.pull_request.number }}
   cancel-in-progress: true
 
 jobs:
@@ -1179,8 +1181,17 @@ jobs:
       - name: Get PR number
         id: pr
         shell: bash
+        env:
+          GH_TOKEN:  ${{ github.token }}
+          REPO:      ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.issue.number }}
         run: |
-          echo "number=${{ github.event.issue.number }}" >> "$GITHUB_OUTPUT"
+          set -euo pipefail
+          echo "number=${PR_NUMBER}" >> "$GITHUB_OUTPUT"
+          # Resolve head SHA so the artifact uploaded later in this job can be
+          # uniquely named per PR head commit and located by the merge job.
+          HEAD_SHA=$(gh api "/repos/${REPO}/pulls/${PR_NUMBER}" --jq '.head.sha')
+          echo "head_sha=${HEAD_SHA}" >> "$GITHUB_OUTPUT"
 
       # ── Preflight: classify whether this PR contains deployment-affecting
       # changes, and if so, in how many distinct sample folders.
@@ -1416,6 +1427,7 @@ jobs:
 
       # ── Ensure azuredeploy.json exists (compile Bicep if needed) ────────────
       - name: Ensure azuredeploy.json exists (compile Bicep if needed)
+        id: compile-main
         if: steps.preflight.outputs.skip != 'true'
         shell: bash
         env:
@@ -1430,11 +1442,13 @@ jobs:
 
           if [[ -f "azuredeploy.json" ]]; then
             echo "azuredeploy.json already exists — no compilation needed."
+            echo "generated=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
           if [[ ! -f "main.bicep" ]]; then
             echo "Neither azuredeploy.json nor main.bicep found — skipping (validation step will catch this)."
+            echo "generated=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
@@ -1442,6 +1456,7 @@ jobs:
           command -v bicep >/dev/null 2>&1 || az bicep install
           bicep build main.bicep --outfile azuredeploy.json
           echo "✅ Compiled main.bicep → azuredeploy.json"
+          echo "generated=true" >> "$GITHUB_OUTPUT"
 
       # ── Calculate templateHash from template file ─────────────────────────────
       - name: Calculate templateHash for main template
@@ -1704,6 +1719,7 @@ jobs:
 
       # ── Prereqs: ensure azuredeploy.json exists (compile Bicep if needed) ───
       - name: Prereqs – ensure azuredeploy.json exists (compile Bicep if needed)
+        id: compile-prereqs
         if: steps.preflight.outputs.skip != 'true' && steps.check-prereqs.outputs.has_prereqs == 'true'
         shell: bash
         env:
@@ -1729,6 +1745,7 @@ jobs:
 
           if [[ -n "${ARM_FILE}" ]]; then
             echo "${ARM_FILE} already exists — no compilation needed."
+            echo "generated=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
@@ -1743,6 +1760,7 @@ jobs:
 
           if [[ -z "${BICEP_FILE}" ]]; then
             echo "No ARM or Bicep template found in prereqs/ — skipping (validation step will catch this)."
+            echo "generated=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
@@ -1757,6 +1775,7 @@ jobs:
           command -v bicep >/dev/null 2>&1 || az bicep install
           bicep build "${BICEP_FILE}" --outfile "${OUT_FILE}"
           echo "✅ Compiled ${BICEP_FILE} → ${OUT_FILE}"
+          echo "generated=true" >> "$GITHUB_OUTPUT"
 
       # ── Prereqs: calculate templateHash from template files ──────────────────
       - name: Prereqs – calculate templateHash from template files
@@ -2035,6 +2054,31 @@ jobs:
           fi
           echo "== Prereqs deployment validation PASSED =="
 
+      # ── Upload generated azuredeploy.json artifact ──────────────────────────
+      # If either compile step actually generated a file (and templateHash
+      # validation succeeded above), upload it as a workflow artifact keyed by
+      # PR number + head SHA. The merge-time `commit-generated-on-merge` job
+      # downloads this artifact and commits the JSON to master, so the merged
+      # commit contains the generated ARM template.
+      #
+      # Files are uploaded preserving their repo-relative path so the merge
+      # job can copy them straight back into a fresh master checkout.
+      - name: Upload generated azuredeploy.json artifact
+        if: >-
+          steps.preflight.outputs.skip != 'true' &&
+          (steps.compile-main.outputs.generated == 'true' ||
+           steps.compile-prereqs.outputs.generated == 'true')
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated-azuredeploy-${{ steps.pr.outputs.number }}-${{ steps.pr.outputs.head_sha }}
+          path: |
+            ${{ steps.find-metadata.outputs.sample_path }}/azuredeploy.json
+            ${{ steps.find-metadata.outputs.sample_path }}/prereqs/azuredeploy.json
+            ${{ steps.find-metadata.outputs.sample_path }}/prereqs/prereq.azuredeploy.json
+          if-no-files-found: ignore
+          retention-days: 7
+          include-hidden-files: false
+
   # ============================================================================
   # JOB 4 – report-check
   #
@@ -2194,3 +2238,172 @@ jobs:
           DETAILS_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: bash .github/scripts/upsert-check-run.sh
 
+
+  # ============================================================================
+  # JOB 5 – commit-generated-on-merge
+  #
+  # Triggered by `pull_request: closed` (the second `on:` trigger). When a PR
+  # is merged into the default branch AND the ADX validation succeeded for
+  # that PR head SHA, this job downloads the `generated-azuredeploy-*`
+  # artifact uploaded by the `selected-pipeline` job during /validate and
+  # commits the contained azuredeploy.json file(s) directly to the default
+  # branch.
+  #
+  # Effect: the generated ARM JSON ends up in the default branch right after
+  # the PR's merge commit, so downstream tooling (raw.githubusercontent.com
+  # links, deployment buttons) sees a JSON file that matches the merged
+  # main.bicep. No second Bicep build is performed — we reuse the JSON that
+  # /validate already validated.
+  #
+  # Fork PRs cannot reach this workflow at all (the /validate path requires
+  # ADX access), so the same-repo guard is defensive belt-and-braces only.
+  # ============================================================================
+  commit-generated-on-merge:
+    name: Commit generated azuredeploy.json on merge
+    runs-on: ubuntu-latest
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.action == 'closed' &&
+      github.event.pull_request.merged == true &&
+      github.event.pull_request.base.ref == github.event.repository.default_branch &&
+      github.event.pull_request.head.repo.full_name == github.repository
+
+    permissions:
+      contents: write
+      actions: read
+      pull-requests: read
+
+    steps:
+      # ── 1. Verify ADX validation succeeded for the merged PR head SHA ──────
+      - name: Verify adx-deployment-validation succeeded
+        id: verify
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO:     ${{ github.repository }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          echo "Looking up adx-deployment-validation for ${HEAD_SHA}"
+          CONCLUSION=$(gh api \
+            "/repos/${REPO}/commits/${HEAD_SHA}/check-runs?check_name=adx-deployment-validation" \
+            --jq '.check_runs | sort_by(.completed_at) | last | .conclusion // ""')
+          echo "adx-deployment-validation conclusion: '${CONCLUSION:-<none>}'"
+          if [[ "${CONCLUSION}" != "success" ]]; then
+            echo "::notice::Skipping commit-back: adx-deployment-validation did not succeed for PR head SHA."
+            echo "should_commit=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "should_commit=true" >> "$GITHUB_OUTPUT"
+
+      # ── 2. Locate the workflow run that produced the artifact ──────────────
+      - name: Resolve artifact source run
+        id: source-run
+        if: steps.verify.outputs.should_commit == 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO:     ${{ github.repository }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          WORKFLOW: ${{ github.workflow }}
+        run: |
+          set -euo pipefail
+          RUN_ID=$(gh api \
+            "/repos/${REPO}/actions/runs?head_sha=${HEAD_SHA}&event=issue_comment&status=success&per_page=20" \
+            --jq "[.workflow_runs[] | select(.name == \"${WORKFLOW}\")] | sort_by(.run_started_at) | last | .id // \"\"")
+          if [[ -z "${RUN_ID}" || "${RUN_ID}" == "null" ]]; then
+            echo "::notice::No successful issue_comment run of '${WORKFLOW}' found for ${HEAD_SHA} — nothing to commit."
+            echo "found=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "Source run id: ${RUN_ID}"
+          echo "run_id=${RUN_ID}" >> "$GITHUB_OUTPUT"
+          echo "found=true" >> "$GITHUB_OUTPUT"
+
+      # ── 3. Locate the artifact name on that run ────────────────────────────
+      - name: Locate generated-azuredeploy artifact
+        id: locate-artifact
+        if: steps.verify.outputs.should_commit == 'true' && steps.source-run.outputs.found == 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO:     ${{ github.repository }}
+          RUN_ID:   ${{ steps.source-run.outputs.run_id }}
+          PR_NUM:   ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          EXPECTED="generated-azuredeploy-${PR_NUM}-${HEAD_SHA}"
+          NAME=$(gh api \
+            "/repos/${REPO}/actions/runs/${RUN_ID}/artifacts?per_page=100" \
+            --jq "[.artifacts[] | select(.name == \"${EXPECTED}\") | select(.expired == false)] | .[0].name // \"\"")
+          if [[ -z "${NAME}" || "${NAME}" == "null" ]]; then
+            echo "::notice::Artifact '${EXPECTED}' not present on run ${RUN_ID} — sample had no generated JSON, nothing to commit."
+            echo "found=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "Artifact: ${NAME}"
+          echo "name=${NAME}" >> "$GITHUB_OUTPUT"
+          echo "found=true" >> "$GITHUB_OUTPUT"
+
+      # ── 4. Checkout the default branch with push credentials ───────────────
+      - name: Checkout default branch
+        if: steps.locate-artifact.outputs.found == 'true'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          token: ${{ github.token }}
+          persist-credentials: true
+          fetch-depth: 1
+
+      # ── 5. Download the artifact into the working tree ─────────────────────
+      - name: Download generated azuredeploy.json
+        if: steps.locate-artifact.outputs.found == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ steps.locate-artifact.outputs.name }}
+          path: .
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ steps.source-run.outputs.run_id }}
+
+      # ── 6. Commit & push to default branch (if anything actually changed) ──
+      - name: Commit and push generated azuredeploy.json
+        if: steps.locate-artifact.outputs.found == 'true'
+        shell: bash
+        env:
+          PR_NUM:         ${{ github.event.pull_request.number }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          set -euo pipefail
+
+          git config user.email "azure-quickstart-templates@noreply.github.com"
+          git config user.name  "azure-quickstart-templates Automation"
+
+          # Stage only generated ARM JSON files anywhere in the tree. The
+          # artifact only ever contains these three filenames, so the glob
+          # is safe and cannot pick up unrelated changes.
+          git add -A -- '**/azuredeploy.json' '**/prereq.azuredeploy.json' || true
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit — generated JSON already matches the merged tree."
+            exit 0
+          fi
+
+          echo "Files staged for commit:"
+          git diff --cached --name-only | sed 's/^/  /'
+
+          git commit -m "Auto-add generated azuredeploy.json from PR #${PR_NUM}"
+
+          # Push with one rebase-retry in case of a concurrent merge.
+          for attempt in 1 2; do
+            if git push origin "HEAD:${DEFAULT_BRANCH}"; then
+              echo "✅ Pushed generated azuredeploy.json to ${DEFAULT_BRANCH}"
+              exit 0
+            fi
+            echo "Push attempt ${attempt} rejected — pulling --rebase and retrying..."
+            git pull --rebase origin "${DEFAULT_BRANCH}"
+          done
+
+          echo "ERROR: Failed to push generated azuredeploy.json after retry." >&2
+          exit 1
