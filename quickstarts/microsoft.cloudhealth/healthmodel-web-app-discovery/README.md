@@ -28,7 +28,7 @@ languages:
 
 ## Overview
 
-This template deploys an [Azure Health Model](https://learn.microsoft.com/azure/cloud-health/) that combines a tiered entity structure with automatic resource discovery and additional manually-created entities.
+This template deploys an [Azure Health Model](https://learn.microsoft.com/azure/cloud-health/) that combines a three-tier entity structure with automatic resource discovery and additional manually-created entities.
 
 For more information, see the [Azure Health Models documentation](https://learn.microsoft.com/azure/cloud-health/).
 
@@ -38,18 +38,9 @@ The three additional entities included (custom-entity-1, custom-entity-2, custom
 
 ## Prerequisites
 
-Before deploying, tag the resources you want discovered:
+This template discovers **existing** Azure resources using Azure Resource Graph queries filtered by tag. You must have resources already deployed that you want to monitor — without them, the discovery rules will find nothing and the model will only contain the tier entities and placeholders.
 
-```bash
-# Tag web apps for frontend discovery
-az tag update --resource-id <webapp-resource-id> --operation merge --tags healthmodel=<your-health-model-name>
-
-# Tag VMs for backend discovery
-az tag update --resource-id <vm-resource-id> --operation merge --tags healthmodel=<your-health-model-name>
-
-# Tag Cosmos DB accounts for data discovery
-az tag update --resource-id <cosmosdb-resource-id> --operation merge --tags healthmodel=<your-health-model-name>
-```
+Before deploying, tag the resources you want discovered with `workload=my-web-app` (or your chosen tag name/value).
 
 ## What Gets Deployed
 
@@ -99,7 +90,7 @@ All entities — whether created by discovery or by the template — are the sam
 
 After deployment:
 
-1. **Grant the managed identity** read access (Monitoring Reader) to the resources and workspaces you want to monitor.
+1. **Grant the managed identity Reader access** at the subscription or resource group level. This is required before any resources will be discovered — without it, the discovery rules cannot query Azure Resource Graph and the model will remain empty.
 2. **Add signals** to the placeholder entities (custom-entity-1, custom-entity-2, custom-entity-3) via the portal or API.
 3. **Configure alerts** on tier entities to get notified when aggregated health degrades.
 
@@ -109,4 +100,4 @@ After deployment:
 - [healthmodel-basic-discovery](../healthmodel-basic-discovery) — a basic health model that uses Azure Resource Graph to discover VMs by tag and adds recommended signals automatically.
 - [healthmodel-servicegroup-discovery](../healthmodel-servicegroup-discovery) — a health model that discovers resources from an Azure Service Group.
 
-`Tags: Microsoft.CloudHealth/healthmodels, health model, monitoring, observability, discovery, tiered`
+`Tags: Microsoft.CloudHealth/healthmodels, health model, monitoring, observability, discovery, web-app`

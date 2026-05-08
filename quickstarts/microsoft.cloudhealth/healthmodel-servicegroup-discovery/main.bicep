@@ -31,6 +31,8 @@ resource authSetting 'Microsoft.CloudHealth/healthmodels/authenticationsettings@
 // Discovery Rule — discovers all resources in the specified Service Group.
 // The backend detects this query pattern and performs recursive Service Group
 // discovery server-side (up to 10 levels deep).
+// Named the same as the health model because the backend automatically creates
+// the Service Group as a grouping entity under root — no manual entity needed.
 resource serviceGroupDiscovery 'Microsoft.CloudHealth/healthmodels/discoveryrules@2026-05-01-preview' = {
   parent: healthModel
   name: healthModelName

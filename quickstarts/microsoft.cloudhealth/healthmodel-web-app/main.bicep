@@ -28,6 +28,27 @@ resource authSetting 'Microsoft.CloudHealth/healthmodels/authenticationsettings@
 // =============================================================================
 // Signal Definitions — reusable metric and log signal templates
 // =============================================================================
+// Signal definitions define WHAT to measure and WHEN it's degraded or unhealthy.
+// They are not attached to any entity or Azure resource by default.
+//
+// To use them, update an entity's signalGroups to reference the definition:
+//
+//   signalGroups: {
+//     azureResource: {
+//       authenticationSetting: authSetting.name
+//       azureResourceId: '<your-resource-id>'
+//       signals: [
+//         {
+//           name: 'my-signal'
+//           signalKind: 'AzureResourceMetric'
+//           signalDefinitionName: httpResponseTimeSignal.name
+//         }
+//       ]
+//     }
+//   }
+//
+// For log signals, use signalGroups.azureLogAnalytics with a workspace ID.
+// =============================================================================
 
 // App Service metrics
 resource httpResponseTimeSignal 'Microsoft.CloudHealth/healthmodels/signaldefinitions@2026-05-01-preview' = {
@@ -243,18 +264,38 @@ resource dataEntity 'Microsoft.CloudHealth/healthmodels/entities@2026-05-01-prev
 }
 
 // =============================================================================
-// T2 Entities — components to attach signals to after deployment
+// T2 Entities — attach your Azure resources and signal definitions to these.
+// Uncomment the signalGroups block and replace the azureResourceId placeholder.
 // =============================================================================
 
 resource webEntity 'Microsoft.CloudHealth/healthmodels/entities@2026-05-01-preview' = {
   parent: healthModel
   name: 'web'
   properties: {
-    displayName: 'Web'
+    displayName: 'Web (attach App Service)'
     canvasPosition: {
       x: -100
       y: 400
     }
+    // Uncomment to wire up an App Service:
+    // signalGroups: {
+    //   azureResource: {
+    //     authenticationSetting: authSetting.name
+    //     azureResourceId: '<your-app-service-resource-id>'
+    //     signals: [
+    //       {
+    //         name: 'web-response-time'
+    //         signalKind: 'AzureResourceMetric'
+    //         signalDefinitionName: httpResponseTimeSignal.name
+    //       }
+    //       {
+    //         name: 'web-http-5xx'
+    //         signalKind: 'AzureResourceMetric'
+    //         signalDefinitionName: http5xxSignal.name
+    //       }
+    //     ]
+    //   }
+    // }
   }
 }
 
@@ -262,11 +303,25 @@ resource apiGatewayEntity 'Microsoft.CloudHealth/healthmodels/entities@2026-05-0
   parent: healthModel
   name: 'api-gateway'
   properties: {
-    displayName: 'API Gateway'
+    displayName: 'API Gateway (attach APIM)'
     canvasPosition: {
       x: 100
       y: 400
     }
+    // Uncomment to wire up an API Management instance:
+    // signalGroups: {
+    //   azureResource: {
+    //     authenticationSetting: authSetting.name
+    //     azureResourceId: '<your-apim-resource-id>'
+    //     signals: [
+    //       {
+    //         name: 'apim-failed-requests'
+    //         signalKind: 'AzureResourceMetric'
+    //         signalDefinitionName: apimFailedRequestsSignal.name
+    //       }
+    //     ]
+    //   }
+    // }
   }
 }
 
@@ -274,11 +329,30 @@ resource apiEntity 'Microsoft.CloudHealth/healthmodels/entities@2026-05-01-previ
   parent: healthModel
   name: 'api'
   properties: {
-    displayName: 'API'
+    displayName: 'API (attach App Service)'
     canvasPosition: {
       x: 350
       y: 400
     }
+    // Uncomment to wire up an App Service:
+    // signalGroups: {
+    //   azureResource: {
+    //     authenticationSetting: authSetting.name
+    //     azureResourceId: '<your-api-app-service-resource-id>'
+    //     signals: [
+    //       {
+    //         name: 'api-response-time'
+    //         signalKind: 'AzureResourceMetric'
+    //         signalDefinitionName: httpResponseTimeSignal.name
+    //       }
+    //       {
+    //         name: 'api-http-5xx'
+    //         signalKind: 'AzureResourceMetric'
+    //         signalDefinitionName: http5xxSignal.name
+    //       }
+    //     ]
+    //   }
+    // }
   }
 }
 
@@ -298,11 +372,25 @@ resource databaseEntity 'Microsoft.CloudHealth/healthmodels/entities@2026-05-01-
   parent: healthModel
   name: 'database'
   properties: {
-    displayName: 'Database'
+    displayName: 'Database (attach Cosmos DB)'
     canvasPosition: {
       x: 800
       y: 400
     }
+    // Uncomment to wire up a Cosmos DB account:
+    // signalGroups: {
+    //   azureResource: {
+    //     authenticationSetting: authSetting.name
+    //     azureResourceId: '<your-cosmosdb-resource-id>'
+    //     signals: [
+    //       {
+    //         name: 'db-availability'
+    //         signalKind: 'AzureResourceMetric'
+    //         signalDefinitionName: cosmosDbAvailabilitySignal.name
+    //       }
+    //     ]
+    //   }
+    // }
   }
 }
 
@@ -310,11 +398,25 @@ resource cacheEntity 'Microsoft.CloudHealth/healthmodels/entities@2026-05-01-pre
   parent: healthModel
   name: 'cache'
   properties: {
-    displayName: 'Cache'
+    displayName: 'Cache (attach Redis)'
     canvasPosition: {
       x: 1050
       y: 400
     }
+    // Uncomment to wire up a Redis Cache:
+    // signalGroups: {
+    //   azureResource: {
+    //     authenticationSetting: authSetting.name
+    //     azureResourceId: '<your-redis-cache-resource-id>'
+    //     signals: [
+    //       {
+    //         name: 'cache-server-load'
+    //         signalKind: 'AzureResourceMetric'
+    //         signalDefinitionName: redisCacheHitsSignal.name
+    //       }
+    //     ]
+    //   }
+    // }
   }
 }
 
@@ -350,9 +452,8 @@ resource rootToFrontend 'Microsoft.CloudHealth/healthmodels/relationships@2026-0
   name: '${healthModelName}-frontend'
   properties: {
     parentEntityName: healthModelName
-    childEntityName: 'frontend'
+    childEntityName: frontendEntity.name
   }
-  dependsOn: [frontendEntity]
 }
 
 resource rootToBackend 'Microsoft.CloudHealth/healthmodels/relationships@2026-05-01-preview' = {
@@ -360,9 +461,8 @@ resource rootToBackend 'Microsoft.CloudHealth/healthmodels/relationships@2026-05
   name: '${healthModelName}-backend'
   properties: {
     parentEntityName: healthModelName
-    childEntityName: 'backend'
+    childEntityName: backendEntity.name
   }
-  dependsOn: [backendEntity]
 }
 
 resource rootToData 'Microsoft.CloudHealth/healthmodels/relationships@2026-05-01-preview' = {
@@ -370,9 +470,8 @@ resource rootToData 'Microsoft.CloudHealth/healthmodels/relationships@2026-05-01
   name: '${healthModelName}-data'
   properties: {
     parentEntityName: healthModelName
-    childEntityName: 'data'
+    childEntityName: dataEntity.name
   }
-  dependsOn: [dataEntity]
 }
 
 // T2 → T1 relationships
@@ -380,60 +479,54 @@ resource frontendToWeb 'Microsoft.CloudHealth/healthmodels/relationships@2026-05
   parent: healthModel
   name: 'frontend-web'
   properties: {
-    parentEntityName: 'frontend'
-    childEntityName: 'web'
+    parentEntityName: frontendEntity.name
+    childEntityName: webEntity.name
   }
-  dependsOn: [frontendEntity, webEntity]
 }
 
 resource frontendToApiGateway 'Microsoft.CloudHealth/healthmodels/relationships@2026-05-01-preview' = {
   parent: healthModel
   name: 'frontend-api-gateway'
   properties: {
-    parentEntityName: 'frontend'
-    childEntityName: 'api-gateway'
+    parentEntityName: frontendEntity.name
+    childEntityName: apiGatewayEntity.name
   }
-  dependsOn: [frontendEntity, apiGatewayEntity]
 }
 
 resource backendToApi 'Microsoft.CloudHealth/healthmodels/relationships@2026-05-01-preview' = {
   parent: healthModel
   name: 'backend-api'
   properties: {
-    parentEntityName: 'backend'
-    childEntityName: 'api'
+    parentEntityName: backendEntity.name
+    childEntityName: apiEntity.name
   }
-  dependsOn: [backendEntity, apiEntity]
 }
 
 resource backendToWorker 'Microsoft.CloudHealth/healthmodels/relationships@2026-05-01-preview' = {
   parent: healthModel
   name: 'backend-worker'
   properties: {
-    parentEntityName: 'backend'
-    childEntityName: 'worker'
+    parentEntityName: backendEntity.name
+    childEntityName: workerEntity.name
   }
-  dependsOn: [backendEntity, workerEntity]
 }
 
 resource dataToDatabase 'Microsoft.CloudHealth/healthmodels/relationships@2026-05-01-preview' = {
   parent: healthModel
   name: 'data-database'
   properties: {
-    parentEntityName: 'data'
-    childEntityName: 'database'
+    parentEntityName: dataEntity.name
+    childEntityName: databaseEntity.name
   }
-  dependsOn: [dataEntity, databaseEntity]
 }
 
 resource dataToCache 'Microsoft.CloudHealth/healthmodels/relationships@2026-05-01-preview' = {
   parent: healthModel
   name: 'data-cache'
   properties: {
-    parentEntityName: 'data'
-    childEntityName: 'cache'
+    parentEntityName: dataEntity.name
+    childEntityName: cacheEntity.name
   }
-  dependsOn: [dataEntity, cacheEntity]
 }
 
 output healthModelName string = healthModel.name

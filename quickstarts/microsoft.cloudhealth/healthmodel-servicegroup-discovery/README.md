@@ -54,7 +54,7 @@ After deployment, the discovery rule will:
 
 ## Next Steps
 
-1. **Grant the managed identity** Reader access at a scope that covers the discovered resources.
+1. **Grant the managed identity Reader access** at the subscription or resource group level. This is required before any resources will be discovered — without it, the discovery rule cannot query Azure Resource Graph and the model will remain empty.
 2. **Configure alerts** on entities to get notified when health degrades.
 
 ## See Also

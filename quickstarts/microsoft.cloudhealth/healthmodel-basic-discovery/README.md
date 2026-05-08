@@ -34,26 +34,35 @@ For more information, see the [Azure Health Models documentation](https://learn.
 
 ## Prerequisites
 
-Before deploying, tag the virtual machines you want to monitor:
+This template discovers **existing** virtual machines using an Azure Resource Graph query filtered by tag. You must have VMs already deployed — without them, the discovery rule will find nothing and the model will be empty.
 
-```bash
-az tag update --resource-id <vm-resource-id> --operation merge --tags healthmodel=<your-health-model-name>
-```
+Before deploying, tag the virtual machines you want to monitor with `workload=my-web-app` (or your chosen tag name/value).
 
 ## Deployed Resources
+
+```
+Root: <healthModelName>
+└── Compute                    (entity + discovery rule)
+    ├── [VM 1 with tag]        (discovered, recommended signals on)
+    ├── [VM 2 with tag]        (discovered, recommended signals on)
+    └── ...
+```
 
 | Resource | Type | Description |
 |----------|------|-------------|
 | Health Model | `Microsoft.CloudHealth/healthmodels` | The health model with system-assigned managed identity. |
 | Authentication Setting | `authenticationsettings` | Configures the system-assigned identity for data source queries. |
+| Compute Entity | `entities` | Grouping entity for discovered VMs. |
+| Relationship | `relationships` | Connects the Compute entity to the root. |
 | Discovery Rule | `discoveryrules` | Discovers VMs matching the specified tag. Recommended signals are added automatically. |
 
-After deployment, the discovery rule will find all VMs with the matching tag and create entities with monitoring signals under the root of the health model.
+After deployment, the discovery rule will find all VMs with the matching tag and create entities with monitoring signals under the Compute entity.
 
 ## Next Steps
 
-- To monitor additional resource types, add more discovery rules via the portal or a follow-up template.
-- To organise discovered resources into groupings, create entities and relationships manually.
+1. **Grant the managed identity Reader access** at the subscription or resource group level. This is required before any resources will be discovered — without it, the discovery rule cannot query Azure Resource Graph and the model will remain empty.
+2. To monitor additional resource types, add more discovery rules via the portal or a follow-up template.
+3. To organise discovered resources into groupings, create entities and relationships manually.
 
 ## See Also
 

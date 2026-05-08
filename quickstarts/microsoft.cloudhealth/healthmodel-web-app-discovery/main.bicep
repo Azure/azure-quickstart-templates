@@ -5,10 +5,10 @@ param healthModelName string
 param location string = resourceGroup().location
 
 @description('Tag name used to identify resources for discovery.')
-param tagName string = 'healthmodel'
+param tagName string = 'workload'
 
-@description('Tag value to match. Defaults to the health model name.')
-param tagValue string = healthModelName
+@description('Tag value to match.')
+param tagValue string = 'my-web-app'
 
 // Health Model
 resource healthModel 'Microsoft.CloudHealth/healthmodels@2026-05-01-preview' = {
@@ -33,7 +33,7 @@ resource authSetting 'Microsoft.CloudHealth/healthmodels/authenticationsettings@
 
 // =============================================================================
 // T1 Entities — logical tier groupings under the root
-// (same structure as healthmodel-tiered-app)
+// (same structure as healthmodel-web-app)
 // =============================================================================
 
 resource frontendEntity 'Microsoft.CloudHealth/healthmodels/entities@2026-05-01-preview' = {
@@ -78,9 +78,8 @@ resource rootToFrontend 'Microsoft.CloudHealth/healthmodels/relationships@2026-0
   name: '${healthModelName}-frontend'
   properties: {
     parentEntityName: healthModelName
-    childEntityName: 'frontend'
+    childEntityName: frontendEntity.name
   }
-  dependsOn: [frontendEntity]
 }
 
 resource rootToBackend 'Microsoft.CloudHealth/healthmodels/relationships@2026-05-01-preview' = {
@@ -88,9 +87,8 @@ resource rootToBackend 'Microsoft.CloudHealth/healthmodels/relationships@2026-05
   name: '${healthModelName}-backend'
   properties: {
     parentEntityName: healthModelName
-    childEntityName: 'backend'
+    childEntityName: backendEntity.name
   }
-  dependsOn: [backendEntity]
 }
 
 resource rootToData 'Microsoft.CloudHealth/healthmodels/relationships@2026-05-01-preview' = {
@@ -98,9 +96,8 @@ resource rootToData 'Microsoft.CloudHealth/healthmodels/relationships@2026-05-01
   name: '${healthModelName}-data'
   properties: {
     parentEntityName: healthModelName
-    childEntityName: 'data'
+    childEntityName: dataEntity.name
   }
-  dependsOn: [dataEntity]
 }
 
 // =============================================================================
@@ -115,7 +112,7 @@ resource customEntity1 'Microsoft.CloudHealth/healthmodels/entities@2026-05-01-p
     displayName: 'Custom Entity 1'
     canvasPosition: {
       x: 0
-      y: 400
+      y: 600
     }
   }
 }
@@ -127,7 +124,7 @@ resource customEntity2 'Microsoft.CloudHealth/healthmodels/entities@2026-05-01-p
     displayName: 'Custom Entity 2'
     canvasPosition: {
       x: 450
-      y: 400
+      y: 600
     }
   }
 }
@@ -139,7 +136,7 @@ resource customEntity3 'Microsoft.CloudHealth/healthmodels/entities@2026-05-01-p
     displayName: 'Custom Entity 3'
     canvasPosition: {
       x: 900
-      y: 400
+      y: 600
     }
   }
 }
@@ -149,30 +146,27 @@ resource frontendToCustom1 'Microsoft.CloudHealth/healthmodels/relationships@202
   parent: healthModel
   name: 'frontend-custom-entity-1'
   properties: {
-    parentEntityName: 'frontend'
-    childEntityName: 'custom-entity-1'
+    parentEntityName: frontendEntity.name
+    childEntityName: customEntity1.name
   }
-  dependsOn: [frontendEntity, customEntity1]
 }
 
 resource backendToCustom2 'Microsoft.CloudHealth/healthmodels/relationships@2026-05-01-preview' = {
   parent: healthModel
   name: 'backend-custom-entity-2'
   properties: {
-    parentEntityName: 'backend'
-    childEntityName: 'custom-entity-2'
+    parentEntityName: backendEntity.name
+    childEntityName: customEntity2.name
   }
-  dependsOn: [backendEntity, customEntity2]
 }
 
 resource dataToCustom3 'Microsoft.CloudHealth/healthmodels/relationships@2026-05-01-preview' = {
   parent: healthModel
   name: 'data-custom-entity-3'
   properties: {
-    parentEntityName: 'data'
-    childEntityName: 'custom-entity-3'
+    parentEntityName: dataEntity.name
+    childEntityName: customEntity3.name
   }
-  dependsOn: [dataEntity, customEntity3]
 }
 
 // =============================================================================
@@ -194,7 +188,6 @@ resource frontendDiscovery 'Microsoft.CloudHealth/healthmodels/discoveryrules@20
       resourceGraphQuery: 'resources | where type =~ \'microsoft.web/sites\' and tags[\'${tagName}\'] =~ \'${tagValue}\''
     }
   }
-  dependsOn: [frontendEntity]
 }
 
 resource backendDiscovery 'Microsoft.CloudHealth/healthmodels/discoveryrules@2026-05-01-preview' = {
@@ -210,7 +203,6 @@ resource backendDiscovery 'Microsoft.CloudHealth/healthmodels/discoveryrules@202
       resourceGraphQuery: 'resources | where type =~ \'microsoft.compute/virtualmachines\' and tags[\'${tagName}\'] =~ \'${tagValue}\''
     }
   }
-  dependsOn: [backendEntity]
 }
 
 resource dataDiscovery 'Microsoft.CloudHealth/healthmodels/discoveryrules@2026-05-01-preview' = {
@@ -226,7 +218,6 @@ resource dataDiscovery 'Microsoft.CloudHealth/healthmodels/discoveryrules@2026-0
       resourceGraphQuery: 'resources | where type =~ \'microsoft.documentdb/databaseaccounts\' and tags[\'${tagName}\'] =~ \'${tagValue}\''
     }
   }
-  dependsOn: [dataEntity]
 }
 
 output healthModelName string = healthModel.name

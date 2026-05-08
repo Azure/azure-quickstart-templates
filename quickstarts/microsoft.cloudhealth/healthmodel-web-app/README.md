@@ -61,7 +61,9 @@ Root: <healthModelName>              (alert: Sev1 unhealthy, Sev3 degraded)
 
 ### Signal Definitions
 
-These are deployed as reusable templates. After deployment, attach them to entities by adding `signalGroups` via the portal or API.
+Signal definitions are deployed as **reusable templates** that define what to measure and when health should degrade. They are not attached to any entity by default — after deployment, wire them to entities by adding `signalGroups` to each entity via the portal or API.
+
+For **metric signals**, add `signalGroups.azureResource` to an entity with the Azure resource ID and reference the signal definition by name. For **log signals**, add `signalGroups.azureLogAnalytics` with a Log Analytics workspace resource ID.
 
 | Signal | Kind | Metric / Query | Degraded | Unhealthy |
 |--------|------|----------------|----------|-----------|
@@ -75,9 +77,10 @@ These are deployed as reusable templates. After deployment, attach them to entit
 
 ## Next Steps
 
-1. **Attach signals to entities** — update each T2 entity’s `signalGroups.azureResource` with the resource ID of the Azure resource to monitor and reference the signal definitions.
-2. **Grant the managed identity** Monitoring Reader access to the monitored resources.
-3. **Add action groups** to the root entity alerts to receive notifications (email, SMS, webhook, etc.).
+1. **Attach Azure resources and metric signals to entities** — update each T2 entity's `signalGroups.azureResource` with the resource ID of the Azure resource to monitor and reference the metric signal definitions.
+2. **Attach log signals to entities** — add `signalGroups.azureLogAnalytics` with a Log Analytics workspace resource ID and reference the log signal definitions (`failed-requests-log`, `exception-rate-log`).
+3. **Grant the managed identity** Monitoring Reader access to the monitored resources and Log Analytics workspace.
+4. **Add action groups** to the root entity alerts to receive notifications (email, SMS, webhook, etc.).
 
 ## See Also
 
