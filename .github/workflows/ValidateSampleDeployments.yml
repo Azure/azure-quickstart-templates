@@ -1555,15 +1555,21 @@ jobs:
               --resource "https://kusto.kusto.windows.net"
           }
 
+          # File-based side channel so the matched cluster URL survives the
+          # command-substitution subshell used to capture the function's stdout.
+          MATCHED_CLUSTER_FILE="${RUNNER_TEMP:-/tmp}/matched_cluster.$$"
+          MATCHED_CLUSTER=""
+
           # ── Helper: try each cluster in order; return first response with rows ─
           # Echoes the JSON response on stdout; logs per-cluster attempts on stderr.
-          # Sets MATCHED_CLUSTER (global) to the cluster URL that returned rows,
-          # or empty if none did. If all clusters return 0 rows, the last response
-          # is echoed so callers can still parse it for diagnostics.
+          # Writes the cluster URL that returned rows to MATCHED_CLUSTER_FILE (or
+          # empty if none did) so the parent shell can read it after $(...) capture.
+          # If all clusters return 0 rows, the last response is echoed so callers
+          # can still parse it for diagnostics.
           run_kusto_query_with_fallback () {
             local body="$1"
             local response="" row_count=0 cluster=""
-            MATCHED_CLUSTER=""
+            : > "${MATCHED_CLUSTER_FILE}"
             while IFS= read -r cluster; do
               [[ -z "${cluster}" ]] && continue
               echo "  → trying cluster: ${cluster}" >&2
@@ -1571,7 +1577,7 @@ jobs:
               row_count=$(echo "${response}" | jq '(.Tables[0].Rows // []) | length')
               if [[ "${row_count}" -gt 0 ]]; then
                 echo "    matched (${row_count} row(s)) on ${cluster}" >&2
-                MATCHED_CLUSTER="${cluster}"
+                printf '%s' "${cluster}" > "${MATCHED_CLUSTER_FILE}"
                 echo "${response}"
                 return 0
               fi
@@ -1658,6 +1664,7 @@ jobs:
 
           echo "Running Kusto query for '${TEMPLATE_FILE_NAME}' (with cluster fallback)..."
           RESPONSE=$(run_kusto_query_with_fallback "${REQUEST_BODY}")
+          MATCHED_CLUSTER=$(cat "${MATCHED_CLUSTER_FILE}" 2>/dev/null || true)
 
           ROW_COUNT=$(echo "${RESPONSE}" | jq '(.Tables[0].Rows // []) | length')
           if [[ "${ROW_COUNT}" -eq 0 ]]; then
@@ -1976,13 +1983,19 @@ jobs:
               --resource "https://kusto.kusto.windows.net"
           }
 
+          # File-based side channel so the matched cluster URL survives the
+          # command-substitution subshell used to capture the function's stdout.
+          MATCHED_CLUSTER_FILE="${RUNNER_TEMP:-/tmp}/matched_cluster.$$"
+          MATCHED_CLUSTER=""
+
           # ── Helper: try each cluster in order; return first response with rows ─
-          # Sets MATCHED_CLUSTER to the cluster URL that returned rows, or empty.
+          # Writes the matched cluster URL to MATCHED_CLUSTER_FILE (or empty) so
+          # the parent shell can read it after $(...) capture.
           # If all clusters return 0 rows, the last response is echoed for diagnostics.
           run_kusto_query_with_fallback () {
             local body="$1"
             local response="" row_count=0 cluster=""
-            MATCHED_CLUSTER=""
+            : > "${MATCHED_CLUSTER_FILE}"
             while IFS= read -r cluster; do
               [[ -z "${cluster}" ]] && continue
               echo "  → trying cluster: ${cluster}" >&2
@@ -1990,12 +2003,15 @@ jobs:
               row_count=$(echo "${response}" | jq '(.Tables[0].Rows // []) | length')
               if [[ "${row_count}" -gt 0 ]]; then
                 echo "    matched (${row_count} row(s)) on ${cluster}" >&2
-                MATCHED_CLUSTER="${cluster}"
+                printf '%s' "${cluster}" > "${MATCHED_CLUSTER_FILE}"
                 echo "${response}"
                 return 0
               fi
               echo "    0 rows on ${cluster}" >&2
             done <<< "${CLUSTER_URLS}"
+            echo "${response}"
+            return 0
+          }
             echo "${response}"
             return 0
           }
@@ -2060,6 +2076,7 @@ jobs:
 
             echo "Running Kusto query for prereqs entry '${TEMPLATE_FILE_NAME}' (with cluster fallback)..."
             RESPONSE=$(run_kusto_query_with_fallback "${REQUEST_BODY}")
+            MATCHED_CLUSTER=$(cat "${MATCHED_CLUSTER_FILE}" 2>/dev/null || true)
 
             ROW_COUNT=$(echo "${RESPONSE}" | jq '(.Tables[0].Rows // []) | length')
             if [[ "${ROW_COUNT}" -eq 0 ]]; then
