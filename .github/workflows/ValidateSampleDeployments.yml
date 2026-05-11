@@ -1513,7 +1513,12 @@ jobs:
         if: steps.preflight.outputs.skip != 'true'
         shell: bash
         env:
-          CLUSTER_URL: "https://armprodeus.eastus.kusto.windows.net"
+          # Deployment logs may live in any one of these regional ADX clusters.
+          # Queries are tried in order; the first cluster returning a row wins.
+          CLUSTER_URLS: |
+            https://armprodeus.eastus.kusto.windows.net
+            https://armprodweu.westeurope.kusto.windows.net
+            https://armprodsea.southeastasia.kusto.windows.net
           DATABASE: ${{ secrets.ADX_DATABASE }}
           # Path resolved from PR changed files by the find-metadata step above
           METADATA_FILE: ${{ steps.find-metadata.outputs.metadata_file }}
@@ -1538,15 +1543,43 @@ jobs:
             exit 1
           fi
 
-          # ── Helper: POST a pre-built JSON body to the Kusto REST endpoint ──
+          # ── Helper: POST a pre-built JSON body to a Kusto REST endpoint ───
           run_kusto_query () {
-            local body="$1"
+            local cluster_url="$1"
+            local body="$2"
             az rest \
               --method POST \
-              --url "${CLUSTER_URL}/v1/rest/query" \
+              --url "${cluster_url}/v1/rest/query" \
               --headers "Content-Type=application/json" \
               --body "${body}" \
               --resource "https://kusto.kusto.windows.net"
+          }
+
+          # ── Helper: try each cluster in order; return first response with rows ─
+          # Echoes the JSON response on stdout; logs per-cluster attempts on stderr.
+          # Sets MATCHED_CLUSTER (global) to the cluster URL that returned rows,
+          # or empty if none did. If all clusters return 0 rows, the last response
+          # is echoed so callers can still parse it for diagnostics.
+          run_kusto_query_with_fallback () {
+            local body="$1"
+            local response="" row_count=0 cluster=""
+            MATCHED_CLUSTER=""
+            while IFS= read -r cluster; do
+              [[ -z "${cluster}" ]] && continue
+              echo "  → trying cluster: ${cluster}" >&2
+              response=$(run_kusto_query "${cluster}" "${body}")
+              row_count=$(echo "${response}" | jq '(.Tables[0].Rows // []) | length')
+              if [[ "${row_count}" -gt 0 ]]; then
+                echo "    matched (${row_count} row(s)) on ${cluster}" >&2
+                MATCHED_CLUSTER="${cluster}"
+                echo "${response}"
+                return 0
+              fi
+              echo "    0 rows on ${cluster}" >&2
+            done <<< "${CLUSTER_URLS}"
+            # No cluster matched — return the last response (0 rows) for diagnostics
+            echo "${response}"
+            return 0
           }
 
           # ── If array, pick the non-prereqs entry; otherwise use the flat object ───
@@ -1623,14 +1656,17 @@ jobs:
             --arg dn  "${DEPLOYMENT_NAME}" \
             '{db: $db, csl: "Deployments | where correlationId == \"\($cid)\" | where deploymentName == \"\($dn)\" | project timestamp=TIMESTAMP, deploymentName, executionStatus, templateHash | top 1 by timestamp desc"}')
 
-          echo "Running Kusto query for '${TEMPLATE_FILE_NAME}'..."
-          RESPONSE=$(run_kusto_query "${REQUEST_BODY}")
+          echo "Running Kusto query for '${TEMPLATE_FILE_NAME}' (with cluster fallback)..."
+          RESPONSE=$(run_kusto_query_with_fallback "${REQUEST_BODY}")
 
           ROW_COUNT=$(echo "${RESPONSE}" | jq '(.Tables[0].Rows // []) | length')
           if [[ "${ROW_COUNT}" -eq 0 ]]; then
-            echo "ERROR: No ADX record found — correlationId='${CORRELATION_ID}' deploymentName='${DEPLOYMENT_NAME}'" >&2
+            echo "ERROR: No ADX record found in any cluster — correlationId='${CORRELATION_ID}' deploymentName='${DEPLOYMENT_NAME}'" >&2
+            echo "  clusters tried (in order):" >&2
+            while IFS= read -r c; do [[ -n "$c" ]] && echo "    - $c" >&2; done <<< "${CLUSTER_URLS}"
             exit 1
           fi
+          echo "  matched cluster : ${MATCHED_CLUSTER}"
 
           # Extract field values by column name (robust against column-order changes)
           ACTUAL_STATUS=$(echo "${RESPONSE}" | jq -r \
@@ -1876,7 +1912,12 @@ jobs:
         if: steps.preflight.outputs.skip != 'true' && steps.check-prereqs.outputs.has_prereqs == 'true'
         shell: bash
         env:
-          CLUSTER_URL: "https://armprodeus.eastus.kusto.windows.net"
+          # Deployment logs may live in any one of these regional ADX clusters.
+          # Queries are tried in order; the first cluster returning a row wins.
+          CLUSTER_URLS: |
+            https://armprodeus.eastus.kusto.windows.net
+            https://armprodweu.westeurope.kusto.windows.net
+            https://armprodsea.southeastasia.kusto.windows.net
           DATABASE: ${{ secrets.ADX_DATABASE }}
           METADATA_FILE: ${{ steps.find-metadata.outputs.metadata_file }}
           COMPUTED_HASHES: ${{ steps.prereqs-template-hash.outputs.computed_hashes }}
@@ -1923,15 +1964,40 @@ jobs:
 
           echo "Found ${PREREQ_COUNT} prereqs deployment entry/entries."
 
-          # ── Helper: POST a pre-built JSON body to the Kusto REST endpoint ──
+          # ── Helper: POST a pre-built JSON body to a Kusto REST endpoint ────
           run_kusto_query () {
-            local body="$1"
+            local cluster_url="$1"
+            local body="$2"
             az rest \
               --method POST \
-              --url "${CLUSTER_URL}/v1/rest/query" \
+              --url "${cluster_url}/v1/rest/query" \
               --headers "Content-Type=application/json" \
               --body "${body}" \
               --resource "https://kusto.kusto.windows.net"
+          }
+
+          # ── Helper: try each cluster in order; return first response with rows ─
+          # Sets MATCHED_CLUSTER to the cluster URL that returned rows, or empty.
+          # If all clusters return 0 rows, the last response is echoed for diagnostics.
+          run_kusto_query_with_fallback () {
+            local body="$1"
+            local response="" row_count=0 cluster=""
+            MATCHED_CLUSTER=""
+            while IFS= read -r cluster; do
+              [[ -z "${cluster}" ]] && continue
+              echo "  → trying cluster: ${cluster}" >&2
+              response=$(run_kusto_query "${cluster}" "${body}")
+              row_count=$(echo "${response}" | jq '(.Tables[0].Rows // []) | length')
+              if [[ "${row_count}" -gt 0 ]]; then
+                echo "    matched (${row_count} row(s)) on ${cluster}" >&2
+                MATCHED_CLUSTER="${cluster}"
+                echo "${response}"
+                return 0
+              fi
+              echo "    0 rows on ${cluster}" >&2
+            done <<< "${CLUSTER_URLS}"
+            echo "${response}"
+            return 0
           }
 
           OVERALL_PASS=true
@@ -1992,19 +2058,22 @@ jobs:
               --arg dn  "${DEPLOYMENT_NAME}" \
               '{db: $db, csl: "Deployments | where correlationId == \"\($cid)\" | where deploymentName == \"\($dn)\" | project timestamp=TIMESTAMP, deploymentName, executionStatus, templateHash | top 1 by timestamp desc"}')
 
-            echo "Running Kusto query for prereqs entry '${TEMPLATE_FILE_NAME}'..."
-            RESPONSE=$(run_kusto_query "${REQUEST_BODY}")
+            echo "Running Kusto query for prereqs entry '${TEMPLATE_FILE_NAME}' (with cluster fallback)..."
+            RESPONSE=$(run_kusto_query_with_fallback "${REQUEST_BODY}")
 
             ROW_COUNT=$(echo "${RESPONSE}" | jq '(.Tables[0].Rows // []) | length')
             if [[ "${ROW_COUNT}" -eq 0 ]]; then
-              echo "ERROR [prereqs ${ENTRY_LABEL}]: No ADX record found" >&2
+              echo "ERROR [prereqs ${ENTRY_LABEL}]: No ADX record found in any cluster" >&2
               echo "  templateFileName : ${TEMPLATE_FILE_NAME}" >&2
               echo "  correlationId    : ${CORRELATION_ID}" >&2
               echo "  deploymentName   : ${DEPLOYMENT_NAME}" >&2
               echo "  Kusto parameters : correlationId='${CORRELATION_ID}' deploymentName='${DEPLOYMENT_NAME}'" >&2
+              echo "  clusters tried (in order):" >&2
+              while IFS= read -r c; do [[ -n "$c" ]] && echo "    - $c" >&2; done <<< "${CLUSTER_URLS}"
               OVERALL_PASS=false
               continue
             fi
+            echo "  matched cluster : ${MATCHED_CLUSTER}"
 
             # Extract field values by column name (robust against column-order changes)
             ACTUAL_STATUS=$(echo "${RESPONSE}" | jq -r \
