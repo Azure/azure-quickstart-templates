@@ -43,7 +43,7 @@ You can select the **Deploy to Azure** button at the beginning of this document.
 
 ||GP_Gen5|BC_Gen5|
 |----|------|------|
-|Tier|General Purpose|Busines Critical|
+|Tier|General Purpose|Business Critical|
 |Hardware|Gen 5|Gen 5|
 |Min vCores|8|8|
 |Max vCores|80|80|
