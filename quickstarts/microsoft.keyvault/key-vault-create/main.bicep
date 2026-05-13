@@ -64,3 +64,4 @@ output location string = location
 output name string = kv.name
 output resourceGroupName string = resourceGroup().name
 output resourceId string = kv.id
+
