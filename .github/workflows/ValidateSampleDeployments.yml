@@ -2423,57 +2423,55 @@ jobs:
           fi
           echo "should_commit=true" >> "$GITHUB_OUTPUT"
 
-      # ── 2. Locate the workflow run that produced the artifact ──────────────
-      - name: Resolve artifact source run
-        id: source-run
+      # ── 2. Locate the artifact by name (and derive its source run) ─────────
+      # The artifact name encodes both the PR number and the PR head SHA, so it
+      # uniquely identifies what we want. We deliberately do NOT search the
+      # workflow_runs API by `head_sha=${PR_HEAD_SHA}&event=issue_comment`
+      # because issue_comment-triggered runs are registered against the
+      # default-branch HEAD at comment time, not against the PR head — and
+      # their `pull_requests[]` array is populated by an unrelated SHA
+      # heuristic that does not include the actual triggering PR. See
+      # Azure/azure-quickstart-templates#14765 for the post-mortem.
+      #
+      # Step 1 (`verify`) already confirmed `adx-deployment-validation`
+      # concluded `success` for this exact PR head SHA, which guarantees the
+      # validation job that produced the artifact succeeded — so the bare
+      # presence of a non-expired artifact with the expected name is
+      # sufficient proof of a usable upload. We pull `workflow_run.id` out of
+      # the artifact's own metadata to feed the cross-run download below.
+      - name: Locate generated-azuredeploy artifact
+        id: locate-artifact
         if: steps.verify.outputs.should_commit == 'true'
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
           REPO:     ${{ github.repository }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-          WORKFLOW: ${{ github.workflow }}
-        run: |
-          set -euo pipefail
-          RUN_ID=$(gh api \
-            "/repos/${REPO}/actions/runs?head_sha=${HEAD_SHA}&event=issue_comment&status=success&per_page=20" \
-            --jq "[.workflow_runs[] | select(.name == \"${WORKFLOW}\")] | sort_by(.run_started_at) | last | .id // \"\"")
-          if [[ -z "${RUN_ID}" || "${RUN_ID}" == "null" ]]; then
-            echo "::notice::No successful issue_comment run of '${WORKFLOW}' found for ${HEAD_SHA} — nothing to commit."
-            echo "found=false" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          echo "Source run id: ${RUN_ID}"
-          echo "run_id=${RUN_ID}" >> "$GITHUB_OUTPUT"
-          echo "found=true" >> "$GITHUB_OUTPUT"
-
-      # ── 3. Locate the artifact name on that run ────────────────────────────
-      - name: Locate generated-azuredeploy artifact
-        id: locate-artifact
-        if: steps.verify.outputs.should_commit == 'true' && steps.source-run.outputs.found == 'true'
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-          REPO:     ${{ github.repository }}
-          RUN_ID:   ${{ steps.source-run.outputs.run_id }}
           PR_NUM:   ${{ github.event.pull_request.number }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           set -euo pipefail
           EXPECTED="generated-azuredeploy-${PR_NUM}-${HEAD_SHA}"
-          NAME=$(gh api \
-            "/repos/${REPO}/actions/runs/${RUN_ID}/artifacts?per_page=100" \
-            --jq "[.artifacts[] | select(.name == \"${EXPECTED}\") | select(.expired == false)] | .[0].name // \"\"")
-          if [[ -z "${NAME}" || "${NAME}" == "null" ]]; then
-            echo "::notice::Artifact '${EXPECTED}' not present on run ${RUN_ID} — sample had no generated JSON, nothing to commit."
+          RESPONSE=$(gh api \
+            "/repos/${REPO}/actions/artifacts?name=${EXPECTED}&per_page=100")
+          ARTIFACT=$(echo "${RESPONSE}" | jq -c \
+            '[.artifacts[] | select(.expired == false)] | sort_by(.created_at) | last // empty')
+          if [[ -z "${ARTIFACT}" || "${ARTIFACT}" == "null" ]]; then
+            echo "::notice::Artifact '${EXPECTED}' not found (or all matching artifacts expired) — sample had no generated JSON, nothing to commit."
             echo "found=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          echo "Artifact: ${NAME}"
+          NAME=$(echo "${ARTIFACT}" | jq -r '.name')
+          RUN_ID=$(echo "${ARTIFACT}" | jq -r '.workflow_run.id')
+          if [[ -z "${RUN_ID}" || "${RUN_ID}" == "null" ]]; then
+            echo "::error::Artifact '${EXPECTED}' has no workflow_run.id — cannot download cross-run." >&2
+            exit 1
+          fi
+          echo "Artifact: ${NAME} (run ${RUN_ID})"
           echo "name=${NAME}" >> "$GITHUB_OUTPUT"
+          echo "run_id=${RUN_ID}" >> "$GITHUB_OUTPUT"
           echo "found=true" >> "$GITHUB_OUTPUT"
 
-      # ── 4. Checkout the default branch with push credentials ───────────────
+      # ── 3. Checkout the default branch with push credentials ───────────────
       - name: Checkout default branch
         if: steps.locate-artifact.outputs.found == 'true'
         uses: actions/checkout@v4
@@ -2483,7 +2481,7 @@ jobs:
           persist-credentials: true
           fetch-depth: 1
 
-      # ── 5. Download the artifact into the working tree ─────────────────────
+      # ── 4. Download the artifact into the working tree ─────────────────────
       - name: Download generated azuredeploy.json
         if: steps.locate-artifact.outputs.found == 'true'
         uses: actions/download-artifact@v4
@@ -2492,9 +2490,9 @@ jobs:
           path: .
           github-token: ${{ github.token }}
           repository: ${{ github.repository }}
-          run-id: ${{ steps.source-run.outputs.run_id }}
+          run-id: ${{ steps.locate-artifact.outputs.run_id }}
 
-      # ── 6. Commit & push to default branch (if anything actually changed) ──
+      # ── 5. Commit & push to default branch (if anything actually changed) ──
       - name: Commit and push generated azuredeploy.json
         if: steps.locate-artifact.outputs.found == 'true'
         shell: bash
