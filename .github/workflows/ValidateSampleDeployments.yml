@@ -2137,6 +2137,51 @@ jobs:
           fi
           echo "== Prereqs deployment validation PASSED =="
 
+      # ── Stage generated azuredeploy.json into a workspace-rooted tree ───────
+      # actions/upload-artifact@v4 rebases uploaded files to the *least common
+      # ancestor* of the matched paths. For a typical sample with no prereqs/
+      # folder only one file matches (<sample>/azuredeploy.json) and the LCA
+      # collapses to the file itself, so the artifact would contain a bare
+      # `azuredeploy.json` at its root — which the merge job would then
+      # extract into the repository root instead of the sample folder.
+      #
+      # To preserve the full repo-relative path, copy the generated files
+      # into ${RUNNER_TEMP}/generated/<sample_path>/... and upload that
+      # directory. The merge job extracts it into the checked-out default
+      # branch with `path: .`, so the files land in the correct sample
+      # folders.
+      - name: Stage generated azuredeploy.json files for artifact upload
+        id: stage-generated
+        if: >-
+          steps.preflight.outputs.skip != 'true' &&
+          (steps.compile-main.outputs.generated == 'true' ||
+           steps.compile-prereqs.outputs.generated == 'true')
+        shell: bash
+        env:
+          SAMPLE_PATH: ${{ steps.find-metadata.outputs.sample_path }}
+        run: |
+          set -euo pipefail
+          STAGE_DIR="${RUNNER_TEMP}/generated"
+          DEST_DIR="${STAGE_DIR}/${SAMPLE_PATH}"
+          mkdir -p "${DEST_DIR}/prereqs"
+
+          copied=0
+          for rel in azuredeploy.json prereqs/azuredeploy.json prereqs/prereq.azuredeploy.json; do
+            src="${SAMPLE_PATH}/${rel}"
+            if [[ -f "${src}" ]]; then
+              cp "${src}" "${DEST_DIR}/${rel}"
+              echo "Staged ${src} → ${DEST_DIR}/${rel}"
+              copied=$((copied + 1))
+            fi
+          done
+
+          # Drop the empty prereqs/ dir if nothing landed there, so the
+          # artifact tree mirrors only files that actually exist.
+          rmdir "${DEST_DIR}/prereqs" 2>/dev/null || true
+
+          echo "stage_dir=${STAGE_DIR}" >> "$GITHUB_OUTPUT"
+          echo "copied=${copied}" >> "$GITHUB_OUTPUT"
+
       # ── Upload generated azuredeploy.json artifact ──────────────────────────
       # If either compile step actually generated a file (and templateHash
       # validation succeeded above), upload it as a workflow artifact keyed by
@@ -2144,20 +2189,19 @@ jobs:
       # downloads this artifact and commits the JSON to master, so the merged
       # commit contains the generated ARM template.
       #
-      # Files are uploaded preserving their repo-relative path so the merge
-      # job can copy them straight back into a fresh master checkout.
+      # Uploading the staged directory (rather than the original files
+      # directly) preserves the repo-relative paths end-to-end — see the
+      # stage-generated step above for the rationale.
       - name: Upload generated azuredeploy.json artifact
         if: >-
           steps.preflight.outputs.skip != 'true' &&
+          steps.stage-generated.outputs.copied != '0' &&
           (steps.compile-main.outputs.generated == 'true' ||
            steps.compile-prereqs.outputs.generated == 'true')
         uses: actions/upload-artifact@v4
         with:
           name: generated-azuredeploy-${{ steps.pr.outputs.number }}-${{ steps.pr.outputs.head_sha }}
-          path: |
-            ${{ steps.find-metadata.outputs.sample_path }}/azuredeploy.json
-            ${{ steps.find-metadata.outputs.sample_path }}/prereqs/azuredeploy.json
-            ${{ steps.find-metadata.outputs.sample_path }}/prereqs/prereq.azuredeploy.json
+          path: ${{ steps.stage-generated.outputs.stage_dir }}
           if-no-files-found: ignore
           retention-days: 7
           include-hidden-files: false
@@ -2467,6 +2511,13 @@ jobs:
           # artifact only ever contains these three filenames, so the glob
           # is safe and cannot pick up unrelated changes.
           git add -A -- '**/azuredeploy.json' '**/prereq.azuredeploy.json' || true
+
+          # Safety net: a buggy artifact (e.g. one whose paths got collapsed
+          # to the artifact root) could land a bare azuredeploy.json or
+          # prereq.azuredeploy.json at the repository root. Those two files
+          # never legitimately live at the repo root, so unstage them if
+          # they somehow got picked up.
+          git reset -q -- azuredeploy.json prereq.azuredeploy.json 2>/dev/null || true
 
           if git diff --cached --quiet; then
             echo "No changes to commit — generated JSON already matches the merged tree."
