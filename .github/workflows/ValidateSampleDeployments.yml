@@ -1458,57 +1458,6 @@ jobs:
           echo "✅ Compiled main.bicep → azuredeploy.json"
           echo "generated=true" >> "$GITHUB_OUTPUT"
 
-      # ── Calculate templateHash from template file ─────────────────────────────
-      - name: Calculate templateHash for main template
-        id: main-template-hash
-        if: steps.preflight.outputs.skip != 'true'
-        shell: bash
-        env:
-          SAMPLE_PATH: ${{ steps.find-metadata.outputs.sample_path }}
-        run: |
-          set -euo pipefail
-          cd "${SAMPLE_PATH}"
-
-          echo "──────────────────────────────────────────"
-          echo "  templateHash computation (main template)"
-          echo "──────────────────────────────────────────"
-
-          if [[ ! -f "azuredeploy.json" ]]; then
-            echo "ERROR: azuredeploy.json not found in '${SAMPLE_PATH}' — cannot compute templateHash." >&2
-            exit 1
-          fi
-
-          # Compute hash via ARM public API
-          COMPUTED_HASH=$(az rest --method post \
-            --url "https://management.azure.com/providers/Microsoft.Resources/calculateTemplateHash?api-version=2025-04-01" \
-            --body @azuredeploy.json | jq -r '.templateHash')
-
-          echo "Computed templateHash: ${COMPUTED_HASH}"
-          echo "computed_hash=${COMPUTED_HASH}" >> "$GITHUB_OUTPUT"
-
-          # Read optional templateHash from metadata.json (for backwards-compat warning)
-          METADATA_HASH=$(jq -r '
-            if (.testResult.deployments | type) == "array" then
-              [.testResult.deployments[] | select((.templateFileName // "") | startswith("prereqs/") | not)] | .[0].templateHash // empty
-            else
-              .testResult.deployments.templateHash // empty
-            end' "metadata.json")
-
-          if [[ -n "${METADATA_HASH}" ]]; then
-            if [[ "${COMPUTED_HASH}" != "${METADATA_HASH}" ]]; then
-              echo "⚠️  WARNING: templateHash in metadata.json differs from computed hash (metadata is ignored)." >&2
-              echo "  metadata : ${METADATA_HASH}" >&2
-              echo "  computed : ${COMPUTED_HASH}" >&2
-              echo "  Note: templateHash no longer needs to be in metadata.json — it is derived from the template file." >&2
-            else
-              echo "ℹ️  templateHash in metadata.json matches computed hash (field is optional)."
-            fi
-          else
-            echo "ℹ️  No templateHash in metadata.json — this is fine, the hash is computed from the template file."
-          fi
-
-          echo "✅ templateHash computed for main template."
-
       - name: Validate deployments via ADX
         if: steps.preflight.outputs.skip != 'true'
         shell: bash
@@ -1522,7 +1471,11 @@ jobs:
           DATABASE: ${{ secrets.ADX_DATABASE }}
           # Path resolved from PR changed files by the find-metadata step above
           METADATA_FILE: ${{ steps.find-metadata.outputs.metadata_file }}
-          COMPUTED_HASH: ${{ steps.main-template-hash.outputs.computed_hash }}
+          # Sample folder (where azuredeploy.json / main.bicep live)
+          SAMPLE_PATH: ${{ steps.find-metadata.outputs.sample_path }}
+          # 'true' if CI compiled azuredeploy.json from main.bicep; 'false' if the contributor
+          # committed azuredeploy.json directly. Drives whether we pin Bicep before hashing.
+          JSON_GENERATED: ${{ steps.compile-main.outputs.generated }}
         run: |
           set -euo pipefail
 
@@ -1607,7 +1560,6 @@ jobs:
           CORRELATION_ID=$(echo "${DEPLOYMENTS}"     | jq -r '.correlationId    // empty')
           DEPLOYMENT_NAME=$(echo "${DEPLOYMENTS}"    | jq -r '.deploymentName   // empty')
           ENTRY_TIMESTAMP=$(echo "${DEPLOYMENTS}"    | jq -r '.TIMESTAMP        // "N/A"')
-          METADATA_HASH=$(echo "${DEPLOYMENTS}"      | jq -r '.templateHash     // empty')
 
           echo ""
           echo "================================================================"
@@ -1615,10 +1567,6 @@ jobs:
           echo "  correlationId  : ${CORRELATION_ID:-<missing>}"
           echo "  deploymentName : ${DEPLOYMENT_NAME:-<missing>}"
           echo "  timestamp      : ${ENTRY_TIMESTAMP} (optional)"
-          echo "  computed hash  : ${COMPUTED_HASH}"
-          if [[ -n "${METADATA_HASH}" ]]; then
-          echo "  metadata hash  : ${METADATA_HASH} (optional, not used for comparison)"
-          fi
           echo "================================================================"
 
           # ── Validate templateFileName is an allowed value ─────────────────
@@ -1646,21 +1594,13 @@ jobs:
             exit 1
           fi
 
-          # Warn if metadata templateHash is present but differs from computed
-          if [[ -n "${METADATA_HASH}" && "${METADATA_HASH}" != "${COMPUTED_HASH}" ]]; then
-            echo "⚠️  WARNING: templateHash in metadata.json differs from computed hash." >&2
-            echo "  metadata : ${METADATA_HASH}" >&2
-            echo "  computed : ${COMPUTED_HASH}" >&2
-            echo "  Note: templateHash no longer needs to be in metadata.json — the computed hash is used." >&2
-          fi
-
           # ── Run Kusto query ───────────────────────────────────────────────
           # jq handles JSON-escaping of all KQL string values
           REQUEST_BODY=$(jq -n \
             --arg db  "${DATABASE}" \
             --arg cid "${CORRELATION_ID}" \
             --arg dn  "${DEPLOYMENT_NAME}" \
-            '{db: $db, csl: "Deployments | where correlationId == \"\($cid)\" | where deploymentName == \"\($dn)\" | project timestamp=TIMESTAMP, deploymentName, executionStatus, templateHash | top 1 by timestamp desc"}')
+            '{db: $db, csl: "Deployments | where correlationId == \"\($cid)\" | where deploymentName == \"\($dn)\" | project timestamp=TIMESTAMP, deploymentName, executionStatus, templateHash, generatorName, generatorVersion | top 1 by timestamp desc"}')
 
           echo "Running Kusto query for '${TEMPLATE_FILE_NAME}' (with cluster fallback)..."
           RESPONSE=$(run_kusto_query_with_fallback "${REQUEST_BODY}")
@@ -1684,8 +1624,68 @@ jobs:
           echo "  actual status : ${ACTUAL_STATUS}"
           echo "  actual hash   : ${ACTUAL_HASH}"
 
+          # ── Compute templateHash (with optional Bicep version pinning) ────
+          # When CI compiled azuredeploy.json from main.bicep, the runner's
+          # bundled Bicep may differ from the contributor's local Bicep,
+          # producing a different `_generator.version` and therefore a
+          # different ARM templateHash. To make the comparison version-
+          # invariant, we re-compile main.bicep here using the same Bicep
+          # version the contributor used (recorded in ADX) and hash that.
+          GEN_NAME=$(echo "${RESPONSE}" | jq -r \
+            '.Tables[0] as $t | ($t.Columns | map(.ColumnName) | index("generatorName")) as $i | (if $i == null then "" else ($t.Rows[0][$i] // "") end)')
+          GEN_VERSION=$(echo "${RESPONSE}" | jq -r \
+            '.Tables[0] as $t | ($t.Columns | map(.ColumnName) | index("generatorVersion")) as $i | (if $i == null then "" else ($t.Rows[0][$i] // "") end)')
+
+          cd "${SAMPLE_PATH}"
+
+          if [[ ! -f "azuredeploy.json" ]]; then
+            echo "ERROR: azuredeploy.json not found in '${SAMPLE_PATH}' — cannot compute templateHash." >&2
+            exit 1
+          fi
+
+          JSON_TO_HASH="azuredeploy.json"
+          USED_PIN=false
+          RELEASE_TAG=""
+
+          if [[ "${JSON_GENERATED}" == "true" && "${GEN_NAME}" == "bicep" && -n "${GEN_VERSION}" ]]; then
+            # generatorVersion is "X.Y.Z.BUILD"; GitHub release tag is "vX.Y.Z"
+            if [[ "${GEN_VERSION}" =~ ^([0-9]+\.[0-9]+\.[0-9]+) ]]; then
+              RELEASE_TAG="v${BASH_REMATCH[1]}"
+              PINNED_BICEP="${RUNNER_TEMP:-/tmp}/bicep-pinned-${RELEASE_TAG}"
+              echo ""
+              echo "── Bicep version pinning ──"
+              echo "  ADX generatorVersion : ${GEN_VERSION}"
+              echo "  Resolved release tag : ${RELEASE_TAG}"
+              if [[ ! -x "${PINNED_BICEP}" ]] && \
+                 ! curl -fsSLo "${PINNED_BICEP}" "https://downloads.bicep.azure.com/${RELEASE_TAG}/bicep-linux-x64"; then
+                echo "  ⚠️  Could not download Bicep ${RELEASE_TAG} — falling back to runner-compiled JSON for hashing." >&2
+                rm -f "${PINNED_BICEP}"
+              else
+                chmod +x "${PINNED_BICEP}"
+                if "${PINNED_BICEP}" build main.bicep --outfile azuredeploy.pinned.json; then
+                  JSON_TO_HASH="azuredeploy.pinned.json"
+                  USED_PIN=true
+                  echo "  Recompiled JSON file : azuredeploy.pinned.json"
+                else
+                  echo "  ⚠️  Pinned Bicep ${RELEASE_TAG} failed to build main.bicep — falling back to runner-compiled JSON." >&2
+                fi
+              fi
+            else
+              echo "  ⚠️  Unrecognized generatorVersion format '${GEN_VERSION}' — skipping pin." >&2
+            fi
+          fi
+
+          COMPUTED_HASH=$(az rest --method post \
+            --url "https://management.azure.com/providers/Microsoft.Resources/calculateTemplateHash?api-version=2025-04-01" \
+            --body @"${JSON_TO_HASH}" | jq -r '.templateHash')
+
+          echo "  computed hash : ${COMPUTED_HASH}"
+          if [[ "${USED_PIN}" == "true" ]]; then
+            echo "  → hash computed from pinned-Bicep recompile (azuredeploy.pinned.json)"
+          fi
+
           # ── Compare results ───────────────────────────────────────────────
-          # Compare ADX log hash against the COMPUTED hash (not metadata hash)
+          # Compare ADX log hash against the COMPUTED hash
           OVERALL_PASS=true
 
           if [[ "${ACTUAL_STATUS}" != "Succeeded" ]]; then
@@ -1699,6 +1699,13 @@ jobs:
             echo "FAIL: templateHash mismatch for '${TEMPLATE_FILE_NAME}'" >&2
             echo "      computed (from template file) : ${COMPUTED_HASH}" >&2
             echo "      actual   (from ADX log)       : ${ACTUAL_HASH}" >&2
+            if [[ "${USED_PIN}" == "true" ]]; then
+              echo "      Note: hash was computed after pinning Bicep to ${RELEASE_TAG}" >&2
+              echo "      (the version ADX recorded for the deployment). A mismatch here" >&2
+              echo "      indicates main.bicep has substantively changed since the" >&2
+              echo "      deployment — please re-deploy and re-record correlationId" >&2
+              echo "      and deploymentName in metadata.json." >&2
+            fi
             OVERALL_PASS=false
           else
             echo "PASS: templateHash matches (computed vs ADX log)"
@@ -1820,100 +1827,6 @@ jobs:
           echo "✅ Compiled ${BICEP_FILE} → ${OUT_FILE}"
           echo "generated=true" >> "$GITHUB_OUTPUT"
 
-      # ── Prereqs: calculate templateHash from template files ──────────────────
-      - name: Prereqs – calculate templateHash from template files
-        id: prereqs-template-hash
-        if: steps.preflight.outputs.skip != 'true' && steps.check-prereqs.outputs.has_prereqs == 'true'
-        shell: bash
-        env:
-          SAMPLE_PATH: ${{ steps.find-metadata.outputs.sample_path }}
-          METADATA_FILE: ${{ steps.find-metadata.outputs.metadata_file }}
-        run: |
-          set -euo pipefail
-          PREREQS_DIR="${SAMPLE_PATH}/prereqs"
-          METADATA_PATH="${METADATA_FILE}"
-
-          echo "──────────────────────────────────────────"
-          echo "  templateHash computation (prereqs)"
-          echo "──────────────────────────────────────────"
-
-          # Gather prereqs deployment entries from metadata.json
-          PREREQ_DEPLOYMENTS=$(jq -c \
-            '[.testResult.deployments[] | select(.templateFileName | startswith("prereqs/"))]' \
-            "${METADATA_PATH}")
-          PREREQ_COUNT=$(echo "${PREREQ_DEPLOYMENTS}" | jq 'length')
-
-          if [[ "${PREREQ_COUNT}" -eq 0 ]]; then
-            echo "No prereqs entries in metadata.json — skipping hash computation."
-            echo "computed_hashes={}" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-
-          OVERALL_PASS=true
-          # Build computed hashes JSON using jq for safe serialization
-          HASHES_JSON="{}"
-
-          for i in $(seq 0 $((PREREQ_COUNT - 1))); do
-            ENTRY=$(echo "${PREREQ_DEPLOYMENTS}" | jq -c ".[${i}]")
-            ENTRY_LABEL="$((i + 1))/${PREREQ_COUNT}"
-            TEMPLATE_FILE_NAME=$(echo "${ENTRY}" | jq -r '.templateFileName // empty')
-            METADATA_HASH=$(echo "${ENTRY}" | jq -r '.templateHash // empty')
-
-            echo ""
-            echo "  [prereqs entry ${ENTRY_LABEL}] ${TEMPLATE_FILE_NAME}"
-
-            # Determine which ARM JSON file corresponds to this entry
-            # templateFileName is e.g. "prereqs/main.bicep" or "prereqs/prereq.azuredeploy.json"
-            BASENAME=$(basename "${TEMPLATE_FILE_NAME}")
-            case "${BASENAME}" in
-              prereq.main.bicep)       ARM_FILE="${PREREQS_DIR}/prereq.azuredeploy.json" ;;
-              main.bicep)              ARM_FILE="${PREREQS_DIR}/azuredeploy.json" ;;
-              prereq.azuredeploy.json) ARM_FILE="${PREREQS_DIR}/prereq.azuredeploy.json" ;;
-              azuredeploy.json)        ARM_FILE="${PREREQS_DIR}/azuredeploy.json" ;;
-              *)                       ARM_FILE="${PREREQS_DIR}/${BASENAME}" ;;
-            esac
-
-            if [[ ! -f "${ARM_FILE}" ]]; then
-              echo "  ERROR: ARM template '${ARM_FILE}' not found (needed for hash computation)." >&2
-              OVERALL_PASS=false
-              continue
-            fi
-
-            COMPUTED_HASH=$(az rest --method post \
-              --url "https://management.azure.com/providers/Microsoft.Resources/calculateTemplateHash?api-version=2025-04-01" \
-              --body @"${ARM_FILE}" | jq -r '.templateHash')
-
-            echo "  computed : ${COMPUTED_HASH}"
-            HASHES_JSON=$(echo "${HASHES_JSON}" | jq -c --arg k "${TEMPLATE_FILE_NAME}" --arg v "${COMPUTED_HASH}" '. + {($k): $v}')
-
-            # Warn if metadata hash is present and differs (backwards compatibility)
-            if [[ -n "${METADATA_HASH}" ]]; then
-              if [[ "${COMPUTED_HASH}" != "${METADATA_HASH}" ]]; then
-                echo "  ⚠️  WARNING: templateHash in metadata.json differs from computed (metadata is ignored)." >&2
-                echo "    metadata : ${METADATA_HASH}" >&2
-                echo "    computed : ${COMPUTED_HASH}" >&2
-              else
-                echo "  ℹ️  templateHash in metadata.json matches computed (field is optional)."
-              fi
-            else
-              echo "  ℹ️  No templateHash in metadata.json — this is fine, the hash is computed from the template file."
-            fi
-          done
-
-          # Use heredoc delimiter to safely write JSON to GITHUB_OUTPUT
-          {
-            echo "computed_hashes<<HASHES_EOF"
-            echo "${HASHES_JSON}"
-            echo "HASHES_EOF"
-          } >> "$GITHUB_OUTPUT"
-
-          echo ""
-          if [[ "${OVERALL_PASS}" != "true" ]]; then
-            echo "PREREQS templateHash COMPUTATION FAILED — missing ARM template files." >&2
-            exit 1
-          fi
-          echo "✅ All prereqs templateHash values computed."
-
       # ── Prereqs B+C: validate metadata entries and run Kusto per entry ──────
       - name: Validate prereqs deployments via ADX
         if: steps.preflight.outputs.skip != 'true' && steps.check-prereqs.outputs.has_prereqs == 'true'
@@ -1927,7 +1840,12 @@ jobs:
             https://armprodsea.southeastasia.kusto.windows.net
           DATABASE: ${{ secrets.ADX_DATABASE }}
           METADATA_FILE: ${{ steps.find-metadata.outputs.metadata_file }}
-          COMPUTED_HASHES: ${{ steps.prereqs-template-hash.outputs.computed_hashes }}
+          # Sample folder (where prereqs/ lives)
+          SAMPLE_PATH: ${{ steps.find-metadata.outputs.sample_path }}
+          # 'true' if CI compiled the prereqs ARM JSON from Bicep; 'false' if
+          # the contributor committed it directly. Drives whether we pin Bicep
+          # before hashing each entry.
+          JSON_GENERATED: ${{ steps.compile-prereqs.outputs.generated }}
         run: |
           set -euo pipefail
           METADATA_PATH="${METADATA_FILE}"
@@ -2014,6 +1932,7 @@ jobs:
           }
 
           OVERALL_PASS=true
+          PREREQS_DIR="${SAMPLE_PATH}/prereqs"
 
           for i in $(seq 0 $((PREREQ_COUNT - 1))); do
             ENTRY=$(echo "${PREREQ_DEPLOYMENTS}" | jq -c ".[$i]")
@@ -2026,9 +1945,6 @@ jobs:
             DEPLOYMENT_NAME=$(echo "${ENTRY}"    | jq -r '.deploymentName   // empty')
             ENTRY_TIMESTAMP=$(echo "${ENTRY}"    | jq -r '.TIMESTAMP        // "N/A"')
 
-            # Look up the computed hash for this entry from the previous step
-            EXPECTED_HASH=$(echo "${COMPUTED_HASHES}" | jq -r --arg k "${TEMPLATE_FILE_NAME}" '.[$k] // empty')
-
             echo ""
             echo "================================================================"
             echo "  [prereqs entry ${ENTRY_LABEL}]"
@@ -2036,7 +1952,6 @@ jobs:
             echo "  correlationId  : ${CORRELATION_ID:-<missing>}"
             echo "  deploymentName : ${DEPLOYMENT_NAME:-<missing>}"
             echo "  timestamp      : ${ENTRY_TIMESTAMP} (optional)"
-            echo "  computed hash  : ${EXPECTED_HASH:-<not computed>}"
             echo "================================================================"
 
             # ── Validate required fields only ─────────────────────────────
@@ -2058,8 +1973,19 @@ jobs:
               continue
             fi
 
-            if [[ -z "${EXPECTED_HASH}" ]]; then
-              echo "ERROR: No computed hash available for '${TEMPLATE_FILE_NAME}' — cannot validate." >&2
+            # ── Resolve the on-disk ARM JSON file for this entry ──────────
+            # templateFileName is e.g. "prereqs/main.bicep" or "prereqs/prereq.azuredeploy.json"
+            BASENAME=$(basename "${TEMPLATE_FILE_NAME}")
+            case "${BASENAME}" in
+              prereq.main.bicep)       ARM_FILE="${PREREQS_DIR}/prereq.azuredeploy.json"; SRC_BICEP="${PREREQS_DIR}/prereq.main.bicep" ;;
+              main.bicep)              ARM_FILE="${PREREQS_DIR}/azuredeploy.json";        SRC_BICEP="${PREREQS_DIR}/main.bicep" ;;
+              prereq.azuredeploy.json) ARM_FILE="${PREREQS_DIR}/prereq.azuredeploy.json"; SRC_BICEP="" ;;
+              azuredeploy.json)        ARM_FILE="${PREREQS_DIR}/azuredeploy.json";        SRC_BICEP="" ;;
+              *)                       ARM_FILE="${PREREQS_DIR}/${BASENAME}";             SRC_BICEP="" ;;
+            esac
+
+            if [[ ! -f "${ARM_FILE}" ]]; then
+              echo "ERROR [prereqs ${ENTRY_LABEL}]: ARM template '${ARM_FILE}' not found (needed for hash computation)." >&2
               OVERALL_PASS=false
               continue
             fi
@@ -2069,7 +1995,7 @@ jobs:
               --arg db  "${DATABASE}" \
               --arg cid "${CORRELATION_ID}" \
               --arg dn  "${DEPLOYMENT_NAME}" \
-              '{db: $db, csl: "Deployments | where correlationId == \"\($cid)\" | where deploymentName == \"\($dn)\" | project timestamp=TIMESTAMP, deploymentName, executionStatus, templateHash | top 1 by timestamp desc"}')
+              '{db: $db, csl: "Deployments | where correlationId == \"\($cid)\" | where deploymentName == \"\($dn)\" | project timestamp=TIMESTAMP, deploymentName, executionStatus, templateHash, generatorName, generatorVersion | top 1 by timestamp desc"}')
 
             echo "Running Kusto query for prereqs entry '${TEMPLATE_FILE_NAME}' (with cluster fallback)..."
             RESPONSE=$(run_kusto_query_with_fallback "${REQUEST_BODY}")
@@ -2098,8 +2024,58 @@ jobs:
             echo "  actual status : ${ACTUAL_STATUS}"
             echo "  actual hash   : ${ACTUAL_HASH}"
 
+            # ── Compute templateHash (with optional Bicep version pinning) ──
+            # When CI compiled the prereq ARM JSON from Bicep, the runner's
+            # bundled Bicep may differ from the contributor's local Bicep.
+            # Re-compile here using the same Bicep version the contributor used
+            # (recorded in ADX) so the hash comparison is version-invariant.
+            GEN_NAME=$(echo "${RESPONSE}" | jq -r \
+              '.Tables[0] as $t | ($t.Columns | map(.ColumnName) | index("generatorName")) as $i | (if $i == null then "" else ($t.Rows[0][$i] // "") end)')
+            GEN_VERSION=$(echo "${RESPONSE}" | jq -r \
+              '.Tables[0] as $t | ($t.Columns | map(.ColumnName) | index("generatorVersion")) as $i | (if $i == null then "" else ($t.Rows[0][$i] // "") end)')
+
+            JSON_TO_HASH="${ARM_FILE}"
+            USED_PIN=false
+            RELEASE_TAG=""
+
+            if [[ "${JSON_GENERATED}" == "true" && "${GEN_NAME}" == "bicep" && -n "${GEN_VERSION}" && -n "${SRC_BICEP}" && -f "${SRC_BICEP}" ]]; then
+              if [[ "${GEN_VERSION}" =~ ^([0-9]+\.[0-9]+\.[0-9]+) ]]; then
+                RELEASE_TAG="v${BASH_REMATCH[1]}"
+                PINNED_BICEP="${RUNNER_TEMP:-/tmp}/bicep-pinned-${RELEASE_TAG}"
+                PINNED_OUT="${ARM_FILE%.json}.pinned.json"
+                echo ""
+                echo "  ── Bicep version pinning ──"
+                echo "    ADX generatorVersion : ${GEN_VERSION}"
+                echo "    Resolved release tag : ${RELEASE_TAG}"
+                if [[ ! -x "${PINNED_BICEP}" ]] && \
+                   ! curl -fsSLo "${PINNED_BICEP}" "https://downloads.bicep.azure.com/${RELEASE_TAG}/bicep-linux-x64"; then
+                  echo "    ⚠️  Could not download Bicep ${RELEASE_TAG} — falling back to runner-compiled JSON for hashing." >&2
+                  rm -f "${PINNED_BICEP}"
+                else
+                  chmod +x "${PINNED_BICEP}"
+                  if "${PINNED_BICEP}" build "${SRC_BICEP}" --outfile "${PINNED_OUT}"; then
+                    JSON_TO_HASH="${PINNED_OUT}"
+                    USED_PIN=true
+                    echo "    Recompiled JSON file : ${PINNED_OUT}"
+                  else
+                    echo "    ⚠️  Pinned Bicep ${RELEASE_TAG} failed to build ${SRC_BICEP} — falling back to runner-compiled JSON." >&2
+                  fi
+                fi
+              else
+                echo "  ⚠️  Unrecognized generatorVersion format '${GEN_VERSION}' — skipping pin." >&2
+              fi
+            fi
+
+            COMPUTED_HASH=$(az rest --method post \
+              --url "https://management.azure.com/providers/Microsoft.Resources/calculateTemplateHash?api-version=2025-04-01" \
+              --body @"${JSON_TO_HASH}" | jq -r '.templateHash')
+
+            echo "  computed hash : ${COMPUTED_HASH}"
+            if [[ "${USED_PIN}" == "true" ]]; then
+              echo "  → hash computed from pinned-Bicep recompile (${PINNED_OUT})"
+            fi
+
             # ── Compare results ───────────────────────────────────────────
-            # Compare ADX log hash against the COMPUTED hash (not metadata hash)
             ENTRY_PASS=true
 
             if [[ "${ACTUAL_STATUS}" != "Succeeded" ]]; then
@@ -2113,15 +2089,22 @@ jobs:
               echo "PASS: executionStatus = Succeeded"
             fi
 
-            if [[ -n "${EXPECTED_HASH}" && "${ACTUAL_HASH}" != "${EXPECTED_HASH}" ]]; then
+            if [[ "${ACTUAL_HASH}" != "${COMPUTED_HASH}" ]]; then
               echo "FAIL [prereqs ${ENTRY_LABEL}]: templateHash mismatch" >&2
               echo "  templateFileName                   : ${TEMPLATE_FILE_NAME}" >&2
-              echo "  computed (from template file)      : ${EXPECTED_HASH}" >&2
+              echo "  computed (from template file)      : ${COMPUTED_HASH}" >&2
               echo "  actual   (from ADX log)            : ${ACTUAL_HASH}" >&2
               echo "  correlationId                      : ${CORRELATION_ID}" >&2
               echo "  deploymentName                     : ${DEPLOYMENT_NAME}" >&2
+              if [[ "${USED_PIN}" == "true" ]]; then
+                echo "  Note: hash was computed after pinning Bicep to ${RELEASE_TAG}" >&2
+                echo "  (the version ADX recorded for the deployment). A mismatch here" >&2
+                echo "  indicates ${SRC_BICEP##*/} has substantively changed since the" >&2
+                echo "  deployment — please re-deploy and re-record correlationId" >&2
+                echo "  and deploymentName in metadata.json." >&2
+              fi
               ENTRY_PASS=false
-            elif [[ -n "${EXPECTED_HASH}" ]]; then
+            else
               echo "PASS: templateHash matches (computed vs ADX log)"
             fi
 
