@@ -10,6 +10,9 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2023-04-01' = {
   sku: {
     name: 'Standard_LRS'
   }
+  properties: {
+    allowSharedKeyAccess: false
+  }
 }
 resource storageAccount2 'Microsoft.Storage/storageAccounts@2023-04-01' = {
   name: storageAccountName2
@@ -17,6 +20,9 @@ resource storageAccount2 'Microsoft.Storage/storageAccounts@2023-04-01' = {
   kind: 'StorageV2'
   sku: {
     name: 'Standard_GRS'
+  }
+  properties: {
+    allowSharedKeyAccess: false
   }
 }
 
