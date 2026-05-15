@@ -1152,7 +1152,12 @@ jobs:
       startsWith(github.event.comment.body, '/validate')
 
     permissions:
-      contents: read
+      # `contents: write` is required by the `Commit generated azuredeploy.json
+      # to PR head branch` step at the end of this job, which (for same-repo
+      # PRs only) pushes the generated ARM JSON onto the PR's head branch so
+      # the merge naturally carries it into master. Fork PRs are handled by
+      # the post-merge `commit-generated-on-merge` job's auto-PR fallback.
+      contents: write
       pull-requests: read
       issues: read
       id-token: write
@@ -1190,8 +1195,16 @@ jobs:
           echo "number=${PR_NUMBER}" >> "$GITHUB_OUTPUT"
           # Resolve head SHA so the artifact uploaded later in this job can be
           # uniquely named per PR head commit and located by the merge job.
-          HEAD_SHA=$(gh api "/repos/${REPO}/pulls/${PR_NUMBER}" --jq '.head.sha')
+          # Also resolve head_repo and head_ref so the path-A push step at the
+          # end of this job can decide whether the PR is from the same repo
+          # (push to head branch) or a fork (skip; merge job will auto-PR).
+          PR_JSON=$(gh api "/repos/${REPO}/pulls/${PR_NUMBER}")
+          HEAD_SHA=$(echo "${PR_JSON}" | jq -r '.head.sha')
+          HEAD_REF=$(echo "${PR_JSON}" | jq -r '.head.ref')
+          HEAD_REPO=$(echo "${PR_JSON}" | jq -r '.head.repo.full_name')
           echo "head_sha=${HEAD_SHA}" >> "$GITHUB_OUTPUT"
+          echo "head_ref=${HEAD_REF}" >> "$GITHUB_OUTPUT"
+          echo "head_repo=${HEAD_REPO}" >> "$GITHUB_OUTPUT"
 
       # ── Preflight: classify whether this PR contains deployment-affecting
       # changes, and if so, in how many distinct sample folders.
@@ -2189,6 +2202,90 @@ jobs:
           retention-days: 7
           include-hidden-files: false
 
+      # ── Path A: push generated JSON to the PR's head branch ─────────────────
+      # When the PR head is in this same repo (i.e. the contributor pushed
+      # their branch directly to Azure/azure-quickstart-templates rather than
+      # opening from a fork), GITHUB_TOKEN with `contents: write` can push to
+      # the head branch. Doing so here means the generated azuredeploy.json
+      # appears in the PR's file list and is naturally carried into master by
+      # the merge — sidestepping the protected-branch push that previously
+      # failed in `commit-generated-on-merge`.
+      #
+      # For fork PRs (head_repo != github.repository) GITHUB_TOKEN cannot push
+      # to the fork — even with "Allow edits by maintainers" enabled, that
+      # setting only grants human maintainers push access, not the Actions
+      # token. Those PRs are handled by the post-merge auto-PR fallback in
+      # `commit-generated-on-merge`.
+      #
+      # The step is idempotent: if the PR's head already contains the
+      # generated JSON (e.g. /validate run a second time with no changes), the
+      # diff check exits cleanly without producing an empty commit.
+      - name: Commit generated azuredeploy.json to PR head branch
+        id: push-to-pr-head
+        if: >-
+          steps.preflight.outputs.skip != 'true' &&
+          steps.stage-generated.outputs.copied != '0' &&
+          steps.pr.outputs.head_repo == github.repository &&
+          (steps.compile-main.outputs.generated == 'true' ||
+           steps.compile-prereqs.outputs.generated == 'true')
+        shell: bash
+        env:
+          HEAD_REF:  ${{ steps.pr.outputs.head_ref }}
+          PR_NUM:    ${{ steps.pr.outputs.number }}
+          STAGE_DIR: ${{ steps.stage-generated.outputs.stage_dir }}
+          GH_TOKEN:  ${{ github.token }}
+          REPO:      ${{ github.repository }}
+        run: |
+          set -euo pipefail
+
+          # Use a sibling working tree to avoid mutating the read-only
+          # refs/pull/<N>/head checkout the validation steps used.
+          WORKDIR="${RUNNER_TEMP}/pr-head-checkout"
+          rm -rf "${WORKDIR}"
+          git clone --depth 1 --branch "${HEAD_REF}" \
+            "https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git" \
+            "${WORKDIR}"
+          cd "${WORKDIR}"
+
+          git config user.email "azure-quickstart-templates@noreply.github.com"
+          git config user.name  "azure-quickstart-templates Automation"
+
+          # Overlay the staged generated files onto the working tree. STAGE_DIR
+          # mirrors the repo-relative paths (see `stage-generated` step).
+          cp -R "${STAGE_DIR}/." .
+
+          # Stage only generated ARM JSON files anywhere in the tree, then
+          # unstage any that may have landed at the repo root (defense in
+          # depth — none of those files legitimately live there).
+          git add -A -- '**/azuredeploy.json' '**/prereq.azuredeploy.json' || true
+          git reset -q -- azuredeploy.json prereq.azuredeploy.json 2>/dev/null || true
+
+          if git diff --cached --quiet; then
+            echo "::notice::PR head branch already contains the generated JSON — nothing to push."
+            exit 0
+          fi
+
+          echo "Files staged for commit:"
+          git diff --cached --name-only | sed 's/^/  /'
+
+          git commit -m "Auto-add generated azuredeploy.json (validation run for PR #${PR_NUM})"
+
+          # Push with one rebase-retry to tolerate a concurrent push to the
+          # PR branch. Workflow concurrency (validate-pr-${PR_NUM}) already
+          # serializes our own runs, so retries here only cover external
+          # pushes by the contributor.
+          for attempt in 1 2; do
+            if git push origin "HEAD:${HEAD_REF}"; then
+              echo "✅ Pushed generated azuredeploy.json to ${HEAD_REF}"
+              exit 0
+            fi
+            echo "Push attempt ${attempt} rejected — pulling --rebase and retrying..."
+            git pull --rebase origin "${HEAD_REF}"
+          done
+
+          echo "ERROR: Failed to push generated azuredeploy.json to PR head branch." >&2
+          exit 1
+
   # ============================================================================
   # JOB 4 – report-check
   #
@@ -2355,23 +2452,34 @@ jobs:
   # Triggered by `pull_request: closed` (the second `on:` trigger). When a PR
   # is merged into the default branch AND the ADX validation succeeded for
   # that PR head SHA, this job downloads the `generated-azuredeploy-*`
-  # artifact uploaded by the `selected-pipeline` job during /validate and
-  # commits the contained azuredeploy.json file(s) directly to the default
-  # branch.
+  # artifact uploaded by the `selected-pipeline` job during /validate.
   #
-  # Effect: the generated ARM JSON ends up in the default branch right after
-  # the PR's merge commit, so downstream tooling (raw.githubusercontent.com
-  # links, deployment buttons) sees a JSON file that matches the merged
-  # main.bicep. No second Bicep build is performed — we reuse the JSON that
-  # /validate already validated.
+  # Two delivery paths cooperate to land the generated ARM JSON on the default
+  # branch:
   #
-  # Fork PRs are explicitly supported here. /validate is `issue_comment`-
-  # triggered, so it runs in the upstream repo's context with upstream secrets
-  # and uploads `generated-azuredeploy-*` artifacts to upstream's actions
-  # storage exactly like in-repo PRs do. The merge event also fires in
-  # upstream context, so `GITHUB_TOKEN` is upstream's `contents: write` token
-  # and no fork credentials are involved in the push. Trust boundary is
-  # maintainer review of the `main.bicep` change before merge 
+  #   Path A — same-repo PRs (head.repo == github.repository):
+  #     The `selected-pipeline` job already pushed the generated JSON onto
+  #     the PR's head branch during /validate, so the merge naturally carries
+  #     it into the default branch. By the time this job runs, the merged
+  #     tree already contains the file and the `git diff --cached --quiet`
+  #     check below exits cleanly with no auto-PR created.
+  #
+  #   Path B — fork PRs (head.repo != github.repository):
+  #     GITHUB_TOKEN cannot push to forks (the "Allow edits by maintainers"
+  #     setting only grants human maintainers push access, not Actions
+  #     tokens), so path A is impossible. Instead, this job commits the
+  #     generated JSON onto an unprotected `auto/generated-azuredeploy-pr-N`
+  #     branch and opens a follow-up PR for a maintainer to merge. This
+  #     avoids needing branch-protection bypass on the default branch for
+  #     github-actions[bot].
+  #
+  # Both paths reuse the JSON that /validate already validated — no second
+  # Bicep build is performed — so downstream tooling
+  # (raw.githubusercontent.com links, deployment buttons) eventually sees a
+  # JSON file that matches the merged main.bicep.
+  #
+  # Trust boundary: maintainer review of the `main.bicep` change before merge
+  # (path A) and maintainer review of the auto-PR before merge (path B).
   # ============================================================================
   commit-generated-on-merge:
     name: Commit generated azuredeploy.json on merge
@@ -2385,7 +2493,7 @@ jobs:
     permissions:
       contents: write
       actions: read
-      pull-requests: read
+      pull-requests: write
 
     steps:
       # ── 1. Verify ADX validation succeeded for the merged PR head SHA ──────
@@ -2479,13 +2587,26 @@ jobs:
           repository: ${{ github.repository }}
           run-id: ${{ steps.locate-artifact.outputs.run_id }}
 
-      # ── 5. Commit & push to default branch (if anything actually changed) ──
-      - name: Commit and push generated azuredeploy.json
+      # ── 5. Commit to a bot branch and open an auto-PR (if anything changed) ──
+      # Background: master is protected and GITHUB_TOKEN (acting as
+      # github-actions[bot]) is not on the bypass list, so a direct push to
+      # master 403s. Instead, we push to an unprotected `auto/...` branch and
+      # open a PR for a maintainer to merge.
+      #
+      # For same-repo PRs the path-A step in `selected-pipeline` will already
+      # have pushed the generated JSON onto the PR's head branch, so the
+      # merged tree matches and the diff check below exits cleanly with no
+      # auto-PR created. The auto-PR path is therefore primarily exercised
+      # for fork PRs (where path A is impossible because GITHUB_TOKEN cannot
+      # push to forks), and as a safety net if path A was skipped/failed.
+      - name: Commit generated azuredeploy.json and open auto-PR
         if: steps.locate-artifact.outputs.found == 'true'
         shell: bash
         env:
           PR_NUM:         ${{ github.event.pull_request.number }}
           DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          GH_TOKEN:       ${{ github.token }}
+          REPO:           ${{ github.repository }}
         run: |
           set -euo pipefail
 
@@ -2505,24 +2626,44 @@ jobs:
           git reset -q -- azuredeploy.json prereq.azuredeploy.json 2>/dev/null || true
 
           if git diff --cached --quiet; then
-            echo "No changes to commit — generated JSON already matches the merged tree."
+            echo "No changes to commit — generated JSON already matches the merged tree (path A handled it, or artifact already in tree)."
             exit 0
           fi
 
           echo "Files staged for commit:"
           git diff --cached --name-only | sed 's/^/  /'
 
+          BRANCH="auto/generated-azuredeploy-pr-${PR_NUM}"
+
+          # If a stale auto-PR branch from a previous run still exists,
+          # overwrite it so we don't accumulate orphaned branches and so the
+          # existing PR (if any) gets refreshed with the latest generated JSON.
+          git checkout -B "${BRANCH}"
           git commit -m "Auto-add generated azuredeploy.json from PR #${PR_NUM}"
+          git push --force-with-lease origin "${BRANCH}"
 
-          # Push with one rebase-retry in case of a concurrent merge.
-          for attempt in 1 2; do
-            if git push origin "HEAD:${DEFAULT_BRANCH}"; then
-              echo "✅ Pushed generated azuredeploy.json to ${DEFAULT_BRANCH}"
-              exit 0
-            fi
-            echo "Push attempt ${attempt} rejected — pulling --rebase and retrying..."
-            git pull --rebase origin "${DEFAULT_BRANCH}"
-          done
+          # Reuse an existing open auto-PR for the same source PR if present;
+          # otherwise create a new one. `gh pr list --head` matches by branch
+          # name (head ref) within this repo.
+          EXISTING_PR=$(gh pr list \
+            --repo "${REPO}" \
+            --head "${BRANCH}" \
+            --base "${DEFAULT_BRANCH}" \
+            --state open \
+            --json number \
+            --jq '.[0].number // empty')
 
-          echo "ERROR: Failed to push generated azuredeploy.json after retry." >&2
-          exit 1
+          if [[ -n "${EXISTING_PR}" ]]; then
+            echo "✅ Refreshed existing auto-PR #${EXISTING_PR} on branch ${BRANCH}"
+            exit 0
+          fi
+
+          gh pr create \
+            --repo "${REPO}" \
+            --base "${DEFAULT_BRANCH}" \
+            --head "${BRANCH}" \
+            --title "Auto-add generated azuredeploy.json from PR #${PR_NUM}" \
+            --body "$(printf 'This PR was generated automatically by the **commit-generated-on-merge** job in `ValidateSampleDeployments.yml` after PR #%s was merged.\n\nIt contains the compiled `azuredeploy.json` (and any `prereq.azuredeploy.json`) produced from the Bicep sources in the merged PR. A maintainer should review and merge this PR to land the generated ARM template on `%s`.\n\nNo human edits were made; the contents come directly from the `generated-azuredeploy-%s-%s` artifact uploaded during ADX validation.' \
+              "${PR_NUM}" "${DEFAULT_BRANCH}" "${PR_NUM}" "${{ github.event.pull_request.head.sha }}")"
+
+          echo "✅ Opened auto-PR for branch ${BRANCH}"
