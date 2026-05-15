@@ -312,3 +312,4 @@ resource backupInstance 'Microsoft.DataProtection/backupVaults/backupInstances@2
     storageContainerList
   ]
 }
+
