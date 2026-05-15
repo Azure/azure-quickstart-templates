@@ -323,13 +323,13 @@ This workflow runs automatically on every PR to `master`. It validates:
 
 ### 2. Validate ARM Deployments (`ValidateSampleDeployments.yml`)
 
-This workflow is triggered by a repo maintainer posting a `/verify` comment on your PR.  It validates the deployment results you provided in `testResult`:
+This workflow is triggered by a repo maintainer posting a `/validate` comment on your PR.  It validates the deployment results you provided in `testResult`:
 
 + Verifies that the `correlationId` and `deploymentName` exist in the Azure deployment logs
 + Confirms the deployment `executionStatus` is `Succeeded`
-+ Computes a `templateHash` from the template file in the PR and verifies it matches the hash recorded in the deployment logs — this ensures the template you deployed is the same one in the PR
++ Computes a `templateHash` from the template file in the PR and verifies it matches the hash recorded in the deployment logs — this ensures the template you deployed is the same one in the PR. When the PR ships only a `.bicep` source (no committed `azuredeploy.json`), CI re-compiles using the **same Bicep version you used at deployment time** (read from the deployment log) so toolchain version skew does not cause spurious mismatches.
 
-The `/verify` command can only be run after `validate-samples.yml` passes.
+The `/validate` command can only be run after `validate-samples.yml` passes.
 
 ### 3. Summarize PR (`summarize-pr.yml`)
 
@@ -342,7 +342,7 @@ Triggered by a `/summarize` comment on a PR, this workflow generates an AI-power
 3. **Capture** the deployment results: `correlationId`, `deploymentName`, and `templateFileName`
 4. **Update** `metadata.json` with the `testResult` section containing the deployment results
 5. **Submit** your PR — `validate-samples.yml` runs automatically
-6. A **maintainer** runs `/verify` to validate your deployment results against Azure logs
+6. A **maintainer** runs `/validate` to validate your deployment results against Azure logs
 7. Optionally, a reviewer runs `/summarize` for an AI-generated PR summary
 
 ### Parameters File Placeholders
@@ -489,9 +489,9 @@ Common failure reasons:
 
 + **metadata.json missing `testResult`:** You must deploy your template and add the deployment results to metadata.json before submitting the PR.  See [testResult](#testresult) for the required format.
 + **Template changed but metadata.json not updated:** If you modify any `.bicep` or `.json` file, you must re-deploy and update the `testResult` section with fresh deployment results.
-+ **`/verify` fails with "No ADX record found":** The `correlationId` or `deploymentName` in your metadata.json does not match any Azure deployment log.  Double-check the values are correct.
-+ **`/verify` fails with templateHash mismatch:** The template you deployed is different from the template in your PR.  Re-deploy the exact template from your PR branch and update the deployment results.
-+ **`/verify` fails with executionStatus not Succeeded:** Your deployment did not succeed.  Fix the template, re-deploy, and update the deployment results.
++ **`/validate` fails with "No ADX record found":** The `correlationId` or `deploymentName` in your metadata.json does not match any Azure deployment log.  Double-check the values are correct.
++ **`/validate` fails with templateHash mismatch:** The template you deployed differs substantively from the template in your PR. CI pins to the Bicep version recorded in your deployment log, so this is no longer caused by `az bicep upgrade` between deployments and PR open — it indicates real source drift. Re-deploy the exact template from your PR branch and update the deployment results.
++ **`/validate` fails with executionStatus not Succeeded:** Your deployment did not succeed.  Fix the template, re-deploy, and update the deployment results.
 
 Keep in mind that depending on the resources allocated, it can take a few minutes for the CI system to cleanup provisioned resources.
 

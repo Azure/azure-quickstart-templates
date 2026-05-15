@@ -2365,8 +2365,13 @@ jobs:
   # main.bicep. No second Bicep build is performed — we reuse the JSON that
   # /validate already validated.
   #
-  # Fork PRs cannot reach this workflow at all (the /validate path requires
-  # ADX access), so the same-repo guard is defensive belt-and-braces only.
+  # Fork PRs are explicitly supported here. /validate is `issue_comment`-
+  # triggered, so it runs in the upstream repo's context with upstream secrets
+  # and uploads `generated-azuredeploy-*` artifacts to upstream's actions
+  # storage exactly like in-repo PRs do. The merge event also fires in
+  # upstream context, so `GITHUB_TOKEN` is upstream's `contents: write` token
+  # and no fork credentials are involved in the push. Trust boundary is
+  # maintainer review of the `main.bicep` change before merge 
   # ============================================================================
   commit-generated-on-merge:
     name: Commit generated azuredeploy.json on merge
@@ -2375,8 +2380,7 @@ jobs:
       github.event_name == 'pull_request' &&
       github.event.action == 'closed' &&
       github.event.pull_request.merged == true &&
-      github.event.pull_request.base.ref == github.event.repository.default_branch &&
-      github.event.pull_request.head.repo.full_name == github.repository
+      github.event.pull_request.base.ref == github.event.repository.default_branch
 
     permissions:
       contents: write
