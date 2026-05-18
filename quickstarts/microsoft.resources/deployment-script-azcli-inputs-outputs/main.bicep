@@ -1,4 +1,4 @@
-@description('An Example of a boolean parameter')
+@description('Example of a boolean parameter')
 param myBool bool
 
 @description('An example of an integer parameter')
