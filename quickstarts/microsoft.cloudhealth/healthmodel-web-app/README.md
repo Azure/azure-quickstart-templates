@@ -1,5 +1,5 @@
 ---
-description: This template creates an Azure Health Model with a three-tier application topology using logical entities and relationships.
+description: This template creates an Azure Monitor health model with a three-tier application topology using logical entities and relationships.
 page_type: sample
 products:
 - azure
@@ -28,11 +28,11 @@ languages:
 
 ## Overview
 
-This template deploys an [Azure Health Model](https://learn.microsoft.com/azure/cloud-health/) with a three-tier web application topology, complete with signal definitions and alerts on the root entity. It demonstrates the health modelling workflow — entity structure, signal definitions, and alerting — all deployable with a single parameter.
+This template deploys an [Azure Monitor health model](https://learn.microsoft.com/azure/cloud-health/) with a three-tier web application topology, complete with signal definitions and alerts on the root entity. It demonstrates the health modelling workflow — entity structure, signal definitions, and alerting — all deployable with a single parameter.
 
 After deployment, wire the signal definitions to your entities by adding `signalGroups` via the portal or API.
 
-For more information, see the [Azure Health Models documentation](https://learn.microsoft.com/azure/cloud-health/).
+For more information, see the [Azure Monitor health models documentation](https://learn.microsoft.com/azure/cloud-health/).
 
 ## Deployed Resources
 

@@ -1,5 +1,5 @@
 ---
-description: This template creates an Azure Health Model that automatically discovers virtual machines using Azure Resource Graph queries filtered by tag.
+description: This template creates an Azure Monitor health model that automatically discovers virtual machines using Azure Resource Graph queries filtered by tag.
 page_type: sample
 products:
 - azure
@@ -28,9 +28,9 @@ languages:
 
 ## Overview
 
-This template deploys an [Azure Health Model](https://learn.microsoft.com/azure/cloud-health/) that automatically discovers virtual machines using an Azure Resource Graph query filtered by tag. Recommended monitoring signals (CPU, memory, disk) are added to each discovered VM automatically.
+This template deploys an [Azure Monitor health model](https://learn.microsoft.com/azure/cloud-health/) that automatically discovers virtual machines using an Azure Resource Graph query filtered by tag. Recommended monitoring signals (CPU, memory, disk) are added to each discovered VM automatically.
 
-For more information, see the [Azure Health Models documentation](https://learn.microsoft.com/azure/cloud-health/).
+For more information, see the [Azure Monitor health models documentation](https://learn.microsoft.com/azure/cloud-health/).
 
 ## Prerequisites
 
@@ -60,7 +60,7 @@ After deployment, the discovery rule will find all VMs with the matching tag and
 
 ## Next Steps
 
-1. **Grant the managed identity Reader access** at the subscription or resource group level. This is required before any resources will be discovered — without it, the discovery rule cannot query Azure Resource Graph and the model will remain empty.
+1. **Grant the managed identity Reader access** at the subscription or resource group level. This is required before any resources will be discovered — without it, the discovery rule will not return any results and the model will remain empty.
 2. To monitor additional resource types, add more discovery rules via the portal or a follow-up template.
 3. To organise discovered resources into groupings, create entities and relationships manually.
 
