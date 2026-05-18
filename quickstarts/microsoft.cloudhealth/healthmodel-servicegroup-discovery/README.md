@@ -1,5 +1,5 @@
 ---
-description: This template creates an Azure Health Model that discovers all resources belonging to an Azure Service Group.
+description: This template creates an Azure Monitor health model that discovers all resources belonging to an Azure Service Group.
 page_type: sample
 products:
 - azure
@@ -28,9 +28,9 @@ languages:
 
 ## Overview
 
-This template deploys an [Azure Health Model](https://learn.microsoft.com/azure/cloud-health/) that discovers all resources belonging to an Azure Service Group. Nested Service Groups are discovered recursively (up to 10 levels deep), with each nested group represented as its own entity in the health model hierarchy.
+This template deploys an [Azure Monitor health model](https://learn.microsoft.com/azure/cloud-health/) that discovers all resources belonging to an Azure Service Group. Nested Service Groups are discovered recursively (up to 10 levels deep), with each nested group represented as its own entity in the health model hierarchy.
 
-For more information, see the [Azure Health Models documentation](https://learn.microsoft.com/azure/cloud-health/).
+For more information, see the [Azure Monitor health models documentation](https://learn.microsoft.com/azure/cloud-health/).
 
 ## Prerequisites
 
@@ -54,7 +54,7 @@ After deployment, the discovery rule will:
 
 ## Next Steps
 
-1. **Grant the managed identity Reader access** at the subscription or resource group level. This is required before any resources will be discovered — without it, the discovery rule cannot query Azure Resource Graph and the model will remain empty.
+1. **Grant the managed identity Reader access** at the subscription or resource group level. This is required before any resources will be discovered — without it, the discovery rule will not return any results and the model will remain empty.
 2. **Configure alerts** on entities to get notified when health degrades.
 
 ## See Also
