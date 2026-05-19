@@ -25,6 +25,6 @@ languages:
 
 This template creates a new DevTestLab instance.
 
-More Azure Resource Manger Quickstart Templates for Azure DevTestLab can be found at: https://github.com/Azure/azure-devtestlab
+More Azure Resource Manager Quickstart Templates for Azure DevTestLab can be found at: https://github.com/Azure/azure-devtestlab
 
 `Tags: Microsoft.DevTestLab/labs`
