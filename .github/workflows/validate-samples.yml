@@ -7,6 +7,7 @@
 # Jobs
 #   1. detect_changed_samples  – finds which sample folders were touched
 #   2. validate_samples        – matrix job; one runner per sample folder
+#   (Summarization is handled by the separate summarize-pr.yml workflow)
 # ──────────────────────────────────────────────────────────────────────────────
 
 name: Validate Sample Contributions
@@ -207,6 +208,80 @@ jobs:
           echo "  Validating sample: ${{ matrix.sample }}"
           echo "══════════════════════════════════════════════════════════"
 
+      # ── (0b) Early gate – template change requires metadata.json update ───
+      - name: Check metadata.json is updated when templates change
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          SAMPLE_DIR="${{ matrix.sample }}"
+
+          echo "──────────────────────────────────────────"
+          echo "CHECK 0b – metadata.json updated with template changes"
+          echo "  sample: ${SAMPLE_DIR}"
+          echo "──────────────────────────────────────────"
+
+          # ── Compute changed files scoped to this sample folder ─────
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            CHANGED=$(git diff --name-only "origin/${{ github.base_ref }}...${{ github.sha }}" -- "$SAMPLE_DIR/")
+          else
+            if [[ "${{ github.event.before }}" == "0000000000000000000000000000000000000000" ]]; then
+              CHANGED=$(git diff --name-only HEAD~1 HEAD -- "$SAMPLE_DIR/" 2>/dev/null \
+                || git show --name-only --format="" HEAD -- "$SAMPLE_DIR/")
+            else
+              CHANGED=$(git diff --name-only "${{ github.event.before }}..${{ github.sha }}" -- "$SAMPLE_DIR/")
+            fi
+          fi
+
+          TEMPLATE_CHANGED=false
+          METADATA_CHANGED=false
+          CHANGED_TEMPLATES=()
+
+          while IFS= read -r f; do
+            [[ -z "$f" ]] && continue
+            fname=$(basename "$f")
+
+            if [[ "$fname" == "metadata.json" ]]; then
+              METADATA_CHANGED=true
+              continue
+            fi
+
+            # Any .bicep or .json file (excluding metadata.json) is a template file
+            if [[ "$f" == *.bicep || "$f" == *.json ]]; then
+              TEMPLATE_CHANGED=true
+              CHANGED_TEMPLATES+=("$f")
+            fi
+          done <<< "$CHANGED"
+
+          if [[ "$TEMPLATE_CHANGED" == true && "$METADATA_CHANGED" == false ]]; then
+            echo ""
+            echo "❌ ERROR – Template file(s) changed but metadata.json was NOT updated."
+            echo ""
+            echo "  The following template files were modified:"
+            for t in "${CHANGED_TEMPLATES[@]}"; do echo "    - $t"; done
+            echo ""
+            echo "  metadata.json must include a 'testResult' section with deployment"
+            echo "  results for every deployment template in the sample."
+            echo "  Any change to a .bicep or .json template requires re-running the"
+            echo "  deployment and updating testResult in metadata.json accordingly."
+            echo ""
+            echo "  This check exists because the second validation workflow"
+            echo "  (Validate ARM Deployments via ADX) will fail if testResult"
+            echo "  does not match the current template content."
+            echo ""
+            echo "  To fix: deploy your updated template(s) and add the deployment"
+            echo "  results to the 'testResult.deployments' array in metadata.json."
+            echo ""
+            echo "  Reference: https://github.com/Azure/azure-quickstart-templates/blob/master/1-CONTRIBUTION-GUIDE/README.md#metadatajson"
+            exit 1
+          fi
+
+          if [[ "$TEMPLATE_CHANGED" == false ]]; then
+            echo "✅ No template files (.bicep/.json) changed – skipping metadata.json gate."
+          else
+            echo "✅ Template files changed and metadata.json is also updated."
+          fi
+
       # ── (1) Duplicate folder name check ────────────────────────────────────
       - name: Check for duplicate folder name
         shell: bash
@@ -274,6 +349,7 @@ jobs:
             echo "  Every sample folder must contain a metadata.json file."
             echo "  See the contribution guide:"
             echo "  https://github.com/Azure/azure-quickstart-templates/blob/master/1-CONTRIBUTION-GUIDE/README.md#metadatajson"
+            echo "::error::metadata.json is missing from '${SAMPLE_DIR}'. Every sample folder must contain a metadata.json file."
             exit 1
           fi
 
@@ -286,6 +362,7 @@ jobs:
             echo "  File: ${META}"
             # Show a more descriptive parse error
             jq '.' "$META" || true
+            echo "::error file=${META}::metadata.json is not valid JSON. Please validate it with jq or jsonlint."
             exit 1
           fi
 
@@ -295,10 +372,12 @@ jobs:
           REQUIRED_FIELDS=(itemDisplayName description summary githubUsername dateUpdated type testResult)
 
           all_ok=true
+          missing_fields=()
           for field in "${REQUIRED_FIELDS[@]}"; do
             value=$(jq -r --arg f "$field" '.[$f] // empty' "$META")
             if [[ -z "$value" ]]; then
               echo "❌ Required field missing or empty: '${field}'"
+              missing_fields+=("$field")
               all_ok=false
             else
               echo "✅ ${field}: present"
@@ -311,6 +390,8 @@ jobs:
             for f in "${REQUIRED_FIELDS[@]}"; do echo "    - $f"; done
             echo ""
             echo "  Reference: https://github.com/Azure/azure-quickstart-templates/blob/master/1-CONTRIBUTION-GUIDE/README.md#metadatajson"
+            missing_csv=$(IFS=,; echo "${missing_fields[*]}")
+            echo "::error file=${META}::metadata.json is missing or has empty required field(s): ${missing_csv}. See the contribution guide for the full list."
             exit 1
           fi
 
@@ -349,6 +430,7 @@ jobs:
           if [[ "$FAIL" == true ]]; then
             echo ""
             echo "  Please shorten the fields above to meet the contributor guide limits."
+            echo "::error file=${META}::metadata.json has field(s) exceeding length limits (itemDisplayName ≤ 60, summary ≤ 200, description ≤ 1000). See step log for details."
             exit 1
           fi
 
@@ -357,6 +439,7 @@ jobs:
             ENV_TYPE=$(jq -r '.environments | type' "$META")
             if [[ "$ENV_TYPE" != "array" ]]; then
               echo "❌ 'environments' must be an array (got: ${ENV_TYPE})."
+              echo "::error file=${META}::metadata.json field 'environments' must be an array (got: ${ENV_TYPE})."
               exit 1
             fi
             # Every element must be a string
@@ -364,6 +447,7 @@ jobs:
             if [[ "$NON_STRING" -gt 0 ]]; then
               echo "❌ 'environments' array contains non-string elements."
               echo "   Each entry must be a string, e.g. [\"AzureCloud\",\"AzureUSGovernment\"]"
+              echo "::error file=${META}::metadata.json field 'environments' contains non-string elements; each entry must be a string (e.g. [\"AzureCloud\",\"AzureUSGovernment\"])."
               exit 1
             fi
             echo "✅ environments: valid array of strings"
@@ -374,6 +458,7 @@ jobs:
             VT_TYPE=$(jq -r '.validationType | type' "$META")
             if [[ "$VT_TYPE" != "string" ]]; then
               echo "❌ 'validationType' must be a string (got: ${VT_TYPE})."
+              echo "::error file=${META}::metadata.json field 'validationType' must be a string (got: ${VT_TYPE})."
               exit 1
             fi
             echo "✅ validationType: valid string"
@@ -381,6 +466,84 @@ jobs:
 
           echo ""
           echo "✅ metadata.json passed all checks."
+
+      # ── (2b) Ensure README contains the public "Deploy to Azure" button ────
+      - name: Ensure README public deploy button
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          SAMPLE_DIR="${{ matrix.sample }}"
+          README="${SAMPLE_DIR}/README.md"
+          META="${SAMPLE_DIR}/metadata.json"
+
+          echo "──────────────────────────────────────────"
+          echo "CHECK 2b – Ensure public deploy button"
+          echo "  sample: ${SAMPLE_DIR}"
+          echo "──────────────────────────────────────────"
+
+          # Skip if README or metadata doesn't exist (later steps will catch that)
+          if [[ ! -f "${README}" ]] || [[ ! -f "${META}" ]]; then
+            echo "README.md or metadata.json not found — skipping button insertion."
+            exit 0
+          fi
+
+          # ── Read supported environments from metadata.json ────────────────
+          SUPPORTED_ENVS=$(jq -r '(.environments // ["AzureCloud"]) | .[]' "${META}")
+          if ! echo "${SUPPORTED_ENVS}" | grep -qx "AzureCloud"; then
+            echo "AzureCloud not in supported environments — skipping."
+            exit 0
+          fi
+
+          # ── Compute sEncoded (match Validate-ReadMe.ps1 logic) ────────────
+          # Replace both \ and / with %2F
+          S_ENCODED=$(echo "${SAMPLE_DIR}" | sed 's|\\|%2F|g; s|/|%2F|g')
+
+          IMAGE_URL="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true"
+          PORTAL_URL="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F${S_ENCODED}%2Fazuredeploy.json"
+          BUTTON_LINE="[![Deploy To Azure](${IMAGE_URL})](${PORTAL_URL})"
+
+          # ── Idempotency check ─────────────────────────────────────────────
+          if grep -qF "${PORTAL_URL}" "${README}" || grep -qF "${IMAGE_URL}" "${README}"; then
+            echo "✅ Public deploy button already present — no changes needed."
+            exit 0
+          fi
+
+          echo "Public deploy button not found — inserting..."
+
+          # ── Determine insertion point ─────────────────────────────────────
+          INSERT_AFTER=0
+
+          # Check for YAML front matter (starts with --- on line 1)
+          if head -1 "${README}" | grep -qx '\-\-\-'; then
+            # Find the closing --- (second occurrence)
+            CLOSING_LINE=$(awk 'NR>1 && /^---$/ { print NR; exit }' "${README}")
+            if [[ -n "${CLOSING_LINE}" ]]; then
+              INSERT_AFTER=${CLOSING_LINE}
+            fi
+          fi
+
+          # If no front matter, find the first # heading
+          if [[ ${INSERT_AFTER} -eq 0 ]]; then
+            HEADING_LINE=$(grep -n '^# ' "${README}" | head -1 | cut -d: -f1)
+            if [[ -n "${HEADING_LINE}" ]]; then
+              INSERT_AFTER=${HEADING_LINE}
+            else
+              INSERT_AFTER=1
+            fi
+          fi
+
+          # ── Insert the button line ────────────────────────────────────────
+          {
+            head -n "${INSERT_AFTER}" "${README}"
+            echo ""
+            echo "${BUTTON_LINE}"
+            echo ""
+            tail -n +"$((INSERT_AFTER + 1))" "${README}"
+          } > "${README}.tmp"
+          mv "${README}.tmp" "${README}"
+
+          echo "✅ Inserted public deploy button after line ${INSERT_AFTER}."
 
       # ── (3) README.md validation ────────────────────────────────────────────
       - name: Validate README.md
@@ -566,7 +729,9 @@ jobs:
 
           echo "Found ${PREREQ_COUNT} prereqs deployment entry/entries."
 
-          REQUIRED_FIELDS=(templateFileName correlationId deploymentName TIMESTAMP templateHash)
+          # Only templateFileName, correlationId, and deploymentName are required.
+          # TIMESTAMP and templateHash are optional (templateHash is computed from the template file).
+          REQUIRED_FIELDS=(templateFileName correlationId deploymentName)
           OVERALL_PASS=true
 
           for i in $(seq 0 $((PREREQ_COUNT - 1))); do
@@ -587,11 +752,21 @@ jobs:
                 echo "  ✅ ${FIELD_NAME}: present"
               fi
             done
+
+            # Note optional fields if present
+            for OPT_FIELD in TIMESTAMP templateHash; do
+              OPT_VAL=$(echo "${ENTRY}" | jq -r --arg f "${OPT_FIELD}" '.[$f] // empty')
+              if [[ -n "${OPT_VAL}" ]]; then
+                echo "  ℹ️  ${OPT_FIELD}: present (optional, ignored — hash is computed from the template file)"
+              fi
+            done
           done
 
           echo ""
           if [[ "${OVERALL_PASS}" != "true" ]]; then
             echo "❌ One or more prereqs entries in metadata.json are missing required fields."
+            echo "  Required fields per entry: templateFileName, correlationId, deploymentName"
+            echo "  (TIMESTAMP and templateHash are optional — the hash is derived from the template file.)"
             exit 1
           fi
           echo "✅ All prereqs metadata.json entries are valid."
@@ -604,3 +779,39 @@ jobs:
           echo "══════════════════════════════════════════════════════════"
           echo "  ✅  All validations passed for: ${{ matrix.sample }}"
           echo "══════════════════════════════════════════════════════════"
+  # ============================================================================
+  # JOB 3 – validate-samples-results
+  #
+  # Static aggregator job. Its name is fixed (independent of the matrix), so it
+  # can be required by the repository ruleset on master. Branch protection /
+  # rulesets cannot require dynamically-named matrix jobs like
+  # "Validate – ${{ matrix.sample }}", so this job exists purely to give them
+  # a stable handle.
+  #
+  # Passes iff every preceding job concluded `success` or `skipped` (the
+  # matrix is intentionally skipped when no sample folders changed).
+  # ============================================================================
+  validate-samples-results:
+    name: validate-samples-results
+    runs-on: ubuntu-latest
+    needs: [detect_changed_samples, validate_samples]
+    if: always()
+    steps:
+      - name: Aggregate matrix outcome
+        shell: bash
+        run: |
+          set -euo pipefail
+          detect='${{ needs.detect_changed_samples.result }}'
+          matrix='${{ needs.validate_samples.result }}'
+          echo "detect_changed_samples=${detect}"
+          echo "validate_samples=${matrix}"
+          for r in "${detect}" "${matrix}"; do
+            case "${r}" in
+              success|skipped) ;;
+              *)
+                echo "::error::A required validation job concluded '${r}'"
+                exit 1
+                ;;
+            esac
+          done
+          echo "✅ All required validate-samples jobs concluded acceptably."

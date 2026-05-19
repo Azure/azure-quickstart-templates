@@ -61,7 +61,7 @@ param osSensorHMACToken string
 var nsgSourceAddressPrefix = split(varMgmtSourceAddressOrRange, ',')
 var varMgmtSourceAddressOrRange = replace(MgmtSourceAddressOrRange, ' ', '')
 
-resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2022-05-01' = {
+resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2025-03-01' = {
   name: networkSecurityGroupName
   location: location
   properties: {
@@ -117,7 +117,7 @@ resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2022-05-0
   }
 }
 
-resource nic 'Microsoft.Network/networkInterfaces@2022-05-01' = [for i in range(0, numberOfVsensors): {
+resource nic 'Microsoft.Network/networkInterfaces@2025-03-01' = [for i in range(0, numberOfVsensors): {
   name: '${vsensorName}-${i+1}-nic'
   location: location
   properties: {
@@ -139,7 +139,7 @@ resource nic 'Microsoft.Network/networkInterfaces@2022-05-01' = [for i in range(
   }
 }]
 
-resource vm 'Microsoft.Compute/virtualMachines@2022-08-01' = [for i in range(0, numberOfVsensors): {
+resource vm 'Microsoft.Compute/virtualMachines@2025-04-01' = [for i in range(0, numberOfVsensors): {
   name: '${vsensorName}-${i+1}'
   location: location
   properties: {

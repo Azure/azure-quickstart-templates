@@ -1,7 +1,6 @@
 @description('Azure region for all resources. Must be a Discovery-supported region.')
 @allowed([
   'eastus'
-  'eastus2'
   'swedencentral'
   'uksouth'
 ])
@@ -25,7 +24,7 @@ param workspaceName string = 'ws-${uniqueString(resourceGroup().id)}'
 @description('Name of the Chat Model Deployment created under the Workspace.')
 @minLength(3)
 @maxLength(24)
-param chatModelDeploymentName string = 'gpt-5-1'
+param chatModelDeploymentName string = 'gpt-5-2'
 
 @description('Name of the Microsoft Discovery Storage Container resource. Must be 3-24 characters, alphanumeric and hyphens only.')
 @minLength(3)
@@ -69,6 +68,9 @@ param privateEndpointSubnetPrefix string = '10.0.4.0/24'
 @description('Address prefix for the Agent subnet.')
 param agentSubnetPrefix string = '10.0.5.0/24'
 
+@description('Address prefix for Search Subnet.')
+param searchSubnetPrefix string = '10.0.6.0/24'
+
 @description('VM SKU for the Node Pool.')
 param nodePoolVmSize string = 'Standard_D4s_v6'
 
@@ -91,7 +93,7 @@ param nodePoolScaleSetPriority string = 'Regular'
 param chatModelFormat string = 'OpenAI'
 
 @description('Chat model name to deploy.')
-param chatModelName string = 'gpt-5.1'
+param chatModelName string = 'gpt-5.2'
 
 // Built-in role definition IDs
 var storageBlobDataContributorRoleId = 'ba92f5b4-2d11-453d-a403-e96b0029c9fe'
@@ -144,6 +146,20 @@ resource vnet 'Microsoft.Network/virtualNetworks@2024-05-01' = {
         name: 'agentSubnet'
         properties: {
           addressPrefix: agentSubnetPrefix
+          delegations: [
+            {
+              name: 'Microsoft.App.environments'
+              properties: {
+                serviceName: 'Microsoft.App/environments'
+              }
+            }
+          ]
+        }
+      }
+      {
+        name: 'searchSubnet'
+        properties: {
+          addressPrefix: searchSubnetPrefix
           delegations: [
             {
               name: 'Microsoft.App.environments'
@@ -252,6 +268,9 @@ resource acrPullAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' 
 resource supercomputer 'Microsoft.Discovery/supercomputers@2026-02-01-preview' = {
   name: supercomputerName
   location: location
+  tags: {
+    version: 'v2'
+  }
   dependsOn: [
     vnet
   ]
