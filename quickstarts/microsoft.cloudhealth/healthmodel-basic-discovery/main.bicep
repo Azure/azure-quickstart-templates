@@ -60,6 +60,7 @@ resource discoveryRule 'Microsoft.CloudHealth/healthmodels/discoveryrules@2026-0
     authenticationSetting: authSetting.name
     discoverRelationships: 'Enabled'
     addRecommendedSignals: 'Enabled'
+    addResourceHealthSignal: 'Enabled'
     specification: {
       kind: 'ResourceGraphQuery'
       resourceGraphQuery: 'resources | where type =~ \'microsoft.compute/virtualmachines\' and tags[\'${tagName}\'] =~ \'${tagValue}\''
