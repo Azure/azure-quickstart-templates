@@ -1,5 +1,5 @@
 ---
-description: This template creates an Azure Health Model with a three-tier structure combining Azure Resource Graph discovery with additional manually-created entities.
+description: This template creates an Azure Monitor health model with a three-tier structure combining Azure Resource Graph discovery with additional manually-created entities.
 page_type: sample
 products:
 - azure
@@ -28,9 +28,9 @@ languages:
 
 ## Overview
 
-This template deploys an [Azure Health Model](https://learn.microsoft.com/azure/cloud-health/) that combines a three-tier entity structure with automatic resource discovery and additional manually-created entities.
+This template deploys an [Azure Monitor health model](https://learn.microsoft.com/azure/cloud-health/) that combines a three-tier entity structure with automatic resource discovery and additional manually-created entities.
 
-For more information, see the [Azure Health Models documentation](https://learn.microsoft.com/azure/cloud-health/).
+For more information, see the [Azure Monitor health models documentation](https://learn.microsoft.com/azure/cloud-health/).
 
 Discovery rules find Azure resources automatically, but not everything you care about is an Azure resource. External APIs, business workflows, cross-resource concerns, and SLA targets don't appear in Azure Resource Graph. This template shows how to combine discovered resources with additional manually-created entities that represent those concepts.
 
@@ -80,6 +80,8 @@ Root: <healthModelName>                              (auto-created)
 
 ## Key Concepts
 
+**Canvas positions:** Each entity has hard-coded `canvasPosition` coordinates (x/y pixels) that control its placement on the portal's health model topology view. Adjust these values to change the visual layout.
+
 Discovery rules query Azure Resource Graph and automatically create entities for matching resources with recommended monitoring signals (CPU, memory, disk, etc.).
 
 You can also create entities manually in the template for things that don't appear in Azure Resource Graph. Attach signals to these after deployment via the portal or API — KQL queries, Azure Monitor workspace Prometheus metrics, or external signals.
@@ -90,7 +92,7 @@ All entities — whether created by discovery or by the template — are the sam
 
 After deployment:
 
-1. **Grant the managed identity Reader access** at the subscription or resource group level. This is required before any resources will be discovered — without it, the discovery rules cannot query Azure Resource Graph and the model will remain empty.
+1. **Grant the managed identity Reader access** at the subscription or resource group level. This is required before any resources will be discovered — without it, the discovery rules will not return any results and the model will remain empty.
 2. **Add signals** to the placeholder entities (custom-entity-1, custom-entity-2, custom-entity-3) via the portal or API.
 3. **Configure alerts** on tier entities to get notified when aggregated health degrades.
 
