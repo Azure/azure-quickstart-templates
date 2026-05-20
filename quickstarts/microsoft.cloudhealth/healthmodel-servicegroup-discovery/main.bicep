@@ -41,6 +41,7 @@ resource serviceGroupDiscovery 'Microsoft.CloudHealth/healthmodels/discoveryrule
     authenticationSetting: authSetting.name
     discoverRelationships: 'Enabled'
     addRecommendedSignals: 'Enabled'
+    addResourceHealthSignal: 'Enabled'
     specification: {
       kind: 'ResourceGraphQuery'
       resourceGraphQuery: 'relationshipresources | where type =~ \'microsoft.relationships/servicegroupmember\' | where tostring(properties.TargetId) =~ \'${serviceGroupId}\' | project id=tostring(properties.SourceId)'
