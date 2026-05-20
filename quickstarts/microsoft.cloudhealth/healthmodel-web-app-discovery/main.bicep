@@ -36,6 +36,8 @@ resource authSetting 'Microsoft.CloudHealth/healthmodels/authenticationsettings@
 // (same structure as healthmodel-web-app)
 // =============================================================================
 
+// canvasPosition sets the x/y pixel coordinates for each entity on the portal's health model topology view.
+// These values arrange the tier entities in a left-to-right row beneath the root.
 resource frontendEntity 'Microsoft.CloudHealth/healthmodels/entities@2026-05-01-preview' = {
   parent: healthModel
   name: 'frontend'

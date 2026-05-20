@@ -152,23 +152,23 @@ resource cosmosDbAvailabilitySignal 'Microsoft.CloudHealth/healthmodels/signalde
 // Redis Cache metrics
 resource redisCacheHitsSignal 'Microsoft.CloudHealth/healthmodels/signaldefinitions@2026-05-01-preview' = {
   parent: healthModel
-  name: 'redis-server-load'
+  name: 'redis-cache-hits'
   properties: {
     signalKind: 'AzureResourceMetric'
-    displayName: 'Redis Server Load'
+    displayName: 'Redis Cache Hits'
     metricNamespace: 'microsoft.cache/redis'
-    metricName: 'serverLoad'
+    metricName: 'cachehits'
     aggregationType: 'Average'
     timeGrain: 'PT5M'
-    dataUnit: 'Percent'
+    dataUnit: 'Count'
     evaluationRules: {
       degradedRule: {
-        operator: 'GreaterThan'
-        threshold: 70
+        operator: 'LessThan'
+        threshold: 100
       }
       unhealthyRule: {
-        operator: 'GreaterThan'
-        threshold: 90
+        operator: 'LessThan'
+        threshold: 10
       }
     }
   }
@@ -410,7 +410,7 @@ resource cacheEntity 'Microsoft.CloudHealth/healthmodels/entities@2026-05-01-pre
     //     azureResourceId: '<your-redis-cache-resource-id>'
     //     signals: [
     //       {
-    //         name: 'cache-server-load'
+    //         name: 'cache-hits'
     //         signalKind: 'AzureResourceMetric'
     //         signalDefinitionName: redisCacheHitsSignal.name
     //       }

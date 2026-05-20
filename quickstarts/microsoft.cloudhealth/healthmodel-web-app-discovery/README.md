@@ -80,6 +80,8 @@ Root: <healthModelName>                              (auto-created)
 
 ## Key Concepts
 
+**Canvas positions:** Each entity has hard-coded `canvasPosition` coordinates (x/y pixels) that control its placement on the portal's health model topology view. Adjust these values to change the visual layout.
+
 Discovery rules query Azure Resource Graph and automatically create entities for matching resources with recommended monitoring signals (CPU, memory, disk, etc.).
 
 You can also create entities manually in the template for things that don't appear in Azure Resource Graph. Attach signals to these after deployment via the portal or API — KQL queries, Azure Monitor workspace Prometheus metrics, or external signals.
