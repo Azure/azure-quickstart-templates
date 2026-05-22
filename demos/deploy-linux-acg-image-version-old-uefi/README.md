@@ -13,6 +13,9 @@ languages:
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/deploy-linux-acg-image-version-old-uefi/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/deploy-linux-acg-image-version-old-uefi/PublicDeployment.svg)
 
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/demos/deploy-linux-acg-image-version-old-uefi/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/demos/deploy-linux-acg-image-version-old-uefi/FairfaxDeployment.svg)
+
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/demos/deploy-linux-acg-image-version-old-uefi/BestPracticeResult.svg)
 ![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/demos/deploy-linux-acg-image-version-old-uefi/CredScanResult.svg)
 
