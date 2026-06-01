@@ -203,4 +203,102 @@ After deploying the Logic App and assigning the required API permissions, you ne
 
 4. **Create an Access Package** — Still within the same catalog, create (or update) an **Access Package** and add the CDPR as a resource. Configure an **Access Review** policy on the package. When the Access Review runs, Entitlement Management will automatically call the Logic App with the appropriate trigger payload (`catalogId`, `resourceId`, and `data`) to start the BYOD data upload.
 
+### Steps (Microsoft Graph API)
+
+You can also attach the Logic App to a CDPR programmatically using the Microsoft Graph beta API. All requests below use the endpoint `https://graph.microsoft.com/beta` and require a bearer token with the `EntitlementManagement.ReadWrite.All` permission.
+
+#### 1. Create a catalog (skip if you already have one)
+
+```http
+POST https://graph.microsoft.com/beta/identityGovernance/entitlementManagement/accessPackageCatalogs
+Content-Type: application/json
+Authorization: Bearer <token>
+
+{
+  "displayName": "My BYOD Catalog",
+  "description": "Catalog for BYOD resources",
+  "isExternallyVisible": false
+}
+```
+
+Save the `id` from the response — this is your `catalogId`.
+
+#### 2. Create a CDPR and attach the Logic App in one step
+
+This creates the Custom Data Provided Resource and configures the Logic App as the notification endpoint in a single request:
+
+```http
+POST https://graph.microsoft.com/beta/identityGovernance/entitlementManagement/accessPackageResourceRequests
+Content-Type: application/json
+Authorization: Bearer <token>
+
+{
+  "catalogId": "<catalogId>",
+  "accessPackageResource": {
+    "@odata.type": "#microsoft.graph.customDataProvidedResource",
+    "displayName": "BYOD Data Provider",
+    "description": "Uploads external data via Logic App for Access Reviews",
+    "originId": "<a-unique-guid>",
+    "originSystem": "CustomDataProvidedResource",
+    "notificationEndpointConfiguration": {
+      "@odata.type": "#microsoft.graph.logicAppTriggerEndpointConfiguration",
+      "subscriptionId": "<azure-subscription-id>",
+      "resourceGroupName": "<resource-group-name>",
+      "logicAppWorkflowName": "<logic-app-name>",
+      "url": "<logic-app-trigger-url>"
+    }
+  },
+  "requestType": "AdminAdd"
+}
+```
+
+| Placeholder | Description |
+|-------------|-------------|
+| `<catalogId>` | The ID of the catalog from step 1 |
+| `<a-unique-guid>` | Any new GUID (e.g., generate one with `uuidgen` or `[guid]::NewGuid()`) |
+| `<azure-subscription-id>` | The Azure subscription ID where the Logic App is deployed |
+| `<resource-group-name>` | The resource group containing the Logic App |
+| `<logic-app-name>` | The name of the Logic App workflow |
+| `<logic-app-trigger-url>` | The HTTP trigger URL of the Logic App (found in the Azure Portal under **Logic App → Overview → Trigger URL**) |
+
+#### 2b. (Alternative) Update an existing CDPR with the Logic App
+
+If you already created a CDPR without a notification endpoint, you can update it:
+
+```http
+POST https://graph.microsoft.com/beta/identityGovernance/entitlementManagement/accessPackageResourceRequests
+Content-Type: application/json
+Authorization: Bearer <token>
+
+{
+  "catalogId": "<catalogId>",
+  "accessPackageResource": {
+    "@odata.type": "#microsoft.graph.customDataProvidedResource",
+    "displayName": "<existing-cdpr-display-name>",
+    "description": "<existing-cdpr-description>",
+    "originId": "<existing-cdpr-origin-id>",
+    "originSystem": "CustomDataProvidedResource",
+    "notificationEndpointConfiguration": {
+      "@odata.type": "#microsoft.graph.logicAppTriggerEndpointConfiguration",
+      "subscriptionId": "<azure-subscription-id>",
+      "resourceGroupName": "<resource-group-name>",
+      "logicAppWorkflowName": "<logic-app-name>",
+      "url": "<logic-app-trigger-url>"
+    }
+  },
+  "requestType": "AdminUpdate"
+}
+```
+
+> **Note:** The `requestType` is `"AdminUpdate"` instead of `"AdminAdd"`. The `originId`, `displayName`, and `description` must match the existing CDPR.
+
+#### 3. Verify the CDPR was created
+
+```http
+GET https://graph.microsoft.com/beta/identityGovernance/entitlementManagement/accessPackageCatalogs/<catalogId>/accessPackageResources?$filter=originSystem eq 'CustomDataProvidedResource'
+Authorization: Bearer <token>
+```
+
+The response includes your CDPR with its `notificationEndpointConfiguration` confirming the Logic App is attached.
+
 `Tags: Microsoft.Logic/workflows, Microsoft.Storage/storageAccounts, Microsoft.Web/connections, Request, Http, AADPOP, Identity Governance, Entitlement Management, Access Reviews, BYOD`
