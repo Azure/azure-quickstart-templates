@@ -1,0 +1,51 @@
+name: test-scripts
+
+# Runs bats-core tests for the bash helpers under .github/scripts/.
+#
+# Triggered only when the scripts or their tests change so we don't burn
+# minutes on unrelated PRs. Kept intentionally small and dependency-light:
+# bats + jq from apt, no extra setup.
+
+on:
+  pull_request:
+    paths:
+      - '.github/scripts/**'
+      - 'test/scripts/**'
+      - '.github/workflows/test-scripts.yml'
+  push:
+    branches: [master, main]
+    paths:
+      - '.github/scripts/**'
+      - 'test/scripts/**'
+      - '.github/workflows/test-scripts.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  bats:
+    name: bats (.github/scripts)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install bats and jq
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends bats jq
+          bats --version
+          jq --version
+
+      - name: Syntax-check shell scripts
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          for f in .github/scripts/*.sh; do
+            echo "bash -n $f"
+            bash -n "$f"
+          done
+
+      - name: Run bats tests
+        run: bats --print-output-on-failure test/scripts

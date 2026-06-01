@@ -1562,6 +1562,14 @@ jobs:
             return 0
           }
 
+          # ── Source the shared KQL-input validator ─────────────────────────
+          # Defines validate_kusto_inputs (cid, dn, label) — see
+          # .github/scripts/validate-kusto-inputs.sh for the format contract.
+          # Tested by test/scripts/validate-kusto-inputs.bats.
+          # Security context: MSRC 117973 / ICM 31000000613310.
+          # shellcheck disable=SC1091
+          source "${GITHUB_WORKSPACE}/.github/scripts/validate-kusto-inputs.sh"
+
           # ── If array, pick the non-prereqs entry; otherwise use the flat object ───
           DEPLOYMENTS=$(echo "${DEPLOYMENTS}" | jq -c '
             if type == "array" then
@@ -1615,13 +1623,20 @@ jobs:
             exit 1
           fi
 
+          # ── Validate untrusted metadata before binding into KQL ───────────
+          # correlationId / deploymentName come from PR-controlled metadata.json.
+          # Reject anything that does not match the strict format contract
+          # before we hand the values to Kusto.
+          if ! validate_kusto_inputs "${CORRELATION_ID}" "${DEPLOYMENT_NAME}" "${TEMPLATE_FILE_NAME}"; then
+            exit 1
+          fi
+
           # ── Run Kusto query ───────────────────────────────────────────────
-          # jq handles JSON-escaping of all KQL string values
-          REQUEST_BODY=$(jq -n \
-            --arg db  "${DATABASE}" \
-            --arg cid "${CORRELATION_ID}" \
-            --arg dn  "${DEPLOYMENT_NAME}" \
-            '{db: $db, csl: "Deployments | where correlationId == \"\($cid)\" | where deploymentName == \"\($dn)\" | project timestamp=TIMESTAMP, deploymentName, executionStatus, templateHash, generatorName, generatorVersion | top 1 by timestamp desc"}')
+          # Body shape (parameterized KQL) is built by the shared script — see
+          # .github/scripts/build-adx-query-body.sh, tested by
+          # test/scripts/build-adx-query-body.bats.
+          REQUEST_BODY=$(DATABASE="${DATABASE}" CID="${CORRELATION_ID}" DN="${DEPLOYMENT_NAME}" \
+            "${GITHUB_WORKSPACE}/.github/scripts/build-adx-query-body.sh")
 
           echo "Running Kusto query for '${TEMPLATE_FILE_NAME}' (with cluster fallback)..."
           RESPONSE=$(run_kusto_query_with_fallback "${REQUEST_BODY}")
@@ -1952,6 +1967,14 @@ jobs:
             return 0
           }
 
+          # ── Source the shared KQL-input validator ─────────────────────────
+          # Defines validate_kusto_inputs (cid, dn, label) — see
+          # .github/scripts/validate-kusto-inputs.sh for the format contract.
+          # Tested by test/scripts/validate-kusto-inputs.bats.
+          # Security context: MSRC 117973 / ICM 31000000613310.
+          # shellcheck disable=SC1091
+          source "${GITHUB_WORKSPACE}/.github/scripts/validate-kusto-inputs.sh"
+
           OVERALL_PASS=true
           PREREQS_DIR="${SAMPLE_PATH}/prereqs"
 
@@ -2011,12 +2034,21 @@ jobs:
               continue
             fi
 
+            # ── Validate untrusted metadata before binding into KQL ───────
+            # correlationId / deploymentName come from PR-controlled
+            # metadata.json. Reject anything that does not match the strict
+            # format contract before we hand the values to Kusto.
+            if ! validate_kusto_inputs "${CORRELATION_ID}" "${DEPLOYMENT_NAME}" "prereqs ${ENTRY_LABEL} (${TEMPLATE_FILE_NAME})"; then
+              OVERALL_PASS=false
+              continue
+            fi
+
             # ── Run Kusto query ───────────────────────────────────────────
-            REQUEST_BODY=$(jq -n \
-              --arg db  "${DATABASE}" \
-              --arg cid "${CORRELATION_ID}" \
-              --arg dn  "${DEPLOYMENT_NAME}" \
-              '{db: $db, csl: "Deployments | where correlationId == \"\($cid)\" | where deploymentName == \"\($dn)\" | project timestamp=TIMESTAMP, deploymentName, executionStatus, templateHash, generatorName, generatorVersion | top 1 by timestamp desc"}')
+            # Body shape (parameterized KQL) is built by the shared script —
+            # see .github/scripts/build-adx-query-body.sh, tested by
+            # test/scripts/build-adx-query-body.bats.
+            REQUEST_BODY=$(DATABASE="${DATABASE}" CID="${CORRELATION_ID}" DN="${DEPLOYMENT_NAME}" \
+              "${GITHUB_WORKSPACE}/.github/scripts/build-adx-query-body.sh")
 
             echo "Running Kusto query for prereqs entry '${TEMPLATE_FILE_NAME}' (with cluster fallback)..."
             RESPONSE=$(run_kusto_query_with_fallback "${REQUEST_BODY}")
