@@ -39,6 +39,7 @@
     "possession": "[concat(resourceGroup().id, '/providers/Microsoft.Logic/workflows/', parameters('logicAppName'))]",
     "appId": "2829028a-b35b-42cc-86e3-517e751a3e2a",
     "arAppId": "d8c767ef-3e9a-48c4-aef9-562696539b39",
+    "elmAppId": "810dcf14-1858-4bf2-8134-4c369fa3235b",
     "cloudConfig": {
       "AzureCloud": {
         "arm": "management.azure.com",
@@ -56,7 +57,13 @@
         "issuer": "https://sts.chinacloudapi.cn/"
       }
     },
-    "cloud": "[variables('cloudConfig')[parameters('cloudEnvironment')]]"
+    "cloud": "[variables('cloudConfig')[parameters('cloudEnvironment')]]",
+    "dataOdataTypeExpression": "@{triggerBody()?['data']?['@odata.type']}",
+    "triggerType": {
+      "uploadDataTriggerType": "#microsoft.graph.customDataProvidedResourceRequestAccessReviewDataCalloutData",
+      "applyDecisionTriggerType": "#microsoft.graph.customDataProvidedResourceApplyDecisionContextData",
+      "updateAccessAssignmentTriggerType": "#microsoft.graph.customDataProvidedResourceAccessAssignmentCalloutData"
+    }
   },
   "resources": [
     {
@@ -219,295 +226,453 @@
               "inputs": {
                 "schema": {
                   "type": "object",
+                  "required": [
+                    "source",
+                    "catalogId",
+                    "resourceId",
+                    "data"
+                  ],
                   "properties": {
-                    "reviewDefinitionId": {
+                    "source": {
                       "type": "string",
-                      "description": "Definition Id for the Access Review"
-                    },
-                    "reviewInstanceId": {
-                      "type": "string",
-                      "description": "Instance Id for the Access Review"
+                      "description": "Source system that emitted the callback."
                     },
                     "catalogId": {
-                      "type": "string",
-                      "description": "Id for the Catalog used in the Access Review"
-                    },
-                    "customDataProvidedResourceId": {
-                      "type": "string",
-                      "description": "Id used for the Disconnected App Resource in the Catalog"
-                    },
-                    "callbackDataType": {
                       "type": "string"
                     },
-                    "triggerType": {
+                    "resourceId": {
                       "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "@@odata.type": {
+                          "type": "string",
+                          "description": "type"
+                        }
+                      },
+                      "description": "Payload specific to the trigger type."
                     }
-                  },
-                  "required": [
-                    "reviewDefinitionId",
-                    "reviewInstanceId",
-                    "catalogId",
-                    "customDataProvidedResourceId"
-                  ]
+                  }
                 }
               },
               "operationOptions": "IncludeAuthorizationHeadersInOutputs"
             }
           },
           "actions": {
-            "Initialize_variables": {
+            "Switch_on_OdataType": {
+              "type": "Switch",
+              "expression": "@triggerBody()?['data']?['@odata.type']",
               "runAfter": {},
-              "type": "InitializeVariable",
-              "inputs": {
-                "variables": [
-                  {
-                    "name": "byod_session_id",
-                    "type": "string"
-                  }
-                ]
-              }
-            },
-            "Create-Upload-Session": {
-              "runAfter": {
-                "Initialize_variables": [
-                  "Succeeded"
-                ]
-              },
-              "type": "Http",
-              "inputs": {
-                "uri": "@{parameters('graphEndpoint')}/beta/identityGovernance/catalogs/@{triggerBody()?['catalogId']}/accessPackageResources/@{triggerBody()?['customDataProvidedResourceId']}/uploadSessions",
-                "method": "POST",
-                "headers": {
-                  "Accept": "application/json",
-                  "Content-Type": "application/json"
-                },
-                "body": {
-                  "source": "BuildingAccessData",
-                  "type": "#microsoft.graph.accessReviewDataUploadTriggerCallbackData",
-                  "data": {
-                    "@@odata.type": "#microsoft.graph.accessReviewInstance",
-                    "accessReviewId": "@triggerBody()?['reviewDefinitionId']",
-                    "accessReviewInstanceId": "@triggerBody()?['reviewInstanceId']"
-                  }
-                },
-                "authentication": {
-                  "type": "ManagedServiceIdentity",
-                  "audience": "@{parameters('graphEndpoint')}"
-                }
-              },
-              "runtimeConfiguration": {
-                "contentTransfer": {
-                  "transferMode": "Chunked"
-                }
-              }
-            },
-            "Parse_BYOD_Response": {
-              "runAfter": {
-                "Create-Upload-Session": [
-                  "Succeeded"
-                ]
-              },
-              "type": "ParseJson",
-              "inputs": {
-                "content": "@body('Create-Upload-Session')",
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "@@odata.context": {
-                      "type": "string"
-                    },
-                    "id": {
-                      "type": "string"
-                    },
-                    "status": {
-                      "type": "string"
-                    },
-                    "isUploadDone": {
-                      "type": "boolean"
-                    },
-                    "createdDateTime": {
-                      "type": "string"
-                    },
-                    "expirationDateTime": {
-                      "type": "string"
-                    },
-                    "stats": {
-                      "type": "object",
-                      "properties": {
-                        "filesUploaded": {
-                          "type": "integer"
+              "cases": {
+                    "UploadData": {
+                      "case": "[variables('triggerType').uploadDataTriggerType]",
+                      "actions": {
+                        "Parse_UploadData": {
+                          "type": "ParseJson",
+                          "inputs": {
+                            "content": "@triggerBody()?['data']",
+                            "schema": {
+                              "type": "object",
+                              "required": [
+                                "@@odata.type",
+                                "reviewDefinitionId",
+                                "reviewInstanceId"
+                              ],
+                              "properties": {
+                                "@@odata.type": {
+                                  "type": "string"
+                                },
+                                "reviewDefinitionId": {
+                                  "type": "string"
+                                },
+                                "reviewInstanceId": {
+                                  "type": "string"
+                                }
+                              }
+                            }
+                          },
+                          "runAfter": {}
                         },
-                        "totalBytesUploaded": {
-                          "type": "integer"
+                        "Create-Upload-Session": {
+                          "runAfter": {
+                            "Parse_UploadData": [
+                              "Succeeded"
+                            ]
+                          },
+                          "type": "Http",
+                          "inputs": {
+                            "uri": "@{parameters('graphEndpoint')}/beta/identityGovernance/catalogs/@{triggerBody()?['catalogId']}/accessPackageResources/@{triggerBody()?['resourceId']}/uploadSessions",
+                            "method": "POST",
+                            "headers": {
+                              "Accept": "application/json",
+                              "Content-Type": "application/json"
+                            },
+                            "body": {
+                              "source": "BuildingAccessData",
+                              "type": "#microsoft.graph.accessReviewDataUploadTriggerCallbackData",
+                              "data": {
+                                "@@odata.type": "#microsoft.graph.accessReviewInstance",
+                                "accessReviewId": "@body('Parse_UploadData')?['reviewDefinitionId']",
+                                "accessReviewInstanceId": "@body('Parse_UploadData')?['reviewInstanceId']"
+                              }
+                            },
+                            "authentication": {
+                              "type": "ManagedServiceIdentity",
+                              "audience": "@{parameters('graphEndpoint')}"
+                            }
+                          },
+                          "runtimeConfiguration": {
+                            "contentTransfer": {
+                              "transferMode": "Chunked"
+                            }
+                          }
+                        },
+                        "Parse_BYOD_Response": {
+                          "runAfter": {
+                            "Create-Upload-Session": [
+                              "Succeeded"
+                            ]
+                          },
+                          "type": "ParseJson",
+                          "inputs": {
+                            "content": "@body('Create-Upload-Session')",
+                            "schema": {
+                              "type": "object",
+                              "properties": {
+                                "@@odata.context": {
+                                  "type": "string"
+                                },
+                                "id": {
+                                  "type": "string"
+                                },
+                                "status": {
+                                  "type": "string"
+                                },
+                                "isUploadDone": {
+                                  "type": "boolean"
+                                },
+                                "createdDateTime": {
+                                  "type": "string"
+                                },
+                                "expirationDateTime": {
+                                  "type": "string"
+                                },
+                                "stats": {
+                                  "type": "object",
+                                  "properties": {
+                                    "filesUploaded": {
+                                      "type": "integer"
+                                    },
+                                    "totalBytesUploaded": {
+                                      "type": "integer"
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "Compose_Session_Id": {
+                          "runAfter": {
+                            "Parse_BYOD_Response": [
+                              "Succeeded"
+                            ]
+                          },
+                          "type": "Compose",
+                          "inputs": "@body('Parse_BYOD_Response')?['id']"
+                        },
+                        "List_Blobs": {
+                          "runAfter": {
+                            "Compose_Session_Id": [
+                              "Succeeded"
+                            ]
+                          },
+                          "type": "ApiConnection",
+                          "inputs": {
+                            "host": {
+                              "connection": {
+                                "name": "@parameters('$connections')['azureblob']['connectionId']"
+                              }
+                            },
+                            "method": "get",
+                            "path": "[concat('/v2/datasets/@{encodeURIComponent(encodeURIComponent(''', parameters('storageAccountName'), '''))}/foldersV2/@{encodeURIComponent(encodeURIComponent(''/byod''))}')]"
+                          }
+                        },
+                        "For_each": {
+                          "foreach": "@body('List_Blobs')?['value']",
+                          "actions": {
+                            "Get_blob_content_(V2)": {
+                              "type": "ApiConnection",
+                              "inputs": {
+                                "host": {
+                                  "connection": {
+                                    "name": "@parameters('$connections')['azureblob']['connectionId']"
+                                  }
+                                },
+                                "method": "get",
+                                "path": "[concat('/v2/datasets/@{encodeURIComponent(encodeURIComponent(''', parameters('storageAccountName'), '''))}/files/@{encodeURIComponent(encodeURIComponent(items(''For_each'')?[''Path'']))}/content')]",
+                                "queries": {
+                                  "inferContentType": false
+                                }
+                              }
+                            },
+                            "Compose_FileName": {
+                              "runAfter": {
+                                "Get_blob_content_(V2)": [
+                                  "Succeeded"
+                                ]
+                              },
+                              "type": "Compose",
+                              "inputs": "@last(split(items('For_each')?['Path'], '/'))"
+                            },
+                            "HTTP_Upload": {
+                              "runAfter": {
+                                "Compose_FileName": [
+                                  "Succeeded"
+                                ]
+                              },
+                              "type": "Http",
+                              "inputs": {
+                                "uri": "@{parameters('graphEndpoint')}/beta/identityGovernance/catalogs/@{triggerBody()?['catalogId']}/accessPackageResources/@{triggerBody()?['resourceId']}/uploadSessions/@{outputs('Compose_Session_Id')}/uploadFile",
+                                "method": "POST",
+                                "headers": {
+                                  "Content-Type": "multipart/form-data; boundary=testboundary"
+                                },
+                                "body": "--testboundary\r\nContent-Disposition: form-data; name=\"file\"; filename=\"@{outputs('Compose_FileName')}\"\r\nContent-Type: application/octet-stream\r\n\r\n@{body('Get_blob_content_(V2)')}\r\n\r\n--testboundary--",
+                                "authentication": {
+                                  "type": "ManagedServiceIdentity",
+                                  "audience": "@{parameters('graphEndpoint')}"
+                                }
+                              },
+                              "runtimeConfiguration": {
+                                "contentTransfer": {
+                                  "transferMode": "Chunked"
+                                }
+                              }
+                            },
+                            "Delay": {
+                              "runAfter": {
+                                "HTTP_Upload": [
+                                  "Succeeded"
+                                ]
+                              },
+                              "type": "Wait",
+                              "inputs": {
+                                "interval": {
+                                  "count": 5,
+                                  "unit": "Second"
+                                }
+                              }
+                            }
+                          },
+                          "runAfter": {
+                            "List_Blobs": [
+                              "Succeeded"
+                            ]
+                          },
+                          "type": "Foreach",
+                          "runtimeConfiguration": {
+                            "concurrency": {
+                              "repetitions": 1
+                            }
+                          }
+                        },
+                        "End-Upload-Session": {
+                          "runAfter": {
+                            "For_each": [
+                              "Succeeded"
+                            ]
+                          },
+                          "type": "Http",
+                          "inputs": {
+                            "uri": "@{parameters('graphEndpoint')}/beta/identityGovernance/catalogs/@{triggerBody()?['catalogId']}/accessPackageResources/@{triggerBody()?['resourceId']}/uploadSessions/@{outputs('Compose_Session_Id')}",
+                            "method": "PATCH",
+                            "headers": {
+                              "Accept": "application/json"
+                            },
+                            "body": {
+                              "isUploadDone": true
+                            },
+                            "authentication": {
+                              "type": "ManagedServiceIdentity",
+                              "audience": "@{parameters('graphEndpoint')}"
+                            }
+                          },
+                          "runtimeConfiguration": {
+                            "contentTransfer": {
+                              "transferMode": "Chunked"
+                            }
+                          }
+                        },
+                        "End-Upload-Session-on-failure": {
+                          "runAfter": {
+                            "For_each": [
+                              "Failed"
+                            ]
+                          },
+                          "type": "Http",
+                          "inputs": {
+                            "uri": "@{parameters('graphEndpoint')}/beta/identityGovernance/catalogs/@{triggerBody()?['catalogId']}/accessPackageResources/@{triggerBody()?['resourceId']}/uploadSessions/@{outputs('Compose_Session_Id')}",
+                            "method": "PATCH",
+                            "headers": {
+                              "Accept": "application/json"
+                            },
+                            "body": {
+                              "isUploadDone": true
+                            },
+                            "authentication": {
+                              "type": "ManagedServiceIdentity",
+                              "audience": "@{parameters('graphEndpoint')}"
+                            }
+                          },
+                          "runtimeConfiguration": {
+                            "contentTransfer": {
+                              "transferMode": "Chunked"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "ApplyDecision": {
+                      "case": "[variables('triggerType').applyDecisionTriggerType]",
+                      "actions": {
+                        "Parse_ApplyDecision": {
+                          "type": "ParseJson",
+                          "inputs": {
+                            "content": "@triggerBody()?['data']",
+                            "schema": {
+                              "type": "object",
+                              "required": [
+                                "@@odata.type",
+                                "reviewDefinitionId",
+                                "reviewInstanceId"
+                              ],
+                              "properties": {
+                                "@@odata.type": {
+                                  "type": "string"
+                                },
+                                "reviewDefinitionId": {
+                                  "type": "string"
+                                },
+                                "reviewInstanceId": {
+                                  "type": "string"
+                                }
+                              }
+                            }
+                          },
+                          "runAfter": {}
+                        },
+                        "ApplyDecision_Placeholder": {
+                          "type": "Compose",
+                          "inputs": {
+                            "branch": "ApplyDecision",
+                            "reviewDefinitionId": "@body('Parse_ApplyDecision')?['reviewDefinitionId']",
+                            "reviewInstanceId": "@body('Parse_ApplyDecision')?['reviewInstanceId']"
+                          },
+                          "runAfter": {
+                            "Parse_ApplyDecision": [
+                              "Succeeded"
+                            ]
+                          }
+                        }
+                      }
+                    },
+                    "UpdateAccessAssignment": {
+                      "case": "[variables('triggerType').updateAccessAssignmentTriggerType]",
+                      "actions": {
+                        "Parse_UpdateAccessAssignment": {
+                          "type": "ParseJson",
+                          "inputs": {
+                            "content": "@triggerBody()?['data']",
+                            "schema": {
+                              "type": "object",
+                              "required": [
+                                "@@odata.type",
+                                "calloutInstanceId",
+                                "callbackUriPath"
+                              ],
+                              "properties": {
+                                "@@odata.type": {
+                                  "type": "string"
+                                },
+                                "calloutInstanceId": {
+                                  "type": "string"
+                                },
+                                "callbackUriPath": {
+                                  "type": "string"
+                                },
+                                "accessAssignment": {
+                                  "type": "object"
+                                }
+                              }
+                            }
+                          },
+                          "runAfter": {}
+                        },
+                        "Switch_on_AssignmentStatus": {
+                          "type": "Switch",
+                          "expression": "@triggerBody()?['data']?['accessAssignment']?['status']",
+                          "runAfter": {
+                            "Parse_UpdateAccessAssignment": [
+                              "Succeeded"
+                            ]
+                          },
+                          "cases": {
+                            "Add": {
+                              "case": "PendingFulfillment",
+                              "actions": {
+                                "UpdateAccessAssignment_Add_Placeholder": {
+                                  "type": "Compose",
+                                  "inputs": {
+                                    "operation": "Add",
+                                    "status": "PendingFulfillment",
+                                    "calloutInstanceId": "@body('Parse_UpdateAccessAssignment')?['calloutInstanceId']",
+                                    "callbackUriPath": "@body('Parse_UpdateAccessAssignment')?['callbackUriPath']"
+                                  },
+                                  "runAfter": {}
+                                }
+                              }
+                            },
+                            "Remove": {
+                              "case": "PendingRemoval",
+                              "actions": {
+                                "UpdateAccessAssignment_Remove_Placeholder": {
+                                  "type": "Compose",
+                                  "inputs": {
+                                    "operation": "Remove",
+                                    "status": "PendingRemoval",
+                                    "calloutInstanceId": "@body('Parse_UpdateAccessAssignment')?['calloutInstanceId']",
+                                    "callbackUriPath": "@body('Parse_UpdateAccessAssignment')?['callbackUriPath']"
+                                  },
+                                  "runAfter": {}
+                                }
+                              }
+                            }
+                          },
+                          "default": {
+                            "actions": {}
+                          }
                         }
                       }
                     }
-                  }
-                }
-              }
-            },
-            "Set_Session_Id": {
-              "runAfter": {
-                "Parse_BYOD_Response": [
-                  "Succeeded"
-                ]
-              },
-              "type": "SetVariable",
-              "inputs": {
-                "name": "byod_session_id",
-                "value": "@body('Parse_BYOD_Response')?['id']"
-              }
-            },
-            "List_Blobs": {
-              "runAfter": {
-                "Set_Session_Id": [
-                  "Succeeded"
-                ]
-              },
-              "type": "ApiConnection",
-              "inputs": {
-                "host": {
-                  "connection": {
-                    "name": "@parameters('$connections')['azureblob']['connectionId']"
-                  }
-                },
-                "method": "get",
-                "path": "[concat('/v2/datasets/@{encodeURIComponent(encodeURIComponent(''', parameters('storageAccountName'), '''))}/foldersV2/@{encodeURIComponent(encodeURIComponent(''/byod''))}')]"
-              }
-            },
-            "For_each": {
-              "foreach": "@body('List_Blobs')?['value']",
-              "actions": {
-                "Get_blob_content_(V2)": {
-                  "type": "ApiConnection",
-                  "inputs": {
-                    "host": {
-                      "connection": {
-                        "name": "@parameters('$connections')['azureblob']['connectionId']"
+                  },
+                  "default": {
+                    "actions": {
+                      "Unsupported_Type_Terminate": {
+                        "type": "Terminate",
+                        "inputs": {
+                          "runStatus": "Failed",
+                          "runError": {
+                            "code": "400",
+                            "message": "UnsupportedCallbackType"
+                          }
+                        },
+                        "runAfter": {}
                       }
-                    },
-                    "method": "get",
-                    "path": "[concat('/v2/datasets/@{encodeURIComponent(encodeURIComponent(''', parameters('storageAccountName'), '''))}/files/@{encodeURIComponent(encodeURIComponent(items(''For_each'')?[''Path'']))}/content')]",
-                    "queries": {
-                      "inferContentType": false
-                    }
-                  }
-                },
-                "Compose_FileName": {
-                  "runAfter": {
-                    "Get_blob_content_(V2)": [
-                      "Succeeded"
-                    ]
-                  },
-                  "type": "Compose",
-                  "inputs": "@last(split(items('For_each')?['Path'], '/'))"
-                },
-                "HTTP_Upload": {
-                  "runAfter": {
-                    "Compose_FileName": [
-                      "Succeeded"
-                    ]
-                  },
-                  "type": "Http",
-                  "inputs": {
-                    "uri": "@{parameters('graphEndpoint')}/beta/identityGovernance/catalogs/@{triggerBody()?['catalogId']}/accessPackageResources/@{triggerBody()?['customDataProvidedResourceId']}/uploadSessions/@{variables('byod_session_id')}/uploadFile",
-                    "method": "POST",
-                    "headers": {
-                      "Content-Type": "multipart/form-data; boundary=testboundary"
-                    },
-                    "body": "--testboundary\r\nContent-Disposition: form-data; name=\"file\"; filename=\"@{outputs('Compose_FileName')}\"\r\nContent-Type: application/octet-stream\r\n\r\n@{body('Get_blob_content_(V2)')}\r\n\r\n--testboundary--",
-                    "authentication": {
-                      "type": "ManagedServiceIdentity",
-                      "audience": "@{parameters('graphEndpoint')}"
-                    }
-                  },
-                  "runtimeConfiguration": {
-                    "contentTransfer": {
-                      "transferMode": "Chunked"
-                    }
-                  }
-                },
-                "Delay": {
-                  "runAfter": {
-                    "HTTP_Upload": [
-                      "Succeeded"
-                    ]
-                  },
-                  "type": "Wait",
-                  "inputs": {
-                    "interval": {
-                      "count": 5,
-                      "unit": "Second"
                     }
                   }
                 }
-              },
-              "runAfter": {
-                "List_Blobs": [
-                  "Succeeded"
-                ]
-              },
-              "type": "Foreach",
-              "runtimeConfiguration": {
-                "concurrency": {
-                  "repetitions": 1
-                }
-              }
-            },
-            "End-Upload-Session": {
-              "runAfter": {
-                "For_each": [
-                  "Succeeded"
-                ]
-              },
-              "type": "Http",
-              "inputs": {
-                "uri": "@{parameters('graphEndpoint')}/beta/identityGovernance/catalogs/@{triggerBody()?['catalogId']}/accessPackageResources/@{triggerBody()?['customDataProvidedResourceId']}/uploadSessions/@{variables('byod_session_id')}",
-                "method": "PATCH",
-                "headers": {
-                  "Accept": "application/json"
-                },
-                "body": {
-                  "isUploadDone": true
-                },
-                "authentication": {
-                  "type": "ManagedServiceIdentity",
-                  "audience": "@{parameters('graphEndpoint')}"
-                }
-              },
-              "runtimeConfiguration": {
-                "contentTransfer": {
-                  "transferMode": "Chunked"
-                }
-              }
-            },
-            "End-Upload-Session-copy": {
-              "runAfter": {
-                "For_each": [
-                  "Failed"
-                ]
-              },
-              "type": "Http",
-              "inputs": {
-                "uri": "@{parameters('graphEndpoint')}/beta/identityGovernance/catalogs/@{triggerBody()?['catalogId']}/accessPackageResources/@{triggerBody()?['customDataProvidedResourceId']}/uploadSessions/@{variables('byod_session_id')}",
-                "method": "PATCH",
-                "headers": {
-                  "Accept": "application/json"
-                },
-                "body": {
-                  "isUploadDone": true
-                },
-                "authentication": {
-                  "type": "ManagedServiceIdentity",
-                  "audience": "@{parameters('graphEndpoint')}"
-                }
-              },
-              "runtimeConfiguration": {
-                "contentTransfer": {
-                  "transferMode": "Chunked"
-                }
-              }
-            }
           },
           "outputs": {}
         },
@@ -580,6 +745,35 @@
                     {
                       "name": "appid",
                       "value": "[variables('arAppId')]"
+                    },
+                    {
+                      "name": "m",
+                      "value": "POST"
+                    },
+                    {
+                      "name": "u",
+                      "value": "[variables('cloud').arm]"
+                    },
+                    {
+                      "name": "p",
+                      "value": "[variables('possession')]"
+                    }
+                  ]
+                },
+                "EntraIDELMPOPAuthPolicy": {
+                  "type": "AADPOP",
+                  "claims": [
+                    {
+                      "name": "iss",
+                      "value": "[concat(variables('cloud').issuer, subscription().tenantId, '/')]"
+                    },
+                    {
+                      "name": "aud",
+                      "value": "[concat('https://', variables('cloud').arm)]"
+                    },
+                    {
+                      "name": "appid",
+                      "value": "[variables('elmAppId')]"
                     },
                     {
                       "name": "m",
