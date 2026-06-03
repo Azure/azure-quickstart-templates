@@ -77,14 +77,6 @@ The following resources are deployed as part of the solution
   - `Microsoft.Storage`
   - `Microsoft.Web`
 
-  You can register them in bulk with:
-
-  ```bash
-  for rp in Microsoft.AlertsManagement Microsoft.App Microsoft.Authorization Microsoft.Bing Microsoft.CognitiveServices Microsoft.Compute Microsoft.ContainerInstance Microsoft.ContainerRegistry Microsoft.ContainerService Microsoft.Discovery Microsoft.DocumentDB Microsoft.Features Microsoft.Insights Microsoft.KeyVault Microsoft.MachineLearningServices Microsoft.ManagedIdentity Microsoft.Network Microsoft.OperationalInsights Microsoft.ResourceGraph Microsoft.Resources Microsoft.Search Microsoft.Sql Microsoft.Storage Microsoft.Web; do
-    az provider register --namespace "$rp"
-  done
-  ```
-
 - Sufficient role assignments: *Discovery Platform Admin*, *Managed Identity Contributor*, *Network Contributor*, and *Storage Account Contributor* at the target resource-group scope.
 - Microsoft Discovery is available in **East US**, **East US 2**, **Sweden Central**, and **UK South**.
 
