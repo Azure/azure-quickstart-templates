@@ -358,6 +358,9 @@ resource project 'Microsoft.Discovery/workspaces/projects@2026-02-01-preview' = 
       discoveryStorageContainer.id
     ]
   }
+  dependsOn: [
+    chatModelDeployment
+  ]
 }
 
 @description('Resource ID of the Supercomputer.')
