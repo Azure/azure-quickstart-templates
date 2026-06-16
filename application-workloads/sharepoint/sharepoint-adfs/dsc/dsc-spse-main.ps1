@@ -10,7 +10,7 @@ configuration ConfigSpMain
         [Parameter(Mandatory)] [SharePointBuild] $SharePointVersion,
         [Parameter(Mandatory)] [String]$SharePointSitesAuthority,
         [Parameter(Mandatory)] [String]$SharePointCentralAdminPort,
-        [Parameter(Mandatory)] [Boolean]$EnableAnalysis,
+        [Parameter(Mandatory = $false)] [Boolean]$EnableAnalysis = $false,
         [Parameter(Mandatory)] [SharePointBuildInfo[]] $SharePointBits,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$DomainAdminCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSetupCreds,
@@ -22,7 +22,8 @@ configuration ConfigSpMain
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSuperUserCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSuperReaderCreds,
         [Parameter(Mandatory = $false)] [Boolean] $DefaultZoneMustBeHttps = $false,
-        [Parameter(Mandatory = $false)] [ConfigurationLevel] $ConfigurationLevel = [ConfigurationLevel]::Full
+        [Parameter(Mandatory = $false)] [SharePointConfigurationLevels] $SharePointConfigurationLevel = [SharePointConfigurationLevels]::Full,
+        [Parameter(Mandatory = $false)] [SharePointConfigurations[]] $CustomSharePointConfiguration = @("TrustedAuthentication", "UserProfilesService")
     )
 
     Import-DscResource -ModuleName ComputerManagementDsc -ModuleVersion 10.0.0
@@ -30,7 +31,7 @@ configuration ConfigSpMain
     Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion 6.7.1
     Import-DscResource -ModuleName xCredSSP -ModuleVersion 1.4.0
     Import-DscResource -ModuleName WebAdministrationDsc -ModuleVersion 4.2.1
-    Import-DscResource -ModuleName SharePointDsc -ModuleVersion 5.7.0 # Custom workaround on SPInstall and SPInstallPrereqs
+    Import-DscResource -ModuleName SharePointDsc -ModuleVersion 5.7.1
     Import-DscResource -ModuleName DnsServerDsc -ModuleVersion 3.0.3
     Import-DscResource -ModuleName CertificateDsc -ModuleVersion 6.0.0
     Import-DscResource -ModuleName SqlServerDsc -ModuleVersion 17.5.1 # Custom workaround on SqlSecureConnection
@@ -54,34 +55,50 @@ configuration ConfigSpMain
     [System.Management.Automation.PSCredential] $SPSvcCredsQualified = New-Object System.Management.Automation.PSCredential ("$($DomainNetbiosName)\$($SPSvcCreds.UserName)", $SPSvcCreds.Password)
     [System.Management.Automation.PSCredential] $SPAppPoolCredsQualified = New-Object System.Management.Automation.PSCredential ("$($DomainNetbiosName)\$($SPAppPoolCreds.UserName)", $SPAppPoolCreds.Password)
     [System.Management.Automation.PSCredential] $SPADDirSyncCredsQualified = New-Object System.Management.Automation.PSCredential ("$($DomainNetbiosName)\$($SPADDirSyncCreds.UserName)", $SPADDirSyncCreds.Password)
+    [System.Management.Automation.PSCredential] $SPSuperReaderCredsQualified = New-Object System.Management.Automation.PSCredential ("$($DomainNetbiosName)\$($SPSuperReaderCreds.UserName)", $SPSuperReaderCreds.Password)
     
-    #################### DUPLICATED ####################
-    # Provisioning options - set to $true to provision, $false to skip provisioning of the corresponding component. These are set based on the selected configuration level, but can be overridden by setting them directly.
+    # Provisioning options
     [Boolean] $ProvisionStateServiceApplication = $false
     [Boolean] $ProvisionTrustedAuthentication = $false
     [Boolean] $ProvisionUserProfilesService = $false
     [Boolean] $ProvisionAddins = $false
-    [Boolean] $ProvisionHnscSites = $false
+    [Boolean] $ProvisionAdditionalSiteCollections = $false
     [Boolean] $ProvisionExtendedZone = $false
-    if ($ConfigurationLevel -ge [ConfigurationLevel]::Minimum) {}
-    if ($ConfigurationLevel -ge [ConfigurationLevel]::Light) {
-        $ProvisionStateServiceApplication = $true
-        $ProvisionTrustedAuthentication = $true
+    [Boolean] $ProvisionProjectServer = $false
+    [Boolean] $ProvisionSearch = $false
+    
+    if ($SharePointConfigurationLevel -eq [SharePointConfigurationLevels]::Custom) {
+        $ProvisionStateServiceApplication = $CustomSharePointConfiguration -ccontains [SharePointConfigurations]::StateService
+        $ProvisionTrustedAuthentication = $CustomSharePointConfiguration -ccontains [SharePointConfigurations]::TrustedAuthentication
+        $ProvisionUserProfilesService = $CustomSharePointConfiguration -ccontains [SharePointConfigurations]::UserProfilesService
+        $ProvisionAddins = $CustomSharePointConfiguration -ccontains [SharePointConfigurations]::Addins
+        $ProvisionAdditionalSiteCollections = $CustomSharePointConfiguration -ccontains [SharePointConfigurations]::AdditionalSiteCollections
+        $ProvisionExtendedZone = $CustomSharePointConfiguration -ccontains [SharePointConfigurations]::ExtendedWebApplication
+        $ProvisionProjectServer = $CustomSharePointConfiguration -ccontains [SharePointConfigurations]::ProjectServer
+        $ProvisionSearch = $CustomSharePointConfiguration -ccontains [SharePointConfigurations]::Search
     }
-    if ($ConfigurationLevel -ge [ConfigurationLevel]::Medium) {
-        $ProvisionUserProfilesService = $true
-        $ProvisionExtendedZone = $true
-    }
-    if ($ConfigurationLevel -ge [ConfigurationLevel]::Full) {
-        $ProvisionAddins = $true
-        $ProvisionHnscSites = $true
+    else {
+        if ($SharePointConfigurationLevel -ge [SharePointConfigurationLevels]::Minimum) {}
+        if ($SharePointConfigurationLevel -ge [SharePointConfigurationLevels]::Light) {
+            $ProvisionStateServiceApplication = $true
+            $ProvisionAdditionalSiteCollections = $true
+            $ProvisionTrustedAuthentication = $true
+        }
+        if ($SharePointConfigurationLevel -ge [SharePointConfigurationLevels]::Medium) {
+            $ProvisionExtendedZone = $true
+            $ProvisionUserProfilesService = $true
+            $ProvisionAddins = $true
+        }
+        if ($SharePointConfigurationLevel -ge [SharePointConfigurationLevels]::Full) {
+            $ProvisionProjectServer = $true
+            $ProvisionSearch = $true
+        }
     }
 
-    # Final value for $DefaultZoneMustBeHttps must be set before setting $WebApplicationUrl
+    # $DefaultZoneMustBeHttps may need to be overwritten, and if so, before $WebApplicationUrl is set
     if ($ProvisionTrustedAuthentication -and -not $ProvisionExtendedZone) {
         $DefaultZoneMustBeHttps = $true
     }
-    #################### DUPLICATED ####################
 
     # Setup settings
     [String] $SetupPath = "C:\DSC Data"
@@ -90,11 +107,10 @@ configuration ConfigSpMain
     [String] $SharePointBitsPath = Join-Path -Path $SetupPath -ChildPath "Binaries" #[environment]::GetEnvironmentVariable("temp","machine")
     [String] $SharePointIsoFullPath = Join-Path -Path $SharePointBitsPath -ChildPath "OfficeServer.iso"
     [String] $SharePointIsoDriveLetter = "S"
+    [String] $AdfsOidcIdentifier = "fae5bd07-be63-4a64-a28c-7931a4ebf62b"
     [String] $AdfsDnsEntryName = "adfs"
-    [String] $LdapcpSolutionName = "LDAPCPSE"
-    [String] $LdapcpSolutionId = "ff36c8cf-e510-42fc-8ba3-18af3c316aec"
-    [String] $LdapcpReleaseId = "latest"
-    [String] $LDAPCPFileFullPath = Join-Path -Path $SetupPath -ChildPath "Binaries\$LdapcpSolutionName.wsp"
+    [String] $ClaimsProviderFilePath = Join-Path -Path $SetupPath -ChildPath "Binaries\LDAPCPSE.wsp"
+    [String] $SharePointFarmReadyDnsTxtName = "SharePointFarmReady"
 
     # SharePoint settings
     [String] $SPDBPrefix = "SPDSC_"
@@ -106,9 +122,12 @@ configuration ConfigSpMain
     [String] $HNSC1Alias = "HNSC1"
     [String] $AddinsSiteDNSAlias = "addins"
     [String] $AddinsSiteName = "Provider-hosted addins"
-    [String] $TrustedIdChar = "e"
+    [String] $WindowsAccountPattern = "i:0#.w|$DomainNetbiosName\{0}"
+    [String] $WindowsDomainAdminAccountName = $WindowsAccountPattern -f $DomainAdminCreds.UserName
+    [String] $TrustedAuthenticationProviderName = "trusted"
+    [String] $TrustedAccountPattern = "i:0e.t|$TrustedAuthenticationProviderName|{0}"
+    [String] $TrustedDomainAdminAccountName = $TrustedAccountPattern -f "$($DomainAdminCreds.UserName)@$DomainFQDN"
     [String] $SPTeamSiteTemplate = "STS#3"
-    [String] $AdfsOidcIdentifier = "fae5bd07-be63-4a64-a28c-7931a4ebf62b"
     [String] $WebApplicationUrl = if ($DefaultZoneMustBeHttps) { "https://$SharePointSitesAuthority.$DomainFQDN" } else { "http://$SharePointSitesAuthority" }
 
     Node localhost
@@ -125,7 +144,7 @@ configuration ConfigSpMain
                 if (!(Test-Path $destinationFolder -PathType Container)) {
                     New-Item -ItemType Directory -Force -Path $destinationFolder
                 }
-                "$(Get-Date -Format u)`t$($using:ComputerName)`tDSC Configuration starting. DefaultZoneMustBeHttps: $($using:DefaultZoneMustBeHttps); Provisioning options: ProvisionStateServiceApplication: $($using:ProvisionStateServiceApplication), ProvisionTrustedAuthentication: $($using:ProvisionTrustedAuthentication), ProvisionUserProfilesService: $($using:ProvisionUserProfilesService), ProvisionAddins: $($using:ProvisionAddins), ProvisionHnscSites: $($using:ProvisionHnscSites), ProvisionExtendedZone: $($using:ProvisionExtendedZone)" | Out-File -FilePath $using:DscStatusFilePath -Append
+                "$(Get-Date -Format u)`t$($using:ComputerName)`tDSC Configuration starting. SharePointConfigurationLevel: $($using:SharePointConfigurationLevel); CustomSharePointConfiguration: $($using:CustomSharePointConfiguration); DefaultZoneMustBeHttps: $($using:DefaultZoneMustBeHttps); Provisioning options: ProvisionStateServiceApplication: $($using:ProvisionStateServiceApplication), ProvisionTrustedAuthentication: $($using:ProvisionTrustedAuthentication), ProvisionUserProfilesService: $($using:ProvisionUserProfilesService), ProvisionAddins: $($using:ProvisionAddins), ProvisionAdditionalSiteCollections: $($using:ProvisionAdditionalSiteCollections), ProvisionExtendedZone: $($using:ProvisionExtendedZone)" | Out-File -FilePath $using:DscStatusFilePath -Append
             }
             GetScript  = { } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
             TestScript = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
@@ -257,8 +276,8 @@ configuration ConfigSpMain
         }
 
         xRemoteFile DownloadLDAPCP {
-            DestinationPath = $LDAPCPFileFullPath
-            Uri             = Get-LatestGitHubRelease -Repo "Yvand/LDAPCP" -Artifact "*.wsp" -ReleaseId $LdapcpReleaseId
+            DestinationPath = $ClaimsProviderFilePath
+            Uri             = Get-LatestGitHubRelease -Repo "Yvand/LDAPCP" -Artifact "*.wsp" -ReleaseId "latest"
             MatchSource     = $false
         }
 
@@ -471,7 +490,6 @@ configuration ConfigSpMain
         #**********************************************************
         # Join AD forest
         #**********************************************************
-        
         Script DscStatus_WaitForDCReady {
             SetScript  =
             {
@@ -848,8 +866,8 @@ configuration ConfigSpMain
 
         if ($ProvisionTrustedAuthentication) {
             SPFarmSolution InstallLdapcpSolution {
-                LiteralPath          = $LDAPCPFileFullPath
-                Name                 = "$LdapcpSolutionName.wsp"
+                LiteralPath          = $ClaimsProviderFilePath
+                Name                 = "LDAPCPSE.wsp"
                 Deployed             = $true
                 Ensure               = "Present"
                 PsDscRunAsCredential = $DomainAdminCredsQualified
@@ -859,7 +877,7 @@ configuration ConfigSpMain
             Script InstallLdapcpFeatures {
                 SetScript            = 
                 {
-                    $solutionId = $using:LdapcpSolutionId
+                    $solutionId = "ff36c8cf-e510-42fc-8ba3-18af3c316aec"
                     Install-SPFeature -SolutionId $solutionId -AllExistingFeatures
                 }
                 GetScript            =  
@@ -870,8 +888,7 @@ configuration ConfigSpMain
                 TestScript           = 
                 {
                     # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
-                    $claimsProviderName = $using:LdapcpSolutionName
-                    if ($null -eq (Get-SPClaimProvider -Identity $claimsProviderName -ErrorAction SilentlyContinue)) {
+                    if ($null -eq (Get-SPClaimProvider -Identity "LDAPCPSE" -ErrorAction SilentlyContinue)) {
                         return $false
                     }
                     else {
@@ -947,6 +964,31 @@ configuration ConfigSpMain
             }
         }
 
+        if ($ProvisionProjectServer) {
+            SPServiceInstance StartProjectServerServiceInstance {
+                Name                 = "Project Server Application Service"
+                Ensure               = "Present"
+                PsDscRunAsCredential = $DomainAdminCredsQualified
+                DependsOn            = "[Script]RestartSPTimerAfterCreateSPFarm"
+            }
+        }
+
+        if ($ProvisionSearch) {
+            SPServiceInstance StartSearchServiceInstance_Controller {
+                Name                 = "Search Host Controller Service"
+                Ensure               = "Present"
+                PsDscRunAsCredential = $DomainAdminCredsQualified
+                DependsOn            = "[Script]RestartSPTimerAfterCreateSPFarm"
+            }
+
+            SPServiceInstance StartSearchServiceInstance_Query {
+                Name                 = "Search Query and Site Settings Service"
+                Ensure               = "Present"
+                PsDscRunAsCredential = $DomainAdminCredsQualified
+                DependsOn            = "[Script]RestartSPTimerAfterCreateSPFarm"
+            }
+        }
+
         SPServiceAppPool MainServiceAppPool {
             Name                 = $ServiceAppPoolName
             ServiceAccount       = $SPSvcCredsQualified.UserName
@@ -1004,29 +1046,6 @@ configuration ConfigSpMain
             DependsOn            = "[Script]RestartSPTimerAfterCreateSPFarm"
             PsDscRunAsCredential = $DomainAdminCredsQualified
         }
-
-        # # Installing LDAPCP somehow updates SPClaimEncodingManager 
-        # # But in SharePoint 2019 and Subscription, it causes an UpdatedConcurrencyException on SPClaimEncodingManager in SPTrustedIdentityTokenIssuer resource
-        # # The only solution I've found is to force a reboot
-        # Script ForceRebootBeforeCreatingSPTrust {
-        #     # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
-        #     TestScript           = {
-        #         return (Test-Path HKLM:\SOFTWARE\DscScriptExecution\flag_ForceRebootBeforeCreatingSPTrust)
-        #     }
-        #     SetScript            = {
-        #         New-Item -Path HKLM:\SOFTWARE\DscScriptExecution\flag_ForceRebootBeforeCreatingSPTrust -Force
-        #         $global:DSCMachineStatus = 1
-        #     }
-        #     GetScript            = { }
-        #     PsDscRunAsCredential = $DomainAdminCredsQualified
-        #     DependsOn            = "[SPFarmSolution]InstallLdapcpSolution"
-        # }
-
-        # PendingReboot RebootOnSignalFromForceRebootBeforeCreatingSPTrust {
-        #     Name             = "RebootOnSignalFromForceRebootBeforeCreatingSPTrust"
-        #     SkipCcmClientSDK = $true
-        #     DependsOn        = "[Script]ForceRebootBeforeCreatingSPTrust"
-        # }
 
         if ($ProvisionTrustedAuthentication) {
             $apppoolUserName = $SPAppPoolCredsQualified.UserName
@@ -1092,15 +1111,10 @@ configuration ConfigSpMain
             }
 
             SPTrustedIdentityTokenIssuer CreateSPTrust {
-                Name                    = $DomainFQDN
+                Name                    = $TrustedAuthenticationProviderName
                 Description             = "Federation with $DomainFQDN"
                 DefaultClientIdentifier = $AdfsOidcIdentifier
                 MetadataEndPoint        = "https://adfs.$DomainFQDN/adfs/.well-known/openid-configuration"
-                # RegisteredIssuerName       = "https://adfs.$DomainFQDN/adfs"
-                # AuthorizationEndPointUri   = "https://adfs.$DomainFQDN/adfs/oauth2/authorize"
-                # SignOutUrl                 = "https://adfs.$DomainFQDN/adfs/oauth2/logout"
-                # SigningCertificateFilePath = "$SetupPath\Certificates\ADFS Signing.cer"
-
                 IdentifierClaim         = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/upn"
                 ClaimsMappings          = @(
                     MSFT_SPClaimTypeMapping {
@@ -1116,7 +1130,7 @@ configuration ConfigSpMain
                         IncomingClaimType = "http://schemas.microsoft.com/ws/2008/06/identity/claims/groupsid"
                     }
                 )
-                ClaimProviderName       = $LdapcpSolutionName
+                ClaimProviderName       = "LDAPCPSE"
                 Ensure                  = "Present" 
                 DependsOn               = "[Script]SetFarmPropertiesForOIDC", "[Script]InstallLdapcpFeatures"
                 PsDscRunAsCredential    = $DomainAdminCredsQualified
@@ -1182,58 +1196,6 @@ configuration ConfigSpMain
 
         [System.Array]$configureMainWebAppAuthenticationDependsOn = if ($ProvisionExtendedZone) { @( "[SPWebApplicationExtension]ExtendMainWebApp" ) } else { @() }
         if ($ProvisionTrustedAuthentication) { $configureMainWebAppAuthenticationDependsOn += "[SPTrustedIdentityTokenIssuer]CreateSPTrust" }
-
-        # if ($ProvisionExtendedZone) {
-        #         $IntranetArgs             =
-        #         if ($DefaultZoneMustBeHttps -or $false -eq $ProvisionTrustedAuthentication) {
-        #             @(
-        #                 MSFT_SPWebAppAuthenticationMode {
-        #                     AuthenticationMethod = "WindowsAuthentication"
-        #                     WindowsAuthMethod    = "NTLM"
-        #                 }
-        #             )
-        #         }
-        #     }
-
-        # SPWebAppAuthentication ConfigureMainWebAppAuthentication {
-        #     WebAppUrl            = $WebApplicationUrl
-        #     Default              = if ($DefaultZoneMustBeHttps) {
-        #         if ($ProvisionTrustedAuthentication) {
-        #             @(
-        #                 MSFT_SPWebAppAuthenticationMode {
-        #                     AuthenticationMethod   = "Federated"
-        #                     AuthenticationProvider = $DomainFQDN
-        #                 }
-        #                 MSFT_SPWebAppAuthenticationMode {
-        #                     AuthenticationMethod = "WindowsAuthentication"
-        #                     WindowsAuthMethod    = "NTLM"
-        #                 }
-        #             )
-        #         }
-        #         else {
-        #             @(
-        #                 MSFT_SPWebAppAuthenticationMode {
-        #                     AuthenticationMethod = "WindowsAuthentication"
-        #                     WindowsAuthMethod    = "NTLM"
-        #                 }
-        #             )
-        #         }
-        #     }
-        #     else {
-        #         @(
-        #             MSFT_SPWebAppAuthenticationMode {
-        #                 AuthenticationMethod = "WindowsAuthentication"
-        #                 WindowsAuthMethod    = "NTLM"
-        #             }
-        #         )
-        #     }
-        #     Intranet = $IntranetArgs
-            
-            
-        #     PsDscRunAsCredential = $DomainAdminCredsQualified
-        #     DependsOn            = $configureMainWebAppAuthenticationDependsOn
-        # }
-
         SPWebAppAuthentication ConfigureMainWebAppAuthentication {
             WebAppUrl            = $WebApplicationUrl
             Default              = if ($DefaultZoneMustBeHttps) {
@@ -1241,7 +1203,7 @@ configuration ConfigSpMain
                     @(
                         MSFT_SPWebAppAuthenticationMode {
                             AuthenticationMethod   = "Federated"
-                            AuthenticationProvider = $DomainFQDN
+                            AuthenticationProvider = $TrustedAuthenticationProviderName
                         }
                         MSFT_SPWebAppAuthenticationMode {
                             AuthenticationMethod = "WindowsAuthentication"
@@ -1280,7 +1242,7 @@ configuration ConfigSpMain
                     @(
                         MSFT_SPWebAppAuthenticationMode {
                             AuthenticationMethod   = "Federated"
-                            AuthenticationProvider = $DomainFQDN
+                            AuthenticationProvider = $TrustedAuthenticationProviderName
                         }
                     )
                 }
@@ -1372,8 +1334,8 @@ configuration ConfigSpMain
 
         SPSite CreateRootSite {
             Url                  = $WebApplicationUrl
-            OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
-            SecondaryOwnerAlias  = if ($ProvisionTrustedAuthentication) { "i:0$TrustedIdChar.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN" } else { "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)" }
+            OwnerAlias           = $WindowsDomainAdminAccountName
+            SecondaryOwnerAlias  = if ($ProvisionTrustedAuthentication) { $TrustedDomainAdminAccountName } else { $WindowsDomainAdminAccountName }
             Name                 = "root site"
             Template             = $SPTeamSiteTemplate
             CreateDefaultGroups  = $true
@@ -1385,8 +1347,8 @@ configuration ConfigSpMain
             # Create this site early, otherwise [SPAppCatalog]SetAppCatalogUrl may throw error "Cannot find an SPSite object with Id or Url: http://SPSites/sites/AppCatalog"
             SPSite CreateAppCatalog {
                 Url                  = "$WebApplicationUrl/sites/AppCatalog"
-                OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
-                SecondaryOwnerAlias  = if ($ProvisionTrustedAuthentication) { "i:0$TrustedIdChar.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN" } else { "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)" }
+                OwnerAlias           = $WindowsDomainAdminAccountName
+                SecondaryOwnerAlias  = if ($ProvisionTrustedAuthentication) { $TrustedDomainAdminAccountName } else { $WindowsDomainAdminAccountName }
                 Name                 = "AppCatalog"
                 Template             = "APPCATALOG#0"
                 PsDscRunAsCredential = $DomainAdminCredsQualified
@@ -1401,24 +1363,21 @@ configuration ConfigSpMain
             SPSite CreateMySiteHost {
                 Url                      = if ($DefaultZoneMustBeHttps) { "https://$MySiteHostAlias.$DomainFQDN/" } else { "http://$MySiteHostAlias/" }
                 HostHeaderWebApplication = $WebApplicationUrl
-                OwnerAlias               = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
-                SecondaryOwnerAlias      = if ($ProvisionTrustedAuthentication) { "i:0$TrustedIdChar.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN" } else { "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)" }
+                OwnerAlias               = $WindowsDomainAdminAccountName
+                SecondaryOwnerAlias      = if ($ProvisionTrustedAuthentication) { $TrustedDomainAdminAccountName } else { $WindowsDomainAdminAccountName }
                 Name                     = "MySite host"
                 Template                 = "SPSMSITEHOST#0"
                 PsDscRunAsCredential     = $DomainAdminCredsQualified
                 DependsOn                = "[SPWebAppAuthentication]ConfigureMainWebAppAuthentication"
             }
 
-            SPSiteUrl SetMySiteHostIntranetUrl {
-                Url                  = if ($DefaultZoneMustBeHttps) { "https://$MySiteHostAlias.$DomainFQDN/" } else { "http://$MySiteHostAlias/" }
-                Intranet             = if ($ProvisionExtendedZone) {
-                    if ($DefaultZoneMustBeHttps) { "http://$MySiteHostAlias/" } else { "https://$MySiteHostAlias.$DomainFQDN/" }
+            if ($ProvisionExtendedZone) {
+                SPSiteUrl SetMySiteHostIntranetUrl {
+                    Url                  = if ($DefaultZoneMustBeHttps) { "https://$MySiteHostAlias.$DomainFQDN/" } else { "http://$MySiteHostAlias/" }
+                    Intranet             = if ($DefaultZoneMustBeHttps) { "http://$MySiteHostAlias/" } else { "https://$MySiteHostAlias.$DomainFQDN/" }
+                    PsDscRunAsCredential = $DomainAdminCredsQualified
+                    DependsOn            = "[SPSite]CreateMySiteHost"
                 }
-                else { 
-                    [string]::Empty
-                }
-                PsDscRunAsCredential = $DomainAdminCredsQualified
-                DependsOn            = "[SPSite]CreateMySiteHost"
             }
 
             SPManagedPath CreateMySiteManagedPath {
@@ -1447,20 +1406,20 @@ configuration ConfigSpMain
         # SPSite CreateDevSite
         # {
         #     Url                  = "$WebApplicationUrl/sites/dev"
-        #     OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
-        #     SecondaryOwnerAlias  = if ($ProvisionTrustedAuthentication) { "i:0$TrustedIdChar.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN"} else { "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)" }
+        #     OwnerAlias           = $WindowsDomainAdminAccountName
+        #     SecondaryOwnerAlias  = if ($ProvisionTrustedAuthentication) { $TrustedDomainAdminAccountName} else { $WindowsDomainAdminAccountName }
         #     Name                 = "Developer site"
         #     Template             = "DEV#0"
         #     PsDscRunAsCredential = $DomainAdminCredsQualified
         #     DependsOn            = "[SPWebAppAuthentication]ConfigureMainWebAppAuthentication"
         # }
 
-        if ($ProvisionHnscSites) {
+        if ($ProvisionAdditionalSiteCollections) {
             SPSite CreateHNSC1 {
                 Url                      = if ($DefaultZoneMustBeHttps) { "https://$HNSC1Alias.$DomainFQDN/" } else { "http://$HNSC1Alias/" }
                 HostHeaderWebApplication = $WebApplicationUrl
-                OwnerAlias               = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
-                SecondaryOwnerAlias      = if ($ProvisionTrustedAuthentication) { "i:0$TrustedIdChar.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN" } else { "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)" }
+                OwnerAlias               = $WindowsDomainAdminAccountName
+                SecondaryOwnerAlias      = if ($ProvisionTrustedAuthentication) { $TrustedDomainAdminAccountName } else { $WindowsDomainAdminAccountName }
                 Name                     = "$HNSC1Alias site"
                 Template                 = $SPTeamSiteTemplate
                 CreateDefaultGroups      = $true
@@ -1468,11 +1427,13 @@ configuration ConfigSpMain
                 DependsOn                = "[SPWebAppAuthentication]ConfigureMainWebAppAuthentication"
             }
 
-            SPSiteUrl SetHNSC1IntranetUrl {
-                Url                  = if ($DefaultZoneMustBeHttps) { "https://$HNSC1Alias.$DomainFQDN/" } else { "http://$HNSC1Alias/" }
-                Intranet             = if ($DefaultZoneMustBeHttps) { "http://$HNSC1Alias/" } else { "https://$HNSC1Alias.$DomainFQDN/" }
-                PsDscRunAsCredential = $DomainAdminCredsQualified
-                DependsOn            = "[SPSite]CreateHNSC1"
+            if ($ProvisionExtendedZone) {
+                SPSiteUrl SetHNSC1IntranetUrl {
+                    Url                  = if ($DefaultZoneMustBeHttps) { "https://$HNSC1Alias.$DomainFQDN/" } else { "http://$HNSC1Alias/" }
+                    Intranet             = if ($DefaultZoneMustBeHttps) { "http://$HNSC1Alias/" } else { "https://$HNSC1Alias.$DomainFQDN/" }
+                    PsDscRunAsCredential = $DomainAdminCredsQualified
+                    DependsOn            = "[SPSite]CreateHNSC1"
+                }
             }
         }
 
@@ -1664,6 +1625,62 @@ configuration ConfigSpMain
             }
         }
 
+        if ($ProvisionProjectServer) {
+            SPProjectServerLicense ProjectLicense {
+                IsSingleInstance     = "Yes"
+                ProductKey           = "WD6NX-PGRBH-3FQ88-BRBVC-8XFTV"
+                PsDscRunAsCredential = $DomainAdminCredsQualified
+            }
+
+            SPProjectServerServiceApp CreateProjectServerServiceApp {
+                Name                 = "Project Server Service Application"
+                ApplicationPool      = $ServiceAppPoolName
+                PsDscRunAsCredential = $DomainAdminCredsQualified
+                DependsOn            = "[SPServiceAppPool]MainServiceAppPool", "[SPServiceInstance]StartProjectServerServiceInstance"
+            }
+
+            SPSite PWASite {
+                Url                  = "$WebApplicationUrl/sites/pwa"
+                OwnerAlias           = $WindowsDomainAdminAccountName
+                SecondaryOwnerAlias  = if ($ProvisionTrustedAuthentication) { $TrustedDomainAdminAccountName } else { $WindowsDomainAdminAccountName }
+                Name                 = "PWA"
+                Template             = "PWA#0"
+                PsDscRunAsCredential = $DomainAdminCredsQualified
+                DependsOn            = "[SPProjectServerServiceApp]CreateProjectServerServiceApp", "[SPWebAppAuthentication]ConfigureMainWebAppAuthentication"
+            }
+
+            SPFeature PWASiteFeature {
+                Url                  = "$WebApplicationUrl/sites/pwa"
+                Name                 = "PWASITE"
+                FeatureScope         = "Site"
+                PsDscRunAsCredential = $DomainAdminCredsQualified
+                DependsOn            = "[SPSite]PWASite", "[SPProjectServerLicense]ProjectLicense"
+            }
+        }
+
+        if ($ProvisionSearch) {
+            SPSite SearchSite {
+                Url                  = "$WebApplicationUrl/sites/search"
+                OwnerAlias           = $WindowsDomainAdminAccountName
+                SecondaryOwnerAlias  = if ($ProvisionTrustedAuthentication) { $TrustedDomainAdminAccountName } else { $WindowsDomainAdminAccountName }
+                Name                 = "Search"
+                Template             = "SRCHCEN#0"
+                PsDscRunAsCredential = $DomainAdminCredsQualified
+                DependsOn            = "[SPWebAppAuthentication]ConfigureMainWebAppAuthentication"
+            }
+
+            SPSearchServiceApp CreateSearchServiceApp {
+                Name                        = "Search Service Application"
+                ApplicationPool             = $ServiceAppPoolName
+                DatabaseName                = "$($SPDBPrefix)Search"
+                SearchCenterUrl             = "$WebApplicationUrl/sites/search"
+                DefaultContentAccessAccount = $SPSuperReaderCredsQualified
+                Ensure                      = "Present"
+                PsDscRunAsCredential        = $DomainAdminCredsQualified
+                DependsOn                   = "[SPServiceAppPool]MainServiceAppPool", "[SPServiceInstance]StartSearchServiceInstance_Controller", "[SPServiceInstance]StartSearchServiceInstance_Query", "[SPSite]SearchSite"
+            }
+        }
+
         # Move this op after all databases were created (instead of just after psconfig.exe as documented), but before other servers can join, to fix SQL permission errors thrown at step 10/10 in SPS config wizard, when installing a CU post-provisionning
         Script AddRequiredDatabasesPermissions {
             SetScript            =
@@ -1679,20 +1696,28 @@ configuration ConfigSpMain
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[SPFarm]CreateSPFarm"
         }
-        
-        # This team site is tested by VM FE to wait before joining the farm, so it acts as a milestone and it should be created only when all SharePoint services are created
-        # If VM FE joins the farm while a SharePoint service is creating here, it may block its creation forever.
-        $createTeamSiteDependsOn = @( "[SPWebAppAuthentication]ConfigureMainWebAppAuthentication" )
-        if ($ProvisionAddins) { $createTeamSiteDependsOn += "[SPWebApplicationAppDomain]ConfigureAppDomainDefaultZone", "[SPWebApplicationAppDomain]ConfigureAppDomainIntranetZone", "[SPAppCatalog]SetAppCatalogUrl" }
-        SPSite CreateTeamSite {
-            Url                  = "$WebApplicationUrl/sites/team"
-            OwnerAlias           = "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)"
-            SecondaryOwnerAlias  = if ($ProvisionTrustedAuthentication) { "i:0$TrustedIdChar.t|$DomainFQDN|$($DomainAdminCreds.UserName)@$DomainFQDN" } else { "i:0#.w|$DomainNetbiosName\$($DomainAdminCreds.UserName)" }
-            Name                 = "Team site"
-            Template             = $SPTeamSiteTemplate
-            CreateDefaultGroups  = $true
+
+        DnsRecordTxt SharePointFarmReady {
+            ZoneName             = $DomainFQDN
+            DnsServer            = "$DCServerName.$DomainFQDN"
+            Name                 = $SharePointFarmReadyDnsTxtName
+            DescriptiveText      = $SharePointFarmReadyDnsTxtName
+            Ensure               = 'Present'
             PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = $createTeamSiteDependsOn
+            DependsOn            = "[SPWebAppAuthentication]ConfigureMainWebAppAuthentication"
+        }
+        
+        if ($ProvisionAdditionalSiteCollections) {
+            SPSite CreateTeamSite {
+                Url                  = "$WebApplicationUrl/sites/team"
+                OwnerAlias           = $WindowsDomainAdminAccountName
+                SecondaryOwnerAlias  = if ($ProvisionTrustedAuthentication) { $TrustedDomainAdminAccountName } else { $WindowsDomainAdminAccountName }
+                Name                 = "Team site"
+                Template             = $SPTeamSiteTemplate
+                CreateDefaultGroups  = $true
+                PsDscRunAsCredential = $DomainAdminCredsQualified
+                DependsOn            = "[SPWebAppAuthentication]ConfigureMainWebAppAuthentication"
+            }
         }
 
         if ($ProvisionAddins) {
@@ -1905,23 +1930,26 @@ configuration ConfigSpMain
                             @{
                                 "AccountName"   = $accountPattern_WinClaims -f $env:UserName;
                                 "PreferredName" = $env:UserName;
-                            },
-                            @{
+                            }
+                        )
+                        if ([string]::IsNullOrWhiteSpace($accountPattern_Trusted) -eq $false) {
+                            $accounts += @{
                                 "AccountName"   = $accountPattern_Trusted -f $env:UserName;
                                 "PreferredName" = $env:UserName;
                             }
-                        )
+                        }
                     
                         $directoryUsers = Get-ADUser -Filter "objectClass -like 'user'" -Properties @("SamAccountName", "displayName") -SearchBase $directoryBase #-ResultSetSize 5
                         foreach ($directoryUser in $directoryUsers) {
-                            $accounts += 
-                            @{
+                            $accounts += @{
                                 "AccountName"   = $accountPattern_WinClaims -f $directoryUser.SamAccountName;
                                 "PreferredName" = $directoryUser["displayName"];
-                            },
-                            @{
-                                "AccountName"   = $accountPattern_Trusted -f $directoryUser.SamAccountName;
-                                "PreferredName" = $directoryUser["displayName"];
+                            }
+                            if ([string]::IsNullOrWhiteSpace($accountPattern_Trusted) -eq $false) {
+                                $accounts += @{
+                                    "AccountName"   = $accountPattern_Trusted -f $directoryUser.SamAccountName;
+                                    "PreferredName" = $directoryUser["displayName"];
+                                }
                             }
                         }
 
@@ -1989,8 +2017,13 @@ configuration ConfigSpMain
                         }
                     }
                     $webAppUrl = $using:WebApplicationUrl
-                    $accountPattern_WinClaims = "i:0#.w|$($using:DomainNetbiosName)\{0}"
-                    $accountPattern_Trusted = "i:0$($using:TrustedIdChar).t|$($using:DomainFQDN)|{0}@$($using:DomainFQDN)"
+
+                    $accountPattern_WinClaims = $using:WindowsAccountPattern
+                    $accountPattern_Trusted = [string]::Empty
+                    $provisionTrustedAuthentication = $using:ProvisionTrustedAuthentication
+                    if ($provisionTrustedAuthentication) {
+                        $accountPattern_Trusted = $using:TrustedAccountPattern -f "{0}@$($using:DomainFQDN)"
+                    }
                     $job = Start-Job -ScriptBlock $jobBlock -ArgumentList @($webAppUrl, $accountPattern_WinClaims, $accountPattern_Trusted, $using:AdditionalUsersPath)
                     Receive-Job -Job $job -AutoRemoveJob -Wait
                 }
@@ -2099,7 +2132,6 @@ function Get-LatestGitHubRelease {
     return $assetUrl
 }
 
-#################### DUPLICATED ####################
 function Get-NetBIOSName {
     [OutputType([string])]
     param(
@@ -2121,13 +2153,6 @@ function Get-NetBIOSName {
             return $DomainFQDN
         }
     }
-}
-
-enum ConfigurationLevel {
-    Minimum
-    Light
-    Medium
-    Full
 }
 
 # enum values cannot start with a digit - https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_enum?view=powershell-5.1#syntax
@@ -2153,7 +2178,39 @@ class SharePointPackageInfo {
     [Parameter(Mandatory = $false)] [string] $ChecksumType
     [Parameter(Mandatory = $false)] [string] $Checksum
 }
-#################### DUPLICATED ####################
+enum SharePointConfigurationLevels {
+    Custom
+    Minimum
+    Light
+    Medium
+    Full
+}
+
+enum SharePointConfigurations {
+    TrustedAuthentication
+    UserProfilesService
+    ExtendedWebApplication
+    Addins
+    AdditionalSiteCollections
+    StateService
+    ProjectServer
+    Search
+}
+
+<#
+rename SharePointConfigurationLevel to SharePointFeatureLevel?
+param SharePointSettings
+
+class SharePointSetting {
+    [int] $CentralAdminPort
+    [string] $webAppHostName
+    [SharePointBuild] $BuildName
+    [bool] $DefaultZoneMustBeHttps
+}
+
+class SharePointSettings {
+}
+#>
 
 <#
 help ConfigSpMain
@@ -2173,12 +2230,13 @@ $DomainFQDN = "contoso.local"
 $DCServerName = "DC"
 $SQLServerName = "SQL"
 $SQLAlias = "SQLAlias"
-$SharePointVersion = "SPRTM"
+$SharePointVersion = "SPRTM" #"SPLatest"
 $SharePointSitesAuthority = "spsites"
 $SharePointCentralAdminPort = 5000
 $EnableAnalysis = $true
 $DefaultZoneMustBeHttps = $false
-$ConfigurationLevel = "Light"
+$SharePointConfigurationLevel = "Light"
+$CustomSharePointConfiguration = @("TrustedAuthentication", "UserProfilesService", "ExtendedWebApplication", "Addins", "AdditionalSiteCollections", "StateService")
 $SharePointBits = @(
     @{
         Label = "SPRTM"; 
@@ -2202,14 +2260,13 @@ $SharePointBits = @(
     @{
         Label = "SPLatest"; 
         Packages = @(
-            @{ DownloadUrl = "https://download.microsoft.com/download/d/6/d/d6dcc9e7-744e-43e1-b4be-206a6acd4f88/sts-subscription-kb5002331-fullfile-x64-glb.exe" },
-            @{ DownloadUrl = "https://download.microsoft.com/download/d/3/5/d354b6e2-fa16-48e0-b3f8-423f7ca279a0/wssloc-subscription-kb5002326-fullfile-x64-glb.exe" }
+            @{ DownloadUrl = "https://download.microsoft.com/download/f839c57c-7b4e-4213-b03b-2c1508e13588/uber-subscription-kb5002853-fullfile-x64-glb.exe" }
         )
     }
 )
 
 $outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.83.5\DSCWork\dsc-spse-main.0\ConfigSpMain"
-ConfigSpMain -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPSvcCreds $SPSvcCreds -SPAppPoolCreds $SPAppPoolCreds -SPADDirSyncCreds $SPADDirSyncCreds -SPPassphraseCreds $SPPassphraseCreds -SPSuperUserCreds $SPSuperUserCreds -SPSuperReaderCreds $SPSuperReaderCreds -DNSServerIP $DNSServerIP -DomainFQDN $DomainFQDN -DCServerName $DCServerName -SQLServerName $SQLServerName -SQLAlias $SQLAlias -SharePointVersion $SharePointVersion -SharePointSitesAuthority $SharePointSitesAuthority -SharePointCentralAdminPort $SharePointCentralAdminPort -EnableAnalysis $EnableAnalysis -DefaultZoneMustBeHttps $DefaultZoneMustBeHttps -ConfigurationLevel $ConfigurationLevel -SharePointBits $SharePointBits -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath $outputPath
+ConfigSpMain -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPSvcCreds $SPSvcCreds -SPAppPoolCreds $SPAppPoolCreds -SPADDirSyncCreds $SPADDirSyncCreds -SPPassphraseCreds $SPPassphraseCreds -SPSuperUserCreds $SPSuperUserCreds -SPSuperReaderCreds $SPSuperReaderCreds -DNSServerIP $DNSServerIP -DomainFQDN $DomainFQDN -DCServerName $DCServerName -SQLServerName $SQLServerName -SQLAlias $SQLAlias -SharePointVersion $SharePointVersion -SharePointSitesAuthority $SharePointSitesAuthority -SharePointCentralAdminPort $SharePointCentralAdminPort -EnableAnalysis $EnableAnalysis -DefaultZoneMustBeHttps $DefaultZoneMustBeHttps -SharePointConfigurationLevel $SharePointConfigurationLevel -CustomSharePointConfiguration $CustomSharePointConfiguration -SharePointBits $SharePointBits -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath $outputPath
 Set-DscLocalConfigurationManager -Path $outputPath
 Start-DscConfiguration -Path $outputPath -Wait -Verbose -Force
 
