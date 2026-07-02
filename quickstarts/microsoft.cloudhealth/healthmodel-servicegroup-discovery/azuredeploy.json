@@ -1,0 +1,91 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.44.1.10279",
+      "templateHash": "4483999255176255985"
+    }
+  },
+  "parameters": {
+    "healthModelName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the health model. This also becomes the root entity name."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "serviceGroupId": {
+      "type": "string",
+      "metadata": {
+        "description": "Resource ID of the Service Group to discover resources from. Must be a full path, for example: /providers/Microsoft.Management/serviceGroups/myServiceGroup"
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.CloudHealth/healthmodels",
+      "apiVersion": "2026-05-01-preview",
+      "name": "[parameters('healthModelName')]",
+      "location": "[parameters('location')]",
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "properties": {}
+    },
+    {
+      "type": "Microsoft.CloudHealth/healthmodels/authenticationsettings",
+      "apiVersion": "2026-05-01-preview",
+      "name": "[format('{0}/{1}', parameters('healthModelName'), 'default-auth')]",
+      "properties": {
+        "displayName": "Default Authentication",
+        "authenticationKind": "ManagedIdentity",
+        "managedIdentityName": "SystemAssigned"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.CloudHealth/healthmodels', parameters('healthModelName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.CloudHealth/healthmodels/discoveryrules",
+      "apiVersion": "2026-05-01-preview",
+      "name": "[format('{0}/{1}', parameters('healthModelName'), parameters('healthModelName'))]",
+      "properties": {
+        "displayName": "Discover Service Group Resources",
+        "authenticationSetting": "default-auth",
+        "discoverRelationships": "Enabled",
+        "addRecommendedSignals": "Enabled",
+        "addResourceHealthSignal": "Enabled",
+        "specification": {
+          "kind": "ResourceGraphQuery",
+          "resourceGraphQuery": "[format('relationshipresources | where type =~ ''microsoft.relationships/servicegroupmember'' | where tostring(properties.TargetId) =~ ''{0}'' | project id=tostring(properties.SourceId)', parameters('serviceGroupId'))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.CloudHealth/healthmodels/authenticationsettings', parameters('healthModelName'), 'default-auth')]",
+        "[resourceId('Microsoft.CloudHealth/healthmodels', parameters('healthModelName'))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "healthModelName": {
+      "type": "string",
+      "value": "[parameters('healthModelName')]"
+    },
+    "healthModelId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.CloudHealth/healthmodels', parameters('healthModelName'))]"
+    },
+    "location": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.CloudHealth/healthmodels', parameters('healthModelName')), '2026-05-01-preview', 'full').location]"
+    }
+  }
+}
