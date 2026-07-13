@@ -41,6 +41,7 @@ resource kv 'Microsoft.KeyVault/vaults@2023-07-01' = {
     tenantId: tenantId
     enableSoftDelete: true
     softDeleteRetentionInDays: 90
+    enablePurgeProtection: true
     sku: {
       name: skuName
       family: 'A'
