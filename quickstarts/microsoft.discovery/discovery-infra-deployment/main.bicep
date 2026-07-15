@@ -95,6 +95,15 @@ param chatModelFormat string = 'OpenAI'
 @description('Chat model name to deploy.')
 param chatModelName string = 'gpt-5.2'
 
+@description('Enable GitHub Copilot and AI features in the Discovery workspace via the discovery.workbench.enableGhcpAiFeatures tag.')
+param enableGhcpAiFeatures bool = true
+
+@description('Enable the VS Code Extension Marketplace in the Discovery workspace via the discovery.workbench.enableExtensions tag.')
+param enableExtensions bool = true
+
+@description('Workspace network isolation mode via the NetworkIsolation tag. Set to false to enable public preview access as documented in the Infrastructure portal quickstart.')
+param networkIsolation bool = false
+
 // Built-in role definition IDs
 var storageBlobDataContributorRoleId = 'ba92f5b4-2d11-453d-a403-e96b0029c9fe'
 var discoveryPlatformContributorRoleId = '01288891-85ee-45a7-b367-9db3b752fc65'
@@ -265,7 +274,7 @@ resource acrPullAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' 
   }
 }
 
-resource supercomputer 'Microsoft.Discovery/supercomputers@2026-02-01-preview' = {
+resource supercomputer 'Microsoft.Discovery/supercomputers@2026-06-01' = {
   name: supercomputerName
   location: location
   tags: {
@@ -290,7 +299,7 @@ resource supercomputer 'Microsoft.Discovery/supercomputers@2026-02-01-preview' =
   }
 }
 
-resource nodePool 'Microsoft.Discovery/supercomputers/nodePools@2026-02-01-preview' = {
+resource nodePool 'Microsoft.Discovery/supercomputers/nodePools@2026-06-01' = {
   parent: supercomputer
   name: nodePoolName
   location: location
@@ -306,11 +315,14 @@ resource nodePool 'Microsoft.Discovery/supercomputers/nodePools@2026-02-01-previ
   }
 }
 
-resource workspace 'Microsoft.Discovery/workspaces@2026-02-01-preview' = {
+resource workspace 'Microsoft.Discovery/workspaces@2026-06-01' = {
   name: workspaceName
   location: location
   tags: {
     version: 'v2'
+    'discovery.workbench.enableGhcpAiFeatures': string(enableGhcpAiFeatures)
+    'discovery.workbench.enableExtensions': string(enableExtensions)
+    NetworkIsolation: string(networkIsolation)
   }
   dependsOn: [
     vnet
@@ -328,7 +340,7 @@ resource workspace 'Microsoft.Discovery/workspaces@2026-02-01-preview' = {
   }
 }
 
-resource chatModelDeployment 'Microsoft.Discovery/workspaces/chatModelDeployments@2026-02-01-preview' = {
+resource chatModelDeployment 'Microsoft.Discovery/workspaces/chatModelDeployments@2026-06-01' = {
   parent: workspace
   name: chatModelDeploymentName
   location: location
@@ -338,7 +350,7 @@ resource chatModelDeployment 'Microsoft.Discovery/workspaces/chatModelDeployment
   }
 }
 
-resource discoveryStorageContainer 'Microsoft.Discovery/storageContainers@2026-02-01-preview' = {
+resource discoveryStorageContainer 'Microsoft.Discovery/storageContainers@2026-06-01' = {
   name: storageContainerName
   location: location
   properties: {
@@ -349,10 +361,13 @@ resource discoveryStorageContainer 'Microsoft.Discovery/storageContainers@2026-0
   }
 }
 
-resource project 'Microsoft.Discovery/workspaces/projects@2026-02-01-preview' = {
+resource project 'Microsoft.Discovery/workspaces/projects@2026-06-01' = {
   parent: workspace
   name: projectName
   location: location
+  dependsOn: [
+    chatModelDeployment
+  ]
   properties: {
     storageContainerIds: [
       discoveryStorageContainer.id
