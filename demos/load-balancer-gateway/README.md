@@ -30,7 +30,7 @@ This template creates a Public Load Balancer chained to a Gateway Load Balancer.
 
 ## Network diagram ##
 
-A hight level network diagram of the deployment is shown below:
+A high level network diagram of the deployment is shown below:
 
 ![1](./images/1.png "high level diagram with Public Load Balancer chained to a Gateway Load Balancer")
 
