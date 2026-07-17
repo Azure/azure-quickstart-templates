@@ -349,6 +349,7 @@ jobs:
             echo "  Every sample folder must contain a metadata.json file."
             echo "  See the contribution guide:"
             echo "  https://github.com/Azure/azure-quickstart-templates/blob/master/1-CONTRIBUTION-GUIDE/README.md#metadatajson"
+            echo "::error::metadata.json is missing from '${SAMPLE_DIR}'. Every sample folder must contain a metadata.json file."
             exit 1
           fi
 
@@ -361,6 +362,7 @@ jobs:
             echo "  File: ${META}"
             # Show a more descriptive parse error
             jq '.' "$META" || true
+            echo "::error file=${META}::metadata.json is not valid JSON. Please validate it with jq or jsonlint."
             exit 1
           fi
 
@@ -370,10 +372,12 @@ jobs:
           REQUIRED_FIELDS=(itemDisplayName description summary githubUsername dateUpdated type testResult)
 
           all_ok=true
+          missing_fields=()
           for field in "${REQUIRED_FIELDS[@]}"; do
             value=$(jq -r --arg f "$field" '.[$f] // empty' "$META")
             if [[ -z "$value" ]]; then
               echo "❌ Required field missing or empty: '${field}'"
+              missing_fields+=("$field")
               all_ok=false
             else
               echo "✅ ${field}: present"
@@ -386,6 +390,8 @@ jobs:
             for f in "${REQUIRED_FIELDS[@]}"; do echo "    - $f"; done
             echo ""
             echo "  Reference: https://github.com/Azure/azure-quickstart-templates/blob/master/1-CONTRIBUTION-GUIDE/README.md#metadatajson"
+            missing_csv=$(IFS=,; echo "${missing_fields[*]}")
+            echo "::error file=${META}::metadata.json is missing or has empty required field(s): ${missing_csv}. See the contribution guide for the full list."
             exit 1
           fi
 
@@ -424,6 +430,7 @@ jobs:
           if [[ "$FAIL" == true ]]; then
             echo ""
             echo "  Please shorten the fields above to meet the contributor guide limits."
+            echo "::error file=${META}::metadata.json has field(s) exceeding length limits (itemDisplayName ≤ 60, summary ≤ 200, description ≤ 1000). See step log for details."
             exit 1
           fi
 
@@ -432,6 +439,7 @@ jobs:
             ENV_TYPE=$(jq -r '.environments | type' "$META")
             if [[ "$ENV_TYPE" != "array" ]]; then
               echo "❌ 'environments' must be an array (got: ${ENV_TYPE})."
+              echo "::error file=${META}::metadata.json field 'environments' must be an array (got: ${ENV_TYPE})."
               exit 1
             fi
             # Every element must be a string
@@ -439,6 +447,7 @@ jobs:
             if [[ "$NON_STRING" -gt 0 ]]; then
               echo "❌ 'environments' array contains non-string elements."
               echo "   Each entry must be a string, e.g. [\"AzureCloud\",\"AzureUSGovernment\"]"
+              echo "::error file=${META}::metadata.json field 'environments' contains non-string elements; each entry must be a string (e.g. [\"AzureCloud\",\"AzureUSGovernment\"])."
               exit 1
             fi
             echo "✅ environments: valid array of strings"
@@ -449,6 +458,7 @@ jobs:
             VT_TYPE=$(jq -r '.validationType | type' "$META")
             if [[ "$VT_TYPE" != "string" ]]; then
               echo "❌ 'validationType' must be a string (got: ${VT_TYPE})."
+              echo "::error file=${META}::metadata.json field 'validationType' must be a string (got: ${VT_TYPE})."
               exit 1
             fi
             echo "✅ validationType: valid string"
@@ -724,6 +734,16 @@ jobs:
           REQUIRED_FIELDS=(templateFileName correlationId deploymentName)
           OVERALL_PASS=true
 
+          # Strict format regexes — these values are passed into Kusto queries
+          # downstream (ValidateSampleDeployments.yml). Reject anything that
+          # could break out of a KQL string literal (MSRC 117973 /
+          # ICM 31000000613310). Regexes are exported by the shared script as
+          # KUSTO_INPUTS_GUID_RE / KUSTO_INPUTS_NAME_RE so this workflow and
+          # ValidateSampleDeployments.yml stay byte-for-byte consistent.
+          # Tests: test/scripts/validate-kusto-inputs.bats
+          # shellcheck disable=SC1091
+          source "${GITHUB_WORKSPACE}/.github/scripts/validate-kusto-inputs.sh"
+
           for i in $(seq 0 $((PREREQ_COUNT - 1))); do
             ENTRY=$(echo "${PREREQ_DEPLOYMENTS}" | jq -c ".[$i]")
             ENTRY_LABEL="$((i + 1))/${PREREQ_COUNT}"
@@ -732,16 +752,40 @@ jobs:
             echo ""
             echo "  [prereqs entry ${ENTRY_LABEL}] ${TEMPLATE_FILE_NAME}"
 
+            ENTRY_OK=true
             for FIELD_NAME in "${REQUIRED_FIELDS[@]}"; do
               FIELD_VAL=$(echo "${ENTRY}" | jq -r --arg f "${FIELD_NAME}" '.[$f] // empty')
               if [[ -z "${FIELD_VAL}" ]]; then
                 echo "  ❌ '${FIELD_NAME}' is missing or empty"
                 echo "     offending entry: ${ENTRY}"
                 OVERALL_PASS=false
+                ENTRY_OK=false
               else
                 echo "  ✅ ${FIELD_NAME}: present"
               fi
             done
+
+            # Format checks (only if presence checks passed for the relevant fields)
+            if [[ "${ENTRY_OK}" == "true" ]]; then
+              CID_VAL=$(echo "${ENTRY}" | jq -r '.correlationId // empty')
+              DN_VAL=$(echo "${ENTRY}"  | jq -r '.deploymentName // empty')
+
+              if [[ ! "${CID_VAL}" =~ ${KUSTO_INPUTS_GUID_RE} ]]; then
+                echo "  ❌ correlationId is not a valid GUID: '${CID_VAL}'"
+                echo "     Expected RFC 4122 dashed form, e.g. 12345678-1234-1234-1234-1234567890ab"
+                OVERALL_PASS=false
+              else
+                echo "  ✅ correlationId: valid GUID"
+              fi
+
+              if [[ ! "${DN_VAL}" =~ ${KUSTO_INPUTS_NAME_RE} ]] || [[ "${DN_VAL}" == *. ]]; then
+                echo "  ❌ deploymentName does not match ARM deployment-name grammar: '${DN_VAL}'"
+                echo "     Allowed: 1-64 chars from [a-zA-Z0-9._()-], must not end with '.'"
+                OVERALL_PASS=false
+              else
+                echo "  ✅ deploymentName: valid format"
+              fi
+            fi
 
             # Note optional fields if present
             for OPT_FIELD in TIMESTAMP templateHash; do
@@ -754,12 +798,105 @@ jobs:
 
           echo ""
           if [[ "${OVERALL_PASS}" != "true" ]]; then
-            echo "❌ One or more prereqs entries in metadata.json are missing required fields."
+            echo "❌ One or more prereqs entries in metadata.json are missing required fields or have an invalid format."
             echo "  Required fields per entry: templateFileName, correlationId, deploymentName"
+            echo "  correlationId  must be a GUID (RFC 4122 dashed form)."
+            echo "  deploymentName must match ^[a-zA-Z0-9._()-]{1,64}$ and not end with '.'."
             echo "  (TIMESTAMP and templateHash are optional — the hash is derived from the template file.)"
             exit 1
           fi
           echo "✅ All prereqs metadata.json entries are valid."
+
+      # ── (5b) Validate correlationId/deploymentName format for ALL entries ──
+      # Covers both the prereqs (array) and non-prereqs (flat object) shapes of
+      # .testResult.deployments. These fields are bound into Kusto queries by
+      # ValidateSampleDeployments.yml; enforcing strict formats here fails PRs
+      # early with a clear error (defense-in-depth — the consumer also uses
+      # parameterized KQL). Ref MSRC 117973 / ICM 31000000613310.
+      - name: Validate correlationId and deploymentName format in metadata.json
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          SAMPLE_DIR="${{ matrix.sample }}"
+          META="${SAMPLE_DIR}/metadata.json"
+
+          echo "──────────────────────────────────────────"
+          echo "CHECK 5b – correlationId/deploymentName format"
+          echo "  file: ${META}"
+          echo "──────────────────────────────────────────"
+
+          if [[ ! -f "${META}" ]]; then
+            echo "ℹ️  No metadata.json found — skipping."
+            exit 0
+          fi
+
+          # Normalise: turn the deployments node into a JSON array regardless
+          # of whether it is an array (prereqs case) or a flat object
+          # (non-prereqs case). Missing/null → empty array.
+          ENTRIES=$(jq -c '
+            (.testResult.deployments // null) as $d
+            | if   $d == null      then []
+              elif ($d | type) == "array"  then $d
+              elif ($d | type) == "object" then [$d]
+              else []
+              end
+          ' "${META}")
+
+          COUNT=$(echo "${ENTRIES}" | jq 'length')
+          if [[ "${COUNT}" -eq 0 ]]; then
+            echo "ℹ️  No .testResult.deployments entries — skipping."
+            exit 0
+          fi
+
+          # Shared regex contract (see CHECK 5a comment block for rationale).
+          # shellcheck disable=SC1091
+          source "${GITHUB_WORKSPACE}/.github/scripts/validate-kusto-inputs.sh"
+          OVERALL_PASS=true
+
+          for i in $(seq 0 $((COUNT - 1))); do
+            ENTRY=$(echo "${ENTRIES}" | jq -c ".[$i]")
+            LABEL="entry $((i + 1))/${COUNT}"
+            TFN=$(echo "${ENTRY}" | jq -r '.templateFileName // "<no templateFileName>"')
+            CID=$(echo "${ENTRY}" | jq -r '.correlationId   // empty')
+            DN=$(echo "${ENTRY}"  | jq -r '.deploymentName  // empty')
+
+            echo ""
+            echo "  [${LABEL}] ${TFN}"
+
+            # Presence (matches existing semantics — only fail format if present)
+            if [[ -z "${CID}" ]]; then
+              echo "  ❌ correlationId is missing or empty"
+              OVERALL_PASS=false
+            elif [[ ! "${CID}" =~ ${KUSTO_INPUTS_GUID_RE} ]]; then
+              echo "  ❌ correlationId is not a valid GUID: '${CID}'"
+              echo "     Expected RFC 4122 dashed form, e.g. 12345678-1234-1234-1234-1234567890ab"
+              OVERALL_PASS=false
+            else
+              echo "  ✅ correlationId: valid GUID"
+            fi
+
+            if [[ -z "${DN}" ]]; then
+              echo "  ❌ deploymentName is missing or empty"
+              OVERALL_PASS=false
+            elif [[ ! "${DN}" =~ ${KUSTO_INPUTS_NAME_RE} ]] || [[ "${DN}" == *. ]]; then
+              echo "  ❌ deploymentName does not match ARM deployment-name grammar: '${DN}'"
+              echo "     Allowed: 1-64 chars from [a-zA-Z0-9._()-], must not end with '.'"
+              OVERALL_PASS=false
+            else
+              echo "  ✅ deploymentName: valid format"
+            fi
+          done
+
+          echo ""
+          if [[ "${OVERALL_PASS}" != "true" ]]; then
+            echo "❌ One or more .testResult.deployments entries have an invalid correlationId/deploymentName."
+            echo "  correlationId  must be a GUID (RFC 4122 dashed form)."
+            echo "  deploymentName must match ^[a-zA-Z0-9._()-]{1,64}$ and not end with '.'."
+            echo "  These values are passed into a Kusto query downstream, so strict formats are enforced."
+            exit 1
+          fi
+          echo "✅ All .testResult.deployments entries have valid correlationId/deploymentName."
 
       # ── Summary ─────────────────────────────────────────────────────────────
       - name: Validation summary
@@ -769,4 +906,39 @@ jobs:
           echo "══════════════════════════════════════════════════════════"
           echo "  ✅  All validations passed for: ${{ matrix.sample }}"
           echo "══════════════════════════════════════════════════════════"
-
+  # ============================================================================
+  # JOB 3 – validate-samples-results
+  #
+  # Static aggregator job. Its name is fixed (independent of the matrix), so it
+  # can be required by the repository ruleset on master. Branch protection /
+  # rulesets cannot require dynamically-named matrix jobs like
+  # "Validate – ${{ matrix.sample }}", so this job exists purely to give them
+  # a stable handle.
+  #
+  # Passes iff every preceding job concluded `success` or `skipped` (the
+  # matrix is intentionally skipped when no sample folders changed).
+  # ============================================================================
+  validate-samples-results:
+    name: validate-samples-results
+    runs-on: ubuntu-latest
+    needs: [detect_changed_samples, validate_samples]
+    if: always()
+    steps:
+      - name: Aggregate matrix outcome
+        shell: bash
+        run: |
+          set -euo pipefail
+          detect='${{ needs.detect_changed_samples.result }}'
+          matrix='${{ needs.validate_samples.result }}'
+          echo "detect_changed_samples=${detect}"
+          echo "validate_samples=${matrix}"
+          for r in "${detect}" "${matrix}"; do
+            case "${r}" in
+              success|skipped) ;;
+              *)
+                echo "::error::A required validation job concluded '${r}'"
+                exit 1
+                ;;
+            esac
+          done
+          echo "✅ All required validate-samples jobs concluded acceptably."
