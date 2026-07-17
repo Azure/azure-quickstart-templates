@@ -189,7 +189,7 @@ A number of VMs can be spun up that will then be automatically installed and con
 
 * Each will have a single NIC and a private IP.
 * The VM size can be any (selectable by the customer) that meets the Virtual Hardware Requirements. The requirements can be found on the Customer Portal (https://customerportal.darktrace.com/product-guides/main/vsensor-requirements).
-* The OS will be the latest version of Ubuntu 20_04-lts (Gen2).
+* The OS will be the latest version of Ubuntu 24_04-lts (Gen2).
 * The VM OS disk will be StandardSSD_LRS; its size is between 30GB and 1024GB (configurable by input parameter).
 * The vSensors will have a newly created Network Security Group to limit the access to the vSensor. Details can be found in the ‘Network Security Group’ below.
 * The vSensor will have the provided user name (input parameter) created and its ssh public key added (input parameter).

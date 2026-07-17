@@ -1,0 +1,73 @@
+{
+  "_comment": [
+    "Source-of-truth GitHub Repository Ruleset for the master branch of",
+    "Azure/azure-quickstart-templates.",
+    "",
+    "GitHub does NOT natively read this file. To apply changes, a repository",
+    "admin must run:",
+    "    bash .github/scripts/apply-ruleset.sh           # apply",
+    "    bash .github/scripts/apply-ruleset.sh --dry-run # preview only",
+    "",
+    "Two-phase rollout via the `enforcement` field below:",
+    "  Phase 1 (current): \"evaluate\" — dry-run mode. Rules are checked and",
+    "    would-be violations are logged to the ruleset Insights page in the",
+    "    GitHub UI, but NOTHING is blocked. Use this to confirm both",
+    "    required checks land on the head SHA across a handful of real PRs",
+    "    before turning enforcement on.",
+    "  Phase 2 (promotion): an admin edits this file and changes",
+    "    \"enforcement\" to \"active\", merges the change, then re-runs",
+    "    `bash .github/scripts/apply-ruleset.sh`. From that moment merges",
+    "    to master are blocked unless every required check is green.",
+    "  Note: GitHub also accepts \"disabled\" (ruleset present but inert).",
+    "  The repository Settings UI only surfaces Active/Disabled; the REST",
+    "  API used by apply-ruleset.sh accepts all three values.",
+    "",
+    "The required_status_checks below pin checks to integration_id 15368,",
+    "which is the GitHub Actions app. This prevents another app from",
+    "satisfying the requirement by reporting a check with the same name.",
+    "",
+    "  validate-samples-results        - aggregator job in validate-samples.yml",
+    "                                    (matrix names cannot be required;",
+    "                                     this static name is the gate).",
+    "  adx-deployment-validation       - check published from",
+    "                                    ValidateSampleDeployments.yml when",
+    "                                    /validate runs. Pushing a new commit",
+    "                                    moves PR head to a new SHA where this",
+    "                                    check has not been reported, blocking",
+    "                                    merge until /validate is re-run."
+  ],
+  "name": "master-protection",
+  "target": "branch",
+  "enforcement": "evaluate",
+  "conditions": {
+    "ref_name": {
+      "include": ["refs/heads/master"],
+      "exclude": []
+    }
+  },
+  "rules": [
+    { "type": "deletion" },
+    { "type": "non_fast_forward" },
+    {
+      "type": "pull_request",
+      "parameters": {
+        "required_approving_review_count": 1,
+        "dismiss_stale_reviews_on_push": true,
+        "require_code_owner_review": false,
+        "require_last_push_approval": false,
+        "required_review_thread_resolution": false
+      }
+    },
+    {
+      "type": "required_status_checks",
+      "parameters": {
+        "strict_required_status_checks_policy": true,
+        "required_status_checks": [
+          { "context": "validate-samples-results", "integration_id": 15368 },
+          { "context": "adx-deployment-validation", "integration_id": 15368 }
+        ]
+      }
+    }
+  ],
+  "bypass_actors": []
+}
