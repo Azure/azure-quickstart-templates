@@ -171,17 +171,6 @@
         "description": "The ADDS OU path"
       }
     },
-    "securityLevel": {
-      "defaultValue": "Recommended",
-      "type": "string",
-      "allowedValues": [
-        "Recommended",
-        "Customized"
-      ],
-      "metadata": {
-        "description": "The security level data for deploying a hci cluster"
-      }
-    },
     "driftControlEnforced": {
       "defaultValue": true,
       "type": "bool",
@@ -368,31 +357,6 @@
         "description": "The physical nodes settings for deploying a hci cluster"
       }
     },
-    "networkingType": {
-      "defaultValue": "switchedMultiServerDeployment",
-      "type": "string",
-      "allowedValues": [
-        "switchedMultiServerDeployment",
-        "switchlessMultiServerDeployment",
-        "singleServerDeployment"
-      ],
-      "metadata": {
-        "description": "The networking type for deploying a hci cluster"
-      }
-    },
-    "networkingPattern": {
-      "defaultValue": "hyperConverged",
-      "type": "string",
-      "allowedValues": [
-        "hyperConverged",
-        "convergedManagementCompute",
-        "convergedComputeStorage",
-        "custom"
-      ],
-      "metadata": {
-        "description": "The networking pattern for deploying a hci cluster"
-      }
-    },
     "intentList": {
       "defaultValue": [],
       "type": "array",
@@ -487,11 +451,11 @@
     "domainAdminSecretName": "[concat( parameters('clusterName'), '-', 'AzureStackLCMUserCredential')]",
     "witnessTypeVar": "[if(equals(parameters('witnessType'), 'No Witness'), '','Cloud')]",
     "clusterWitnessStorageAccountNameVar": "[if(equals(parameters('witnessType'), 'No Witness'), '', parameters('clusterWitnessStorageAccountName'))]",
-    "AzureServiceEndpointVar": "[if(equals(parameters('witnessType'), 'No Witness'), '', if(equals(environment().name, 'AzureCloud'), 'core.windows.net', 'core.usgovcloudapi.net'))]",
+    "AzureServiceEndpointVar": "[if(equals(parameters('witnessType'), 'No Witness'), '', environment().suffixes.storage)]",
     "localAdminSecretValue": "[base64(concat(parameters('localAdminUserName'),':',parameters('localAdminPassword')))]",
     "domainAdminSecretValueVar": "[base64(concat(parameters('AzureStackLCMAdminUsername'),':',parameters('AzureStackLCMAdminPassword')))]",
     "CloudWithnessStorageAccountIdVar": "[resourceId('Microsoft.Storage/storageAccounts', parameters('clusterWitnessStorageAccountName'))]",
-    "KeyVaultDNS": "[if(equals(environment().name, 'AzureCloud'), 'vault.azure.net', 'vault.usgovcloudapi.net')]",
+    "KeyVaultDNS": "[environment().suffixes.keyvaultDns]",
     "copy": [
       {
           "name": "answerfileSBESecrets",
@@ -530,7 +494,7 @@
   "resources":{
     "witnessStorageAcc" : {
       "type": "Microsoft.Storage/storageAccounts",
-      "apiVersion": "2023-01-01",
+      "apiVersion": "2025-06-01",
       "name": "[parameters('clusterWitnessStorageAccountName')]",
       "location": "[parameters('location')]",
       "sku": {
@@ -545,7 +509,7 @@
     },
     "hcirproleassignment": {
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2021-04-01",
+      "apiVersion": "2025-04-01",
       "name": "AzureConnectedMachineResourceManager-RoleAssignment",
       "subscriptionId": "[subscription().subscriptionId]",
       "resourceGroup": "[resourceGroup().name]",
@@ -600,7 +564,7 @@
       },
     "arcMachineRoleAssignment": {
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2021-04-01",
+      "apiVersion": "2025-04-01",
       "name": "AzureStackHCIDeviceManagementRole-RoleAssignment",
       "subscriptionId": "[subscription().subscriptionId]",
       "resourceGroup": "[resourceGroup().name]",
@@ -643,7 +607,7 @@
     },
     "ArcMachineKVRoleAssignment": {
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2021-04-01",
+      "apiVersion": "2025-04-01",
       "name": "KeyVaultSecretsUser-RoleAssignment",
       "subscriptionId": "[subscription().subscriptionId]",
       "resourceGroup": "[resourceGroup().name]",
@@ -686,7 +650,7 @@
     },
     "ArcMachineInfraVMRoleAssignment": {
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2021-04-01",
+      "apiVersion": "2025-04-01",
       "name": "AzureStackHCIConnectedInfraVMs-RoleAssignment",
       "subscriptionId": "[subscription().subscriptionId]",
       "resourceGroup": "[resourceGroup().name]",
@@ -729,7 +693,7 @@
     },
     "StorageAccountConfigurations":{
       "type": "Microsoft.Storage/storageAccounts",
-      "apiVersion": "2023-01-01",
+      "apiVersion": "2025-06-01",
       "name": "[parameters('diagnosticStorageAccountName')]",
       "location": "[parameters('location')]",
       "condition": "[parameters('createNewKeyVault')]",
@@ -750,7 +714,7 @@
     },
     "KVConfigurations":{
       "type": "Microsoft.KeyVault/vaults",
-      "apiVersion": "2021-06-01-preview",
+      "apiVersion": "2025-05-01",
       "name": "[parameters('keyVaultName')]",
       "location": "[parameters('location')]",
       "condition": "[parameters('createNewKeyVault')]",
@@ -778,11 +742,11 @@
       "type": "Microsoft.KeyVault/vaults/providers/diagnosticsettings",
       "name": "[concat(parameters('keyVaultName'), '/Microsoft.Insights/service')]",
       "apiVersion": "2016-09-01",
-      "Location": "[resourceGroup().location]",
+      "Location": "[parameters('location')]",
       "condition": "[parameters('createNewKeyVault')]",
       "dependsOn": [
-        "[concat('Microsoft.KeyVault/vaults/', parameters('keyVaultName'))]",
-        "[concat('Microsoft.Storage/storageAccounts/', parameters('diagnosticStorageAccountName'))]"
+        "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', parameters('diagnosticStorageAccountName'))]"
       ],
       "properties": {
         "storageAccountId": "[resourceId('Microsoft.Storage/storageAccounts', parameters('diagnosticStorageAccountName'))]",
@@ -800,7 +764,7 @@
     },
     "nodeNameValidation":{
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2021-04-01",
+      "apiVersion": "2025-04-01",
       "name": "[if(contains(variables('isNodeNameValid'), 'false'), '##ClusterNameIsSameAsNodeName##', 'NodeNameIsValid')]",
       "properties":{
         "mode": "Incremental",
@@ -829,7 +793,7 @@
     },
     "KVDomainAdminSecret":{
       "type": "Microsoft.KeyVault/vaults/secrets",
-      "apiVersion": "2021-06-01-preview",
+      "apiVersion": "2025-05-01",
       "name": "[concat(parameters('keyVaultName'), '/', variables('domainAdminSecretName'))]",
       "dependsOn": [
         "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]"
@@ -846,7 +810,7 @@
     },
     "KVLocalAdminSecret":{
       "type": "Microsoft.KeyVault/vaults/secrets",
-      "apiVersion": "2021-06-01-preview",
+      "apiVersion": "2025-05-01",
       "name": "[concat(parameters('keyVaultName'), '/', variables('LocalAdminCredentialSecretName'))]",
       "dependsOn": [
         "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]"
@@ -863,7 +827,7 @@
     },
     "KVWitnessSecret":{
       "type": "Microsoft.KeyVault/vaults/secrets",
-      "apiVersion": "2021-06-01-preview",
+      "apiVersion": "2025-05-01",
       "name": "[concat(parameters('keyVaultName'), '/', variables('storageWitnessSecretName'))]",
       "dependsOn": [
         "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]"
@@ -880,7 +844,7 @@
     },
     "KVPartnerCreds":{
       "type": "Microsoft.KeyVault/vaults/secrets",
-      "apiVersion": "2021-06-01-preview",
+      "apiVersion": "2025-05-01",
       "name": "[concat(parameters('keyVaultName'), '/', parameters('partnerCredentialList')[copyIndex()].secretName)]",
       "dependsOn": [
         "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]"
@@ -934,7 +898,6 @@
                 "cluster": {
                   "name": "[parameters('clusterName')]",
                   "witnessType": "[variables('witnessTypeVar')]",
-                  "witnessPath": "",
                   "cloudAccountName": "[variables('clusterWitnessStorageAccountNameVar')]",
                   "azureServiceEndpoint": "[variables('AzureServiceEndpointVar')]"
                 },
