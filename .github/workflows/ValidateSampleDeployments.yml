@@ -16,6 +16,20 @@
 #
 # Triggered by a "/validate" comment on a pull request.  Uses issue_comment
 # (not pull_request) so GITHUB_TOKEN has full permissions for fork PRs.
+#
+# Security gates (enforced in the `gate` job, before any PR-controlled code
+# is read by downstream jobs):
+#   1. Commenter authorization: only MEMBER/OWNER/COLLABORATOR can drive any
+#      job. `issue_comment` events fire for any GitHub user, so this gate
+#      is the only thing preventing fork-PR authors (or arbitrary commenters)
+#      from triggering `summarize`/`selected-pipeline` with `pull-requests:
+#      write` / `security-events: write` / Azure-OIDC tokens. ICM 31000000622897.
+#   2. Protected-files safeguard: PRs that modify this workflow or the
+#      `summarizer.agent.md` system prompt are blocked unless the PR author
+#      is MEMBER/OWNER, so downstream jobs never read attacker-controlled
+#      copies of those files.
+# Downstream jobs (`summarize`, `selected-pipeline`) re-assert the commenter
+# check as defense-in-depth.
 # ──────────────────────────────────────────────────────────────────────────────
 
 name: Validate PR (Summarize + ADX)
@@ -73,6 +87,81 @@ jobs:
       head_sha: ${{ steps.pr-head.outputs.head_sha }}
 
     steps:
+      # ── Security gate 1/2: commenter authorization ─────────────────────
+      # `issue_comment` events fire for any GitHub user who can comment on
+      # the PR (i.e., anyone on a public repo). All downstream jobs read
+      # PR-controlled inputs and/or hold write tokens, so we authorize the
+      # commenter here, before any checkout or API call against the PR.
+      # See ICM 31000000622897 / MSRC 119361.
+      - name: Check commenter permission (basic)
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Comment author association: ${{ github.event.comment.author_association }}"
+          case "${{ github.event.comment.author_association }}" in
+            MEMBER|OWNER|COLLABORATOR) ;;
+            *)
+              echo "::error::Not authorized to /validate. Comment author_association='${{ github.event.comment.author_association }}'; only MEMBER/OWNER/COLLABORATOR may trigger this workflow."
+              exit 1
+              ;;
+          esac
+
+      # ── Security gate 2/2: block edits to protected workflow files ─────
+      # If the PR modifies this workflow or the `summarizer.agent.md`
+      # system prompt, the PR author must be MEMBER/OWNER. This prevents
+      # a fork-PR author from substituting a malicious system prompt or
+      # workflow definition that a maintainer would then run with
+      # `/validate`. Mirrors the in-job safeguard in `selected-pipeline`
+      # but lifted to `gate` so it short-circuits `summarize` as well.
+      - name: Safeguard – block protected-file edits by non MEMBER/OWNER
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const allowed = new Set(["MEMBER", "OWNER"]);
+            const owner = context.repo.owner;
+            const repo  = context.repo.repo;
+            const pull_number = context.payload.issue.number;
+
+            const [prData, files] = await Promise.all([
+              github.rest.pulls.get({ owner, repo, pull_number }),
+              github.paginate(
+                github.rest.pulls.listFiles,
+                { owner, repo, pull_number, per_page: 100 }
+              )
+            ]);
+
+            const assoc = prData.data.author_association;
+
+            // Any file executed with the privileged token/OIDC of this
+            // workflow (via checkout of PR HEAD) must be listed here so
+            // fork PRs cannot substitute a malicious version. Directory
+            // entries end with "/" and match by prefix; file entries
+            // match exactly. See ICM 31000000643564.
+            const protectedDirs = [
+              ".github/workflows/",
+              ".github/scripts/",
+              ".github/actions/",
+              ".github/agents/",
+            ];
+            const protectedFiles = [
+              ".github/CODEOWNERS",
+            ];
+            const isProtected = (name) =>
+              protectedDirs.some(d => name.startsWith(d)) ||
+              protectedFiles.includes(name);
+
+            const touchedNames = files.map(f => f.filename).filter(isProtected);
+            const touched = touchedNames.length > 0;
+
+            core.info(`PR author_association=${assoc}; protected files touched=${touched}`);
+
+            if (touched && !allowed.has(assoc)) {
+              core.setFailed(
+                `Blocked: protected file(s) ${touchedNames.join(', ')} modified by PR author with ` +
+                `author_association='${assoc}'. Only MEMBER or OWNER may modify these files.`
+              );
+            }
+
       # Sparse checkout just the helper script directory so subsequent steps
       # can call .github/scripts/upsert-check-run.sh.
       - name: Checkout helper scripts
@@ -217,6 +306,26 @@ jobs:
       security-events: write
 
     steps:
+      # ── Commenter authorization (defense-in-depth) ─────────────────────
+      # `gate` already enforces this, but `issue_comment` triggers fire for
+      # any GitHub user and this job holds `pull-requests: write` +
+      # `security-events: write` while reading PR-controlled `.github/agents/
+      # summarizer.agent.md` as the AI system prompt. Re-asserting the
+      # commenter check here keeps `summarize` safe even if the `gate`
+      # check is ever bypassed or refactored. See ICM 31000000622897.
+      - name: Check commenter permission (basic)
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Comment author association: ${{ github.event.comment.author_association }}"
+          case "${{ github.event.comment.author_association }}" in
+            MEMBER|OWNER|COLLABORATOR) ;;
+            *)
+              echo "::error::Not authorized to /validate. Comment author_association='${{ github.event.comment.author_association }}'; only MEMBER/OWNER/COLLABORATOR may trigger this workflow."
+              exit 1
+              ;;
+          esac
+
       # ── 1. Resolve the PR head ref ──────────────────────────────────────
       - name: Get PR details
         id: pr
@@ -1352,7 +1461,8 @@ jobs:
               );
             }
 
-      - name: Safeguard – block ValidateSampleDeployments.yml edits by non MEMBER/OWNER
+      - name: Safeguard – block protected-file edits by non MEMBER/OWNER
+        id: safeguard
         uses: actions/github-script@v7
         with:
           script: |
@@ -1370,20 +1480,38 @@ jobs:
             ]);
 
             const assoc = prData.data.author_association;
-            const protectedFiles = [
-              ".github/workflows/ValidateSampleDeployments.yml",
-              ".github/agents/summarizer.agent.md"
+
+            // Any file executed with the privileged token/OIDC of this
+            // workflow (via checkout of PR HEAD) must be listed here so
+            // fork PRs cannot substitute a malicious version. Directory
+            // entries end with "/" and match by prefix; file entries
+            // match exactly. See ICM 31000000643564.
+            const protectedDirs = [
+              ".github/workflows/",
+              ".github/scripts/",
+              ".github/actions/",
+              ".github/agents/",
             ];
-            const touched = files.some(f =>
-              protectedFiles.some(pf => f.filename === pf || f.filename.endsWith("/" + pf.split("/").pop()))
-            );
+            const protectedFiles = [
+              ".github/CODEOWNERS",
+            ];
+            const isProtected = (name) =>
+              protectedDirs.some(d => name.startsWith(d)) ||
+              protectedFiles.includes(name);
+
+            const touchedNames = files.map(f => f.filename).filter(isProtected);
+            const touched = touchedNames.length > 0;
 
             core.info(`PR author_association=${assoc}; protected files touched=${touched}`);
 
+            // Pin the head SHA observed here so the subsequent PR-HEAD
+            // checkout resolves to the same commit the safeguard just
+            // evaluated. Closes the TOCTOU window on refs/pull/N/head.
+            const headSha = prData.data.head.sha;
+            core.setOutput("head_sha", headSha);
+            core.info(`Pinned PR head SHA for downstream checkout: ${headSha}`);
+
             if (touched && !allowed.has(assoc)) {
-              const touchedNames = files
-                .filter(f => protectedFiles.some(pf => f.filename === pf || f.filename.endsWith("/" + pf.split("/").pop())))
-                .map(f => f.filename);
               core.setFailed(
                 `Blocked: protected file(s) ${touchedNames.join(', ')} modified by PR author with ` +
                 `author_association='${assoc}'. Only MEMBER or OWNER may modify these files.`
@@ -1394,7 +1522,7 @@ jobs:
         if: steps.preflight.outputs.skip != 'true'
         uses: actions/checkout@v4
         with:
-          ref: refs/pull/${{ steps.pr.outputs.number }}/head
+          ref: ${{ steps.safeguard.outputs.head_sha }}
 
       # Paginate PR changed files to locate the single added/modified metadata.json
       - name: Find metadata.json from PR changed files
@@ -1562,6 +1690,14 @@ jobs:
             return 0
           }
 
+          # ── Source the shared KQL-input validator ─────────────────────────
+          # Defines validate_kusto_inputs (cid, dn, label) — see
+          # .github/scripts/validate-kusto-inputs.sh for the format contract.
+          # Tested by test/scripts/validate-kusto-inputs.bats.
+          # Security context: MSRC 117973 / ICM 31000000613310.
+          # shellcheck disable=SC1091
+          source "${GITHUB_WORKSPACE}/.github/scripts/validate-kusto-inputs.sh"
+
           # ── If array, pick the non-prereqs entry; otherwise use the flat object ───
           DEPLOYMENTS=$(echo "${DEPLOYMENTS}" | jq -c '
             if type == "array" then
@@ -1615,13 +1751,20 @@ jobs:
             exit 1
           fi
 
+          # ── Validate untrusted metadata before binding into KQL ───────────
+          # correlationId / deploymentName come from PR-controlled metadata.json.
+          # Reject anything that does not match the strict format contract
+          # before we hand the values to Kusto.
+          if ! validate_kusto_inputs "${CORRELATION_ID}" "${DEPLOYMENT_NAME}" "${TEMPLATE_FILE_NAME}"; then
+            exit 1
+          fi
+
           # ── Run Kusto query ───────────────────────────────────────────────
-          # jq handles JSON-escaping of all KQL string values
-          REQUEST_BODY=$(jq -n \
-            --arg db  "${DATABASE}" \
-            --arg cid "${CORRELATION_ID}" \
-            --arg dn  "${DEPLOYMENT_NAME}" \
-            '{db: $db, csl: "Deployments | where correlationId == \"\($cid)\" | where deploymentName == \"\($dn)\" | project timestamp=TIMESTAMP, deploymentName, executionStatus, templateHash, generatorName, generatorVersion | top 1 by timestamp desc"}')
+          # Body shape (parameterized KQL) is built by the shared script — see
+          # .github/scripts/build-adx-query-body.sh, tested by
+          # test/scripts/build-adx-query-body.bats.
+          REQUEST_BODY=$(DATABASE="${DATABASE}" CID="${CORRELATION_ID}" DN="${DEPLOYMENT_NAME}" \
+            bash "${GITHUB_WORKSPACE}/.github/scripts/build-adx-query-body.sh")
 
           echo "Running Kusto query for '${TEMPLATE_FILE_NAME}' (with cluster fallback)..."
           RESPONSE=$(run_kusto_query_with_fallback "${REQUEST_BODY}")
@@ -1952,6 +2095,14 @@ jobs:
             return 0
           }
 
+          # ── Source the shared KQL-input validator ─────────────────────────
+          # Defines validate_kusto_inputs (cid, dn, label) — see
+          # .github/scripts/validate-kusto-inputs.sh for the format contract.
+          # Tested by test/scripts/validate-kusto-inputs.bats.
+          # Security context: MSRC 117973 / ICM 31000000613310.
+          # shellcheck disable=SC1091
+          source "${GITHUB_WORKSPACE}/.github/scripts/validate-kusto-inputs.sh"
+
           OVERALL_PASS=true
           PREREQS_DIR="${SAMPLE_PATH}/prereqs"
 
@@ -2011,12 +2162,21 @@ jobs:
               continue
             fi
 
+            # ── Validate untrusted metadata before binding into KQL ───────
+            # correlationId / deploymentName come from PR-controlled
+            # metadata.json. Reject anything that does not match the strict
+            # format contract before we hand the values to Kusto.
+            if ! validate_kusto_inputs "${CORRELATION_ID}" "${DEPLOYMENT_NAME}" "prereqs ${ENTRY_LABEL} (${TEMPLATE_FILE_NAME})"; then
+              OVERALL_PASS=false
+              continue
+            fi
+
             # ── Run Kusto query ───────────────────────────────────────────
-            REQUEST_BODY=$(jq -n \
-              --arg db  "${DATABASE}" \
-              --arg cid "${CORRELATION_ID}" \
-              --arg dn  "${DEPLOYMENT_NAME}" \
-              '{db: $db, csl: "Deployments | where correlationId == \"\($cid)\" | where deploymentName == \"\($dn)\" | project timestamp=TIMESTAMP, deploymentName, executionStatus, templateHash, generatorName, generatorVersion | top 1 by timestamp desc"}')
+            # Body shape (parameterized KQL) is built by the shared script —
+            # see .github/scripts/build-adx-query-body.sh, tested by
+            # test/scripts/build-adx-query-body.bats.
+            REQUEST_BODY=$(DATABASE="${DATABASE}" CID="${CORRELATION_ID}" DN="${DEPLOYMENT_NAME}" \
+              bash "${GITHUB_WORKSPACE}/.github/scripts/build-adx-query-body.sh")
 
             echo "Running Kusto query for prereqs entry '${TEMPLATE_FILE_NAME}' (with cluster fallback)..."
             RESPONSE=$(run_kusto_query_with_fallback "${REQUEST_BODY}")
