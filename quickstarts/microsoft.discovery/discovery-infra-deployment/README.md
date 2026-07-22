@@ -51,7 +51,32 @@ The following resources are deployed as part of the solution
 ## Prerequisites
 
 - An active Azure subscription with access to the **Microsoft Discovery** preview.
-- The **Microsoft.Discovery** resource provider registered on your subscription, along with `Microsoft.App`, `Microsoft.ContainerService`, `Microsoft.Network`, `Microsoft.ManagedIdentity`, and `Microsoft.Storage`.
+- The following resource providers registered on your subscription (see [Microsoft Discovery quickstart](https://learn.microsoft.com/en-us/azure/microsoft-discovery/quickstart-infrastructure-portal) for the authoritative list):
+  - `Microsoft.AlertsManagement`
+  - `Microsoft.App`
+  - `Microsoft.Authorization`
+  - `Microsoft.Bing`
+  - `Microsoft.CognitiveServices`
+  - `Microsoft.Compute`
+  - `Microsoft.ContainerInstance`
+  - `Microsoft.ContainerRegistry`
+  - `Microsoft.ContainerService`
+  - `Microsoft.Discovery`
+  - `Microsoft.DocumentDB`
+  - `Microsoft.Features`
+  - `Microsoft.Insights`
+  - `Microsoft.KeyVault`
+  - `Microsoft.MachineLearningServices`
+  - `Microsoft.ManagedIdentity`
+  - `Microsoft.Network`
+  - `Microsoft.OperationalInsights`
+  - `Microsoft.ResourceGraph`
+  - `Microsoft.Resources`
+  - `Microsoft.Search`
+  - `Microsoft.Sql`
+  - `Microsoft.Storage`
+  - `Microsoft.Web`
+
 - Sufficient role assignments: *Discovery Platform Admin*, *Managed Identity Contributor*, *Network Contributor*, and *Storage Account Contributor* at the target resource-group scope.
 - Microsoft Discovery is available in **East US**, **East US 2**, **Sweden Central**, and **UK South**.
 
