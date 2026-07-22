@@ -30,8 +30,8 @@ Azure Resource Usage   Solution collects and visualizes Azure Usage from Azure B
 * Category  (Storage)
 * SubCategory (Locally Redundant)
 * MeterType (Standard IO - Page Blob/Disk (GB))
-* Resouce ( VM, Storage Account , Website)
-* Reosuce Group
+* Resource ( VM, Storage Account , Website)
+* Resource Group
 * Resource Tags
 
 ![alt text](images/azureusagetile.png "Overview")
@@ -116,7 +116,7 @@ In the Resource Group where you deployed the template, you should see the soluti
 
 ![alt text](images/azureusagedeployedres.png "Solutions")
 
-### Azure Resouce Usage
+### Azure Resource Usage
 
 The views for Azure Resource   will give you an overview of usage and cost of resources in an Azure Subscription.  Multiple subscriptions can be added to provide overview for all.
 

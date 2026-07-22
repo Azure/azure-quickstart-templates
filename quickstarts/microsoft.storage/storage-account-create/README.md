@@ -26,9 +26,10 @@ languages:
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.storage%2Fstorage-account-create%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.storage%2Fstorage-account-create%2Fazuredeploy.json)
 
-This template creates a standard storage account.
+This template deploys a **standard Azure Storage Account**, suitable for general-purpose storage scenarios such as blobs, files, queues, and tables.
 
-If you're new to Azure Storage account, see:
+If you're new to Azure Storage accounts, see:
+
 
 - [Azure Storage account quickstart article](https://docs.microsoft.com/azure/storage/common/storage-account-create)
 - [Azure Storage account template reference](https://docs.microsoft.com/azure/templates/microsoft.storage/allversions)

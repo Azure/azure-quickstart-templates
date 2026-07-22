@@ -1,0 +1,143 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.35.1.17967",
+      "templateHash": "166777112115110693"
+    }
+  },
+  "parameters": {
+    "serverName": {
+      "type": "string",
+      "metadata": {
+        "description": "Server Name for Azure database for MySQL"
+      }
+    },
+    "mysqlAdminLogin": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "MySQL administrator login name"
+      }
+    },
+    "mysqlAdminPassword": {
+      "type": "securestring",
+      "minLength": 8,
+      "metadata": {
+        "description": "MySQL administrator password"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Provide the location for all the resources."
+      }
+    },
+    "entraAdminUserName": {
+      "type": "string",
+      "metadata": {
+        "description": "UserName of Microsoft Entra ID user or group"
+      }
+    },
+    "entraAdminObjectID": {
+      "type": "string",
+      "metadata": {
+        "description": "Object id of Microsoft Entra ID user or group. You can obtain it using az ad user show --id <user>"
+      }
+    },
+    "userManagedIdentityName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the user-assigned managed identity"
+      }
+    },
+    "userManagedIdentityResourceGroupName": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().name]",
+      "metadata": {
+        "description": "ResourceGroupName of the user-assigned managed identity"
+      }
+    },
+    "userManagedIdentitySubscriptionId": {
+      "type": "string",
+      "defaultValue": "[subscription().subscriptionId]",
+      "metadata": {
+        "description": "SubscriptionId of the user-assigned managed identity"
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.DBforMySQL/flexibleServers",
+      "apiVersion": "2024-10-01-preview",
+      "name": "[parameters('serverName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard_D2ads_v5",
+        "tier": "GeneralPurpose"
+      },
+      "identity": {
+        "type": "UserAssigned",
+        "userAssignedIdentities": {
+          "[format('{0}', extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', parameters('userManagedIdentitySubscriptionId'), parameters('userManagedIdentityResourceGroupName')), 'Microsoft.ManagedIdentity/userAssignedIdentities', parameters('userManagedIdentityName')))]": {}
+        }
+      },
+      "properties": {
+        "administratorLogin": "[parameters('mysqlAdminLogin')]",
+        "administratorLoginPassword": "[parameters('mysqlAdminPassword')]",
+        "version": "8.0.21",
+        "storage": {
+          "storageSizeGB": 20,
+          "iops": 3200,
+          "autoGrow": "Enabled"
+        },
+        "backup": {
+          "backupRetentionDays": 7,
+          "geoRedundantBackup": "Disabled"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.DBforMySQL/flexibleServers/firewallRules",
+      "apiVersion": "2023-12-30",
+      "name": "[format('{0}/{1}', parameters('serverName'), 'AllowAllMicrosoftAzureIps')]",
+      "properties": {
+        "startIpAddress": "0.0.0.0",
+        "endIpAddress": "0.0.0.0"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DBforMySQL/flexibleServers', parameters('serverName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.DBforMySQL/flexibleServers/configurations",
+      "apiVersion": "2023-12-30",
+      "name": "[format('{0}/{1}', parameters('serverName'), 'aad_auth_only')]",
+      "properties": {
+        "value": "ON",
+        "currentValue": "ON"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DBforMySQL/flexibleServers', parameters('serverName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.DBforMySQL/flexibleServers/administrators",
+      "apiVersion": "2023-12-30",
+      "name": "[format('{0}/{1}', parameters('serverName'), 'ActiveDirectory')]",
+      "properties": {
+        "administratorType": "ActiveDirectory",
+        "login": "[parameters('entraAdminUserName')]",
+        "sid": "[parameters('entraAdminObjectID')]",
+        "tenantId": "[subscription().tenantId]",
+        "identityResourceId": "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', parameters('userManagedIdentitySubscriptionId'), parameters('userManagedIdentityResourceGroupName')), 'Microsoft.ManagedIdentity/userAssignedIdentities', parameters('userManagedIdentityName'))]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DBforMySQL/flexibleServers', parameters('serverName'))]"
+      ]
+    }
+  ]
+}

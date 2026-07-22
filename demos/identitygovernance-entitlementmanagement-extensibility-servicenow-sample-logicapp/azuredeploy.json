@@ -1,0 +1,417 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "connections_service_now_display_name": {
+      "defaultValue": "ServiceNow-PDI",
+      "type": "String",
+      "metadata": {
+        "Description": "Name of the ServiceNow connection"
+      }
+    },
+    "connections_service_now_instance": {
+      "defaultValue": "dev12345",
+      "type": "String",
+      "metadata": {
+        "Description": "ServiceNow "
+      }
+    },
+    "connections_service_now_username": {
+      "defaultValue": "admin",
+      "type": "String"
+    },
+    "connections_service_now_password": {
+      "defaultValue": "admin",
+      "type": "securestring"
+    },
+    "logic_app_name": {
+      "defaultValue": "CreateTicketInServiceNow",
+      "type": "String"
+    },
+    "catalogId": {
+      "type": "String",
+      "metadata": {
+        "Description": "Catalog Id from Entitlement Management"
+      }
+    }
+  },
+  "variables": {},
+  "resources": [
+    {
+      "type": "Microsoft.Web/connections",
+      "apiVersion": "2016-06-01",
+      "name": "service-now",
+      "location": "[resourceGroup().location]",
+      "kind": "V1",
+      "properties": {
+        "displayName": "[parameters('connections_service_now_display_name')]",
+        "statuses": [
+          {
+            "status": "Connected"
+          }
+        ],
+        "customParameterValues": {},
+        "parameterValues": {
+          "instance": "[parameters('connections_service_now_instance')]",
+          "username": "[parameters('connections_service_now_username')]",
+          "password": "[parameters('connections_service_now_password')]"
+        },
+        "createdTime": "2023-02-16T00:08:37.065548Z",
+        "changedTime": "2023-02-16T00:08:37.065548Z",
+        "api": {
+          "name": "service-now",
+          "displayName": "[parameters('connections_service_now_display_name')]",
+          "description": "ServiceNow improves service levels, energizes employees, and enables your enterprise to work at lightspeed. Create, read and update records stored within ServiceNow including Incidents, Questions, Users and more.",
+          "iconUri": "https://connectoricons-prod.azureedge.net/releases/v1.0.1544/1.0.1544.2640/service-now/icon.png",
+          "brandColor": "#D1232B",
+          "id": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Web/locations/', resourceGroup().location ,'/managedApis/service-now')]",
+          "type": "Microsoft.Web/locations/managedApis"
+        },
+        "testLinks": [
+          {
+            "requestUri": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Web/locations/', resourceGroup().location ,'/', parameters('connections_service_now_display_name'), '/extensions/proxy/api/now/doc/table/schema?api-version=2016-06-01')]",
+            "method": "get"
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Logic/workflows",
+      "apiVersion": "2017-07-01",
+      "name": "[parameters('logic_app_name')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/connections', 'service-now')]"
+      ],
+      "tags": {
+        "Purpose": "Azure AD Entitlement Management"
+      },
+      "properties": {
+        "state": "Enabled",
+        "definition": {
+          "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {
+            "$connections": {
+              "defaultValue": {},
+              "type": "Object"
+            }
+          },
+          "triggers": {
+            "manual": {
+              "type": "Request",
+              "kind": "Http",
+              "inputs": {
+                "schema": {
+                  "properties": {
+                    "AccessPackage": {
+                      "properties": {
+                        "Description": {
+                          "description": "AccessPackage-Description",
+                          "type": "string"
+                        },
+                        "DisplayName": {
+                          "description": "AccessPackage-DisplayName",
+                          "type": "string"
+                        },
+                        "Id": {
+                          "description": "AccessPackage-Id",
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "AccessPackageAssignmentRequestId": {
+                      "type": "string"
+                    },
+                    "AccessPackageCatalog": {
+                      "properties": {
+                        "Description": {
+                          "description": "AccessPackageCatalog-Description",
+                          "type": "string"
+                        },
+                        "DisplayName": {
+                          "description": "AccessPackageCatalog-DisplayName",
+                          "type": "string"
+                        },
+                        "Id": {
+                          "description": "AccessPackageCatalog-Id",
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "Answers": {
+                      "type": "array"
+                    },
+                    "Assignment": {
+                      "properties": {
+                        "Id": {
+                          "description": "Assignment-Id",
+                          "type": "string"
+                        },
+                        "State": {
+                          "description": "Assignment-State",
+                          "type": "string"
+                        },
+                        "Status": {
+                          "description": "Assignment-Status",
+                          "type": "string"
+                        },
+                        "Target": {
+                          "properties": {
+                            "ConnectedOrganization": {
+                              "properties": {
+                                "Description": {
+                                  "description": "Assignment-Target-ConnectedOrganization-Description",
+                                  "type": "string"
+                                },
+                                "DisplayName": {
+                                  "description": "Assignment-Target-ConnectedOrganization-DisplayName",
+                                  "type": "string"
+                                },
+                                "Id": {
+                                  "description": "Assignment-Target-ConnectedOrganization-Id",
+                                  "type": "string"
+                                }
+                              },
+                              "type": "object"
+                            },
+                            "DisplayName": {
+                              "description": "Assignment-Target-DisplayName",
+                              "type": "string"
+                            },
+                            "Email": {
+                              "description": "Assignment-Target-Email",
+                              "type": "string"
+                            },
+                            "Id": {
+                              "description": "Assignment-Target-Id",
+                              "type": "string"
+                            },
+                            "ObjectId": {
+                              "description": "Assignment-Target-ObjectId",
+                              "type": "string"
+                            },
+                            "PrincipalName": {
+                              "description": "Assignment-Target-PrincipalName",
+                              "type": "string"
+                            }
+                          },
+                          "type": "object"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "CallbackConfiguration": {
+                      "properties": {
+                        "DurationBeforeTimeout": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "CallbackUriPath": {
+                      "type": "string"
+                    },
+                    "CustomExtensionStageInstanceId": {
+                      "type": "string"
+                    },
+                    "RequestType": {
+                      "type": "string"
+                    },
+                    "Requestor": {
+                      "properties": {
+                        "DisplayName": {
+                          "description": "Requestor-DisplayName",
+                          "type": "string"
+                        },
+                        "Id": {
+                          "description": "Requestor-Id",
+                          "type": "string"
+                        },
+                        "ObjectId": {
+                          "description": "Requestor-ObjectId",
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "Stage": {
+                      "type": "string"
+                    },
+                    "State": {
+                      "type": "string"
+                    },
+                    "Status": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "operationOptions": "IncludeAuthorizationHeadersInOutputs"
+            }
+          },
+          "actions": {
+            "Condition": {
+              "actions": {
+                "Create_Record": {
+                  "runAfter": {
+                    "For_each": [
+                      "Succeeded"
+                    ]
+                  },
+                  "type": "ApiConnection",
+                  "inputs": {
+                    "body": {
+                      "description": "@{triggerBody()?['Assignment']?['Target']?['DisplayName']} has requested access for access package name @{triggerBody()?['AccessPackage']?['DisplayName']}\n\nRequestor Answers:\n@{variables('RequestorAnswers')}",
+                      "requested_for": "@triggerBody()?['Assignment']?['Target']?['PrincipalName']",
+                      "short_description": "Requested Access for package name : @{triggerBody()?['AccessPackage']?['DisplayName']}",
+                      "u_accesspackageassignmentrequestid": "@triggerBody()?['AccessPackageAssignmentRequestId']",
+                      "u_accesspackageassignmentstage": "@triggerBody()?['Stage']",
+                      "u_stageinstanceid": "@triggerBody()?['CustomExtensionStageInstanceId']"
+                    },
+                    "host": {
+                      "connection": {
+                        "name": "@parameters('$connections')['service-now']['connectionId']"
+                      }
+                    },
+                    "method": "post",
+                    "path": "/api/now/v2/table/@{encodeURIComponent('sc_request')}",
+                    "queries": {
+                      "sysparm_display_value": true,
+                      "sysparm_exclude_reference_link": true
+                    }
+                  }
+                },
+                "For_each": {
+                  "foreach": "@triggerBody()?['Answers']",
+                  "actions": {
+                    "Append_to_string_variable": {
+                      "runAfter": {
+                        "Parse_JSON": [
+                          "Succeeded"
+                        ]
+                      },
+                      "type": "AppendToStringVariable",
+                      "inputs": {
+                        "name": "RequestorAnswers",
+                        "value": "@{body('Parse_JSON')?['AnsweredQuestion']?['TextString']}:@{body('Parse_JSON')?['Value']}\n"
+                      }
+                    },
+                    "Parse_JSON": {
+                      "runAfter": {},
+                      "type": "ParseJson",
+                      "inputs": {
+                        "content": "@items('For_each')",
+                        "schema": {
+                          "properties": {
+                            "AnsweredQuestion": {
+                              "properties": {
+                                "TextString": {
+                                  "type": "string"
+                                }
+                              },
+                              "type": "object"
+                            },
+                            "Value": {
+                              "type": "string"
+                            }
+                          },
+                          "type": "object"
+                        }
+                      }
+                    }
+                  },
+                  "runAfter": {},
+                  "type": "Foreach"
+                }
+              },
+              "runAfter": {
+                "Initialize_variable": [
+                  "Succeeded"
+                ]
+              },
+              "expression": {
+                "and": [
+                  {
+                    "equals": [
+                      "@triggerBody()?['AccessPackageCatalog']?['Id']",
+                      "[trim(parameters('catalogId'))]"
+                    ]
+                  }
+                ]
+              },
+              "type": "If"
+            },
+            "Initialize_variable": {
+              "runAfter": {},
+              "type": "InitializeVariable",
+              "inputs": {
+                "variables": [
+                  {
+                    "name": "RequestorAnswers",
+                    "type": "string"
+                  }
+                ]
+              }
+            }
+          },
+          "outputs": {}
+        },
+        "parameters": {
+          "$connections": {
+            "value": {
+              "service-now": {
+                "connectionId": "[resourceId('Microsoft.Web/connections', 'service-now')]",
+                "connectionName": "[parameters('connections_service_now_display_name')]",
+                "id": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Web/locations/', resourceGroup().location ,'/managedApis/service-now')]"
+              }
+            }
+          }
+        },
+        "accessControl": {
+          "triggers": {
+            "SasAuthenticationPolicy": {
+              "State": "Disabled"
+            },
+            "openAuthenticationPolicies": {
+              "policies": {
+                "AzureADEntitlementManagementPOPAuthPolicy": {
+                  "type": "AADPOP",
+                  "claims": [
+                    {
+                      "name": "iss",
+                      "value": "[concat('https://sts.windows.net/', subscription().tenantId, '/')]"
+                    },
+                    {
+                      "name": "aud",
+                      "value": "https://management.azure.com"
+                    },
+                    {
+                      "name": "appid",
+                      "value": "810dcf14-1858-4bf2-8134-4c369fa3235b"
+                    },
+                    {
+                      "name": "m",
+                      "value": "POST"
+                    },
+                    {
+                      "name": "u",
+                      "value": "management.azure.com"
+                    },
+                    {
+                      "name": "p",
+                      "value": "[concat(resourceGroup().id,'/providers/Microsoft.Logic/workflows/', parameters('logic_app_name'))]"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

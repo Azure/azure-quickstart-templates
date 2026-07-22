@@ -36,7 +36,7 @@ Use the below PS cmdlet for getting the "keyVaultSecretUrl" and "keyVaultResourc
 References:
 
 - [White paper](https://azure.microsoft.com/documentation/articles/azure-security-disk-encryption/)
-- [Explore Azure Disk Encryption with Azure Powershell](https://blogs.msdn.microsoft.com/azuresecurity/2015/11/16/explore-azure-disk-encryption-with-azure-powershell/)
+- [Explore Azure Disk Encryption with Azure PowerShell](https://blogs.msdn.microsoft.com/azuresecurity/2015/11/16/explore-azure-disk-encryption-with-azure-powershell/)
 - [Explore Azure Disk Encryption with Azure PowerShell – Part 2](http://blogs.msdn.com/b/azuresecurity/archive/2015/11/21/explore-azure-disk-encryption-with-azure-powershell-part-2.aspx)
 
 `Tags: Microsoft.Compute/virtualMachines/extensions, [variables('extensionName')]`

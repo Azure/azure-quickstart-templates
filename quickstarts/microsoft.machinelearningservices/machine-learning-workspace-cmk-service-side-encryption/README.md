@@ -66,11 +66,11 @@ Before using this template, you must meet the following requirements:
 * You must have an existing Azure Key Vault that contains an encryption key.
 * The Azure Key Vault must exist in the same Azure region where you will create the Azure Machine Learning workspace.
 
-To add the Azure Machine Learning service principal as a contributor to your subscription, you can use the following steps in the Azure CLI or Powershell for automation. Alternatively complete the steps via the Azure Portal.
+To add the Azure Machine Learning service principal as a contributor to your subscription, you can use the following steps in the Azure CLI or PowerShell for automation. Alternatively complete the steps via the Azure Portal.
 
 ### Add Azure Machine Learning as a contributor
 
-1. Use the [Azure CLI](https://docs.microsoft.com/cli/azure/install-azure-cli) or [Azure Powershell](https://docs.microsoft.com/powershell/azure/install-az-ps) to authenticate to get your subscription ID:
+1. Use the [Azure CLI](https://docs.microsoft.com/cli/azure/install-azure-cli) or [Azure PowerShell](https://docs.microsoft.com/powershell/azure/install-az-ps) to authenticate to get your subscription ID:
 
 Azure CLI:
 

@@ -149,6 +149,9 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2023-09-01' = {
       {
         name: subnetName
         properties: {
+          networkSecurityGroup: {
+            id: networkSecurityGroup.id
+          }
           addressPrefix: subnetAddressPrefix
           privateEndpointNetworkPolicies: 'Enabled'
           privateLinkServiceNetworkPolicies: 'Enabled'

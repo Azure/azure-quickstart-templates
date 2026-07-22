@@ -57,7 +57,7 @@ resource natGateway 'Microsoft.Network/natGateways@2023-09-01' = {
   }
 }
 
-resource vnet 'Microsoft.Network/virtualNetworks@2023-09-01' = {
+resource vnet 'Microsoft.Network/virtualNetworks@2024-05-01' = {
   location: location
   name: vnetName
   properties: {
@@ -85,6 +85,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2023-09-01' = {
               }
             }
           ]
+          defaultOutboundAccess: false
         }
       }
       {
@@ -105,6 +106,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2023-09-01' = {
               }
             }
           ]
+          defaultOutboundAccess: false
         }
       }
     ]

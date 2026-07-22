@@ -1,0 +1,289 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "imagePublisher": {
+      "type": "string",
+      "metadata": {
+        "description": "Publisher of the marketplace image (e.g. Canonical, Redhat, Suse)"
+      }
+    },
+    "imageOffer": {
+      "type": "string",
+      "metadata": {
+        "description": "Offer of the marketplace image (e.g. 0001-com-ubuntu-server-jammy, rhel, sles-15-sp5)"
+      }
+    },
+    "imageSku": {
+      "type": "string",
+      "metadata": {
+        "description": "SKU of the marketplace image (e.g. 22_04-lts-gen2, 90-gen2, gen2)"
+      }
+    },
+    "imageVersion": {
+      "type": "string",
+      "defaultValue": "latest",
+      "metadata": {
+        "description": "Version of the marketplace image (e.g. latest)"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Resource group location"
+      }
+    },
+    "testregion": {
+      "type": "string",
+      "defaultValue": "centralus",
+      "allowedValues": [
+        "australiacentral",
+        "westus",
+        "eastus",
+        "norwayeast",
+        "japanwest",
+        "switzerlandnorth",
+        "eastasia",
+        "israelcentral",
+        "brazilsoutheast",
+        "australiasoutheast",
+        "uaenorth",
+        "germanynorth",
+        "spaincentral",
+        "southafricanorth",
+        "centraluseuap",
+        "koreacentral",
+        "italynorth",
+        "uaecentral",
+        "francecentral",
+        "norwaywest",
+        "westus3",
+        "southafricawest",
+        "koreasouth",
+        "francesouth",
+        "westus2",
+        "australiaeast",
+        "polandcentral",
+        "centralus",
+        "southeastasia",
+        "southcentralus",
+        "westcentralus",
+        "japaneast",
+        "westeurope",
+        "canadacentral",
+        "centralindia",
+        "australiacentral2",
+        "eastus2euap",
+        "swedencentral",
+        "germanywestcentral",
+        "northeurope",
+        "brazilsouth",
+        "newzealandnorth",
+        "northcentralus",
+        "canadaeast",
+        "eastus2",
+        "swedensouth",
+        "southindia",
+        "uksouth",
+        "switzerlandwest",
+        "malaysiawest",
+        "chilecentral",
+        "jioindiawest",
+        "ukwest",
+        "taiwannorth",
+        "israelnorthwest",
+        "indonesiacentral",
+        "malaysiasouth",
+        "jioindiacentral",
+        "mexicocentral",
+        "taiwannorthwest",
+        "austriaeast"
+      ],
+      "metadata": {
+        "description": "Azure region to deploy the gallery image version"
+      }
+    }
+  },
+  "variables": {
+    "osType": "Linux",
+    "suffix": "[uniqueString(resourceGroup().id, parameters('imagePublisher'), parameters('imageOffer'), parameters('imageSku'), parameters('testregion'))]",
+    "cleanPublisher": "[replace(replace(replace(toLower(parameters('imagePublisher')), '-', ''), '_', ''), '.', '')]",
+    "cleanOffer": "[replace(replace(replace(toLower(parameters('imageOffer')), '-', ''), '_', ''), '.', '')]",
+    "cleanSku": "[replace(replace(replace(toLower(parameters('imageSku')), '-', ''), '_', ''), '.', '')]",
+    "diskName": "[concat('disk-', variables('cleanSku'), '-', variables('suffix'))]",
+    "managedImageName": "[concat('mi-', variables('cleanSku'), '-', variables('suffix'))]",
+    "galleryName": "[concat('gal_', variables('cleanPublisher'), '_', variables('cleanOffer'), '_', variables('suffix'))]",
+    "imageDefinitionName": "[concat(toLower(parameters('imagePublisher')), '-', toLower(parameters('imageOffer')), '-', toLower(parameters('imageSku')))]",
+    "imageVersionName": "1.0.0",
+    "marketplaceImageId": "[subscriptionResourceId('Microsoft.Compute/Locations/Publishers/ArtifactTypes/Offers/Skus/Versions', parameters('testregion'), parameters('imagePublisher'), 'VMImage', parameters('imageOffer'), parameters('imageSku'), parameters('imageVersion'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Compute/disks",
+      "apiVersion": "2025-01-02",
+      "name": "[variables('diskName')]",
+      "location": "[parameters('testregion')]",
+      "sku": {
+        "name": "Premium_LRS"
+      },
+      "properties": {
+        "hyperVGeneration": "V2",
+        "osType": "[variables('osType')]",
+        "creationData": {
+          "createOption": "FromImage",
+          "imageReference": {
+            "id": "[variables('marketplaceImageId')]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/images",
+      "apiVersion": "2025-11-01",
+      "name": "[variables('managedImageName')]",
+      "location": "[parameters('testregion')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/disks', variables('diskName'))]"
+      ],
+      "properties": {
+        "hyperVGeneration": "V2",
+        "storageProfile": {
+          "osDisk": {
+            "osType": "[variables('osType')]",
+            "osState": "Generalized",
+            "managedDisk": {
+              "id": "[resourceId('Microsoft.Compute/disks', variables('diskName'))]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/galleries",
+      "apiVersion": "2025-03-03",
+      "name": "[variables('galleryName')]",
+      "location": "[parameters('testregion')]",
+      "properties": {
+        "description": "Private gallery to test old UEFI certs"
+      }
+    },
+    {
+      "type": "Microsoft.Compute/galleries/images",
+      "apiVersion": "2025-03-03",
+      "name": "[concat(variables('galleryName'), '/', variables('imageDefinitionName'))]",
+      "location": "[parameters('testregion')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/galleries', variables('galleryName'))]"
+      ],
+      "properties": {
+        "hyperVGeneration": "V2",
+        "architecture": "x64",
+        "osType": "[variables('osType')]",
+        "osState": "Generalized",
+        "identifier": {
+          "publisher": "[parameters('imagePublisher')]",
+          "offer": "[parameters('imageOffer')]",
+          "sku": "[parameters('imageSku')]"
+        },
+        "features": [
+          {
+            "name": "SecurityType",
+            "value": "TrustedLaunchAndConfidentialVmSupported"
+          }
+        ],
+        "recommended": {
+          "vCPUs": {
+            "min": 1,
+            "max": 16
+          },
+          "memory": {
+            "min": 1,
+            "max": 32
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/galleries/images/versions",
+      "apiVersion": "2025-03-03",
+      "name": "[concat(variables('galleryName'), '/', variables('imageDefinitionName'), '/', variables('imageVersionName'))]",
+      "location": "[parameters('testregion')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/galleries/images', variables('galleryName'), variables('imageDefinitionName'))]",
+        "[resourceId('Microsoft.Compute/galleries', variables('galleryName'))]",
+        "[resourceId('Microsoft.Compute/images', variables('managedImageName'))]"
+      ],
+      "properties": {
+        "publishingProfile": {
+          "replicationMode": "Shallow",
+          "targetRegions": [
+            {
+              "name": "[parameters('testregion')]",
+              "regionalReplicaCount": 1,
+              "storageAccountType": "Premium_LRS"
+            }
+          ]
+        },
+        "storageProfile": {
+          "source": {
+            "id": "[resourceId('Microsoft.Compute/images', variables('managedImageName'))]"
+          }
+        },
+        "securityProfile": {
+          "uefiSettings": {
+            "signatureTemplateNames": [
+              "NoSignatureTemplate"
+            ],
+            "additionalSignatures": {
+              "PK": {
+                "type": "x509",
+                "value": [
+                  "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"
+                ]
+              },
+              "KEK": [
+                {
+                  "type": "x509",
+                  "value": [
+                    "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"
+                  ]
+                }
+              ],
+              "db": [
+                {
+                  "type": "x509",
+                  "value": [
+                    "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"
+                  ]
+                }
+              ],
+              "dbx": [
+                {
+                  "type": "sha256",
+                  "value": [
+                    "B17qBgWJVIugYLL+7RDaPCDH/psXzQJrlOimg7gRUjg="
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "galleryImageVersionId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Compute/galleries/images/versions', variables('galleryName'), variables('imageDefinitionName'), variables('imageVersionName'))]"
+    },
+    "location": {
+      "type": "string",
+      "value": "[parameters('location')]"
+    },
+    "testregion": {
+      "type": "string",
+      "value": "[parameters('testregion')]"
+    }
+  }
+}

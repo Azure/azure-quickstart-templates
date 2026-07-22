@@ -1,0 +1,2837 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# ValidateSampleDeployments.yml
+#
+# Combined workflow: AI-powered PR summary + ADX deployment validation.
+#
+# Job 1 – summarize:
+#   Posts an AI-generated reviewer-friendly summary comment on a PR using the
+#   instructions in .github/agents/summarizer.agent.md.
+#   Runs Microsoft Security DevOps (Template Analyzer, Checkov, Trivy, Terrascan)
+#   and feeds findings to the AI model via an agentic tool-calling loop.
+#
+# Job 2 – selected-pipeline:
+#   Validates sample deployments against Azure Data Explorer (ADX) logs.
+#   Requires the adx-readonly environment, MEMBER/OWNER/COLLABORATOR auth,
+#   and validate-samples.yml to have passed.
+#
+# Triggered by a "/validate" comment on a pull request.  Uses issue_comment
+# (not pull_request) so GITHUB_TOKEN has full permissions for fork PRs.
+#
+# Security gates (enforced in the `gate` job, before any PR-controlled code
+# is read by downstream jobs):
+#   1. Commenter authorization: only MEMBER/OWNER/COLLABORATOR can drive any
+#      job. `issue_comment` events fire for any GitHub user, so this gate
+#      is the only thing preventing fork-PR authors (or arbitrary commenters)
+#      from triggering `summarize`/`selected-pipeline` with `pull-requests:
+#      write` / `security-events: write` / Azure-OIDC tokens. ICM 31000000622897.
+#   2. Protected-files safeguard: PRs that modify this workflow or the
+#      `summarizer.agent.md` system prompt are blocked unless the PR author
+#      is MEMBER/OWNER, so downstream jobs never read attacker-controlled
+#      copies of those files.
+# Downstream jobs (`summarize`, `selected-pipeline`) re-assert the commenter
+# check as defense-in-depth.
+# ──────────────────────────────────────────────────────────────────────────────
+
+name: Validate PR (Summarize + ADX)
+
+on:
+  issue_comment:
+    types: [created]
+  # `pull_request_target` (not `pull_request`) for the post-merge
+  # commit-generated-on-merge job: GitHub forces GITHUB_TOKEN to read-only
+  # on `pull_request` events from forks regardless of the `permissions:`
+  # block, which 403s the auto-PR branch push. `pull_request_target` runs
+  # in the base-repo context with full token permissions even for fork
+  # PRs. This is safe here because the job only checks out the default
+  # branch (never the fork's PR head) and only downloads a pre-validated
+  # artifact — no fork code is executed.
+  pull_request_target:
+    types: [closed]
+
+# Workflow-level concurrency: one run per PR
+concurrency:
+  group: validate-pr-${{ github.event.issue.number || github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  # ============================================================================
+  # JOB 0 – gate
+  #
+  # Blocks the workflow until validate-samples.yml has reached a terminal
+  # success conclusion for the PR HEAD SHA.
+  #   * completed + success                              -> proceed (exit 0)
+  #   * completed + failure-like                         -> fail immediately
+  #   * non-terminal (queued/in_progress/...) or no-run  -> poll every 30s
+  #     for up to 10 min, then re-evaluate as above.
+  #
+  # Both `summarize` and `selected-pipeline` declare `needs: [gate]` so a
+  # gate failure/timeout skips them entirely.
+  # ============================================================================
+  gate:
+    name: Wait for validate-samples.yml to succeed
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+
+    # Only run on /validate comments on pull requests
+    if: >-
+      github.event.issue.pull_request &&
+      startsWith(github.event.comment.body, '/validate')
+
+    permissions:
+      contents: read
+      pull-requests: read
+      actions: read
+      checks: write
+
+    outputs:
+      head_sha: ${{ steps.pr-head.outputs.head_sha }}
+
+    steps:
+      # ── Security gate 1/2: commenter authorization ─────────────────────
+      # `issue_comment` events fire for any GitHub user who can comment on
+      # the PR (i.e., anyone on a public repo). All downstream jobs read
+      # PR-controlled inputs and/or hold write tokens, so we authorize the
+      # commenter here, before any checkout or API call against the PR.
+      # See ICM 31000000622897 / MSRC 119361.
+      - name: Check commenter permission (basic)
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Comment author association: ${{ github.event.comment.author_association }}"
+          case "${{ github.event.comment.author_association }}" in
+            MEMBER|OWNER|COLLABORATOR) ;;
+            *)
+              echo "::error::Not authorized to /validate. Comment author_association='${{ github.event.comment.author_association }}'; only MEMBER/OWNER/COLLABORATOR may trigger this workflow."
+              exit 1
+              ;;
+          esac
+
+      # ── Security gate 2/2: block edits to protected workflow files ─────
+      # If the PR modifies this workflow or the `summarizer.agent.md`
+      # system prompt, the PR author must be MEMBER/OWNER. This prevents
+      # a fork-PR author from substituting a malicious system prompt or
+      # workflow definition that a maintainer would then run with
+      # `/validate`. Mirrors the in-job safeguard in `selected-pipeline`
+      # but lifted to `gate` so it short-circuits `summarize` as well.
+      - name: Safeguard – block protected-file edits by non MEMBER/OWNER
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const allowed = new Set(["MEMBER", "OWNER"]);
+            const owner = context.repo.owner;
+            const repo  = context.repo.repo;
+            const pull_number = context.payload.issue.number;
+
+            const [prData, files] = await Promise.all([
+              github.rest.pulls.get({ owner, repo, pull_number }),
+              github.paginate(
+                github.rest.pulls.listFiles,
+                { owner, repo, pull_number, per_page: 100 }
+              )
+            ]);
+
+            const assoc = prData.data.author_association;
+
+            // Any file executed with the privileged token/OIDC of this
+            // workflow (via checkout of PR HEAD) must be listed here so
+            // fork PRs cannot substitute a malicious version. Directory
+            // entries end with "/" and match by prefix; file entries
+            // match exactly. See ICM 31000000643564.
+            const protectedDirs = [
+              ".github/workflows/",
+              ".github/scripts/",
+              ".github/actions/",
+              ".github/agents/",
+            ];
+            const protectedFiles = [
+              ".github/CODEOWNERS",
+            ];
+            const isProtected = (name) =>
+              protectedDirs.some(d => name.startsWith(d)) ||
+              protectedFiles.includes(name);
+
+            const touchedNames = files.map(f => f.filename).filter(isProtected);
+            const touched = touchedNames.length > 0;
+
+            core.info(`PR author_association=${assoc}; protected files touched=${touched}`);
+
+            if (touched && !allowed.has(assoc)) {
+              core.setFailed(
+                `Blocked: protected file(s) ${touchedNames.join(', ')} modified by PR author with ` +
+                `author_association='${assoc}'. Only MEMBER or OWNER may modify these files.`
+              );
+            }
+
+      # Sparse checkout just the helper script directory so subsequent steps
+      # can call .github/scripts/upsert-check-run.sh.
+      - name: Checkout helper scripts
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            .github/scripts
+          sparse-checkout-cone-mode: false
+
+      - name: Resolve PR HEAD SHA
+        id: pr-head
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          set -euo pipefail
+
+          gh_api_retry () {
+            local out
+            if out=$(gh api "$@" 2>&1); then
+              printf '%s' "${out}"
+              return 0
+            fi
+            echo "  (transient gh api failure, retrying once: ${out})" >&2
+            sleep 2
+            gh api "$@"
+          }
+
+          HEAD_SHA=$(gh_api_retry "/repos/${REPO}/pulls/${PR_NUMBER}" --jq '.head.sha')
+          if [[ -z "${HEAD_SHA}" ]]; then
+            echo "ERROR: Failed to resolve HEAD SHA for PR #${PR_NUMBER}." >&2
+            exit 1
+          fi
+          echo "PR #${PR_NUMBER} HEAD SHA: ${HEAD_SHA}"
+          echo "head_sha=${HEAD_SHA}" >> "$GITHUB_OUTPUT"
+
+      # Publish the required check as in_progress so reviewers see live status
+      # the moment /validate is acknowledged. The final conclusion is written
+      # by the `report-check` job at the end of the workflow.
+      - name: Mark adx-deployment-validation check in_progress
+        shell: bash
+        env:
+          GH_TOKEN:    ${{ github.token }}
+          GH_REPO:     ${{ github.repository }}
+          CHECK_NAME:  adx-deployment-validation
+          HEAD_SHA:    ${{ steps.pr-head.outputs.head_sha }}
+          STATUS:      in_progress
+          TITLE:       Validating in progress…
+          SUMMARY:     |
+            `/validate` was received. Waiting for `validate-samples.yml`
+            to succeed for this commit, then running ADX deployment
+            validation.
+          DETAILS_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: bash .github/scripts/upsert-check-run.sh
+
+      - name: Wait for validate-samples.yml on PR HEAD SHA
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          HEAD_SHA: ${{ steps.pr-head.outputs.head_sha }}
+          POLL_INTERVAL_SECONDS: '30'
+          POLL_TIMEOUT_SECONDS: '600'
+        run: |
+          set -euo pipefail
+
+          # ── Helper: gh api with one immediate retry on transient failure ──
+          gh_api_retry () {
+            local out
+            if out=$(gh api "$@" 2>&1); then
+              printf '%s' "${out}"
+              return 0
+            fi
+            echo "  (transient gh api failure, retrying once: ${out})" >&2
+            sleep 2
+            gh api "$@"
+          }
+
+          echo "Polling validate-samples.yml for SHA ${HEAD_SHA} every ${POLL_INTERVAL_SECONDS}s (timeout ${POLL_TIMEOUT_SECONDS}s)..."
+
+          # Conclusions considered terminal failures (immediate fail).
+          FAILURE_CONCLUSIONS="failure cancelled timed_out action_required startup_failure stale"
+
+          DEADLINE=$(( $(date +%s) + POLL_TIMEOUT_SECONDS ))
+          LAST_STATUS=""
+          ATTEMPT=0
+
+          while :; do
+            ATTEMPT=$((ATTEMPT + 1))
+            RUN_JSON=$(gh_api_retry \
+              "/repos/${REPO}/actions/workflows/validate-samples.yml/runs?head_sha=${HEAD_SHA}&per_page=1" \
+              --jq '.workflow_runs[0] // {}')
+
+            STATUS=$(echo "${RUN_JSON}"     | jq -r '.status // empty')
+            CONCLUSION=$(echo "${RUN_JSON}" | jq -r '.conclusion // empty')
+            LAST_STATUS="${STATUS:-no-run-yet}"
+
+            echo "[attempt ${ATTEMPT}] status='${LAST_STATUS}' conclusion='${CONCLUSION:-<none>}'"
+
+            if [[ "${STATUS}" == "completed" ]]; then
+              if [[ "${CONCLUSION}" == "success" ]]; then
+                echo "✅ validate-samples.yml succeeded for SHA ${HEAD_SHA}."
+                exit 0
+              fi
+              for f in ${FAILURE_CONCLUSIONS}; do
+                if [[ "${CONCLUSION}" == "${f}" ]]; then
+                  echo "❌ validate-samples.yml conclusion='${CONCLUSION}' for SHA ${HEAD_SHA}." >&2
+                  echo "   Fix the failures and push a new commit; once validate-samples passes, comment /validate again." >&2
+                  exit 1
+                fi
+              done
+              # Unknown/neutral/skipped — treat as not-yet-success and keep polling.
+              echo "  conclusion '${CONCLUSION}' is neither success nor a known failure; continuing to poll." >&2
+            fi
+
+            NOW=$(date +%s)
+            if (( NOW >= DEADLINE )); then
+              echo "⏱️  validate-samples.yml did not reach a terminal state within ${POLL_TIMEOUT_SECONDS} seconds (last status='${LAST_STATUS}')." >&2
+              echo "   Wait for validate-samples to complete, then comment /validate again." >&2
+              exit 1
+            fi
+
+            sleep "${POLL_INTERVAL_SECONDS}"
+          done
+
+  summarize:
+    name: Summarize PR sample
+    runs-on: ubuntu-latest
+    needs: [gate]
+
+    # Only run on /validate comments on pull requests (and after gate succeeds)
+    if: >-
+      github.event.issue.pull_request &&
+      startsWith(github.event.comment.body, '/validate')
+
+    permissions:
+      contents: read
+      pull-requests: write
+      models: read
+      security-events: write
+
+    steps:
+      # ── Commenter authorization (defense-in-depth) ─────────────────────
+      # `gate` already enforces this, but `issue_comment` triggers fire for
+      # any GitHub user and this job holds `pull-requests: write` +
+      # `security-events: write` while reading PR-controlled `.github/agents/
+      # summarizer.agent.md` as the AI system prompt. Re-asserting the
+      # commenter check here keeps `summarize` safe even if the `gate`
+      # check is ever bypassed or refactored. See ICM 31000000622897.
+      - name: Check commenter permission (basic)
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Comment author association: ${{ github.event.comment.author_association }}"
+          case "${{ github.event.comment.author_association }}" in
+            MEMBER|OWNER|COLLABORATOR) ;;
+            *)
+              echo "::error::Not authorized to /validate. Comment author_association='${{ github.event.comment.author_association }}'; only MEMBER/OWNER/COLLABORATOR may trigger this workflow."
+              exit 1
+              ;;
+          esac
+
+      # ── 1. Resolve the PR head ref ──────────────────────────────────────
+      - name: Get PR details
+        id: pr
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number
+            });
+            core.setOutput('head_ref', pr.data.head.ref);
+            core.setOutput('head_sha', pr.data.head.sha);
+            core.setOutput('head_repo', pr.data.head.repo.full_name);
+
+      # ── 2. Detect changed sample folders (API only, no checkout) ────────
+      - name: Detect changed sample folders
+        id: detect
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const path = require('path');
+
+            const owner = context.repo.owner;
+            const repo  = context.repo.repo;
+            const pull_number = context.issue.number;
+            const headSha = '${{ steps.pr.outputs.head_sha }}';
+
+            core.info(`Detecting changed samples for PR #${pull_number}...`);
+
+            // Get changed files via API (no checkout needed)
+            const files = await github.paginate(
+              github.rest.pulls.listFiles,
+              { owner, repo, pull_number, per_page: 100 }
+            );
+            const changedFiles = files.map(f => f.filename);
+
+            core.info(`Changed files (${changedFiles.length}):`);
+            changedFiles.forEach(f => core.info(`  ${f}`));
+
+            const SAMPLE_ROOTS = [
+              'quickstarts/',
+              'demos/',
+              'application-workloads/',
+              'modules/',
+              'subscription-deployments/',
+              'managementgroup-deployments/',
+              'tenant-deployments/'
+            ];
+
+            // Build a set of all changed file paths for quick lookup
+            const changedSet = new Set(changedFiles);
+
+            // Use the Git tree API to check file existence at the PR head
+            // Cache tree lookups to avoid redundant API calls
+            const treeCache = new Map();
+            async function dirContains(dirPath, filename) {
+              if (treeCache.has(dirPath)) {
+                return treeCache.get(dirPath).has(filename);
+              }
+              try {
+                // Get the tree for this directory at the PR head commit
+                const { data } = await github.rest.git.getTree({
+                  owner, repo,
+                  tree_sha: `${headSha}:${dirPath}`
+                });
+                const names = new Set(data.tree.map(e => e.path));
+                treeCache.set(dirPath, names);
+                return names.has(filename);
+              } catch {
+                treeCache.set(dirPath, new Set());
+                return false;
+              }
+            }
+
+            const seenDirs = new Set();
+
+            for (const changedFile of changedFiles) {
+              const matchedRoot = SAMPLE_ROOTS.find(r => changedFile.startsWith(r));
+              if (!matchedRoot) continue;
+
+              const relRoot = matchedRoot.replace(/\/$/, '');
+              let dir = path.posix.dirname(changedFile);
+
+              while (dir !== relRoot && dir !== '.') {
+                if (seenDirs.has(dir)) break;
+
+                // Check if metadata.json and README.md exist via Git tree API
+                const hasMeta = await dirContains(dir, 'metadata.json');
+                const hasReadme = await dirContains(dir, 'README.md');
+
+                if (hasMeta && hasReadme) {
+                  seenDirs.add(dir);
+                  break;
+                }
+                dir = path.posix.dirname(dir);
+              }
+            }
+
+            const samplesList = [...seenDirs];
+            const samplesJson = JSON.stringify(samplesList);
+            core.info(`Detected sample folders: ${samplesJson}`);
+            core.setOutput('samples_json', samplesJson);
+
+            // Build sparse-checkout paths: agent instructions + sample folders
+            const sparsePaths = ['.github/agents/'];
+            for (const s of samplesList) {
+              sparsePaths.push(s + '/');
+            }
+            core.setOutput('sparse_paths', sparsePaths.join('\n'));
+            core.info(`Sparse checkout paths:\n${sparsePaths.join('\n')}`);
+
+      # ── 3. Sparse checkout PR head (only agent files + sample folders) ──
+      - name: Checkout PR head (sparse)
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ steps.pr.outputs.head_repo }}
+          ref: ${{ steps.pr.outputs.head_sha }}
+          fetch-depth: 1
+          sparse-checkout: ${{ steps.detect.outputs.sparse_paths }}
+
+      # ── 4. Add reaction to acknowledge the command ──────────────────────
+      - name: React to comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.reactions.createForIssueComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: context.payload.comment.id,
+              content: 'eyes'
+            });
+
+      # ── 5. Run Microsoft Security DevOps (Template Analyzer, Checkov, Trivy, Terrascan) ──
+      - name: Run MSDO security scan
+        id: msdo
+        uses: microsoft/security-devops-action@latest
+        continue-on-error: true
+        with:
+          tools: templateanalyzer,checkov,trivy,terrascan
+          categories: IaC
+
+      # ── 6. Parse SARIF security findings ────────────────────────────────
+      - name: Parse SARIF findings
+        id: security
+        uses: actions/github-script@v7
+        env:
+          SARIF_FILE: ${{ steps.msdo.outputs.sarifFile }}
+          SAMPLES_JSON: ${{ steps.detect.outputs.samples_json }}
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+
+            const sarifPath = process.env.SARIF_FILE;
+            const samples = JSON.parse(process.env.SAMPLES_JSON || '[]');
+            const findings = [];
+
+            if (!sarifPath || !fs.existsSync(sarifPath)) {
+              core.warning('SARIF file not found – security scan may have failed.');
+              core.setOutput('findings_json', JSON.stringify(findings));
+              core.setOutput('scan_status', 'unavailable');
+              return;
+            }
+
+            try {
+              const sarif = JSON.parse(fs.readFileSync(sarifPath, 'utf8'));
+              const workspace = process.env.GITHUB_WORKSPACE;
+
+              for (const run of (sarif.runs || [])) {
+                const toolName = run.tool?.driver?.name || 'unknown';
+                const rulesById = {};
+                for (const rule of (run.tool?.driver?.rules || [])) {
+                  rulesById[rule.id] = rule;
+                }
+
+                for (const result of (run.results || [])) {
+                  const ruleId = result.ruleId || 'unknown';
+                  const rule = rulesById[ruleId] || {};
+                  const level = result.level || rule.defaultConfiguration?.level || 'warning';
+
+                  // Map SARIF levels to severity
+                  const severityMap = { error: 'high', warning: 'medium', note: 'low', none: 'info' };
+                  const severity = severityMap[level] || 'medium';
+
+                  const location = result.locations?.[0]?.physicalLocation;
+                  let filePath = location?.artifactLocation?.uri || '';
+                  // Normalize file path relative to workspace
+                  if (filePath.startsWith('file://')) {
+                    filePath = filePath.replace('file://', '');
+                  }
+                  if (workspace && filePath.startsWith(workspace)) {
+                    filePath = filePath.substring(workspace.length + 1);
+                  }
+
+                  // Only include findings in changed sample folders
+                  const inSample = samples.length === 0 ||
+                    samples.some(s => filePath.startsWith(s + '/') || filePath === s);
+
+                  if (!inSample) continue;
+
+                  findings.push({
+                    tool: toolName,
+                    ruleId,
+                    severity,
+                    message: result.message?.text || rule.shortDescription?.text || ruleId,
+                    file: filePath,
+                    startLine: location?.region?.startLine || null,
+                    helpUri: rule.helpUri || null
+                  });
+                }
+              }
+
+              // Sort: high → medium → low (use ?? to handle 0 correctly)
+              const severityOrder = { high: 0, medium: 1, low: 2, info: 3 };
+              findings.sort((a, b) => (severityOrder[a.severity] ?? 3) - (severityOrder[b.severity] ?? 3));
+
+              core.info(`Parsed ${findings.length} security finding(s) in sample folders.`);
+            } catch (err) {
+              core.warning(`Failed to parse SARIF: ${err.message}`);
+            }
+
+            // Cap findings to avoid blowing up the context
+            const capped = findings.slice(0, 50);
+            core.setOutput('findings_json', JSON.stringify(capped));
+            core.setOutput('scan_status', 'completed');
+
+      # ── 7. Agentic summary with tool calling ────────────────────────────
+      - name: Generate and post summary
+        uses: actions/github-script@v7
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          SAMPLES_JSON: ${{ steps.detect.outputs.samples_json }}
+          SECURITY_FINDINGS_JSON: ${{ steps.security.outputs.findings_json }}
+          SCAN_STATUS: ${{ steps.security.outputs.scan_status }}
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+
+            // ── 1. Read summarizer agent instructions ──────────────────
+            const agentPath = path.join(
+              process.env.GITHUB_WORKSPACE,
+              '.github', 'agents', 'summarizer.agent.md'
+            );
+            if (!fs.existsSync(agentPath)) {
+              core.warning('summarizer.agent.md not found – skipping summary.');
+              return;
+            }
+            const systemPrompt = fs.readFileSync(agentPath, 'utf8');
+
+            // ── 2. Parse inputs ────────────────────────────────────────
+            const samples = JSON.parse(process.env.SAMPLES_JSON || '[]');
+            if (!samples.length) {
+              core.warning('No sample folders detected – skipping summary.');
+              return;
+            }
+
+            const securityFindings = JSON.parse(
+              process.env.SECURITY_FINDINGS_JSON || '[]'
+            );
+            const scanStatus = process.env.SCAN_STATUS || 'unavailable';
+
+            const owner = context.repo.owner;
+            const repo  = context.repo.repo;
+            const pull_number = context.issue.number;
+            const workspace = process.env.GITHUB_WORKSPACE;
+
+            // ── 3. Gather PR context via API ───────────────────────────
+            const prData = await github.rest.pulls.get({
+              owner, repo, pull_number
+            });
+
+            const files = await github.paginate(
+              github.rest.pulls.listFiles,
+              { owner, repo, pull_number, per_page: 100 }
+            );
+            const changedFilesList = files.map(f => f.filename);
+
+            const MAX_DIFF_CHARS = 2000;
+            const diffResp = await github.rest.pulls.get({
+              owner, repo, pull_number,
+              mediaType: { format: 'diff' }
+            });
+            const fullDiff = typeof diffResp.data === 'string'
+              ? diffResp.data : '';
+            const diffExcerpt = fullDiff.length > MAX_DIFF_CHARS
+              ? fullDiff.substring(0, MAX_DIFF_CHARS) + '\n... (truncated)'
+              : fullDiff;
+
+            // ── 4. Build compact file manifest for each sample ──────────
+            // Only list template-relevant files to keep the prompt small;
+            // the model can use list_directory / search_files for more.
+            function buildCompactManifest(dir, relBase) {
+              const entries = [];
+              if (!fs.existsSync(dir)) return entries;
+              const TEMPLATE_EXTS = new Set(['.bicep', '.json', '.bicepparam']);
+              for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+                const fullPath = path.join(dir, entry.name);
+                const relPath = path.posix.join(relBase, entry.name);
+                if (entry.name.startsWith('.')) continue;
+                if (entry.isDirectory()) {
+                  entries.push(...buildCompactManifest(fullPath, relPath));
+                } else if (entry.isFile()) {
+                  const ext = path.extname(entry.name).toLowerCase();
+                  if (TEMPLATE_EXTS.has(ext) || entry.name === 'README.md' || entry.name === 'metadata.json') {
+                    entries.push(relPath);
+                  }
+                }
+              }
+              return entries;
+            }
+
+            const sampleSections = [];
+            for (const sample of samples) {
+              const sampleDir = path.join(workspace, sample);
+              let section = `## Sample: ${sample}\n`;
+
+              // Compact file manifest (template files only)
+              const manifest = buildCompactManifest(sampleDir, '.');
+              section += `Key files: ${manifest.join(', ')}\n`;
+
+              // Changed files in this sample
+              const relevantFiles = changedFilesList.filter(
+                f => f.startsWith(sample + '/')
+              );
+              section += `Changed: ${relevantFiles.join(', ') || 'None'}`;
+
+              sampleSections.push(section);
+            }
+
+            // ── 5. Build initial user message ──────────────────────────
+            // Keep this minimal — the model uses tools to read file content.
+            let securitySection = '';
+            if (scanStatus !== 'completed') {
+              securitySection = 'Security scan: unavailable (use get_security_findings tool).';
+            } else if (securityFindings.length > 0) {
+              securitySection = `Security scan: ${securityFindings.length} finding(s) detected. Use get_security_findings tool for details.`;
+            } else {
+              securitySection = 'Security scan: ✅ No findings from MSDO.';
+            }
+
+            const userMessage = [
+              `PR #${pull_number}: ${prData.data.title}`,
+              '',
+              ...sampleSections,
+              '',
+              securitySection,
+              '',
+              diffExcerpt ? `Diff excerpt:\n\`\`\`diff\n${diffExcerpt}\n\`\`\`` : '',
+              '',
+              'Use the tools to read template files (main.bicep or azuredeploy.json first), then produce a complete summary.'
+            ].join('\n');
+
+            // ── 6. Define tool schemas ─────────────────────────────────
+            const tools = [
+              {
+                type: 'function',
+                function: {
+                  name: 'read_file',
+                  description: 'Read a file from the sample directory. Returns the file content. For large files, use start_line and max_lines to read a specific range.',
+                  parameters: {
+                    type: 'object',
+                    properties: {
+                      sample: {
+                        type: 'string',
+                        description: 'The sample folder path (e.g., "quickstarts/my-sample")'
+                      },
+                      path: {
+                        type: 'string',
+                        description: 'Relative path within the sample folder (e.g., "main.bicep", "prereqs/prereq.main.bicep")'
+                      },
+                      start_line: {
+                        type: 'integer',
+                        description: 'Optional 1-based start line for partial reads. Defaults to 1.'
+                      },
+                      max_lines: {
+                        type: 'integer',
+                        description: 'Optional max lines to return. Defaults to all lines up to 50KB.'
+                      }
+                    },
+                    required: ['sample', 'path']
+                  }
+                }
+              },
+              {
+                type: 'function',
+                function: {
+                  name: 'list_directory',
+                  description: 'List files and subdirectories in a path within the sample directory. Returns names, types, and sizes.',
+                  parameters: {
+                    type: 'object',
+                    properties: {
+                      sample: {
+                        type: 'string',
+                        description: 'The sample folder path'
+                      },
+                      path: {
+                        type: 'string',
+                        description: 'Relative path within the sample folder. Use "." for the root.'
+                      }
+                    },
+                    required: ['sample', 'path']
+                  }
+                }
+              },
+              {
+                type: 'function',
+                function: {
+                  name: 'search_files',
+                  description: 'Search for files matching a glob pattern within the sample directory. Returns matching file paths and sizes.',
+                  parameters: {
+                    type: 'object',
+                    properties: {
+                      sample: {
+                        type: 'string',
+                        description: 'The sample folder path'
+                      },
+                      pattern: {
+                        type: 'string',
+                        description: 'Glob pattern (e.g., "**/*.bicep", "**/*.json")'
+                      }
+                    },
+                    required: ['sample', 'pattern']
+                  }
+                }
+              },
+              {
+                type: 'function',
+                function: {
+                  name: 'get_security_findings',
+                  description: 'Retrieve security findings from the MSDO scan (Template Analyzer, Checkov, Trivy, Terrascan). Optionally filter by severity.',
+                  parameters: {
+                    type: 'object',
+                    properties: {
+                      severity: {
+                        type: 'string',
+                        enum: ['high', 'medium', 'low', 'all'],
+                        description: 'Filter by severity. Defaults to "all".'
+                      }
+                    }
+                  }
+                }
+              }
+            ];
+
+            // ── 7. Tool executor with path sandboxing ──────────────────
+            const MAX_FILE_BYTES = 50 * 1024;
+            const MAX_LIST_ENTRIES = 200;
+            const MAX_SEARCH_RESULTS = 50;
+            const TOTAL_CONTENT_BUDGET = 100 * 1024;
+            let totalContentBytes = 0;
+
+            // Cache tool results to avoid repeated reads
+            const toolCache = new Map();
+
+            function sanitizePath(sample, relPath) {
+              // Validate sample is in our known list
+              if (!samples.includes(sample)) {
+                return { error: `Unknown sample folder: ${sample}` };
+              }
+
+              // Normalize and validate the relative path
+              const normalized = path.posix.normalize(relPath || '.');
+
+              // Reject path traversal, absolute paths, hidden dirs
+              if (normalized.startsWith('/') || normalized.startsWith('\\')) {
+                return { error: 'Absolute paths are not allowed.' };
+              }
+              if (normalized.includes('..')) {
+                return { error: 'Path traversal ("..") is not allowed.' };
+              }
+              // Allow "." as root, but reject other hidden paths
+              if (normalized.split('/').some(p => p.startsWith('.') && p !== '.')) {
+                return { error: 'Hidden files/directories are not allowed.' };
+              }
+
+              const fullPath = path.join(workspace, sample, normalized);
+
+              // Resolve realpath and verify it stays under sample root
+              const sampleRoot = path.join(workspace, sample);
+              try {
+                const resolved = fs.realpathSync(fullPath);
+                const resolvedRoot = fs.realpathSync(sampleRoot);
+                if (!resolved.startsWith(resolvedRoot + path.sep) && resolved !== resolvedRoot) {
+                  return { error: 'Path escapes the sample directory (symlink?).' };
+                }
+                return { fullPath: resolved, relPath: normalized };
+              } catch {
+                return { fullPath, relPath: normalized };
+              }
+            }
+
+            function executeTool(name, args) {
+              const cacheKey = JSON.stringify({ name, args });
+              if (toolCache.has(cacheKey)) {
+                core.info(`  [cache hit] ${name}(${JSON.stringify(args)})`);
+                return toolCache.get(cacheKey);
+              }
+
+              let result;
+              switch (name) {
+                case 'read_file': {
+                  const check = sanitizePath(args.sample, args.path);
+                  if (check.error) { result = check.error; break; }
+
+                  if (!fs.existsSync(check.fullPath)) {
+                    result = `File not found: ${args.path}`; break;
+                  }
+                  const stat = fs.statSync(check.fullPath);
+                  if (!stat.isFile()) {
+                    result = `Not a file: ${args.path}`; break;
+                  }
+
+                  // Content budget check
+                  if (totalContentBytes >= TOTAL_CONTENT_BUDGET) {
+                    result = 'Content budget exhausted (100KB total). No more file reads available.';
+                    break;
+                  }
+
+                  let content = fs.readFileSync(check.fullPath, 'utf8');
+                  const lines = content.split('\n');
+                  const startLine = Math.max(1, args.start_line || 1);
+                  const maxLines = args.max_lines || lines.length;
+                  const sliced = lines.slice(startLine - 1, startLine - 1 + maxLines);
+                  content = sliced.join('\n');
+
+                  const budget = Math.min(MAX_FILE_BYTES, TOTAL_CONTENT_BUDGET - totalContentBytes);
+                  let truncated = false;
+                  if (content.length > budget) {
+                    content = content.substring(0, budget);
+                    truncated = true;
+                  }
+                  totalContentBytes += content.length;
+
+                  const totalLines = lines.length;
+                  const returnedRange = `lines ${startLine}-${startLine + sliced.length - 1} of ${totalLines}`;
+                  result = content;
+                  if (truncated) {
+                    result += `\n\n[TRUNCATED — ${returnedRange}, content budget remaining: ${TOTAL_CONTENT_BUDGET - totalContentBytes} bytes. Use start_line/max_lines to read more.]`;
+                  } else if (sliced.length < totalLines) {
+                    result += `\n\n[Returned ${returnedRange}. Use start_line/max_lines for other sections.]`;
+                  }
+                  break;
+                }
+
+                case 'list_directory': {
+                  const check = sanitizePath(args.sample, args.path || '.');
+                  if (check.error) { result = check.error; break; }
+
+                  if (!fs.existsSync(check.fullPath)) {
+                    result = `Directory not found: ${args.path}`; break;
+                  }
+                  const stat = fs.statSync(check.fullPath);
+                  if (!stat.isDirectory()) {
+                    result = `Not a directory: ${args.path}`; break;
+                  }
+
+                  const entries = fs.readdirSync(check.fullPath, { withFileTypes: true });
+                  const items = [];
+                  for (const entry of entries.slice(0, MAX_LIST_ENTRIES)) {
+                    if (entry.name.startsWith('.')) continue;
+                    const entryPath = path.join(check.fullPath, entry.name);
+                    if (entry.isDirectory()) {
+                      items.push({ name: entry.name, type: 'directory' });
+                    } else if (entry.isFile()) {
+                      try {
+                        const s = fs.statSync(entryPath);
+                        items.push({ name: entry.name, type: 'file', size: s.size });
+                      } catch {
+                        items.push({ name: entry.name, type: 'file', size: null });
+                      }
+                    }
+                  }
+                  const truncMsg = entries.length > MAX_LIST_ENTRIES
+                    ? `\n(Showing first ${MAX_LIST_ENTRIES} of ${entries.length} entries)`
+                    : '';
+                  result = JSON.stringify(items, null, 2) + truncMsg;
+                  break;
+                }
+
+                case 'search_files': {
+                  if (!args.sample || !samples.includes(args.sample)) {
+                    result = `Unknown sample folder: ${args.sample}`; break;
+                  }
+                  // Simple glob implementation using recursive scan
+                  const sampleDir = path.join(workspace, args.sample);
+                  const pattern = (args.pattern || '*').replace(/\\/g, '/');
+
+                  // Reject dangerous patterns
+                  if (pattern.includes('..') || pattern.startsWith('/')) {
+                    result = 'Invalid pattern: must be relative, no ".."'; break;
+                  }
+
+                  function matchGlob(str, pat) {
+                    const regex = new RegExp(
+                      '^' + pat.split('**').map(segment =>
+                        segment.split('*').map(s =>
+                          s.replace(/[.+^${}()|[\]\\]/g, '\\$&')
+                        ).join('[^/]*')
+                      ).join('.*') + '$'
+                    );
+                    return regex.test(str);
+                  }
+
+                  function scanDir(dir, relBase) {
+                    const results = [];
+                    if (!fs.existsSync(dir)) return results;
+                    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+                      if (entry.name.startsWith('.')) continue;
+                      const fullP = path.join(dir, entry.name);
+                      const relP = path.posix.join(relBase, entry.name);
+                      if (entry.isDirectory()) {
+                        results.push(...scanDir(fullP, relP));
+                      } else if (entry.isFile() && matchGlob(relP, pattern)) {
+                        try {
+                          const s = fs.statSync(fullP);
+                          results.push({ path: relP, size: s.size });
+                        } catch {
+                          results.push({ path: relP, size: null });
+                        }
+                      }
+                      if (results.length >= MAX_SEARCH_RESULTS) break;
+                    }
+                    return results;
+                  }
+
+                  const matches = scanDir(sampleDir, '.').slice(0, MAX_SEARCH_RESULTS);
+                  result = JSON.stringify(matches, null, 2);
+                  if (matches.length >= MAX_SEARCH_RESULTS) {
+                    result += `\n(Results capped at ${MAX_SEARCH_RESULTS})`;
+                  }
+                  break;
+                }
+
+                case 'get_security_findings': {
+                  const severity = args.severity || 'all';
+                  const filtered = severity === 'all'
+                    ? securityFindings
+                    : securityFindings.filter(f => f.severity === severity);
+                  if (filtered.length === 0) {
+                    result = severity === 'all'
+                      ? 'No security findings from MSDO scan.'
+                      : `No ${severity}-severity findings from MSDO scan.`;
+                  } else {
+                    result = JSON.stringify(filtered, null, 2);
+                  }
+                  break;
+                }
+
+                default:
+                  result = `Unknown tool: ${name}`;
+              }
+
+              toolCache.set(cacheKey, result);
+              return result;
+            }
+
+            // ── 8. Agentic tool-calling loop ───────────────────────────
+            const MODEL_ENDPOINT = 'https://models.github.ai/inference/chat/completions';
+            const PRIMARY_MODEL = 'openai/gpt-4.1-mini';
+            const FALLBACK_MODEL = 'openai/gpt-4.1';
+            const MAX_ROUNDS = 8;
+            const MAX_REQUEST_BYTES = 100_000;
+            const FETCH_TIMEOUT_MS = 60_000;
+            const messages = [
+              { role: 'system', content: systemPrompt },
+              { role: 'user',   content: userMessage }
+            ];
+
+            // Compact old tool-call turns when payload exceeds budget.
+            // Removes complete assistant+tool turn pairs from the middle,
+            // preserving the system prompt, initial user message, and recent turns.
+            function compactMessages() {
+              const serialized = JSON.stringify(messages);
+              if (serialized.length <= MAX_REQUEST_BYTES) return;
+
+              core.info(`  Compacting messages (${(serialized.length / 1024).toFixed(1)} KB > ${(MAX_REQUEST_BYTES / 1024).toFixed(1)} KB limit)...`);
+
+              const KEEP_TAIL = 4;
+              const KEEP_HEAD = 2; // system + user
+              while (messages.length > KEEP_HEAD + KEEP_TAIL) {
+                const check = JSON.stringify(messages);
+                if (check.length <= MAX_REQUEST_BYTES) break;
+
+                let i = KEEP_HEAD;
+                if (messages[i]?.role === 'assistant' && messages[i]?.tool_calls?.length) {
+                  let end = i + 1;
+                  while (end < messages.length && messages[end].role === 'tool') end++;
+                  const removed = end - i;
+                  messages.splice(i, removed);
+                  core.info(`    Removed ${removed} messages (1 assistant + ${removed - 1} tool results)`);
+                } else {
+                  break;
+                }
+              }
+              core.info(`  After compaction: ${(JSON.stringify(messages).length / 1024).toFixed(1)} KB, ${messages.length} messages`);
+            }
+
+            // Send a chat completion request with automatic model fallback.
+            // Tries PRIMARY_MODEL first; on persistent failure, retries with FALLBACK_MODEL.
+            async function chatCompletion(extraBody = {}) {
+              const MAX_RETRIES = 3;          // per model (lower to preserve rate budget for fallback)
+              const modelsToTry = [PRIMARY_MODEL, FALLBACK_MODEL];
+
+              for (const model of modelsToTry) {
+                let resp = null;
+                let lastError = null;
+
+                const body = JSON.stringify({
+                  model,
+                  messages,
+                  max_completion_tokens: 4000,
+                  ...extraBody
+                });
+                core.info(`  Request: model=${model}, payload=${(body.length / 1024).toFixed(1)} KB, ${messages.length} messages`);
+
+                for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+                  try {
+                    resp = await fetch(MODEL_ENDPOINT, {
+                      method: 'POST',
+                      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+                      headers: {
+                        'Authorization': `Bearer ${process.env.GITHUB_TOKEN}`,
+                        'Content-Type': 'application/json'
+                      },
+                      body
+                    });
+                    lastError = null;
+
+                    // Log rate-limit headers for diagnostics
+                    const rl = resp.headers.get('x-ratelimit-remaining');
+                    if (rl !== null) core.info(`  Rate-limit remaining: ${rl}`);
+
+                    if (resp.ok) {
+                      core.info(`  ✓ Success with ${model}`);
+                      return { resp, model };
+                    }
+
+                    // 429 and 5xx are retryable
+                    if (resp.status === 429 || resp.status >= 500) {
+                      // Respect Retry-After header for 429, else exponential backoff
+                      let delay;
+                      const retryAfter = resp.headers.get('retry-after');
+                      if (resp.status === 429 && retryAfter) {
+                        delay = (parseInt(retryAfter, 10) || 30) * 1000;
+                      } else {
+                        const base = Math.pow(2, attempt + 1) * 1000;
+                        const jitter = Math.floor(Math.random() * 1000);
+                        delay = base + jitter;
+                      }
+                      if (attempt < MAX_RETRIES - 1) {
+                        core.warning(`GitHub Models API (${model}) returned ${resp.status} — retrying in ${(delay / 1000).toFixed(1)}s (attempt ${attempt + 1}/${MAX_RETRIES})...`);
+                        await new Promise(r => setTimeout(r, delay));
+                      }
+                      continue;
+                    }
+
+                    // Other 4xx — don't retry, try fallback model
+                    lastError = new Error(`HTTP ${resp.status}: ${await resp.text()}`);
+                    core.warning(`  ${model} returned ${resp.status}: ${lastError.message.slice(9)}`);
+                    resp = null;
+                    break;
+                  } catch (fetchErr) {
+                    lastError = fetchErr;
+                    resp = null;
+                    if (attempt < MAX_RETRIES - 1) {
+                      const base = Math.pow(2, attempt + 1) * 1000;
+                      const jitter = Math.floor(Math.random() * 1000);
+                      const delay = base + jitter;
+                      core.warning(`GitHub Models API (${model}) network error: ${fetchErr.message} — retrying in ${(delay / 1000).toFixed(1)}s (attempt ${attempt + 1}/${MAX_RETRIES})...`);
+                      await new Promise(r => setTimeout(r, delay));
+                    }
+                  }
+                }
+
+                // If primary failed, pause before fallback to let rate limits reset
+                if (model === PRIMARY_MODEL) {
+                  const reason = lastError ? lastError.message : `HTTP ${resp?.status}`;
+                  core.warning(`Primary model ${model} failed (${reason}). Waiting 10s then falling back to ${FALLBACK_MODEL}...`);
+                  await new Promise(r => setTimeout(r, 10_000));
+                } else {
+                  // Fallback also failed
+                  if (lastError) {
+                    return { error: lastError.message };
+                  }
+                  let errBody = 'no response';
+                  try { errBody = resp ? await resp.text() : 'no response'; } catch (e) { /* body consumed */ }
+                  return { error: `${model} returned ${resp?.status}: ${errBody}` };
+                }
+              }
+            }
+
+            let summary = null;
+
+            for (let round = 0; round < MAX_ROUNDS; round++) {
+              core.info(`\n── Agent round ${round + 1}/${MAX_ROUNDS} ──`);
+
+              // Compact conversation history if it's grown too large
+              compactMessages();
+
+              const completion = await chatCompletion({ tools, tool_choice: 'auto' });
+              if (completion.error) {
+                core.setFailed(`GitHub Models API failed: ${completion.error}`);
+                return;
+              }
+
+              const result = await completion.resp.json();
+              const choice = result.choices?.[0];
+              if (!choice) {
+                core.setFailed('GitHub Models API returned no choices.');
+                return;
+              }
+
+              const assistantMsg = choice.message;
+              messages.push(assistantMsg);
+
+              // If the model produced a final text response (no tool calls)
+              if (choice.finish_reason === 'stop') {
+                summary = assistantMsg.content;
+                core.info('Agent produced final summary.');
+                break;
+              }
+
+              // If model stopped for token limit or has no tool calls, treat as incomplete
+              if (!assistantMsg.tool_calls?.length) {
+                if (choice.finish_reason === 'length') {
+                  core.warning('Model response truncated (max_completion_tokens). Will request finalization.');
+                } else {
+                  summary = assistantMsg.content;
+                  core.info('Agent produced final summary (no tool calls).');
+                }
+                break;
+              }
+
+              // Execute tool calls
+              core.info(`  Model requested ${assistantMsg.tool_calls.length} tool call(s).`);
+              const MAX_TOOL_RESULT_CHARS = 8000;
+              for (const toolCall of assistantMsg.tool_calls) {
+                const fnName = toolCall.function.name;
+                let fnArgs;
+                try {
+                  fnArgs = JSON.parse(toolCall.function.arguments);
+                } catch {
+                  fnArgs = {};
+                  core.warning(`  Malformed tool args for ${fnName}`);
+                }
+
+                core.info(`  → ${fnName}(${JSON.stringify(fnArgs)})`);
+                let toolResult = executeTool(fnName, fnArgs);
+                let content = typeof toolResult === 'string'
+                  ? toolResult
+                  : JSON.stringify(toolResult);
+
+                // Cap individual tool results to manage conversation size
+                if (content.length > MAX_TOOL_RESULT_CHARS) {
+                  content = content.substring(0, MAX_TOOL_RESULT_CHARS) +
+                    '\n... [truncated — use start_line/max_lines for more]';
+                }
+
+                messages.push({
+                  role: 'tool',
+                  tool_call_id: toolCall.id,
+                  content
+                });
+              }
+            }
+
+            if (!summary) {
+              // If we exhausted rounds, ask for final answer without tools
+              core.info('Max rounds reached – requesting final summary without tools.');
+              messages.push({
+                role: 'user',
+                content: 'You have reached the tool call limit. Please produce your final summary now using the information gathered so far.'
+              });
+              compactMessages();
+
+              const completion = await chatCompletion();
+              if (completion.error) {
+                core.warning(`Final summary request failed: ${completion.error}`);
+              } else {
+                const finalResult = await completion.resp.json();
+                summary = finalResult.choices?.[0]?.message?.content;
+              }
+            }
+
+            if (!summary) {
+              core.setFailed('Agent failed to produce a summary after all rounds.');
+              return;
+            }
+
+            // ── 9. Post or update PR comment ───────────────────────────
+            const MARKER = '<!-- quickstart-summarizer-bot -->';
+            const commentBody = `${MARKER}\n## 🤖 Quickstart Sample Summary\n\n${summary}\n\n---\n*Generated by the quickstart summarizer agent (v2 — agentic + MSDO security) · triggered by /validate*`;
+
+            const comments = await github.paginate(
+              github.rest.issues.listComments,
+              { owner, repo, issue_number: pull_number, per_page: 100 }
+            );
+            const existing = comments.find(c => c.body && c.body.includes(MARKER));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner, repo,
+                comment_id: existing.id,
+                body: commentBody
+              });
+              core.info(`Updated existing summary comment (id=${existing.id}).`);
+            } else {
+              await github.rest.issues.createComment({
+                owner, repo,
+                issue_number: pull_number,
+                body: commentBody
+              });
+              core.info('Created new summary comment on PR.');
+            }
+
+            await github.rest.reactions.createForIssueComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: context.payload.comment.id,
+              content: 'rocket'
+            });
+
+
+
+  selected-pipeline:
+    name: Validate ARM Deployments via ADX
+    runs-on: ubuntu-latest
+    needs: [gate]
+    environment: adx-readonly
+
+    # Run if the gate confirmed validate-samples.yml succeeded for the PR HEAD
+    # SHA, regardless of how `summarize` concluded. (`summarize` is a separate
+    # informational job; its failure or cancellation must not skip the
+    # deployment validation that gates merge.)
+    if: >-
+      !cancelled() &&
+      needs.gate.result == 'success' &&
+      github.event.issue.pull_request &&
+      startsWith(github.event.comment.body, '/validate')
+
+    permissions:
+      # `contents: write` is required by the `Commit generated azuredeploy.json
+      # to PR head branch` step at the end of this job, which (for same-repo
+      # PRs only) pushes the generated ARM JSON onto the PR's head branch so
+      # the merge naturally carries it into master. Fork PRs are handled by
+      # the post-merge `commit-generated-on-merge` job's auto-PR fallback.
+      contents: write
+      pull-requests: read
+      issues: read
+      id-token: write
+      actions: read
+
+    # Job-level outputs consumed by the `report-check` job to map this job's
+    # result to a GitHub Check Run conclusion.
+    outputs:
+      skip: ${{ steps.preflight.outputs.skip }}
+      sample_count: ${{ steps.preflight.outputs.sample_count }}
+
+    steps:
+      - name: Check commenter permission (basic)
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Comment author association: ${{ github.event.comment.author_association }}"
+          case "${{ github.event.comment.author_association }}" in
+            MEMBER|OWNER|COLLABORATOR) ;;
+            *)
+              echo "Not authorized to /validate"
+              exit 1
+              ;;
+          esac
+
+      - name: Get PR number
+        id: pr
+        shell: bash
+        env:
+          GH_TOKEN:  ${{ github.token }}
+          REPO:      ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          set -euo pipefail
+          echo "number=${PR_NUMBER}" >> "$GITHUB_OUTPUT"
+          # Resolve head SHA so the artifact uploaded later in this job can be
+          # uniquely named per PR head commit and located by the merge job.
+          # Also resolve head_repo and head_ref so the path-A push step at the
+          # end of this job can decide whether the PR is from the same repo
+          # (push to head branch) or a fork (skip; merge job will auto-PR).
+          PR_JSON=$(gh api "/repos/${REPO}/pulls/${PR_NUMBER}")
+          HEAD_SHA=$(echo "${PR_JSON}" | jq -r '.head.sha')
+          HEAD_REF=$(echo "${PR_JSON}" | jq -r '.head.ref')
+          HEAD_REPO=$(echo "${PR_JSON}" | jq -r '.head.repo.full_name')
+          echo "head_sha=${HEAD_SHA}" >> "$GITHUB_OUTPUT"
+          echo "head_ref=${HEAD_REF}" >> "$GITHUB_OUTPUT"
+          echo "head_repo=${HEAD_REPO}" >> "$GITHUB_OUTPUT"
+
+      # ── Preflight: classify whether this PR contains deployment-affecting
+      # changes, and if so, in how many distinct sample folders.
+      #
+      # Outputs:
+      #   skip          - 'true' if the PR has NO deploy-affecting changes;
+      #                   downstream ADX steps are then skipped and the
+      #                   `report-check` job publishes a `success` check with
+      #                   "Auto-passed: no deployment-affecting changes."
+      #   sample_count  - number of distinct sample folders containing a
+      #                   deploy-affecting change.
+      #
+      # Multi-sample deployable PRs fail this step explicitly: the existing
+      # ADX validation only supports a single changed metadata.json/sample
+      # per PR. Authors are told to split the PR.
+      - name: Preflight – classify deploy-affecting changes
+        id: preflight
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo  = context.repo.repo;
+            const pull_number = parseInt('${{ steps.pr.outputs.number }}', 10);
+
+            const prData = await github.rest.pulls.get({ owner, repo, pull_number });
+            const headSha = prData.data.head.sha;
+
+            const files = await github.paginate(
+              github.rest.pulls.listFiles,
+              { owner, repo, pull_number, per_page: 100 }
+            );
+
+            const SAMPLE_ROOTS = [
+              'quickstarts/',
+              'demos/',
+              'application-workloads/',
+              'modules/',
+              'subscription-deployments/',
+              'managementgroup-deployments/',
+              'tenant-deployments/'
+            ];
+
+            // Predicate: does this changed-file path affect a deployment?
+            // Conservative: unknown paths under a sample root count as
+            // deploy-affecting so we don't accidentally auto-pass a real
+            // template change.
+            function isDeployAffecting(filename) {
+              const matchedRoot = SAMPLE_ROOTS.find(r => filename.startsWith(r));
+              if (!matchedRoot) return false;
+
+              const lower = filename.toLowerCase();
+              const base  = lower.split('/').pop();
+
+              // Always non-deploy-affecting (sample metadata / docs / images).
+              if (base === 'metadata.json') return false;
+              if (base === 'readme.md' || base === 'contributing.md') return false;
+              if (lower.endsWith('.md'))  return false;
+              if (lower.endsWith('.png') || lower.endsWith('.jpg') ||
+                  lower.endsWith('.jpeg') || lower.endsWith('.gif') ||
+                  lower.endsWith('.svg') || lower.endsWith('.ico')) return false;
+              if (base === '.gitignore') return false;
+
+              // Always deploy-affecting (templates, params, scripts, prereqs).
+              if (lower.endsWith('.bicep') || lower.endsWith('.bicepparam')) return true;
+              if (lower.endsWith('.json'))  return true;
+              if (lower.endsWith('.ps1') || lower.endsWith('.sh')) return true;
+              if (lower.includes('/prereqs/')) return true;
+
+              // Conservative default for anything else under a sample root.
+              return true;
+            }
+
+            const deployFiles = files
+              .filter(f => isDeployAffecting(f.filename));
+
+            core.info(`Total changed files: ${files.length}`);
+            core.info(`Deploy-affecting files: ${deployFiles.length}`);
+            for (const f of deployFiles) core.info(`  ${f.status}\t${f.filename}`);
+
+            if (deployFiles.length === 0) {
+              core.info('No deployment-affecting changes detected — skipping ADX validation.');
+              core.setOutput('skip', 'true');
+              core.setOutput('sample_count', '0');
+              return;
+            }
+
+            // Resolve each deploy-affecting file to its sample folder by
+            // walking up the directory tree until we find a dir containing
+            // both metadata.json and README.md (mirrors validate-samples.yml).
+            const treeCache = new Map();
+            async function dirContains(dirPath, filename) {
+              if (treeCache.has(dirPath)) {
+                return treeCache.get(dirPath).has(filename);
+              }
+              try {
+                const { data } = await github.rest.git.getTree({
+                  owner, repo, tree_sha: `${headSha}:${dirPath}`
+                });
+                const names = new Set(data.tree.map(e => e.path));
+                treeCache.set(dirPath, names);
+                return names.has(filename);
+              } catch {
+                treeCache.set(dirPath, new Set());
+                return false;
+              }
+            }
+
+            const sampleFolders = new Set();
+            for (const f of deployFiles) {
+              const root = SAMPLE_ROOTS.find(r => f.filename.startsWith(r));
+              const relRoot = root.replace(/\/$/, '');
+              let dir = f.filename.split('/').slice(0, -1).join('/');
+              while (dir && dir !== relRoot && dir !== '.') {
+                if (sampleFolders.has(dir)) break;
+                const hasMeta   = await dirContains(dir, 'metadata.json');
+                const hasReadme = await dirContains(dir, 'README.md');
+                if (hasMeta && hasReadme) {
+                  sampleFolders.add(dir);
+                  break;
+                }
+                dir = dir.split('/').slice(0, -1).join('/');
+              }
+            }
+
+            const folderList = [...sampleFolders];
+            core.info(`Distinct sample folders touched: ${folderList.length}`);
+            for (const d of folderList) core.info(`  ${d}`);
+
+            core.setOutput('sample_count', String(folderList.length));
+            core.setOutput('skip', 'false');
+
+            if (folderList.length > 1) {
+              core.setFailed(
+                `Multi-sample deployable PR detected (${folderList.length} sample folders). ` +
+                `The ADX validation pipeline only supports a single changed sample per PR. ` +
+                `Please split deployable changes across multiple PRs (one sample per PR).`
+              );
+            }
+
+      - name: Safeguard – block protected-file edits by non MEMBER/OWNER
+        id: safeguard
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const allowed = new Set(["MEMBER", "OWNER"]);
+            const pull_number = parseInt("${{ steps.pr.outputs.number }}", 10);
+            const owner = context.repo.owner;
+            const repo  = context.repo.repo;
+
+            const [prData, files] = await Promise.all([
+              github.rest.pulls.get({ owner, repo, pull_number }),
+              github.paginate(
+                github.rest.pulls.listFiles,
+                { owner, repo, pull_number, per_page: 100 }
+              )
+            ]);
+
+            const assoc = prData.data.author_association;
+
+            // Any file executed with the privileged token/OIDC of this
+            // workflow (via checkout of PR HEAD) must be listed here so
+            // fork PRs cannot substitute a malicious version. Directory
+            // entries end with "/" and match by prefix; file entries
+            // match exactly. See ICM 31000000643564.
+            const protectedDirs = [
+              ".github/workflows/",
+              ".github/scripts/",
+              ".github/actions/",
+              ".github/agents/",
+            ];
+            const protectedFiles = [
+              ".github/CODEOWNERS",
+            ];
+            const isProtected = (name) =>
+              protectedDirs.some(d => name.startsWith(d)) ||
+              protectedFiles.includes(name);
+
+            const touchedNames = files.map(f => f.filename).filter(isProtected);
+            const touched = touchedNames.length > 0;
+
+            core.info(`PR author_association=${assoc}; protected files touched=${touched}`);
+
+            // Pin the head SHA observed here so the subsequent PR-HEAD
+            // checkout resolves to the same commit the safeguard just
+            // evaluated. Closes the TOCTOU window on refs/pull/N/head.
+            const headSha = prData.data.head.sha;
+            core.setOutput("head_sha", headSha);
+            core.info(`Pinned PR head SHA for downstream checkout: ${headSha}`);
+
+            if (touched && !allowed.has(assoc)) {
+              core.setFailed(
+                `Blocked: protected file(s) ${touchedNames.join(', ')} modified by PR author with ` +
+                `author_association='${assoc}'. Only MEMBER or OWNER may modify these files.`
+              );
+            }
+
+      - name: Checkout PR HEAD
+        if: steps.preflight.outputs.skip != 'true'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.safeguard.outputs.head_sha }}
+
+      # Paginate PR changed files to locate the single added/modified metadata.json
+      - name: Find metadata.json from PR changed files
+        id: find-metadata
+        if: steps.preflight.outputs.skip != 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          PR_NUMBER="${{ steps.pr.outputs.number }}"
+          REPO="${{ github.repository }}"
+
+          METADATA_FILES=()
+          PAGE=1
+          while true; do
+            RESP=$(gh api \
+              "/repos/${REPO}/pulls/${PR_NUMBER}/files?per_page=100&page=${PAGE}" \
+              --jq '[.[] | select(.status=="added" or .status=="modified" or .status=="renamed") | select(.filename == "metadata.json" or (.filename | endswith("/metadata.json"))) | .filename] | .[]')
+            [[ -z "${RESP}" ]] && break
+            while IFS= read -r f; do
+              METADATA_FILES+=("$f")
+            done <<< "${RESP}"
+            (( PAGE++ ))
+          done
+
+          COUNT=${#METADATA_FILES[@]}
+          if [[ "${COUNT}" -eq 0 ]]; then
+            echo "ERROR: No metadata.json added/modified in this PR." >&2
+            exit 1
+          fi
+          if [[ "${COUNT}" -gt 1 ]]; then
+            echo "ERROR: More than one metadata.json found in PR changed files:" >&2
+            printf '  %s\n' "${METADATA_FILES[@]}" >&2
+            exit 1
+          fi
+
+          METADATA_FILE="${METADATA_FILES[0]}"
+          SAMPLE_PATH="$(dirname "${METADATA_FILE}")"
+          echo "metadata_file=${METADATA_FILE}" >> "$GITHUB_OUTPUT"
+          echo "sample_path=${SAMPLE_PATH}"     >> "$GITHUB_OUTPUT"
+          echo "Found metadata.json: ${METADATA_FILE}"
+
+      - name: Azure login via OIDC (federated to UAMI)
+        if: steps.preflight.outputs.skip != 'true'
+        uses: azure/login@v2
+        with:
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          client-id: ${{ secrets.AZURE_UAMI_CLIENT_ID }}
+
+      # ── Ensure azuredeploy.json exists (compile Bicep if needed) ────────────
+      - name: Ensure azuredeploy.json exists (compile Bicep if needed)
+        id: compile-main
+        if: steps.preflight.outputs.skip != 'true'
+        shell: bash
+        env:
+          SAMPLE_PATH: ${{ steps.find-metadata.outputs.sample_path }}
+        run: |
+          set -euo pipefail
+          cd "${SAMPLE_PATH}"
+
+          echo "──────────────────────────────────────────"
+          echo "  Sample folder: ${SAMPLE_PATH}"
+          echo "──────────────────────────────────────────"
+
+          if [[ -f "azuredeploy.json" ]]; then
+            echo "azuredeploy.json already exists — no compilation needed."
+            echo "generated=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [[ ! -f "main.bicep" ]]; then
+            echo "Neither azuredeploy.json nor main.bicep found — skipping (validation step will catch this)."
+            echo "generated=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "azuredeploy.json not found but main.bicep exists — compiling..."
+          command -v bicep >/dev/null 2>&1 || az bicep install
+          bicep build main.bicep --outfile azuredeploy.json
+          echo "✅ Compiled main.bicep → azuredeploy.json"
+          echo "generated=true" >> "$GITHUB_OUTPUT"
+
+      - name: Validate deployments via ADX
+        if: steps.preflight.outputs.skip != 'true'
+        shell: bash
+        env:
+          # Deployment logs may live in any one of these regional ADX clusters.
+          # Queries are tried in order; the first cluster returning a row wins.
+          CLUSTER_URLS: |
+            https://armprodeus.eastus.kusto.windows.net
+            https://armprodweu.westeurope.kusto.windows.net
+            https://armprodsea.southeastasia.kusto.windows.net
+          DATABASE: ${{ secrets.ADX_DATABASE }}
+          # Path resolved from PR changed files by the find-metadata step above
+          METADATA_FILE: ${{ steps.find-metadata.outputs.metadata_file }}
+          # Sample folder (where azuredeploy.json / main.bicep live)
+          SAMPLE_PATH: ${{ steps.find-metadata.outputs.sample_path }}
+          # 'true' if CI compiled azuredeploy.json from main.bicep; 'false' if the contributor
+          # committed azuredeploy.json directly. Drives whether we pin Bicep before hashing.
+          JSON_GENERATED: ${{ steps.compile-main.outputs.generated }}
+        run: |
+          set -euo pipefail
+
+          # metadata.json path comes from PR changed files; no backslash normalization needed
+          METADATA_PATH="${METADATA_FILE}"
+
+          # ── Validate file exists ──────────────────────────────────────────
+          if [[ ! -f "${METADATA_PATH}" ]]; then
+            echo "ERROR: metadata.json not found at '${METADATA_PATH}'" >&2
+            exit 1
+          fi
+          echo "== Parsing metadata: ${METADATA_PATH} =="
+
+          # ── Validate .testResult.deployments block is present ─────────────
+          DEPLOYMENTS=$(jq -c '.testResult.deployments // empty' "${METADATA_PATH}")
+          if [[ -z "${DEPLOYMENTS}" ]]; then
+            echo "ERROR: '.testResult.deployments' not found in '${METADATA_PATH}'" >&2
+            exit 1
+          fi
+
+          # ── Helper: POST a pre-built JSON body to a Kusto REST endpoint ───
+          run_kusto_query () {
+            local cluster_url="$1"
+            local body="$2"
+            az rest \
+              --method POST \
+              --url "${cluster_url}/v1/rest/query" \
+              --headers "Content-Type=application/json" \
+              --body "${body}" \
+              --resource "https://kusto.kusto.windows.net"
+          }
+
+          # File-based side channel so the matched cluster URL survives the
+          # command-substitution subshell used to capture the function's stdout.
+          MATCHED_CLUSTER_FILE="${RUNNER_TEMP:-/tmp}/matched_cluster.$$"
+          MATCHED_CLUSTER=""
+
+          # ── Helper: try each cluster in order; return first response with rows ─
+          # Echoes the JSON response on stdout; logs per-cluster attempts on stderr.
+          # Writes the cluster URL that returned rows to MATCHED_CLUSTER_FILE (or
+          # empty if none did) so the parent shell can read it after $(...) capture.
+          # If all clusters return 0 rows, the last response is echoed so callers
+          # can still parse it for diagnostics.
+          run_kusto_query_with_fallback () {
+            local body="$1"
+            local response="" row_count=0 cluster=""
+            : > "${MATCHED_CLUSTER_FILE}"
+            while IFS= read -r cluster; do
+              [[ -z "${cluster}" ]] && continue
+              echo "  → trying cluster: ${cluster}" >&2
+              response=$(run_kusto_query "${cluster}" "${body}")
+              row_count=$(echo "${response}" | jq '(.Tables[0].Rows // []) | length')
+              if [[ "${row_count}" -gt 0 ]]; then
+                echo "    matched (${row_count} row(s)) on ${cluster}" >&2
+                printf '%s' "${cluster}" > "${MATCHED_CLUSTER_FILE}"
+                echo "${response}"
+                return 0
+              fi
+              echo "    0 rows on ${cluster}" >&2
+            done <<< "${CLUSTER_URLS}"
+            # No cluster matched — return the last response (0 rows) for diagnostics
+            echo "${response}"
+            return 0
+          }
+
+          # ── Source the shared KQL-input validator ─────────────────────────
+          # Defines validate_kusto_inputs (cid, dn, label) — see
+          # .github/scripts/validate-kusto-inputs.sh for the format contract.
+          # Tested by test/scripts/validate-kusto-inputs.bats.
+          # Security context: MSRC 117973 / ICM 31000000613310.
+          # shellcheck disable=SC1091
+          source "${GITHUB_WORKSPACE}/.github/scripts/validate-kusto-inputs.sh"
+
+          # ── If array, pick the non-prereqs entry; otherwise use the flat object ───
+          DEPLOYMENTS=$(echo "${DEPLOYMENTS}" | jq -c '
+            if type == "array" then
+              map(select((.templateFileName // "") | startswith("prereqs/") | not)) | .[0]
+            else
+              .
+            end // empty')
+          if [[ -z "${DEPLOYMENTS}" ]]; then
+            echo "ERROR: No main template deployment entry found in '.testResult.deployments'" >&2
+            exit 1
+          fi
+
+          # ── Extract fields from the deployments entry ────────────────────
+          # Required: templateFileName, correlationId, deploymentName
+          # Optional: TIMESTAMP (informational), templateHash (ignored — computed from template)
+          TEMPLATE_FILE_NAME=$(echo "${DEPLOYMENTS}" | jq -r '.templateFileName // empty')
+          CORRELATION_ID=$(echo "${DEPLOYMENTS}"     | jq -r '.correlationId    // empty')
+          DEPLOYMENT_NAME=$(echo "${DEPLOYMENTS}"    | jq -r '.deploymentName   // empty')
+          ENTRY_TIMESTAMP=$(echo "${DEPLOYMENTS}"    | jq -r '.TIMESTAMP        // "N/A"')
+
+          echo ""
+          echo "================================================================"
+          echo "  Template file  : ${TEMPLATE_FILE_NAME:-<missing>}"
+          echo "  correlationId  : ${CORRELATION_ID:-<missing>}"
+          echo "  deploymentName : ${DEPLOYMENT_NAME:-<missing>}"
+          echo "  timestamp      : ${ENTRY_TIMESTAMP} (optional)"
+          echo "================================================================"
+
+          # ── Validate templateFileName is an allowed value ─────────────────
+          if [[ -z "${TEMPLATE_FILE_NAME}" ]]; then
+            echo "ERROR: 'templateFileName' is missing from '.testResult.deployments'" >&2
+            echo "  Required fields: templateFileName, correlationId, deploymentName" >&2
+            exit 1
+          fi
+          if [[ "${TEMPLATE_FILE_NAME}" != "azuredeploy.json" && "${TEMPLATE_FILE_NAME}" != "main.bicep" ]]; then
+            echo "ERROR: 'templateFileName' is '${TEMPLATE_FILE_NAME}' — must be 'azuredeploy.json' or 'main.bicep'" >&2
+            exit 1
+          fi
+
+          # ── Validate remaining required fields ────────────────────────────
+          # Only templateFileName, correlationId, and deploymentName are required.
+          # TIMESTAMP and templateHash are optional.
+          if [[ -z "${CORRELATION_ID}" ]]; then
+            echo "ERROR: 'correlationId' is missing from '.testResult.deployments'" >&2
+            echo "  Required fields: templateFileName, correlationId, deploymentName" >&2
+            exit 1
+          fi
+          if [[ -z "${DEPLOYMENT_NAME}" ]]; then
+            echo "ERROR: 'deploymentName' is missing from '.testResult.deployments'" >&2
+            echo "  Required fields: templateFileName, correlationId, deploymentName" >&2
+            exit 1
+          fi
+
+          # ── Validate untrusted metadata before binding into KQL ───────────
+          # correlationId / deploymentName come from PR-controlled metadata.json.
+          # Reject anything that does not match the strict format contract
+          # before we hand the values to Kusto.
+          if ! validate_kusto_inputs "${CORRELATION_ID}" "${DEPLOYMENT_NAME}" "${TEMPLATE_FILE_NAME}"; then
+            exit 1
+          fi
+
+          # ── Run Kusto query ───────────────────────────────────────────────
+          # Body shape (parameterized KQL) is built by the shared script — see
+          # .github/scripts/build-adx-query-body.sh, tested by
+          # test/scripts/build-adx-query-body.bats.
+          REQUEST_BODY=$(DATABASE="${DATABASE}" CID="${CORRELATION_ID}" DN="${DEPLOYMENT_NAME}" \
+            bash "${GITHUB_WORKSPACE}/.github/scripts/build-adx-query-body.sh")
+
+          echo "Running Kusto query for '${TEMPLATE_FILE_NAME}' (with cluster fallback)..."
+          RESPONSE=$(run_kusto_query_with_fallback "${REQUEST_BODY}")
+          MATCHED_CLUSTER=$(cat "${MATCHED_CLUSTER_FILE}" 2>/dev/null || true)
+
+          ROW_COUNT=$(echo "${RESPONSE}" | jq '(.Tables[0].Rows // []) | length')
+          if [[ "${ROW_COUNT}" -eq 0 ]]; then
+            echo "ERROR: No ADX record found in any cluster — correlationId='${CORRELATION_ID}' deploymentName='${DEPLOYMENT_NAME}'" >&2
+            echo "  clusters tried (in order):" >&2
+            while IFS= read -r c; do [[ -n "$c" ]] && echo "    - $c" >&2; done <<< "${CLUSTER_URLS}"
+            exit 1
+          fi
+          echo "  matched cluster : ${MATCHED_CLUSTER}"
+
+          # Extract field values by column name (robust against column-order changes)
+          ACTUAL_STATUS=$(echo "${RESPONSE}" | jq -r \
+            '.Tables[0] as $t | ($t.Columns | map(.ColumnName) | index("executionStatus")) as $i | $t.Rows[0][$i]')
+          ACTUAL_HASH=$(echo "${RESPONSE}" | jq -r \
+            '.Tables[0] as $t | ($t.Columns | map(.ColumnName) | index("templateHash")) as $i | $t.Rows[0][$i]')
+
+          echo "  actual status : ${ACTUAL_STATUS}"
+          echo "  actual hash   : ${ACTUAL_HASH}"
+
+          # ── Compute templateHash (with optional Bicep version pinning) ────
+          # When CI compiled azuredeploy.json from main.bicep, the runner's
+          # bundled Bicep may differ from the contributor's local Bicep,
+          # producing a different `_generator.version` and therefore a
+          # different ARM templateHash. To make the comparison version-
+          # invariant, we re-compile main.bicep here using the same Bicep
+          # version the contributor used (recorded in ADX) and hash that.
+          GEN_NAME=$(echo "${RESPONSE}" | jq -r \
+            '.Tables[0] as $t | ($t.Columns | map(.ColumnName) | index("generatorName")) as $i | (if $i == null then "" else ($t.Rows[0][$i] // "") end)')
+          GEN_VERSION=$(echo "${RESPONSE}" | jq -r \
+            '.Tables[0] as $t | ($t.Columns | map(.ColumnName) | index("generatorVersion")) as $i | (if $i == null then "" else ($t.Rows[0][$i] // "") end)')
+
+          cd "${SAMPLE_PATH}"
+
+          if [[ ! -f "azuredeploy.json" ]]; then
+            echo "ERROR: azuredeploy.json not found in '${SAMPLE_PATH}' — cannot compute templateHash." >&2
+            exit 1
+          fi
+
+          JSON_TO_HASH="azuredeploy.json"
+          USED_PIN=false
+          RELEASE_TAG=""
+
+          if [[ "${JSON_GENERATED}" == "true" && "${GEN_NAME}" == "bicep" && -n "${GEN_VERSION}" ]]; then
+            # generatorVersion is "X.Y.Z.BUILD"; GitHub release tag is "vX.Y.Z"
+            if [[ "${GEN_VERSION}" =~ ^([0-9]+\.[0-9]+\.[0-9]+) ]]; then
+              RELEASE_TAG="v${BASH_REMATCH[1]}"
+              PINNED_BICEP="${RUNNER_TEMP:-/tmp}/bicep-pinned-${RELEASE_TAG}"
+              echo ""
+              echo "── Bicep version pinning ──"
+              echo "  ADX generatorVersion : ${GEN_VERSION}"
+              echo "  Resolved release tag : ${RELEASE_TAG}"
+              if [[ ! -x "${PINNED_BICEP}" ]] && \
+                 ! curl -fsSLo "${PINNED_BICEP}" "https://downloads.bicep.azure.com/${RELEASE_TAG}/bicep-linux-x64"; then
+                echo "  ⚠️  Could not download Bicep ${RELEASE_TAG} — falling back to runner-compiled JSON for hashing." >&2
+                rm -f "${PINNED_BICEP}"
+              else
+                chmod +x "${PINNED_BICEP}"
+                if "${PINNED_BICEP}" build main.bicep --outfile azuredeploy.pinned.json; then
+                  JSON_TO_HASH="azuredeploy.pinned.json"
+                  USED_PIN=true
+                  echo "  Recompiled JSON file : azuredeploy.pinned.json"
+                else
+                  echo "  ⚠️  Pinned Bicep ${RELEASE_TAG} failed to build main.bicep — falling back to runner-compiled JSON." >&2
+                fi
+              fi
+            else
+              echo "  ⚠️  Unrecognized generatorVersion format '${GEN_VERSION}' — skipping pin." >&2
+            fi
+          fi
+
+          COMPUTED_HASH=$(az rest --method post \
+            --url "https://management.azure.com/providers/Microsoft.Resources/calculateTemplateHash?api-version=2025-04-01" \
+            --body @"${JSON_TO_HASH}" | jq -r '.templateHash')
+
+          echo "  computed hash : ${COMPUTED_HASH}"
+          if [[ "${USED_PIN}" == "true" ]]; then
+            echo "  → hash computed from pinned-Bicep recompile (azuredeploy.pinned.json)"
+          fi
+
+          # ── Compare results ───────────────────────────────────────────────
+          # Compare ADX log hash against the COMPUTED hash
+          OVERALL_PASS=true
+
+          if [[ "${ACTUAL_STATUS}" != "Succeeded" ]]; then
+            echo "FAIL: executionStatus='${ACTUAL_STATUS}' (expected 'Succeeded') — correlationId='${CORRELATION_ID}' deploymentName='${DEPLOYMENT_NAME}'" >&2
+            OVERALL_PASS=false
+          else
+            echo "PASS: executionStatus = Succeeded"
+          fi
+
+          if [[ "${ACTUAL_HASH}" != "${COMPUTED_HASH}" ]]; then
+            echo "FAIL: templateHash mismatch for '${TEMPLATE_FILE_NAME}'" >&2
+            echo "      computed (from template file) : ${COMPUTED_HASH}" >&2
+            echo "      actual   (from ADX log)       : ${ACTUAL_HASH}" >&2
+            if [[ "${USED_PIN}" == "true" ]]; then
+              echo "      Note: hash was computed after pinning Bicep to ${RELEASE_TAG}" >&2
+              echo "      (the version ADX recorded for the deployment). A mismatch here" >&2
+              echo "      indicates main.bicep has substantively changed since the" >&2
+              echo "      deployment — please re-deploy and re-record correlationId" >&2
+              echo "      and deploymentName in metadata.json." >&2
+            fi
+            OVERALL_PASS=false
+          else
+            echo "PASS: templateHash matches (computed vs ADX log)"
+          fi
+
+          echo ""
+          if [[ "${OVERALL_PASS}" != "true" ]]; then
+            echo "VALIDATION FAILED: deployment did not pass." >&2
+            exit 1
+          fi
+          echo "== Deployment validation PASSED =="
+
+      # ── Prereqs A: verify at least one recognized template exists ──────────
+      - name: Validate prereqs template files
+        id: check-prereqs
+        if: steps.preflight.outputs.skip != 'true'
+        shell: bash
+        env:
+          SAMPLE_PATH: ${{ steps.find-metadata.outputs.sample_path }}
+        run: |
+          set -euo pipefail
+          PREREQS_DIR="${SAMPLE_PATH}/prereqs"
+
+          if [[ ! -d "${PREREQS_DIR}" ]]; then
+            echo "No prereqs/ folder found under '${SAMPLE_PATH}' — skipping prereqs validation."
+            echo "has_prereqs=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "has_prereqs=true" >> "$GITHUB_OUTPUT"
+          echo "== prereqs/ folder found: ${PREREQS_DIR} =="
+
+          EXPECTED_FILES=("prereq.azuredeploy.json" "prereq.main.bicep" "azuredeploy.json" "main.bicep")
+          FOUND_FILES=()
+          for f in "${EXPECTED_FILES[@]}"; do
+            [[ -f "${PREREQS_DIR}/${f}" ]] && FOUND_FILES+=("$f")
+          done
+
+          if [[ ${#FOUND_FILES[@]} -eq 0 ]]; then
+            echo "ERROR: No valid template file found in prereqs/ folder." >&2
+            echo "  Sample folder : ${SAMPLE_PATH}" >&2
+            echo "  Prereqs folder: ${PREREQS_DIR}" >&2
+            echo "  Expected one of: ${EXPECTED_FILES[*]}" >&2
+            ACTUAL_CONTENTS=$(ls "${PREREQS_DIR}" 2>/dev/null || true)
+            if [[ -z "${ACTUAL_CONTENTS}" ]]; then
+              echo "  Actual contents: (empty)" >&2
+            else
+              echo "  Actual contents:" >&2
+              while IFS= read -r entry; do
+                echo "    ${entry}" >&2
+              done <<< "${ACTUAL_CONTENTS}"
+            fi
+            exit 1
+          fi
+
+          printf 'Found prereqs template(s): %s\n' "${FOUND_FILES[*]}"
+          if [[ ${#FOUND_FILES[@]} -gt 1 ]]; then
+            echo "NOTE: Multiple matching template files found. Deployment selection is external;"
+            echo "      the pipeline relies on metadata.json for validation."
+          fi
+
+      # ── Prereqs: ensure azuredeploy.json exists (compile Bicep if needed) ───
+      - name: Prereqs – ensure azuredeploy.json exists (compile Bicep if needed)
+        id: compile-prereqs
+        if: steps.preflight.outputs.skip != 'true' && steps.check-prereqs.outputs.has_prereqs == 'true'
+        shell: bash
+        env:
+          SAMPLE_PATH: ${{ steps.find-metadata.outputs.sample_path }}
+        run: |
+          set -euo pipefail
+          PREREQS_DIR="${SAMPLE_PATH}/prereqs"
+          cd "${PREREQS_DIR}"
+
+          echo "──────────────────────────────────────────"
+          echo "  Prereqs folder: ${PREREQS_DIR}"
+          echo "──────────────────────────────────────────"
+
+          # Determine which ARM template file to target
+          # prereqs may use prereq.azuredeploy.json or azuredeploy.json
+          ARM_FILE=""
+          for candidate in prereq.azuredeploy.json azuredeploy.json; do
+            if [[ -f "${candidate}" ]]; then
+              ARM_FILE="${candidate}"
+              break
+            fi
+          done
+
+          if [[ -n "${ARM_FILE}" ]]; then
+            echo "${ARM_FILE} already exists — no compilation needed."
+            echo "generated=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # No ARM file found — try to compile from Bicep
+          BICEP_FILE=""
+          for candidate in prereq.main.bicep main.bicep; do
+            if [[ -f "${candidate}" ]]; then
+              BICEP_FILE="${candidate}"
+              break
+            fi
+          done
+
+          if [[ -z "${BICEP_FILE}" ]]; then
+            echo "No ARM or Bicep template found in prereqs/ — skipping (validation step will catch this)."
+            echo "generated=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Derive output name: prereq.main.bicep → prereq.azuredeploy.json, main.bicep → azuredeploy.json
+          if [[ "${BICEP_FILE}" == prereq.* ]]; then
+            OUT_FILE="prereq.azuredeploy.json"
+          else
+            OUT_FILE="azuredeploy.json"
+          fi
+
+          echo "${OUT_FILE} not found but ${BICEP_FILE} exists — compiling..."
+          command -v bicep >/dev/null 2>&1 || az bicep install
+          bicep build "${BICEP_FILE}" --outfile "${OUT_FILE}"
+          echo "✅ Compiled ${BICEP_FILE} → ${OUT_FILE}"
+          echo "generated=true" >> "$GITHUB_OUTPUT"
+
+      # ── Prereqs B+C: validate metadata entries and run Kusto per entry ──────
+      - name: Validate prereqs deployments via ADX
+        if: steps.preflight.outputs.skip != 'true' && steps.check-prereqs.outputs.has_prereqs == 'true'
+        shell: bash
+        env:
+          # Deployment logs may live in any one of these regional ADX clusters.
+          # Queries are tried in order; the first cluster returning a row wins.
+          CLUSTER_URLS: |
+            https://armprodeus.eastus.kusto.windows.net
+            https://armprodweu.westeurope.kusto.windows.net
+            https://armprodsea.southeastasia.kusto.windows.net
+          DATABASE: ${{ secrets.ADX_DATABASE }}
+          METADATA_FILE: ${{ steps.find-metadata.outputs.metadata_file }}
+          # Sample folder (where prereqs/ lives)
+          SAMPLE_PATH: ${{ steps.find-metadata.outputs.sample_path }}
+          # 'true' if CI compiled the prereqs ARM JSON from Bicep; 'false' if
+          # the contributor committed it directly. Drives whether we pin Bicep
+          # before hashing each entry.
+          JSON_GENERATED: ${{ steps.compile-prereqs.outputs.generated }}
+        run: |
+          set -euo pipefail
+          METADATA_PATH="${METADATA_FILE}"
+
+          # ── Validate file exists ──────────────────────────────────────────
+          if [[ ! -f "${METADATA_PATH}" ]]; then
+            echo "ERROR: metadata.json not found at '${METADATA_PATH}'" >&2
+            exit 1
+          fi
+          echo "== Validating prereqs deployments from: ${METADATA_PATH} =="
+
+          # ── Validate .testResult ──────────────────────────────────────────
+          TEST_RESULT=$(jq -c '.testResult // empty' "${METADATA_PATH}")
+          if [[ -z "${TEST_RESULT}" ]]; then
+            echo "ERROR: '.testResult' not found in '${METADATA_PATH}'" >&2
+            echo "  metadata file: ${METADATA_PATH}" >&2
+            exit 1
+          fi
+
+          # ── Validate .testResult.deployments is an array ──────────────────
+          DEPLOYMENTS_TYPE=$(jq -r '(.testResult.deployments // null) | type' "${METADATA_PATH}")
+          if [[ "${DEPLOYMENTS_TYPE}" != "array" ]]; then
+            echo "ERROR: '.testResult.deployments' must be an array (got '${DEPLOYMENTS_TYPE}') in '${METADATA_PATH}'" >&2
+            echo "  metadata file   : ${METADATA_PATH}" >&2
+            echo "  offending value : $(jq -c '.testResult.deployments // "missing"' "${METADATA_PATH}")" >&2
+            exit 1
+          fi
+
+          # ── Filter prereqs entries ────────────────────────────────────────
+          PREREQ_DEPLOYMENTS=$(jq -c \
+            '[.testResult.deployments[] | select(.templateFileName | startswith("prereqs/"))]' \
+            "${METADATA_PATH}")
+          PREREQ_COUNT=$(echo "${PREREQ_DEPLOYMENTS}" | jq 'length')
+
+          if [[ "${PREREQ_COUNT}" -eq 0 ]]; then
+            echo "ERROR: prereqs/ folder exists but no prereqs entries found in '.testResult.deployments'" >&2
+            echo "  metadata file: ${METADATA_PATH}" >&2
+            echo "  (looked for entries where templateFileName starts with 'prereqs/')" >&2
+            exit 1
+          fi
+
+          echo "Found ${PREREQ_COUNT} prereqs deployment entry/entries."
+
+          # ── Helper: POST a pre-built JSON body to a Kusto REST endpoint ────
+          run_kusto_query () {
+            local cluster_url="$1"
+            local body="$2"
+            az rest \
+              --method POST \
+              --url "${cluster_url}/v1/rest/query" \
+              --headers "Content-Type=application/json" \
+              --body "${body}" \
+              --resource "https://kusto.kusto.windows.net"
+          }
+
+          # File-based side channel so the matched cluster URL survives the
+          # command-substitution subshell used to capture the function's stdout.
+          MATCHED_CLUSTER_FILE="${RUNNER_TEMP:-/tmp}/matched_cluster.$$"
+          MATCHED_CLUSTER=""
+
+          # ── Helper: try each cluster in order; return first response with rows ─
+          # Writes the matched cluster URL to MATCHED_CLUSTER_FILE (or empty) so
+          # the parent shell can read it after $(...) capture.
+          # If all clusters return 0 rows, the last response is echoed for diagnostics.
+          run_kusto_query_with_fallback () {
+            local body="$1"
+            local response="" row_count=0 cluster=""
+            : > "${MATCHED_CLUSTER_FILE}"
+            while IFS= read -r cluster; do
+              [[ -z "${cluster}" ]] && continue
+              echo "  → trying cluster: ${cluster}" >&2
+              response=$(run_kusto_query "${cluster}" "${body}")
+              row_count=$(echo "${response}" | jq '(.Tables[0].Rows // []) | length')
+              if [[ "${row_count}" -gt 0 ]]; then
+                echo "    matched (${row_count} row(s)) on ${cluster}" >&2
+                printf '%s' "${cluster}" > "${MATCHED_CLUSTER_FILE}"
+                echo "${response}"
+                return 0
+              fi
+              echo "    0 rows on ${cluster}" >&2
+            done <<< "${CLUSTER_URLS}"
+            echo "${response}"
+            return 0
+          }
+
+          # ── Source the shared KQL-input validator ─────────────────────────
+          # Defines validate_kusto_inputs (cid, dn, label) — see
+          # .github/scripts/validate-kusto-inputs.sh for the format contract.
+          # Tested by test/scripts/validate-kusto-inputs.bats.
+          # Security context: MSRC 117973 / ICM 31000000613310.
+          # shellcheck disable=SC1091
+          source "${GITHUB_WORKSPACE}/.github/scripts/validate-kusto-inputs.sh"
+
+          OVERALL_PASS=true
+          PREREQS_DIR="${SAMPLE_PATH}/prereqs"
+
+          for i in $(seq 0 $((PREREQ_COUNT - 1))); do
+            ENTRY=$(echo "${PREREQ_DEPLOYMENTS}" | jq -c ".[$i]")
+            ENTRY_LABEL="$((i + 1))/${PREREQ_COUNT}"
+
+            # Required fields: templateFileName, correlationId, deploymentName
+            # Optional fields: TIMESTAMP (informational), templateHash (ignored)
+            TEMPLATE_FILE_NAME=$(echo "${ENTRY}" | jq -r '.templateFileName // empty')
+            CORRELATION_ID=$(echo "${ENTRY}"     | jq -r '.correlationId    // empty')
+            DEPLOYMENT_NAME=$(echo "${ENTRY}"    | jq -r '.deploymentName   // empty')
+            ENTRY_TIMESTAMP=$(echo "${ENTRY}"    | jq -r '.TIMESTAMP        // "N/A"')
+
+            echo ""
+            echo "================================================================"
+            echo "  [prereqs entry ${ENTRY_LABEL}]"
+            echo "  Template file  : ${TEMPLATE_FILE_NAME:-<missing>}"
+            echo "  correlationId  : ${CORRELATION_ID:-<missing>}"
+            echo "  deploymentName : ${DEPLOYMENT_NAME:-<missing>}"
+            echo "  timestamp      : ${ENTRY_TIMESTAMP} (optional)"
+            echo "================================================================"
+
+            # ── Validate required fields only ─────────────────────────────
+            # Only templateFileName, correlationId, and deploymentName are required.
+            ENTRY_VALID=true
+            for FIELD_NAME in templateFileName correlationId deploymentName; do
+              FIELD_VAL=$(echo "${ENTRY}" | jq -r --arg f "${FIELD_NAME}" '.[$f] // empty')
+              if [[ -z "${FIELD_VAL}" ]]; then
+                echo "ERROR [prereqs ${ENTRY_LABEL}]: '${FIELD_NAME}' is missing or empty" >&2
+                echo "  metadata file   : ${METADATA_PATH}" >&2
+                echo "  offending entry : ${ENTRY}" >&2
+                echo "  Required fields: templateFileName, correlationId, deploymentName" >&2
+                ENTRY_VALID=false
+              fi
+            done
+
+            if [[ "${ENTRY_VALID}" != "true" ]]; then
+              OVERALL_PASS=false
+              continue
+            fi
+
+            # ── Resolve the on-disk ARM JSON file for this entry ──────────
+            # templateFileName is e.g. "prereqs/main.bicep" or "prereqs/prereq.azuredeploy.json"
+            BASENAME=$(basename "${TEMPLATE_FILE_NAME}")
+            case "${BASENAME}" in
+              prereq.main.bicep)       ARM_FILE="${PREREQS_DIR}/prereq.azuredeploy.json"; SRC_BICEP="${PREREQS_DIR}/prereq.main.bicep" ;;
+              main.bicep)              ARM_FILE="${PREREQS_DIR}/azuredeploy.json";        SRC_BICEP="${PREREQS_DIR}/main.bicep" ;;
+              prereq.azuredeploy.json) ARM_FILE="${PREREQS_DIR}/prereq.azuredeploy.json"; SRC_BICEP="" ;;
+              azuredeploy.json)        ARM_FILE="${PREREQS_DIR}/azuredeploy.json";        SRC_BICEP="" ;;
+              *)                       ARM_FILE="${PREREQS_DIR}/${BASENAME}";             SRC_BICEP="" ;;
+            esac
+
+            if [[ ! -f "${ARM_FILE}" ]]; then
+              echo "ERROR [prereqs ${ENTRY_LABEL}]: ARM template '${ARM_FILE}' not found (needed for hash computation)." >&2
+              OVERALL_PASS=false
+              continue
+            fi
+
+            # ── Validate untrusted metadata before binding into KQL ───────
+            # correlationId / deploymentName come from PR-controlled
+            # metadata.json. Reject anything that does not match the strict
+            # format contract before we hand the values to Kusto.
+            if ! validate_kusto_inputs "${CORRELATION_ID}" "${DEPLOYMENT_NAME}" "prereqs ${ENTRY_LABEL} (${TEMPLATE_FILE_NAME})"; then
+              OVERALL_PASS=false
+              continue
+            fi
+
+            # ── Run Kusto query ───────────────────────────────────────────
+            # Body shape (parameterized KQL) is built by the shared script —
+            # see .github/scripts/build-adx-query-body.sh, tested by
+            # test/scripts/build-adx-query-body.bats.
+            REQUEST_BODY=$(DATABASE="${DATABASE}" CID="${CORRELATION_ID}" DN="${DEPLOYMENT_NAME}" \
+              bash "${GITHUB_WORKSPACE}/.github/scripts/build-adx-query-body.sh")
+
+            echo "Running Kusto query for prereqs entry '${TEMPLATE_FILE_NAME}' (with cluster fallback)..."
+            RESPONSE=$(run_kusto_query_with_fallback "${REQUEST_BODY}")
+            MATCHED_CLUSTER=$(cat "${MATCHED_CLUSTER_FILE}" 2>/dev/null || true)
+
+            ROW_COUNT=$(echo "${RESPONSE}" | jq '(.Tables[0].Rows // []) | length')
+            if [[ "${ROW_COUNT}" -eq 0 ]]; then
+              echo "ERROR [prereqs ${ENTRY_LABEL}]: No ADX record found in any cluster" >&2
+              echo "  templateFileName : ${TEMPLATE_FILE_NAME}" >&2
+              echo "  correlationId    : ${CORRELATION_ID}" >&2
+              echo "  deploymentName   : ${DEPLOYMENT_NAME}" >&2
+              echo "  Kusto parameters : correlationId='${CORRELATION_ID}' deploymentName='${DEPLOYMENT_NAME}'" >&2
+              echo "  clusters tried (in order):" >&2
+              while IFS= read -r c; do [[ -n "$c" ]] && echo "    - $c" >&2; done <<< "${CLUSTER_URLS}"
+              OVERALL_PASS=false
+              continue
+            fi
+            echo "  matched cluster : ${MATCHED_CLUSTER}"
+
+            # Extract field values by column name (robust against column-order changes)
+            ACTUAL_STATUS=$(echo "${RESPONSE}" | jq -r \
+              '.Tables[0] as $t | ($t.Columns | map(.ColumnName) | index("executionStatus")) as $i | $t.Rows[0][$i]')
+            ACTUAL_HASH=$(echo "${RESPONSE}" | jq -r \
+              '.Tables[0] as $t | ($t.Columns | map(.ColumnName) | index("templateHash")) as $i | $t.Rows[0][$i]')
+
+            echo "  actual status : ${ACTUAL_STATUS}"
+            echo "  actual hash   : ${ACTUAL_HASH}"
+
+            # ── Compute templateHash (with optional Bicep version pinning) ──
+            # When CI compiled the prereq ARM JSON from Bicep, the runner's
+            # bundled Bicep may differ from the contributor's local Bicep.
+            # Re-compile here using the same Bicep version the contributor used
+            # (recorded in ADX) so the hash comparison is version-invariant.
+            GEN_NAME=$(echo "${RESPONSE}" | jq -r \
+              '.Tables[0] as $t | ($t.Columns | map(.ColumnName) | index("generatorName")) as $i | (if $i == null then "" else ($t.Rows[0][$i] // "") end)')
+            GEN_VERSION=$(echo "${RESPONSE}" | jq -r \
+              '.Tables[0] as $t | ($t.Columns | map(.ColumnName) | index("generatorVersion")) as $i | (if $i == null then "" else ($t.Rows[0][$i] // "") end)')
+
+            JSON_TO_HASH="${ARM_FILE}"
+            USED_PIN=false
+            RELEASE_TAG=""
+
+            if [[ "${JSON_GENERATED}" == "true" && "${GEN_NAME}" == "bicep" && -n "${GEN_VERSION}" && -n "${SRC_BICEP}" && -f "${SRC_BICEP}" ]]; then
+              if [[ "${GEN_VERSION}" =~ ^([0-9]+\.[0-9]+\.[0-9]+) ]]; then
+                RELEASE_TAG="v${BASH_REMATCH[1]}"
+                PINNED_BICEP="${RUNNER_TEMP:-/tmp}/bicep-pinned-${RELEASE_TAG}"
+                PINNED_OUT="${ARM_FILE%.json}.pinned.json"
+                echo ""
+                echo "  ── Bicep version pinning ──"
+                echo "    ADX generatorVersion : ${GEN_VERSION}"
+                echo "    Resolved release tag : ${RELEASE_TAG}"
+                if [[ ! -x "${PINNED_BICEP}" ]] && \
+                   ! curl -fsSLo "${PINNED_BICEP}" "https://downloads.bicep.azure.com/${RELEASE_TAG}/bicep-linux-x64"; then
+                  echo "    ⚠️  Could not download Bicep ${RELEASE_TAG} — falling back to runner-compiled JSON for hashing." >&2
+                  rm -f "${PINNED_BICEP}"
+                else
+                  chmod +x "${PINNED_BICEP}"
+                  if "${PINNED_BICEP}" build "${SRC_BICEP}" --outfile "${PINNED_OUT}"; then
+                    JSON_TO_HASH="${PINNED_OUT}"
+                    USED_PIN=true
+                    echo "    Recompiled JSON file : ${PINNED_OUT}"
+                  else
+                    echo "    ⚠️  Pinned Bicep ${RELEASE_TAG} failed to build ${SRC_BICEP} — falling back to runner-compiled JSON." >&2
+                  fi
+                fi
+              else
+                echo "  ⚠️  Unrecognized generatorVersion format '${GEN_VERSION}' — skipping pin." >&2
+              fi
+            fi
+
+            COMPUTED_HASH=$(az rest --method post \
+              --url "https://management.azure.com/providers/Microsoft.Resources/calculateTemplateHash?api-version=2025-04-01" \
+              --body @"${JSON_TO_HASH}" | jq -r '.templateHash')
+
+            echo "  computed hash : ${COMPUTED_HASH}"
+            if [[ "${USED_PIN}" == "true" ]]; then
+              echo "  → hash computed from pinned-Bicep recompile (${PINNED_OUT})"
+            fi
+
+            # ── Compare results ───────────────────────────────────────────
+            ENTRY_PASS=true
+
+            if [[ "${ACTUAL_STATUS}" != "Succeeded" ]]; then
+              echo "FAIL [prereqs ${ENTRY_LABEL}]: executionStatus='${ACTUAL_STATUS}' (expected 'Succeeded')" >&2
+              echo "  templateFileName : ${TEMPLATE_FILE_NAME}" >&2
+              echo "  correlationId    : ${CORRELATION_ID}" >&2
+              echo "  deploymentName   : ${DEPLOYMENT_NAME}" >&2
+              echo "  Kusto parameters : correlationId='${CORRELATION_ID}' deploymentName='${DEPLOYMENT_NAME}'" >&2
+              ENTRY_PASS=false
+            else
+              echo "PASS: executionStatus = Succeeded"
+            fi
+
+            if [[ "${ACTUAL_HASH}" != "${COMPUTED_HASH}" ]]; then
+              echo "FAIL [prereqs ${ENTRY_LABEL}]: templateHash mismatch" >&2
+              echo "  templateFileName                   : ${TEMPLATE_FILE_NAME}" >&2
+              echo "  computed (from template file)      : ${COMPUTED_HASH}" >&2
+              echo "  actual   (from ADX log)            : ${ACTUAL_HASH}" >&2
+              echo "  correlationId                      : ${CORRELATION_ID}" >&2
+              echo "  deploymentName                     : ${DEPLOYMENT_NAME}" >&2
+              if [[ "${USED_PIN}" == "true" ]]; then
+                echo "  Note: hash was computed after pinning Bicep to ${RELEASE_TAG}" >&2
+                echo "  (the version ADX recorded for the deployment). A mismatch here" >&2
+                echo "  indicates ${SRC_BICEP##*/} has substantively changed since the" >&2
+                echo "  deployment — please re-deploy and re-record correlationId" >&2
+                echo "  and deploymentName in metadata.json." >&2
+              fi
+              ENTRY_PASS=false
+            else
+              echo "PASS: templateHash matches (computed vs ADX log)"
+            fi
+
+            if [[ "${ENTRY_PASS}" != "true" ]]; then
+              OVERALL_PASS=false
+            fi
+          done
+
+          echo ""
+          if [[ "${OVERALL_PASS}" != "true" ]]; then
+            echo "PREREQS VALIDATION FAILED: one or more prereqs deployments did not pass." >&2
+            exit 1
+          fi
+          echo "== Prereqs deployment validation PASSED =="
+
+      # ── Stage generated azuredeploy.json into a workspace-rooted tree ───────
+      # actions/upload-artifact@v4 rebases uploaded files to the *least common
+      # ancestor* of the matched paths. For a typical sample with no prereqs/
+      # folder only one file matches (<sample>/azuredeploy.json) and the LCA
+      # collapses to the file itself, so the artifact would contain a bare
+      # `azuredeploy.json` at its root — which the merge job would then
+      # extract into the repository root instead of the sample folder.
+      #
+      # To preserve the full repo-relative path, copy the generated files
+      # into ${RUNNER_TEMP}/generated/<sample_path>/... and upload that
+      # directory. The merge job extracts it into the checked-out default
+      # branch with `path: .`, so the files land in the correct sample
+      # folders.
+      - name: Stage generated azuredeploy.json files for artifact upload
+        id: stage-generated
+        if: >-
+          steps.preflight.outputs.skip != 'true' &&
+          (steps.compile-main.outputs.generated == 'true' ||
+           steps.compile-prereqs.outputs.generated == 'true')
+        shell: bash
+        env:
+          SAMPLE_PATH: ${{ steps.find-metadata.outputs.sample_path }}
+        run: |
+          set -euo pipefail
+          STAGE_DIR="${RUNNER_TEMP}/generated"
+          DEST_DIR="${STAGE_DIR}/${SAMPLE_PATH}"
+          mkdir -p "${DEST_DIR}/prereqs"
+
+          copied=0
+          for rel in azuredeploy.json prereqs/azuredeploy.json prereqs/prereq.azuredeploy.json; do
+            src="${SAMPLE_PATH}/${rel}"
+            if [[ -f "${src}" ]]; then
+              cp "${src}" "${DEST_DIR}/${rel}"
+              echo "Staged ${src} → ${DEST_DIR}/${rel}"
+              copied=$((copied + 1))
+            fi
+          done
+
+          # Drop the empty prereqs/ dir if nothing landed there, so the
+          # artifact tree mirrors only files that actually exist.
+          rmdir "${DEST_DIR}/prereqs" 2>/dev/null || true
+
+          echo "stage_dir=${STAGE_DIR}" >> "$GITHUB_OUTPUT"
+          echo "copied=${copied}" >> "$GITHUB_OUTPUT"
+
+      # ── Upload generated azuredeploy.json artifact ──────────────────────────
+      # If either compile step actually generated a file (and templateHash
+      # validation succeeded above), upload it as a workflow artifact keyed by
+      # PR number + head SHA. The merge-time `commit-generated-on-merge` job
+      # downloads this artifact and commits the JSON to master, so the merged
+      # commit contains the generated ARM template.
+      #
+      # Uploading the staged directory (rather than the original files
+      # directly) preserves the repo-relative paths end-to-end — see the
+      # stage-generated step above for the rationale.
+      - name: Upload generated azuredeploy.json artifact
+        if: >-
+          steps.preflight.outputs.skip != 'true' &&
+          steps.stage-generated.outputs.copied != '0' &&
+          (steps.compile-main.outputs.generated == 'true' ||
+           steps.compile-prereqs.outputs.generated == 'true')
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated-azuredeploy-${{ steps.pr.outputs.number }}-${{ steps.pr.outputs.head_sha }}
+          path: ${{ steps.stage-generated.outputs.stage_dir }}
+          if-no-files-found: ignore
+          retention-days: 7
+          include-hidden-files: false
+
+      # ── Path A: push generated JSON to the PR's head branch ─────────────────
+      # When the PR head is in this same repo (i.e. the contributor pushed
+      # their branch directly to Azure/azure-quickstart-templates rather than
+      # opening from a fork), GITHUB_TOKEN with `contents: write` can push to
+      # the head branch. Doing so here means the generated azuredeploy.json
+      # appears in the PR's file list and is naturally carried into master by
+      # the merge — sidestepping the protected-branch push that previously
+      # failed in `commit-generated-on-merge`.
+      #
+      # For fork PRs (head_repo != github.repository) GITHUB_TOKEN cannot push
+      # to the fork — even with "Allow edits by maintainers" enabled, that
+      # setting only grants human maintainers push access, not the Actions
+      # token. Those PRs are handled by the post-merge auto-PR fallback in
+      # `commit-generated-on-merge`.
+      #
+      # The step is idempotent: if the PR's head already contains the
+      # generated JSON (e.g. /validate run a second time with no changes), the
+      # diff check exits cleanly without producing an empty commit.
+      - name: Commit generated azuredeploy.json to PR head branch
+        id: push-to-pr-head
+        if: >-
+          steps.preflight.outputs.skip != 'true' &&
+          steps.stage-generated.outputs.copied != '0' &&
+          steps.pr.outputs.head_repo == github.repository &&
+          (steps.compile-main.outputs.generated == 'true' ||
+           steps.compile-prereqs.outputs.generated == 'true')
+        shell: bash
+        env:
+          HEAD_REF:  ${{ steps.pr.outputs.head_ref }}
+          PR_NUM:    ${{ steps.pr.outputs.number }}
+          STAGE_DIR: ${{ steps.stage-generated.outputs.stage_dir }}
+          GH_TOKEN:  ${{ github.token }}
+          REPO:      ${{ github.repository }}
+        run: |
+          set -euo pipefail
+
+          # Use a sibling working tree to avoid mutating the read-only
+          # refs/pull/<N>/head checkout the validation steps used.
+          WORKDIR="${RUNNER_TEMP}/pr-head-checkout"
+          rm -rf "${WORKDIR}"
+          git clone --depth 1 --branch "${HEAD_REF}" \
+            "https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git" \
+            "${WORKDIR}"
+          cd "${WORKDIR}"
+
+          git config user.email "azure-quickstart-templates@noreply.github.com"
+          git config user.name  "azure-quickstart-templates Automation"
+
+          # Overlay the staged generated files onto the working tree. STAGE_DIR
+          # mirrors the repo-relative paths (see `stage-generated` step).
+          cp -R "${STAGE_DIR}/." .
+
+          # Stage only generated ARM JSON files anywhere in the tree, then
+          # unstage any that may have landed at the repo root (defense in
+          # depth — none of those files legitimately live there).
+          git add -A -- '**/azuredeploy.json' '**/prereq.azuredeploy.json' || true
+          git reset -q -- azuredeploy.json prereq.azuredeploy.json 2>/dev/null || true
+
+          if git diff --cached --quiet; then
+            echo "::notice::PR head branch already contains the generated JSON — nothing to push."
+            exit 0
+          fi
+
+          echo "Files staged for commit:"
+          git diff --cached --name-only | sed 's/^/  /'
+
+          git commit -m "Auto-add generated azuredeploy.json (validation run for PR #${PR_NUM})"
+
+          # Push with one rebase-retry to tolerate a concurrent push to the
+          # PR branch. Workflow concurrency (validate-pr-${PR_NUM}) already
+          # serializes our own runs, so retries here only cover external
+          # pushes by the contributor.
+          for attempt in 1 2; do
+            if git push origin "HEAD:${HEAD_REF}"; then
+              echo "✅ Pushed generated azuredeploy.json to ${HEAD_REF}"
+              exit 0
+            fi
+            echo "Push attempt ${attempt} rejected — pulling --rebase and retrying..."
+            git pull --rebase origin "${HEAD_REF}"
+          done
+
+          echo "ERROR: Failed to push generated azuredeploy.json to PR head branch." >&2
+          exit 1
+
+  # ============================================================================
+  # JOB 4 – report-check
+  #
+  # Always-runs final job that publishes the `adx-deployment-validation` GitHub
+  # Check Run on the PR head SHA. The repository ruleset on master requires
+  # this check, so the conclusion written here is what gates merge:
+  #
+  #   gate.result == 'failure'                              -> check failure
+  #     ("validate-samples.yml did not pass; fix and re-run /validate")
+  #
+  #   selected-pipeline.result == 'success' AND skip='true' -> check success
+  #     ("Auto-passed: no deployment-affecting changes")
+  #
+  #   selected-pipeline.result == 'success'                 -> check success
+  #     ("ADX deployment validation passed")
+  #
+  #   selected-pipeline.result == 'failure'                 -> check failure
+  #     (link to this run for details)
+  #
+  #   selected-pipeline.result == 'cancelled'               -> check failure
+  #     ("Validation cancelled; re-run /validate")
+  #
+  #   selected-pipeline.result == 'skipped' AND
+  #     gate.result == 'success'                            -> check failure
+  #     ("ADX validation did not run; comment /validate again")
+  #
+  # Pushing a new commit to the PR moves the head SHA. No check is published
+  # on the new SHA until /validate is re-run, so the ruleset blocks merge —
+  # this is the stale-on-push behavior, with no seed workflow required.
+  # ============================================================================
+  report-check:
+    name: Report adx-deployment-validation check
+    runs-on: ubuntu-latest
+    needs: [gate, summarize, selected-pipeline]
+    if: >-
+      always() &&
+      github.event.issue.pull_request &&
+      startsWith(github.event.comment.body, '/validate')
+
+    permissions:
+      contents: read
+      pull-requests: read
+      checks: write
+
+    steps:
+      # Sparse checkout just the helper script directory.
+      - name: Checkout helper scripts
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            .github/scripts
+          sparse-checkout-cone-mode: false
+
+      # The gate job exposes head_sha as an output, but only if it ran far
+      # enough to resolve it. Resolve here independently so this step works
+      # even if gate failed before its first step (or never ran).
+      - name: Resolve PR HEAD SHA
+        id: pr-head
+        shell: bash
+        env:
+          GH_TOKEN:  ${{ github.token }}
+          REPO:      ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+          GATE_SHA:  ${{ needs.gate.outputs.head_sha }}
+        run: |
+          set -euo pipefail
+          if [[ -n "${GATE_SHA}" ]]; then
+            HEAD_SHA="${GATE_SHA}"
+          else
+            HEAD_SHA=$(gh api "/repos/${REPO}/pulls/${PR_NUMBER}" --jq '.head.sha')
+          fi
+          if [[ -z "${HEAD_SHA}" ]]; then
+            echo "ERROR: could not resolve PR head SHA" >&2
+            exit 1
+          fi
+          echo "head_sha=${HEAD_SHA}" >> "$GITHUB_OUTPUT"
+
+      - name: Determine final check conclusion
+        id: outcome
+        shell: bash
+        env:
+          GATE_RESULT:      ${{ needs.gate.result }}
+          PIPELINE_RESULT:  ${{ needs.selected-pipeline.result }}
+          PIPELINE_SKIP:    ${{ needs.selected-pipeline.outputs.skip }}
+          PIPELINE_COUNT:   ${{ needs.selected-pipeline.outputs.sample_count }}
+          RUN_URL:          ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          echo "gate.result=${GATE_RESULT}"
+          echo "selected-pipeline.result=${PIPELINE_RESULT}"
+          echo "selected-pipeline.outputs.skip=${PIPELINE_SKIP}"
+          echo "selected-pipeline.outputs.sample_count=${PIPELINE_COUNT}"
+
+          conclusion="failure"
+          title=""
+          summary=""
+
+          if [[ "${GATE_RESULT}" == "failure" ]]; then
+            conclusion="failure"
+            title="validate-samples.yml did not pass for this commit"
+            summary=$'`validate-samples.yml` did not reach `success` for this PR head SHA, or timed out waiting (10-minute poll). Fix the failures, push a new commit, then comment `/validate` again.\n\nRun: '"${RUN_URL}"
+          elif [[ "${GATE_RESULT}" == "cancelled" ]]; then
+            conclusion="failure"
+            title="Validation was cancelled"
+            summary=$'The gate job was cancelled (likely a newer `/validate` superseded this one). Re-run `/validate` to publish a fresh check.\n\nRun: '"${RUN_URL}"
+          elif [[ "${PIPELINE_RESULT}" == "success" && "${PIPELINE_SKIP}" == "true" ]]; then
+            conclusion="success"
+            title="Auto-passed: no deployment-affecting changes"
+            summary=$'No files in this PR affect an actual deployment (only docs / images / metadata / non-sample changes), so ADX validation was skipped. The required check passes automatically.\n\nRun: '"${RUN_URL}"
+          elif [[ "${PIPELINE_RESULT}" == "success" ]]; then
+            conclusion="success"
+            title="ADX deployment validation passed"
+            summary=$'ADX confirmed a successful deployment of this sample with a matching `templateHash`.\n\nRun: '"${RUN_URL}"
+          elif [[ "${PIPELINE_RESULT}" == "failure" ]]; then
+            conclusion="failure"
+            title="ADX deployment validation failed"
+            if [[ -n "${PIPELINE_COUNT}" && "${PIPELINE_COUNT}" -gt 1 ]]; then
+              summary=$'This PR touches '"${PIPELINE_COUNT}"$' sample folders. The ADX validation pipeline only supports a single changed sample per PR. Please split deployable changes across multiple PRs (one sample per PR).\n\nRun: '"${RUN_URL}"
+            else
+              summary=$'ADX could not confirm a successful deployment for this commit. See the workflow run for the failing check.\n\nRun: '"${RUN_URL}"
+            fi
+          elif [[ "${PIPELINE_RESULT}" == "cancelled" ]]; then
+            conclusion="failure"
+            title="ADX deployment validation was cancelled"
+            summary=$'Validation was cancelled mid-run. Re-run `/validate` once any in-progress runs finish.\n\nRun: '"${RUN_URL}"
+          elif [[ "${PIPELINE_RESULT}" == "skipped" && "${GATE_RESULT}" == "success" ]]; then
+            conclusion="failure"
+            title="ADX deployment validation did not run"
+            summary=$'The ADX validation job was skipped despite the gate succeeding. This usually means the commenter is not MEMBER/OWNER/COLLABORATOR. Comment `/validate` again from a maintainer account.\n\nRun: '"${RUN_URL}"
+          else
+            conclusion="failure"
+            title="Validation did not complete"
+            summary=$'gate='"${GATE_RESULT}"$', selected-pipeline='"${PIPELINE_RESULT}"$'. Re-run `/validate` to publish a fresh check.\n\nRun: '"${RUN_URL}"
+          fi
+
+          echo "conclusion=${conclusion}" >> "$GITHUB_OUTPUT"
+          {
+            echo "title<<__EOF__"
+            echo "${title}"
+            echo "__EOF__"
+            echo "summary<<__EOF__"
+            echo "${summary}"
+            echo "__EOF__"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Upsert adx-deployment-validation check
+        shell: bash
+        env:
+          GH_TOKEN:    ${{ github.token }}
+          GH_REPO:     ${{ github.repository }}
+          CHECK_NAME:  adx-deployment-validation
+          HEAD_SHA:    ${{ steps.pr-head.outputs.head_sha }}
+          STATUS:      completed
+          CONCLUSION:  ${{ steps.outcome.outputs.conclusion }}
+          TITLE:       ${{ steps.outcome.outputs.title }}
+          SUMMARY:     ${{ steps.outcome.outputs.summary }}
+          DETAILS_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: bash .github/scripts/upsert-check-run.sh
+
+
+  # ============================================================================
+  # JOB 5 – commit-generated-on-merge
+  #
+  # Triggered by `pull_request: closed` (the second `on:` trigger). When a PR
+  # is merged into the default branch AND the ADX validation succeeded for
+  # that PR head SHA, this job downloads the `generated-azuredeploy-*`
+  # artifact uploaded by the `selected-pipeline` job during /validate.
+  #
+  # Two delivery paths cooperate to land the generated ARM JSON on the default
+  # branch:
+  #
+  #   Path A — same-repo PRs (head.repo == github.repository):
+  #     The `selected-pipeline` job already pushed the generated JSON onto
+  #     the PR's head branch during /validate, so the merge naturally carries
+  #     it into the default branch. By the time this job runs, the merged
+  #     tree already contains the file and the `git diff --cached --quiet`
+  #     check below exits cleanly with no auto-PR created.
+  #
+  #   Path B — fork PRs (head.repo != github.repository):
+  #     GITHUB_TOKEN cannot push to forks (the "Allow edits by maintainers"
+  #     setting only grants human maintainers push access, not Actions
+  #     tokens), so path A is impossible. Instead, this job commits the
+  #     generated JSON onto an unprotected `auto/generated-azuredeploy-pr-N`
+  #     branch and opens a follow-up PR for a maintainer to merge. This
+  #     avoids needing branch-protection bypass on the default branch for
+  #     github-actions[bot].
+  #
+  # Both paths reuse the JSON that /validate already validated — no second
+  # Bicep build is performed — so downstream tooling
+  # (raw.githubusercontent.com links, deployment buttons) eventually sees a
+  # JSON file that matches the merged main.bicep.
+  #
+  # Trust boundary: maintainer review of the `main.bicep` change before merge
+  # (path A) and maintainer review of the auto-PR before merge (path B).
+  # ============================================================================
+  commit-generated-on-merge:
+    name: Commit generated azuredeploy.json on merge
+    runs-on: ubuntu-latest
+    if: >-
+      github.event_name == 'pull_request_target' &&
+      github.event.action == 'closed' &&
+      github.event.pull_request.merged == true &&
+      github.event.pull_request.base.ref == github.event.repository.default_branch
+
+    permissions:
+      contents: write
+      actions: read
+      pull-requests: write
+
+    steps:
+      # ── 1. Verify ADX validation succeeded for the merged PR head SHA ──────
+      - name: Verify adx-deployment-validation succeeded
+        id: verify
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO:     ${{ github.repository }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          echo "Looking up adx-deployment-validation for ${HEAD_SHA}"
+          CONCLUSION=$(gh api \
+            "/repos/${REPO}/commits/${HEAD_SHA}/check-runs?check_name=adx-deployment-validation" \
+            --jq '.check_runs | sort_by(.completed_at) | last | .conclusion // ""')
+          echo "adx-deployment-validation conclusion: '${CONCLUSION:-<none>}'"
+          if [[ "${CONCLUSION}" != "success" ]]; then
+            echo "::notice::Skipping commit-back: adx-deployment-validation did not succeed for PR head SHA."
+            echo "should_commit=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "should_commit=true" >> "$GITHUB_OUTPUT"
+
+      # ── 2. Locate the artifact by name (and derive its source run) ─────────
+      # The artifact name encodes both the PR number and the PR head SHA, so it
+      # uniquely identifies what we want. We deliberately do NOT search the
+      # workflow_runs API by `head_sha=${PR_HEAD_SHA}&event=issue_comment`
+      # because issue_comment-triggered runs are registered against the
+      # default-branch HEAD at comment time, not against the PR head — and
+      # their `pull_requests[]` array is populated by an unrelated SHA
+      # heuristic that does not include the actual triggering PR. See
+      # Azure/azure-quickstart-templates#14765 for the post-mortem.
+      #
+      # Step 1 (`verify`) already confirmed `adx-deployment-validation`
+      # concluded `success` for this exact PR head SHA, which guarantees the
+      # validation job that produced the artifact succeeded — so the bare
+      # presence of a non-expired artifact with the expected name is
+      # sufficient proof of a usable upload. We pull `workflow_run.id` out of
+      # the artifact's own metadata to feed the cross-run download below.
+      - name: Locate generated-azuredeploy artifact
+        id: locate-artifact
+        if: steps.verify.outputs.should_commit == 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO:     ${{ github.repository }}
+          PR_NUM:   ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          EXPECTED="generated-azuredeploy-${PR_NUM}-${HEAD_SHA}"
+          RESPONSE=$(gh api \
+            "/repos/${REPO}/actions/artifacts?name=${EXPECTED}&per_page=100")
+          ARTIFACT=$(echo "${RESPONSE}" | jq -c \
+            '[.artifacts[] | select(.expired == false)] | sort_by(.created_at) | last // empty')
+          if [[ -z "${ARTIFACT}" || "${ARTIFACT}" == "null" ]]; then
+            echo "::notice::Artifact '${EXPECTED}' not found (or all matching artifacts expired) — sample had no generated JSON, nothing to commit."
+            echo "found=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          NAME=$(echo "${ARTIFACT}" | jq -r '.name')
+          RUN_ID=$(echo "${ARTIFACT}" | jq -r '.workflow_run.id')
+          if [[ -z "${RUN_ID}" || "${RUN_ID}" == "null" ]]; then
+            echo "::error::Artifact '${EXPECTED}' has no workflow_run.id — cannot download cross-run." >&2
+            exit 1
+          fi
+          echo "Artifact: ${NAME} (run ${RUN_ID})"
+          echo "name=${NAME}" >> "$GITHUB_OUTPUT"
+          echo "run_id=${RUN_ID}" >> "$GITHUB_OUTPUT"
+          echo "found=true" >> "$GITHUB_OUTPUT"
+
+      # ── 3. Checkout the default branch with push credentials ───────────────
+      - name: Checkout default branch
+        if: steps.locate-artifact.outputs.found == 'true'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          token: ${{ github.token }}
+          persist-credentials: true
+          fetch-depth: 1
+
+      # ── 4. Download the artifact into the working tree ─────────────────────
+      - name: Download generated azuredeploy.json
+        if: steps.locate-artifact.outputs.found == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ steps.locate-artifact.outputs.name }}
+          path: .
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ steps.locate-artifact.outputs.run_id }}
+
+      # ── 5. Commit to a bot branch and open an auto-PR (if anything changed) ──
+      # Background: master is protected and GITHUB_TOKEN (acting as
+      # github-actions[bot]) is not on the bypass list, so a direct push to
+      # master 403s. Instead, we push to an unprotected `auto/...` branch and
+      # open a PR for a maintainer to merge.
+      #
+      # For same-repo PRs the path-A step in `selected-pipeline` will already
+      # have pushed the generated JSON onto the PR's head branch, so the
+      # merged tree matches and the diff check below exits cleanly with no
+      # auto-PR created. The auto-PR path is therefore primarily exercised
+      # for fork PRs (where path A is impossible because GITHUB_TOKEN cannot
+      # push to forks), and as a safety net if path A was skipped/failed.
+      - name: Commit generated azuredeploy.json and open auto-PR
+        if: steps.locate-artifact.outputs.found == 'true'
+        shell: bash
+        env:
+          PR_NUM:         ${{ github.event.pull_request.number }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          GH_TOKEN:       ${{ github.token }}
+          REPO:           ${{ github.repository }}
+        run: |
+          set -euo pipefail
+
+          git config user.email "azure-quickstart-templates@noreply.github.com"
+          git config user.name  "azure-quickstart-templates Automation"
+
+          # Stage only generated ARM JSON files anywhere in the tree. The
+          # artifact only ever contains these three filenames, so the glob
+          # is safe and cannot pick up unrelated changes.
+          git add -A -- '**/azuredeploy.json' '**/prereq.azuredeploy.json' || true
+
+          # Safety net: a buggy artifact (e.g. one whose paths got collapsed
+          # to the artifact root) could land a bare azuredeploy.json or
+          # prereq.azuredeploy.json at the repository root. Those two files
+          # never legitimately live at the repo root, so unstage them if
+          # they somehow got picked up.
+          git reset -q -- azuredeploy.json prereq.azuredeploy.json 2>/dev/null || true
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit — generated JSON already matches the merged tree (path A handled it, or artifact already in tree)."
+            exit 0
+          fi
+
+          echo "Files staged for commit:"
+          git diff --cached --name-only | sed 's/^/  /'
+
+          BRANCH="auto/generated-azuredeploy-pr-${PR_NUM}"
+
+          # If a stale auto-PR branch from a previous run still exists,
+          # overwrite it so we don't accumulate orphaned branches and so the
+          # existing PR (if any) gets refreshed with the latest generated JSON.
+          git checkout -B "${BRANCH}"
+          git commit -m "Auto-add generated azuredeploy.json from PR #${PR_NUM}"
+          git push --force-with-lease origin "${BRANCH}"
+
+          # Reuse an existing open auto-PR for the same source PR if present;
+          # otherwise create a new one. `gh pr list --head` matches by branch
+          # name (head ref) within this repo.
+          EXISTING_PR=$(gh pr list \
+            --repo "${REPO}" \
+            --head "${BRANCH}" \
+            --base "${DEFAULT_BRANCH}" \
+            --state open \
+            --json number \
+            --jq '.[0].number // empty')
+
+          if [[ -n "${EXISTING_PR}" ]]; then
+            echo "✅ Refreshed existing auto-PR #${EXISTING_PR} on branch ${BRANCH}"
+            exit 0
+          fi
+
+          gh pr create \
+            --repo "${REPO}" \
+            --base "${DEFAULT_BRANCH}" \
+            --head "${BRANCH}" \
+            --title "Auto-add generated azuredeploy.json from PR #${PR_NUM}" \
+            --body "$(printf 'This PR was generated automatically by the **commit-generated-on-merge** job in `ValidateSampleDeployments.yml` after PR #%s was merged.\n\nIt contains the compiled `azuredeploy.json` (and any `prereq.azuredeploy.json`) produced from the Bicep sources in the merged PR. A maintainer should review and merge this PR to land the generated ARM template on `%s`.\n\nNo human edits were made; the contents come directly from the `generated-azuredeploy-%s-%s` artifact uploaded during ADX validation.' \
+              "${PR_NUM}" "${DEFAULT_BRANCH}" "${PR_NUM}" "${{ github.event.pull_request.head.sha }}")"
+
+          echo "✅ Opened auto-PR for branch ${BRANCH}"

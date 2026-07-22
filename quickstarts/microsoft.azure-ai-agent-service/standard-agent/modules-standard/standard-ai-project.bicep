@@ -18,27 +18,14 @@ param aiProjectDescription string
 @description('Resource ID of the AI Hub resource')
 param aiHubId string
 
-@description('Name for capabilityHost.')
-param capabilityHostName string = 'caphost1'
+/* @description('Name for capabilityHost.')
+param capabilityHostName string 
 
 @description('Name for ACS connection.')
 param acsConnectionName string
 
 @description('Name for ACS connection.')
-param aoaiConnectionName string
-
-param aiServicesName string
-
-@description('Name AI Search resource')
-param aiSearchName string
-
-resource aiServices 'Microsoft.CognitiveServices/accounts@2024-06-01-preview' existing = {
-  name: aiServicesName
-}
-
-resource searchService 'Microsoft.Search/searchServices@2024-06-01-preview' existing = {
-  name: aiSearchName
-}
+param aoaiConnectionName string */
 
 //for constructing endpoint
 var subscriptionId = subscription().subscriptionId
@@ -46,12 +33,13 @@ var resourceGroupName = resourceGroup().name
 
 var projectConnectionString = '${location}.api.azureml.ms;${subscriptionId};${resourceGroupName};${aiProjectName}'
 
-var storageConnections = ['${aiProjectName}/workspaceblobstore']
+
+/* var storageConnections = ['${aiProjectName}/workspaceblobstore']
 var aiSearchConnection = ['${acsConnectionName}']
-var aiServiceConnections = ['${aoaiConnectionName}']
+var aiServiceConnections = ['${aoaiConnectionName}'] */
 
 
-resource aiProject 'Microsoft.MachineLearningServices/workspaces@2023-08-01-preview' = {
+resource aiProject 'Microsoft.MachineLearningServices/workspaces@2024-10-01-preview' = {
   name: aiProjectName
   location: location
   tags: union(tags, {
@@ -72,7 +60,8 @@ resource aiProject 'Microsoft.MachineLearningServices/workspaces@2023-08-01-prev
   kind: 'project'
 
   // Resource definition for the capability host
-  resource capabilityHost 'capabilityHosts@2024-10-01-preview' = {
+  #disable-next-line BCP081
+/*   resource capabilityHost 'capabilityHosts@2024-10-01-preview' = {
     name: '${aiProjectName}-${capabilityHostName}'
     properties: {
       capabilityHostKind: 'Agents'
@@ -80,86 +69,30 @@ resource aiProject 'Microsoft.MachineLearningServices/workspaces@2023-08-01-prev
       vectorStoreConnections: aiSearchConnection
       storageConnections: storageConnections
     }
-  }
+  } */
 }
 
-resource cognitiveServicesContributorRole 'Microsoft.Authorization/roleDefinitions@2022-04-01' existing = {
-  name: '25fbc0a9-bd7c-42a3-aa1a-3b75d497ee68'
-  scope: resourceGroup()
-}
-
-resource cognitiveServicesContributorAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01'= {
-  scope: aiServices
-  name: guid(aiServices.id, cognitiveServicesContributorRole.id, aiProject.id)
-  properties: {  
-    principalId: aiProject.identity.principalId
-    roleDefinitionId: cognitiveServicesContributorRole.id
-    principalType: 'ServicePrincipal'
-  }
-  }
-
-
-resource cognitiveServicesOpenAIUserRole 'Microsoft.Authorization/roleDefinitions@2022-04-01' existing = {
-  name: '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd'
-  scope: resourceGroup()
-}
-resource cognitiveServicesOpenAIUserRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  scope: aiServices
-  name: guid(aiProject.id, cognitiveServicesOpenAIUserRole.id, aiServices.id)
+resource waitScript 'Microsoft.Resources/deploymentScripts@2023-08-01' = {
+  name: 'WaitForProjectDeployment'
+  location: location
+  kind: 'AzurePowerShell'
   properties: {
-    principalId: aiProject.identity.principalId
-    roleDefinitionId: cognitiveServicesOpenAIUserRole.id
-    principalType: 'ServicePrincipal'
+    azPowerShellVersion: '10.0'
+    scriptContent: '''
+      Write-Output "Starting wait script..."
+      Start-Sleep -Seconds 120  # Wait for 2 minutes
+      Write-Output "Wait completed. Proceeding with deployment..."
+    '''
+    retentionInterval: 'PT1H'
+    cleanupPreference: 'OnSuccess'
   }
-}
-
-resource cognitiveServicesUserRole 'Microsoft.Authorization/roleDefinitions@2022-04-01' existing = {
-  name: 'a97b65f3-24c7-4388-baec-2e87135dc908'
-  scope: resourceGroup()
-}
-
-resource cognitiveServicesUserRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  scope: aiServices
-  name: guid(aiProject.id, cognitiveServicesUserRole.id, aiServices.id)
-  properties: {
-    principalId: aiProject.identity.principalId
-    roleDefinitionId: cognitiveServicesUserRole.id
-    principalType: 'ServicePrincipal'
-  }
-}
-
-// search roles
-resource searchIndexDataContributorRole 'Microsoft.Authorization/roleDefinitions@2022-04-01' existing = {
-  name: '8ebe5a00-799e-43f5-93ac-243d3dce84a7'
-  scope: resourceGroup()
-}
-
-resource searchIndexDataContributorAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  scope: searchService
-  name: guid(aiProject.id, searchIndexDataContributorRole.id, searchService.id)
-  properties: {
-    principalId: aiProject.identity.principalId
-    roleDefinitionId: searchIndexDataContributorRole.id
-    principalType: 'ServicePrincipal'
-  }
-}
-
-resource searchServiceContributorRole 'Microsoft.Authorization/roleDefinitions@2022-04-01' existing = {
-  name: '7ca78c08-252a-4471-8644-bb5ff32d4ba0'
-  scope: resourceGroup()
-}
-
-resource searchServiceContributorRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  scope: searchService
-  name: guid(aiProject.id, searchServiceContributorRole.id, searchService.id)
-  properties: {
-    principalId: aiProject.identity.principalId
-    roleDefinitionId: searchServiceContributorRole.id
-    principalType: 'ServicePrincipal'
-  }
+  dependsOn: [
+    aiProject
+  ]
 }
 
 output aiProjectName string = aiProject.name
 output aiProjectResourceId string = aiProject.id
+output aiProjectPrincipalId string = aiProject.identity.principalId
 output aiProjectWorkspaceId string = aiProject.properties.workspaceId
 output projectConnectionString string = aiProject.tags.ProjectConnectionString

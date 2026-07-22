@@ -111,6 +111,15 @@ param dataExplorerSku string = 'Dev(No SLA)_Standard_D11_v2'
 @maxValue(1000)
 param dataExplorerCapacity int = 1
 
+// cSpell:ignore eventhouse
+@description('Optional. Microsoft Fabric eventhouse query URI. Default: "" (do not use).')
+param fabricQueryUri string = ''
+
+@description('Optional. Number of capacity units for the Microsoft Fabric capacity. This is the number in your Fabric SKU (e.g., Trial = 1, F2 = 2, F64 = 64). This is used to manage parallelization in data pipelines. If you change capacity, please redeploy the template. Allowed values: 1 for the Fabric trial and 2-2048 based on the assigned Fabric capacity (e.g., F2-F2048). Default: 2.')
+@minValue(1)
+@maxValue(2048)
+param fabricCapacityUnits int = 2
+
 @description('Optional. Tags to apply to all resources. We will also add the cm-resource-parent tag for improved cost roll-ups in Cost Management.')
 param tags object = {}
 
@@ -154,6 +163,8 @@ module hub 'modules/hub.bicep' = {
     dataExplorerName: dataExplorerName
     dataExplorerSku: dataExplorerSku
     dataExplorerCapacity: dataExplorerCapacity
+    fabricQueryUri: fabricQueryUri
+    fabricCapacityUnits: fabricCapacityUnits
     tags: tags
     tagsByResource: tagsByResource
     scopesToMonitor: scopesToMonitor
@@ -172,16 +183,16 @@ module hub 'modules/hub.bicep' = {
 // Outputs
 //==============================================================================
 
-@description('The name of the resource group.')
+@description('Name of the resource group.')
 output name string = hubName
 
-@description('The location the resources wer deployed to.')
+@description('Azure resource location resources were deployed to.')
 output location string = location
 
-@description('Name of the Data Factory.')
-output dataFactorytName string = hub.outputs.dataFactorytName
+@description('Name of the Data Factory instance.')
+output dataFactoryName string = hub.outputs.dataFactoryName
 
-@description('The resource ID of the deployed storage account.')
+@description('Resource ID of the deployed storage account.')
 output storageAccountId string = hub.outputs.storageAccountId
 
 @description('Name of the storage account created for the hub instance. This must be used when connecting FinOps toolkit Power BI reports to your data.')
@@ -190,16 +201,16 @@ output storageAccountName string = hub.outputs.storageAccountName
 @description('URL to use when connecting custom Power BI reports to your data.')
 output storageUrlForPowerBI string = hub.outputs.storageUrlForPowerBI
 
-@description('The resource ID of the Data Explorer cluster.')
+@description('Resource ID of the Data Explorer cluster.')
 output clusterId string = hub.outputs.clusterId
 
-@description('The URI of the Data Explorer cluster.')
+@description('URI of the Data Explorer cluster.')
 output clusterUri string = hub.outputs.clusterUri
 
-@description('The name of the Data Explorer database used for ingesting data.')
+@description('Name of the Data Explorer database used for ingesting data.')
 output ingestionDbName string = hub.outputs.ingestionDbName
 
-@description('The name of the Data Explorer database used for querying data.')
+@description('Name of the Data Explorer database used for querying data.')
 output hubDbName string = hub.outputs.hubDbName
 
 @description('Object ID of the Data Factory managed identity. This will be needed when configuring managed exports.')

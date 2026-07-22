@@ -87,6 +87,10 @@ param clusterSku string = 'Dev(No SLA)_Standard_E2a_v4'
 @maxValue(1000)
 param clusterCapacity int = 1
 
+// TODO: Figure out why this is breaking upgrades
+// @description('Optional. Array of external tenant IDs that should have access to the cluster. Default: empty (no external access).')
+// param clusterTrustedExternalTenants string[] = []
+
 @description('Optional. Forces the table to be updated if different from the last time it was deployed.')
 param forceUpdateTag string = utcNow()
 
@@ -124,9 +128,7 @@ param enablePublicAccess bool
 // Variables
 //------------------------------------------------------------------------------
 
-var ftkver = any(loadTextContent('ftkver.txt')) // any() is used to suppress a warning the array size (only happens when version does not contain a dash)
-var ftkVersion = contains(ftkver, '-') ? split(ftkver, '-')[0] : ftkver
-var ftkBranch = contains(ftkver, '-') ? split(ftkver, '-')[1] : ''
+// cSpell:ignore ftkver, privatelink
 var dataExplorerPrivateDnsZoneName = replace('privatelink.${location}.${replace(environment().suffixes.storage, 'core', 'kusto')}', '..', '.')
 
 // Actual = Minimum(ClusterMaximumConcurrentOperations, Number of nodes in cluster * Maximum(1, Core count per node * CoreUtilizationCoefficient))
@@ -234,7 +236,7 @@ resource storage 'Microsoft.Storage/storageAccounts@2022-09-01' existing = {
 resource cluster 'Microsoft.Kusto/clusters@2023-08-15' = {
   name: clusterName
   location: location
-  tags: union(tags, contains(tagsByResource, 'Microsoft.Kusto/clusters') ? tagsByResource['Microsoft.Kusto/clusters'] : {})
+  tags: union(tags, tagsByResource[?'Microsoft.Kusto/clusters'] ?? {})
   sku: {
     name: clusterSku
     tier: startsWith(clusterSku, 'Dev(No SLA)_') ? 'Basic' : 'Standard'
@@ -247,6 +249,10 @@ resource cluster 'Microsoft.Kusto/clusters@2023-08-15' = {
     enableStreamingIngest: true
     enableAutoStop: false
     publicNetworkAccess: enablePublicAccess ? 'Enabled' : 'Disabled'
+    // TODO: Figure out why this is breaking upgrades
+    // trustedExternalTenants: [for tenantId in clusterTrustedExternalTenants: {
+    //     value: tenantId
+    // }]
   }
 
   resource adfClusterAdmin 'principalAssignments' = {
@@ -263,67 +269,82 @@ resource cluster 'Microsoft.Kusto/clusters@2023-08-15' = {
     name: 'Ingestion'
     location: location
     kind: 'ReadWrite'
-
-    resource commonScript 'scripts' = {
-      name: 'CommonFunctions'
-      properties: {
-        scriptContent: loadTextContent('scripts/Common.kql')
-        continueOnErrors: continueOnErrors
-        forceUpdateTag: forceUpdateTag
-      }
-    }
-
-    resource setupScript 'scripts' = {
-      name: 'SetupScript'
-      dependsOn: [
-        ingestionDb::commonScript
-      ]
-      properties: {
-        scriptContent: replace(replace(replace(replace(loadTextContent('scripts/IngestionSetup.kql'),
-          '$$adfPrincipalId$$', dataFactory.identity.principalId),
-          '$$adfTenantId$$', dataFactory.identity.tenantId),
-          '$$ftkOpenDataFolder$$', empty(ftkBranch) ? 'https://github.com/microsoft/finops-toolkit/releases/download/v${ftkVersion}' : 'https://raw.githubusercontent.com/microsoft/finops-toolkit/${ftkBranch}/src/open-data'),
-          '$$rawRetentionInDays$$', string(rawRetentionInDays))
-        continueOnErrors: continueOnErrors
-        forceUpdateTag: forceUpdateTag
-      }
-    }
   }
 
   resource hubDb 'databases' = {
     name: 'Hub'
     location: location
     kind: 'ReadWrite'
-    dependsOn: [
-      ingestionDb::setupScript
-    ]
-
-    resource commonScript 'scripts' = {
-      name: 'CommonFunctions'
-      properties: {
-        scriptContent: loadTextContent('scripts/Common.kql')
-        continueOnErrors: continueOnErrors
-        forceUpdateTag: forceUpdateTag
-      }
-    }
-
-    resource setupScript 'scripts' = {
-      name: 'SetupScript'
-      dependsOn: [
-        hubDb::commonScript
-      ]
-      properties: {
-        scriptContent: replace(replace(loadTextContent('scripts/HubSetup.kql'),
-          '$$adfPrincipalId$$', dataFactory.identity.principalId),
-          '$$adfTenantId$$', dataFactory.identity.tenantId)
-        continueOnErrors: continueOnErrors
-        forceUpdateTag: forceUpdateTag
-      }
-    }
   }
 }
 
-//  Authorize Kusto Cluster to read storage
+module ingestion_OpenDataInternalScripts 'hub-database.bicep' = {
+  name: 'ingestion_OpenDataInternalScripts'
+  params: {
+    clusterName: cluster.name
+    databaseName: cluster::ingestionDb.name
+    scripts: {
+      OpenDataFunctions_resource_type_1: loadTextContent('scripts/OpenDataFunctions_resource_type_1.kql')
+      OpenDataFunctions_resource_type_2: loadTextContent('scripts/OpenDataFunctions_resource_type_2.kql')
+      OpenDataFunctions_resource_type_3: loadTextContent('scripts/OpenDataFunctions_resource_type_3.kql')
+      OpenDataFunctions_resource_type_4: loadTextContent('scripts/OpenDataFunctions_resource_type_4.kql')
+    }
+    continueOnErrors: continueOnErrors
+    forceUpdateTag: forceUpdateTag
+  }
+}
+
+module ingestion_CommonScripts 'hub-database.bicep' = {
+  name: 'ingestion_CommonScripts'
+  dependsOn: [
+    ingestion_OpenDataInternalScripts
+  ]
+  params: {
+    clusterName: cluster.name
+    databaseName: cluster::ingestionDb.name
+    scripts: {
+      openDataScript: loadTextContent('scripts/OpenDataFunctions.kql')
+      commonScript: loadTextContent('scripts/Common.kql')
+    }
+    continueOnErrors: continueOnErrors
+    forceUpdateTag: forceUpdateTag
+  }
+}
+
+module ingestion_SetupScript 'hub-database.bicep' = {
+  name: 'ingestion_SetupScript'
+  dependsOn: [
+    ingestion_CommonScripts
+  ]
+  params: {
+    clusterName: cluster.name
+    databaseName: cluster::ingestionDb.name
+    scripts: {
+      setupScript: replace(loadTextContent('scripts/IngestionSetup.kql'), '$$rawRetentionInDays$$', string(rawRetentionInDays))
+    }
+    continueOnErrors: continueOnErrors
+    forceUpdateTag: forceUpdateTag
+  }
+}
+
+module hub_SetupScript 'hub-database.bicep' = {
+  name: 'hub_SetupScript'
+  dependsOn: [
+    ingestion_SetupScript
+  ]
+  params: {
+    clusterName: cluster.name
+    databaseName: cluster::hubDb.name
+    scripts: {
+      commonScript: loadTextContent('scripts/Common.kql')
+      setupScript: replace(loadTextContent('scripts/HubSetup.kql'), '$$rawRetentionInDays$$', string(rawRetentionInDays))
+    }
+    continueOnErrors: continueOnErrors
+    forceUpdateTag: forceUpdateTag
+  }
+}
+    
+// Authorize Kusto Cluster to read storage
 resource clusterStorageAccess 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   name: guid(cluster.name, subscription().id, 'Storage Blob Data Contributor')
   scope: storage
@@ -340,19 +361,19 @@ resource clusterStorageAccess 'Microsoft.Authorization/roleAssignments@2022-04-0
 }
 
 // DNS zone
-resource dataExplorerPrivateDnsZone 'Microsoft.Network/privateDnsZones@2024-06-01' = {
+resource dataExplorerPrivateDnsZone 'Microsoft.Network/privateDnsZones@2024-06-01' = if (!enablePublicAccess) {
   name: dataExplorerPrivateDnsZoneName
   location: 'global'
-  tags: union(tags, contains(tagsByResource, 'Microsoft.Network/privateDnsZones') ? tagsByResource['Microsoft.Network/privateDnsZones'] : {})
+  tags: union(tags, tagsByResource[?'Microsoft.Network/privateDnsZones'] ?? {})
   properties: {}
 }
 
 // Link DNS zone to VNet
-resource dataExplorerPrivateDnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2024-06-01' = {
+resource dataExplorerPrivateDnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2024-06-01' = if (!enablePublicAccess) {
   name: '${replace(dataExplorerPrivateDnsZone.name, '.', '-')}-link'
   location: 'global'
   parent: dataExplorerPrivateDnsZone
-  tags: union(tags, contains(tagsByResource, 'Microsoft.Network/privateDnsZones/virtualNetworkLinks') ? tagsByResource['Microsoft.Network/privateDnsZones/virtualNetworkLinks'] : {})
+  tags: union(tags, tagsByResource[?'Microsoft.Network/privateDnsZones/virtualNetworkLinks'] ?? {})
   properties: {
     virtualNetwork: {
       id: virtualNetworkId
@@ -362,10 +383,10 @@ resource dataExplorerPrivateDnsZoneLink 'Microsoft.Network/privateDnsZones/virtu
 }
 
 // Private endpoint
-resource dataExplorerEndpoint 'Microsoft.Network/privateEndpoints@2023-11-01' = {
+resource dataExplorerEndpoint 'Microsoft.Network/privateEndpoints@2023-11-01' = if (!enablePublicAccess) {
   name: '${cluster.name}-ep'
   location: location
-  tags: union(tags, contains(tagsByResource, 'Microsoft.Network/privateEndpoints') ? tagsByResource['Microsoft.Network/privateEndpoints'] : {})
+  tags: union(tags, tagsByResource[?'Microsoft.Network/privateEndpoints'] ?? {})
   properties: {
     subnet: {
       id: privateEndpointSubnetId
@@ -383,7 +404,7 @@ resource dataExplorerEndpoint 'Microsoft.Network/privateEndpoints@2023-11-01' = 
 }
 
 // DNS records for private endpoint
-resource dataExplorerPrivateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2023-11-01' = {
+resource dataExplorerPrivateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2023-11-01' = if (!enablePublicAccess) {
   name: 'dataExplorer-endpoint-zone'
   parent: dataExplorerEndpoint
   properties: {

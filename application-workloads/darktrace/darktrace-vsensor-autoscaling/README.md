@@ -28,7 +28,7 @@ languages:
 
 This document intends to describe how to use the provided ARM template to deploy automatically scaling Darktrace vSensors in Microsoft Azure.
 
-**Note**: A simpler, non-autoscaling version of this template is also available [here](https://github.com/Azure/azure-quickstart-templates/tree/master/application-workloads/darktrace-vsensor-standalone)
+**Note**: A simpler, non-autoscaling version of this template is also available [here](https://github.com/Azure/azure-quickstart-templates/tree/master/application-workloads/darktrace/darktrace-vsensor-standalone)
 
 The Darktrace vSensor is a lightweight virtual probe intended for deployment in cloud-based networks or environments where it is not feasible to deploy a physical probe, such as virtualized networks. In an Azure public cloud environment, vSensors can be deployed as an automatic virtual machine scale set that collects packets from osSensor agents deployed on the VMs that are to be monitored. 
 

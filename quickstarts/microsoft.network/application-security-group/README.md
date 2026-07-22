@@ -30,7 +30,7 @@ It deploys the following items:
 2. Network Security with two Security Rules, both using destinationApplicationSecurityGroups attribute
 3. Virtual Network with one Subnet assigned to this NSG.
 4. Network Interface assigned to Application Security Group, through its ID (notice that more than one can be assigned)
-5. Centos 6.9 Linux Web server with NGINX installed through Custom Script Extension for Linux
+5. CentOS 6.9 Linux Web server with NGINX installed through Custom Script Extension for Linux
 
 For more information about Application Security Groups, please refer to:
 

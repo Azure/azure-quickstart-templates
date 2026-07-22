@@ -6,7 +6,7 @@ param deidServiceName string
 @description('Location of the Azure Health Data Services de-identification service.')
 param location string = resourceGroup().location
 
-resource deidentificationService 'Microsoft.HealthDataAIServices/deidServices@2024-02-28-preview' = {
+resource deidentificationService 'Microsoft.HealthDataAIServices/deidServices@2024-09-20' = {
   name: deidServiceName
   location: location
   identity: {

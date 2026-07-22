@@ -4,14 +4,14 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.31.92.45157",
-      "templateHash": "11351269347997501228"
+      "version": "0.33.93.31351",
+      "templateHash": "7697352678671762039"
     }
   },
   "parameters": {
     "aiHubName": {
       "type": "string",
-      "defaultValue": "standard-hub",
+      "defaultValue": "basic-hub",
       "minLength": 2,
       "maxLength": 12,
       "metadata": {
@@ -20,35 +20,35 @@
     },
     "aiHubFriendlyName": {
       "type": "string",
-      "defaultValue": "Agents standard hub resource",
+      "defaultValue": "Agents basic hub resource",
       "metadata": {
         "description": "Friendly name for your Azure AI resource"
       }
     },
     "aiHubDescription": {
       "type": "string",
-      "defaultValue": "A standard hub resource required for the agent setup.",
+      "defaultValue": "A basic hub resource required for the agent setup.",
       "metadata": {
         "description": "Description of your Azure AI resource dispayed in AI studio"
       }
     },
     "aiProjectName": {
       "type": "string",
-      "defaultValue": "standard-project",
+      "defaultValue": "basic-project",
       "metadata": {
         "description": "Name for the project"
       }
     },
     "aiProjectFriendlyName": {
       "type": "string",
-      "defaultValue": "Agents standard project resource",
+      "defaultValue": "Agents basic project resource",
       "metadata": {
         "description": "Friendly name for your Azure AI project resource"
       }
     },
     "aiProjectDescription": {
       "type": "string",
-      "defaultValue": "A standard project resource required for the agent setup.",
+      "defaultValue": "A basic project resource required for the agent setup.",
       "metadata": {
         "description": "Description of your Azure AI project resource dispayed in AI studio"
       }
@@ -104,9 +104,23 @@
     },
     "modelLocation": {
       "type": "string",
-      "defaultValue": "eastus",
+      "defaultValue": "",
       "metadata": {
         "description": "Model deployment location. If you want to deploy an Azure AI resource/model in different location than the rest of the resources created."
+      }
+    },
+    "aiServiceAccountResourceId": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The AI Service Account full ARM Resource ID. This is an optional field, and if not provided, the resource will be created."
+      }
+    },
+    "aiServiceKind": {
+      "type": "string",
+      "defaultValue": "AIServices",
+      "metadata": {
+        "description": "AI Service Account kind: either OpenAI or AIServices"
       }
     },
     "storageName": {
@@ -131,7 +145,12 @@
   "variables": {
     "name": "[toLower(format('{0}', parameters('aiHubName')))]",
     "projectName": "[toLower(format('{0}', parameters('aiProjectName')))]",
-    "uniqueSuffix": "[substring(uniqueString(format('{0}-{1}', resourceGroup().id, parameters('deploymentTimestamp'))), 0, 4)]"
+    "uniqueSuffix": "[substring(uniqueString(format('{0}-{1}', resourceGroup().id, parameters('deploymentTimestamp'))), 0, 4)]",
+    "aiServiceExists": "[not(equals(parameters('aiServiceAccountResourceId'), ''))]",
+    "aiServiceParts": "[split(parameters('aiServiceAccountResourceId'), '/')]",
+    "aiServiceAccountSubscriptionId": "[if(variables('aiServiceExists'), variables('aiServiceParts')[2], subscription().subscriptionId)]",
+    "aiServiceAccountResourceGroupName": "[if(variables('aiServiceExists'), variables('aiServiceParts')[4], resourceGroup().name)]",
+    "differentModelLocation": "[if(not(equals(parameters('modelLocation'), '')), parameters('modelLocation'), parameters('location'))]"
   },
   "resources": [
     {
@@ -147,14 +166,17 @@
           "aiServicesName": {
             "value": "[format('{0}{1}', parameters('aiServicesName'), variables('uniqueSuffix'))]"
           },
+          "aiServiceAccountResourceId": {
+            "value": "[parameters('aiServiceAccountResourceId')]"
+          },
           "storageName": {
             "value": "[format('{0}{1}', parameters('storageName'), variables('uniqueSuffix'))]"
           },
+          "keyvaultName": {
+            "value": "[format('kv-{0}-{1}', variables('name'), variables('uniqueSuffix'))]"
+          },
           "location": {
             "value": "[parameters('location')]"
-          },
-          "tags": {
-            "value": "[parameters('tags')]"
           },
           "modelName": {
             "value": "[parameters('modelName')]"
@@ -172,7 +194,7 @@
             "value": "[parameters('modelCapacity')]"
           },
           "modelLocation": {
-            "value": "[parameters('modelLocation')]"
+            "value": "[variables('differentModelLocation')]"
           }
         },
         "template": {
@@ -181,8 +203,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.31.92.45157",
-              "templateHash": "8251659815924226998"
+              "version": "0.33.93.31351",
+              "templateHash": "5549017044427491952"
             }
           },
           "parameters": {
@@ -193,17 +215,16 @@
                 "description": "Azure region of the deployment"
               }
             },
-            "tags": {
-              "type": "object",
-              "defaultValue": {},
-              "metadata": {
-                "description": "Tags to add to the resources"
-              }
-            },
             "aiServicesName": {
               "type": "string",
               "metadata": {
                 "description": "AI services name"
+              }
+            },
+            "keyvaultName": {
+              "type": "string",
+              "metadata": {
+                "description": "The name of the Key Vault"
               }
             },
             "modelName": {
@@ -242,37 +263,40 @@
                 "description": "Model/AI Resource deployment location"
               }
             },
+            "aiServiceAccountResourceId": {
+              "type": "string",
+              "metadata": {
+                "description": "The AI Service Account full ARM Resource ID. This is an optional field, and if not provided, the resource will be created."
+              }
+            },
             "storageName": {
               "type": "string",
               "metadata": {
                 "description": "Name of the storage account"
               }
             },
-            "storageSkuName": {
-              "type": "string",
-              "defaultValue": "Standard_LRS",
-              "allowedValues": [
-                "Standard_LRS",
-                "Standard_ZRS",
-                "Standard_GRS",
-                "Standard_GZRS",
-                "Standard_RAGRS",
-                "Standard_RAGZRS",
-                "Premium_LRS",
-                "Premium_ZRS"
-              ],
-              "metadata": {
-                "description": "Storage SKU"
-              }
+            "noZRSRegions": {
+              "type": "array",
+              "defaultValue": [
+                "southindia",
+                "westus"
+              ]
+            },
+            "sku": {
+              "type": "object",
+              "defaultValue": "[if(contains(parameters('noZRSRegions'), parameters('location')), createObject('name', 'Standard_GRS'), createObject('name', 'Standard_ZRS'))]"
             }
           },
           "variables": {
-            "storageNameCleaned": "[replace(parameters('storageName'), '-', '')]"
+            "storageNameCleaned": "[replace(parameters('storageName'), '-', '')]",
+            "aiServiceExists": "[not(equals(parameters('aiServiceAccountResourceId'), ''))]",
+            "aiServiceParts": "[split(parameters('aiServiceAccountResourceId'), '/')]"
           },
           "resources": [
             {
+              "condition": "[not(variables('aiServiceExists'))]",
               "type": "Microsoft.CognitiveServices/accounts",
-              "apiVersion": "2024-06-01-preview",
+              "apiVersion": "2024-10-01",
               "name": "[parameters('aiServicesName')]",
               "location": "[parameters('modelLocation')]",
               "sku": {
@@ -291,8 +315,9 @@
               }
             },
             {
+              "condition": "[not(variables('aiServiceExists'))]",
               "type": "Microsoft.CognitiveServices/accounts/deployments",
-              "apiVersion": "2024-06-01-preview",
+              "apiVersion": "2024-10-01",
               "name": "[format('{0}/{1}', parameters('aiServicesName'), parameters('modelName'))]",
               "sku": {
                 "capacity": "[parameters('modelCapacity')]",
@@ -314,65 +339,65 @@
               "apiVersion": "2023-05-01",
               "name": "[variables('storageNameCleaned')]",
               "location": "[parameters('location')]",
-              "tags": "[parameters('tags')]",
-              "sku": {
-                "name": "[parameters('storageSkuName')]"
-              },
               "kind": "StorageV2",
+              "sku": "[parameters('sku')]",
               "properties": {
-                "accessTier": "Hot",
-                "allowBlobPublicAccess": false,
-                "allowCrossTenantReplication": false,
-                "allowSharedKeyAccess": true,
-                "encryption": {
-                  "keySource": "Microsoft.Storage",
-                  "requireInfrastructureEncryption": false,
-                  "services": {
-                    "blob": {
-                      "enabled": true,
-                      "keyType": "Account"
-                    },
-                    "file": {
-                      "enabled": true,
-                      "keyType": "Account"
-                    },
-                    "queue": {
-                      "enabled": true,
-                      "keyType": "Service"
-                    },
-                    "table": {
-                      "enabled": true,
-                      "keyType": "Service"
-                    }
-                  }
-                },
-                "isHnsEnabled": false,
-                "isNfsV3Enabled": false,
-                "keyPolicy": {
-                  "keyExpirationPeriodInDays": 7
-                },
-                "largeFileSharesState": "Disabled",
                 "minimumTlsVersion": "TLS1_2",
+                "allowBlobPublicAccess": false,
+                "publicNetworkAccess": "Enabled",
                 "networkAcls": {
                   "bypass": "AzureServices",
-                  "defaultAction": "Deny"
+                  "defaultAction": "Allow",
+                  "virtualNetworkRules": []
                 },
-                "supportsHttpsTrafficOnly": true
+                "allowSharedKeyAccess": false
+              }
+            },
+            {
+              "type": "Microsoft.KeyVault/vaults",
+              "apiVersion": "2022-07-01",
+              "name": "[parameters('keyvaultName')]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "tenantId": "[subscription().tenantId]",
+                "sku": {
+                  "family": "A",
+                  "name": "standard"
+                },
+                "enableSoftDelete": true,
+                "enabledForTemplateDeployment": true,
+                "accessPolicies": []
               }
             }
           ],
           "outputs": {
+            "aiServicesName": {
+              "type": "string",
+              "value": "[if(variables('aiServiceExists'), variables('aiServiceParts')[8], parameters('aiServicesName'))]"
+            },
             "aiservicesID": {
               "type": "string",
-              "value": "[resourceId('Microsoft.CognitiveServices/accounts', parameters('aiServicesName'))]"
+              "value": "[if(variables('aiServiceExists'), extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', variables('aiServiceParts')[2], variables('aiServiceParts')[4]), 'Microsoft.CognitiveServices/accounts', variables('aiServiceParts')[8]), resourceId('Microsoft.CognitiveServices/accounts', parameters('aiServicesName')))]"
             },
             "aiservicesTarget": {
               "type": "string",
-              "value": "[reference(resourceId('Microsoft.CognitiveServices/accounts', parameters('aiServicesName')), '2024-06-01-preview').endpoint]"
+              "value": "[if(variables('aiServiceExists'), reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', variables('aiServiceParts')[2], variables('aiServiceParts')[4]), 'Microsoft.CognitiveServices/accounts', variables('aiServiceParts')[8]), '2024-10-01').endpoint, reference(resourceId('Microsoft.CognitiveServices/accounts', parameters('aiServicesName')), '2024-10-01').endpoint)]"
+            },
+            "aiServiceAccountResourceGroupName": {
+              "type": "string",
+              "value": "[if(variables('aiServiceExists'), variables('aiServiceParts')[4], resourceGroup().name)]"
+            },
+            "aiServiceAccountSubscriptionId": {
+              "type": "string",
+              "value": "[if(variables('aiServiceExists'), variables('aiServiceParts')[2], subscription().subscriptionId)]"
             },
             "storageId": {
               "type": "string",
               "value": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageNameCleaned'))]"
+            },
+            "keyvaultId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.KeyVault/vaults', parameters('keyvaultName'))]"
             }
           }
         }
@@ -400,11 +425,23 @@
           "location": {
             "value": "[parameters('location')]"
           },
+          "keyVaultId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', format('dependencies-{0}-{1}-deployment', variables('name'), variables('uniqueSuffix'))), '2022-09-01').outputs.keyvaultId.value]"
+          },
           "tags": {
             "value": "[parameters('tags')]"
           },
-          "modelLocation": {
-            "value": "[parameters('modelLocation')]"
+          "aiServicesName": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', format('dependencies-{0}-{1}-deployment', variables('name'), variables('uniqueSuffix'))), '2022-09-01').outputs.aiServicesName.value]"
+          },
+          "aiServiceKind": {
+            "value": "[parameters('aiServiceKind')]"
+          },
+          "aiServiceAccountResourceGroupName": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', format('dependencies-{0}-{1}-deployment', variables('name'), variables('uniqueSuffix'))), '2022-09-01').outputs.aiServiceAccountResourceGroupName.value]"
+          },
+          "aiServiceAccountSubscriptionId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', format('dependencies-{0}-{1}-deployment', variables('name'), variables('uniqueSuffix'))), '2022-09-01').outputs.aiServiceAccountSubscriptionId.value]"
           },
           "storageAccountId": {
             "value": "[reference(resourceId('Microsoft.Resources/deployments', format('dependencies-{0}-{1}-deployment', variables('name'), variables('uniqueSuffix'))), '2022-09-01').outputs.storageId.value]"
@@ -422,8 +459,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.31.92.45157",
-              "templateHash": "5580448247188524490"
+              "version": "0.33.93.31351",
+              "templateHash": "15558621331071845672"
             }
           },
           "parameters": {
@@ -476,27 +513,51 @@
                 "description": "Resource ID of the AI Services endpoint"
               }
             },
-            "modelLocation": {
+            "aiServicesName": {
               "type": "string",
               "metadata": {
-                "description": "Model/AI Resource deployment location"
+                "description": "Name AI Services resource"
+              }
+            },
+            "aiServiceAccountResourceGroupName": {
+              "type": "string",
+              "metadata": {
+                "description": "Resource Group name of the AI Services resource"
+              }
+            },
+            "aiServiceAccountSubscriptionId": {
+              "type": "string",
+              "metadata": {
+                "description": "Subscription ID of the AI Services resource"
+              }
+            },
+            "aiServiceKind": {
+              "type": "string",
+              "metadata": {
+                "description": "AI Service Account kind: either OpenAI or AIServices"
+              }
+            },
+            "keyVaultId": {
+              "type": "string",
+              "metadata": {
+                "description": "Resource ID of the key vault resource for storing connection strings"
               }
             }
           },
           "resources": [
             {
               "type": "Microsoft.MachineLearningServices/workspaces/connections",
-              "apiVersion": "2024-07-01-preview",
+              "apiVersion": "2024-10-01-preview",
               "name": "[format('{0}/{1}', parameters('aiHubName'), format('{0}-connection-AIServices', parameters('aiHubName')))]",
               "properties": {
-                "category": "AIServices",
+                "category": "[parameters('aiServiceKind')]",
                 "target": "[parameters('aiServicesTarget')]",
                 "authType": "AAD",
                 "isSharedToAll": true,
                 "metadata": {
                   "ApiType": "Azure",
                   "ResourceId": "[parameters('aiServicesId')]",
-                  "Location": "[parameters('modelLocation')]"
+                  "Location": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', parameters('aiServiceAccountSubscriptionId'), parameters('aiServiceAccountResourceGroupName')), 'Microsoft.CognitiveServices/accounts', parameters('aiServicesName')), '2023-05-01', 'full').location]"
                 }
               },
               "dependsOn": [
@@ -505,7 +566,7 @@
             },
             {
               "type": "Microsoft.MachineLearningServices/workspaces",
-              "apiVersion": "2024-07-01-preview",
+              "apiVersion": "2024-10-01-preview",
               "name": "[parameters('aiHubName')]",
               "location": "[parameters('location')]",
               "tags": "[parameters('tags')]",
@@ -515,7 +576,9 @@
               "properties": {
                 "friendlyName": "[parameters('aiHubFriendlyName')]",
                 "description": "[parameters('aiHubDescription')]",
-                "storageAccount": "[parameters('storageAccountId')]"
+                "keyVault": "[parameters('keyVaultId')]",
+                "storageAccount": "[parameters('storageAccountId')]",
+                "systemDatastoresAuthMode": "identity"
               },
               "kind": "hub"
             }
@@ -557,9 +620,6 @@
           "tags": {
             "value": "[parameters('tags')]"
           },
-          "aiServicesName": {
-            "value": "[format('{0}{1}', parameters('aiServicesName'), variables('uniqueSuffix'))]"
-          },
           "aiHubId": {
             "value": "[reference(resourceId('Microsoft.Resources/deployments', format('ai-{0}-{1}-deployment', variables('name'), variables('uniqueSuffix'))), '2022-09-01').outputs.aiHubID.value]"
           }
@@ -570,8 +630,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.31.92.45157",
-              "templateHash": "1013177370539969855"
+              "version": "0.33.93.31351",
+              "templateHash": "4069116357119294478"
             }
           },
           "parameters": {
@@ -611,9 +671,6 @@
               "metadata": {
                 "description": "Resource ID of the AI Hub resource"
               }
-            },
-            "aiServicesName": {
-              "type": "string"
             }
           },
           "variables": {
@@ -624,7 +681,7 @@
           "resources": [
             {
               "type": "Microsoft.MachineLearningServices/workspaces",
-              "apiVersion": "2023-08-01-preview",
+              "apiVersion": "2024-10-01-preview",
               "name": "[parameters('aiProjectName')]",
               "location": "[parameters('location')]",
               "tags": "[union(parameters('tags'), createObject('ProjectConnectionString', variables('projectConnectionString')))]",
@@ -634,51 +691,10 @@
               "properties": {
                 "friendlyName": "[parameters('aiProjectFriendlyName')]",
                 "description": "[parameters('aiProjectDescription')]",
+                "systemDatastoresAuthMode": "identity",
                 "hubResourceId": "[parameters('aiHubId')]"
               },
               "kind": "project"
-            },
-            {
-              "type": "Microsoft.Authorization/roleAssignments",
-              "apiVersion": "2022-04-01",
-              "scope": "[format('Microsoft.CognitiveServices/accounts/{0}', parameters('aiServicesName'))]",
-              "name": "[guid(resourceId('Microsoft.MachineLearningServices/workspaces', parameters('aiProjectName')), resourceId('Microsoft.Authorization/roleDefinitions', '25fbc0a9-bd7c-42a3-aa1a-3b75d497ee68'), resourceId('Microsoft.CognitiveServices/accounts', parameters('aiServicesName')))]",
-              "properties": {
-                "principalId": "[reference(resourceId('Microsoft.MachineLearningServices/workspaces', parameters('aiProjectName')), '2023-08-01-preview', 'full').identity.principalId]",
-                "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', '25fbc0a9-bd7c-42a3-aa1a-3b75d497ee68')]",
-                "principalType": "ServicePrincipal"
-              },
-              "dependsOn": [
-                "[resourceId('Microsoft.MachineLearningServices/workspaces', parameters('aiProjectName'))]"
-              ]
-            },
-            {
-              "type": "Microsoft.Authorization/roleAssignments",
-              "apiVersion": "2022-04-01",
-              "scope": "[format('Microsoft.CognitiveServices/accounts/{0}', parameters('aiServicesName'))]",
-              "name": "[guid(resourceId('Microsoft.MachineLearningServices/workspaces', parameters('aiProjectName')), resourceId('Microsoft.Authorization/roleDefinitions', '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd'), resourceId('Microsoft.CognitiveServices/accounts', parameters('aiServicesName')))]",
-              "properties": {
-                "principalId": "[reference(resourceId('Microsoft.MachineLearningServices/workspaces', parameters('aiProjectName')), '2023-08-01-preview', 'full').identity.principalId]",
-                "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd')]",
-                "principalType": "ServicePrincipal"
-              },
-              "dependsOn": [
-                "[resourceId('Microsoft.MachineLearningServices/workspaces', parameters('aiProjectName'))]"
-              ]
-            },
-            {
-              "type": "Microsoft.Authorization/roleAssignments",
-              "apiVersion": "2022-04-01",
-              "scope": "[format('Microsoft.CognitiveServices/accounts/{0}', parameters('aiServicesName'))]",
-              "name": "[guid(resourceId('Microsoft.MachineLearningServices/workspaces', parameters('aiProjectName')), resourceId('Microsoft.Authorization/roleDefinitions', 'a97b65f3-24c7-4388-baec-2e87135dc908'), resourceId('Microsoft.CognitiveServices/accounts', parameters('aiServicesName')))]",
-              "properties": {
-                "principalId": "[reference(resourceId('Microsoft.MachineLearningServices/workspaces', parameters('aiProjectName')), '2023-08-01-preview', 'full').identity.principalId]",
-                "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', 'a97b65f3-24c7-4388-baec-2e87135dc908')]",
-                "principalType": "ServicePrincipal"
-              },
-              "dependsOn": [
-                "[resourceId('Microsoft.MachineLearningServices/workspaces', parameters('aiProjectName'))]"
-              ]
             }
           ],
           "outputs": {
@@ -690,19 +706,108 @@
               "type": "string",
               "value": "[resourceId('Microsoft.MachineLearningServices/workspaces', parameters('aiProjectName'))]"
             },
+            "aiProjectPrincipalId": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.MachineLearningServices/workspaces', parameters('aiProjectName')), '2024-10-01-preview', 'full').identity.principalId]"
+            },
             "aiProjectWorkspaceId": {
               "type": "string",
-              "value": "[reference(resourceId('Microsoft.MachineLearningServices/workspaces', parameters('aiProjectName')), '2023-08-01-preview').workspaceId]"
+              "value": "[reference(resourceId('Microsoft.MachineLearningServices/workspaces', parameters('aiProjectName')), '2024-10-01-preview').workspaceId]"
             },
             "projectConnectionString": {
               "type": "string",
-              "value": "[reference(resourceId('Microsoft.MachineLearningServices/workspaces', parameters('aiProjectName')), '2023-08-01-preview', 'full').tags.ProjectConnectionString]"
+              "value": "[reference(resourceId('Microsoft.MachineLearningServices/workspaces', parameters('aiProjectName')), '2024-10-01-preview', 'full').tags.ProjectConnectionString]"
             }
           }
         }
       },
       "dependsOn": [
         "[resourceId('Microsoft.Resources/deployments', format('ai-{0}-{1}-deployment', variables('name'), variables('uniqueSuffix')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "[format('ai-service-role-assignments-{0}-{1}-deployment', variables('projectName'), variables('uniqueSuffix'))]",
+      "subscriptionId": "[variables('aiServiceAccountSubscriptionId')]",
+      "resourceGroup": "[variables('aiServiceAccountResourceGroupName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "aiServicesName": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', format('dependencies-{0}-{1}-deployment', variables('name'), variables('uniqueSuffix'))), '2022-09-01').outputs.aiServicesName.value]"
+          },
+          "aiProjectPrincipalId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', format('ai-{0}-{1}-deployment', variables('projectName'), variables('uniqueSuffix'))), '2022-09-01').outputs.aiProjectPrincipalId.value]"
+          },
+          "aiProjectId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', format('ai-{0}-{1}-deployment', variables('projectName'), variables('uniqueSuffix'))), '2022-09-01').outputs.aiProjectResourceId.value]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.33.93.31351",
+              "templateHash": "16462974087505781196"
+            }
+          },
+          "parameters": {
+            "aiServicesName": {
+              "type": "string"
+            },
+            "aiProjectPrincipalId": {
+              "type": "string"
+            },
+            "aiProjectId": {
+              "type": "string"
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2022-04-01",
+              "scope": "[format('Microsoft.CognitiveServices/accounts/{0}', parameters('aiServicesName'))]",
+              "name": "[guid(resourceId('Microsoft.CognitiveServices/accounts', parameters('aiServicesName')), resourceId('Microsoft.Authorization/roleDefinitions', '25fbc0a9-bd7c-42a3-aa1a-3b75d497ee68'), parameters('aiProjectId'))]",
+              "properties": {
+                "principalId": "[parameters('aiProjectPrincipalId')]",
+                "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', '25fbc0a9-bd7c-42a3-aa1a-3b75d497ee68')]",
+                "principalType": "ServicePrincipal"
+              }
+            },
+            {
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2022-04-01",
+              "scope": "[format('Microsoft.CognitiveServices/accounts/{0}', parameters('aiServicesName'))]",
+              "name": "[guid(parameters('aiProjectId'), resourceId('Microsoft.Authorization/roleDefinitions', '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd'), resourceId('Microsoft.CognitiveServices/accounts', parameters('aiServicesName')))]",
+              "properties": {
+                "principalId": "[parameters('aiProjectPrincipalId')]",
+                "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd')]",
+                "principalType": "ServicePrincipal"
+              }
+            },
+            {
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2022-04-01",
+              "scope": "[format('Microsoft.CognitiveServices/accounts/{0}', parameters('aiServicesName'))]",
+              "name": "[guid(parameters('aiProjectId'), resourceId('Microsoft.Authorization/roleDefinitions', 'a97b65f3-24c7-4388-baec-2e87135dc908'), resourceId('Microsoft.CognitiveServices/accounts', parameters('aiServicesName')))]",
+              "properties": {
+                "principalId": "[parameters('aiProjectPrincipalId')]",
+                "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', 'a97b65f3-24c7-4388-baec-2e87135dc908')]",
+                "principalType": "ServicePrincipal"
+              }
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', format('dependencies-{0}-{1}-deployment', variables('name'), variables('uniqueSuffix')))]",
+        "[resourceId('Microsoft.Resources/deployments', format('ai-{0}-{1}-deployment', variables('projectName'), variables('uniqueSuffix')))]"
       ]
     }
   ],

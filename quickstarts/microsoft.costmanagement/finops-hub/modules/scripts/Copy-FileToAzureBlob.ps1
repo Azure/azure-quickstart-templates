@@ -28,6 +28,7 @@ if ($blob)
     Write-Output "---------"
     $json = $text | ConvertFrom-Json
     Write-Output "Existing settings.json file found. Updating..."
+
     # Rename exportScopes to scopes + convert to object array
     if ($json.exportScopes)
     {
@@ -35,7 +36,7 @@ if ($blob)
         if ($json.exportScopes[0] -is [string])
         {
             Write-Output "    Converting string array to object array..."
-            $json.exportScopes = $json.exportScopes | Where-Object $validateScopes | ForEach-Object { @{ scope = $_ } }
+            $json.exportScopes = @($json.exportScopes | Where-Object $validateScopes | ForEach-Object { @{ scope = $_ } })
             if (-not ($json.exportScopes -is [array]))
             {
                 Write-Output "    Converting single object to object array..."
@@ -46,6 +47,15 @@ if ($blob)
         Write-Output "    Renaming to 'scopes'..."
         $json | Add-Member -MemberType NoteProperty -Name scopes -Value $json.exportScopes
         $json.PSObject.Properties.Remove('exportScopes')
+    }
+
+    # Force string array to object array with unique values
+    if ($json.scopes)
+    {
+        Write-Output "  Converting string array to object array..."
+        $scopeArray = @()
+        $json.scopes | Where-Object $validateScopes | ForEach-Object { $scopeArray += $_ } | Select-Object -Unique
+        $json.scopes = @() + $scopeArray
     }
 }
 
@@ -81,8 +91,7 @@ if (!$json)
     Write-Output "---------"
 }
 
-# Set values from inputs
-$json.scopes = $env:scopes.Split('|') | ForEach-Object { @{ 'scope' = $_ } }
+# Set default retention
 if (!($json.retention))
 {
     # In case the retention object is not present in the settings.json file (versions before 0.4), add it with default values
@@ -148,20 +157,8 @@ else
 # Updating settings
 Write-Output "Updating version to $env:ftkVersion..."
 $json.version = $env:ftkVersion
-if ($newScopes)
-{
-    Write-Output "Merging $($newScopes.Count) scopes..."
-    $json.scopes = Compare-Object -ReferenceObject $json.scopes -DifferenceObject $newScopes -Property scope -PassThru -IncludeEqual
-
-    # Remove the SideIndicator property from the Compare-Object output
-    $json.scopes | ForEach-Object { $_.PSObject.Properties.Remove('SideIndicator') } | ConvertTo-Json
-
-    if (-not ($json.scopes -is [array]))
-    {
-        $json.scopes = @($json.scopes)
-    }
-    Write-Output "$($json.scopes.Count) scopes found."
-}
+$json.scopes = (@() + $json.scopes + $newScopes) | Select-Object -Unique
+if ($null -eq $json.scopes) { $json.scopes = @() }
 $text = $json | ConvertTo-Json
 Write-Output "---------"
 Write-Output $text
@@ -171,14 +168,3 @@ $text | Out-File $filePath
 # Upload new/updated settings
 Write-Output "Uploading settings.json file..."
 Set-AzStorageBlobContent @storageContext -File $filePath -Force | Out-Null
-
-# Save focusSchemaFile file to storage
-$schemaFiles = $env:schemaFiles | ConvertFrom-Json -Depth 10
-Write-Output "Uploading ${$schemaFiles.PSObject.Properties.Count} schema files..."
-$schemaFiles.PSObject.Properties | ForEach-Object {
-    $fileName = "$($_.Name).json"
-    $tempPath = "./$fileName"
-    Write-Output "  Uploading $($_.Name).json..."
-    $_.Value | Out-File $tempPath
-    Set-AzStorageBlobContent @storageContext -File $tempPath -Blob "schemas/$fileName" -Force | Out-Null
-}

@@ -1,4 +1,136 @@
-# Change log for Azure template SharePoint-ADFS
+# Change log for Azure template SharePoint
+
+## Unreleased
+
+## Enhancements & bug-fixes - Published in April 15, 2026
+
+### Changed
+
+- Value `Subscription-Latest` for parameter `sharePointVersion` now installs the April 2026 PU for SharePoint Subscription
+- This template now uses the DSC configurations published in repository https://github.com/Yvand/SharePointInfraDsc, specifically the [v2.3.0](https://github.com/Yvand/SharePointInfraDsc/releases/tag/releases%2Fv2.3.0). Major version 2 contains [significant improvements](https://github.com/Yvand/SharePointInfraDsc/blob/main/CHANGELOG.md).
+- Updates the version of Bicep modules and resources
+
+## Enhancements & bug-fixes - Published in December 5, 2025
+
+### Changed
+
+- Template
+  - Value `Subscription-Latest` for parameter `sharePointVersion` now installs the November 2025 CU for SharePoint Subscription
+  - Added value `Subscription-25H2` to parameter `sharePointVersion`, to install SharePoint Subscription version 25H2 (September 2025 CU)
+  - Switched to SQL Server 2025 on Windows Server 2025
+  - Bumped versions of Bicep resources and [Azure Verified Modules](https://azure.github.io/Azure-Verified-Modules/)
+  - Updated bicep module for virtual machines
+  - Updated pipConfiguration objects to use updated property names, and prevent error "-pip-01 does not support availability zones at location 'westus'"
+  - Updated outputs
+
+- All DSC configurations
+  - Updated DSC module **DnsServerDsc** from 3.0.0 to 3.0.1
+
+- DSC Configuration for all SharePoint VMs
+  - Removed Azure Data Studio (deprecated)
+  - Updated DSC module **SharePointDsc** from 5.6.0 to 5.7.0
+
+- DSC Configuration for SharePoint SE
+  - Re-enabled setting property IsPeoplePickerSearchable on selected profile properties, for use by UPA claims provider
+  - Remove the explicit TLS settings, not required with Windows Server 2025
+  - Added parameter DatabaseConnectionEncryption for resource SPFarm, required with  **SharePointDsc** 5.7.0 + 2025-08 PU+
+
+### Fixed
+
+- DSC Configuration for SharePoint SE
+  - Move script that runs GrantOwnerAccessToDatabaseAccount after all databases were created, and before any WFE server may connect to the farm, to fix SQL permission errors thrown at step 10/10 in SPS config wizard, when installing a CU post-provisionning
+
+- DSC Configuration for DC
+  - Explicitly install the Windows feature "Group Policy Management Console (GPMC)", to ensure cmdlets *-GPO are installed
+  - Allow a reboot before running ADDomain, as it became necessary after installing the Windows feature "Group Policy Management Console (GPMC)"
+
+## Enhancements & bug-fixes - Published in June 2, 2025
+
+### Changed
+
+- Template
+  - Bump versions of Bicep resources and [Azure Verified Modules](https://azure.github.io/Azure-Verified-Modules/)
+  - Value `Subscription-Latest` for parameter `sharePointVersion` now installs the May 2025 CU for SharePoint Subscription
+
+## Enhancements & bug-fixes - Published in April 24, 2025
+
+### Changed
+
+- Template
+  - Rewrite the entire template to create all the resources using [Azure Verified Modules](https://azure.github.io/Azure-Verified-Modules/)
+  - Parameter `enableAzureBastion` now deploys Azure Bastion Developer, which is available at no extra cost
+  - Value `Subscription-Latest` for parameter `sharePointVersion` now installs the April 2025 CU for SharePoint Subscription
+- DSC Configuration for all VMs
+  - Updated DSC module ActiveDirectoryDsc to 6.6.2 and remove all customizations on this module
+- DSC Configuration for SharePoint SE
+  - Move script that runs GrantOwnerAccessToDatabaseAccount, to run it just after the farm is created
+
+## Enhancements & bug-fixes - Published in March 14, 2025
+
+### Changed
+
+- Template
+  - Value `Subscription-Latest` for parameter `sharePointVersion` now installs the March 2025 CU for SharePoint Subscription
+  - Added value `Subscription-25H1` to parameter `sharePointVersion`, to install SharePoint Subscription version 25H1
+  - Fixed the Bicep warnings by using the safe access (.?) operator
+- DSC Configuration for all VMs
+  - Replace Write-Host with Write-Verbose, to print the log nessage in both the log file and the console
+  - Updated DSC module ComputerManagementDsc to 10.0.0
+- DSC Configuration for SharePoint
+  - Updated DSC module SharePointDsc to 5.6.1
+- DSC Configuration for SQL
+  - Configured the encryption of the SQL traffic, which is used autonmatically by SharePoint Subscription 25H1 and onward
+
+### Fixed
+
+- DSC Configuration for SharePoint 2016
+  - Add a temporary fix to workaround a regression on resource ADObjectPermissionEntry, introduced with module ActiveDirectoryDsc v6.6.0 (https://github.com/dsccommunity/ActiveDirectoryDsc/issues/724)
+
+## Enhancements & bug-fixes - Published in February 25, 2025
+
+### Changed
+
+- Template
+  - Value `Subscription-Latest` for parameter `sharePointVersion` now installs the February 2025 CU for SharePoint Subscription
+
+### Fixed
+
+- Template
+  - Fixed connecting to VMs through Azure Bastion
+- DSC Configuration for DC
+  - Removed NetConnectionProfile (to set the network interface as private) as it randomly causes errors
+- DSC Configuration for SPSE
+  - Install the LDAPCP solution as domain admin instead of setup account to improve the reliability
+  - Do not generate an error if creating LDAPCP configuration fails
+
+## Enhancements & bug-fixes - Published in January 17, 2025
+
+### Changed
+
+- Template
+  - Enabled [Trusted launch](https://learn.microsoft.com/azure/virtual-machines/trusted-launch-existing-vm), with secure boot and Virtual Trusted Platform Module, on all virtual machines except SharePoint 2016
+  - Added parameter `addNameToPublicIpAddresses`, to set which virtual machines have a public name associated to their public IP address.
+  - [BREAKING CHANGE] With the default value of new parameter `addNameToPublicIpAddresses` set to `SharePointVMsOnly`, now, only SharePoint VMs have a public name by default. Other VMs only have a public IP.
+  - Upgraded the virtual machines DC and SharePoint Subscription to Windows Server 2025.
+  - Changed the network configuration to use a single subnet for all the virtual machines. This avoids potential network issues due to Defender network access policies, which may block some traffic between subnets due to a JIT access configuration.
+  - Value `Subscription-Latest` for parameter `sharePointVersion` now installs the January 2025 CU for SharePoint Subscription
+
+- All DSC configurations
+  - Bumped DSC modules
+
+- DSC Configuration for SPSE
+  - Renamed root site to "root site"
+
+- DSC Configuration for DC
+  - Set the network interface as a private connection
+
+## Enhancements & bug-fixes - Published in December 18, 2024
+
+### Changed
+
+- Template
+  - Update the default size of the virtual machines to use the [Basv2 series](https://learn.microsoft.com/en-us/azure/virtual-machines/sizes/general-purpose/basv2-series?tabs=sizebasic). It is newer, cheaper and more performant than the [Bv1 series](https://learn.microsoft.com/en-us/azure/virtual-machines/sizes/general-purpose/bv1-series?tabs=sizebasic) used until now.
+  - Value `Subscription-Latest` for parameter `sharePointVersion` now installs the December 2024 CU for SharePoint Subscription
 
 ## Enhancements & bug-fixes - Published in November 19, 2024
 
@@ -579,7 +711,7 @@
 
 ## March 2017.3 update
 
-- Azure key vault and its secrets are now created by the deployment script itself, removing the dependency to the PowerShell deployment script
+- Azure Key Vault and its secrets are now created by the deployment script itself, removing the dependency to the PowerShell deployment script
 - Removed nested templates
 
 ## March 2017.2 update
