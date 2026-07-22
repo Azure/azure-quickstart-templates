@@ -131,20 +131,31 @@ jobs:
             ]);
 
             const assoc = prData.data.author_association;
-            const protectedFiles = [
-              ".github/workflows/ValidateSampleDeployments.yml",
-              ".github/agents/summarizer.agent.md"
+
+            // Any file executed with the privileged token/OIDC of this
+            // workflow (via checkout of PR HEAD) must be listed here so
+            // fork PRs cannot substitute a malicious version. Directory
+            // entries end with "/" and match by prefix; file entries
+            // match exactly. See ICM 31000000643564.
+            const protectedDirs = [
+              ".github/workflows/",
+              ".github/scripts/",
+              ".github/actions/",
+              ".github/agents/",
             ];
-            const touched = files.some(f =>
-              protectedFiles.some(pf => f.filename === pf || f.filename.endsWith("/" + pf.split("/").pop()))
-            );
+            const protectedFiles = [
+              ".github/CODEOWNERS",
+            ];
+            const isProtected = (name) =>
+              protectedDirs.some(d => name.startsWith(d)) ||
+              protectedFiles.includes(name);
+
+            const touchedNames = files.map(f => f.filename).filter(isProtected);
+            const touched = touchedNames.length > 0;
 
             core.info(`PR author_association=${assoc}; protected files touched=${touched}`);
 
             if (touched && !allowed.has(assoc)) {
-              const touchedNames = files
-                .filter(f => protectedFiles.some(pf => f.filename === pf || f.filename.endsWith("/" + pf.split("/").pop())))
-                .map(f => f.filename);
               core.setFailed(
                 `Blocked: protected file(s) ${touchedNames.join(', ')} modified by PR author with ` +
                 `author_association='${assoc}'. Only MEMBER or OWNER may modify these files.`
@@ -1450,7 +1461,8 @@ jobs:
               );
             }
 
-      - name: Safeguard – block ValidateSampleDeployments.yml edits by non MEMBER/OWNER
+      - name: Safeguard – block protected-file edits by non MEMBER/OWNER
+        id: safeguard
         uses: actions/github-script@v7
         with:
           script: |
@@ -1468,20 +1480,38 @@ jobs:
             ]);
 
             const assoc = prData.data.author_association;
-            const protectedFiles = [
-              ".github/workflows/ValidateSampleDeployments.yml",
-              ".github/agents/summarizer.agent.md"
+
+            // Any file executed with the privileged token/OIDC of this
+            // workflow (via checkout of PR HEAD) must be listed here so
+            // fork PRs cannot substitute a malicious version. Directory
+            // entries end with "/" and match by prefix; file entries
+            // match exactly. See ICM 31000000643564.
+            const protectedDirs = [
+              ".github/workflows/",
+              ".github/scripts/",
+              ".github/actions/",
+              ".github/agents/",
             ];
-            const touched = files.some(f =>
-              protectedFiles.some(pf => f.filename === pf || f.filename.endsWith("/" + pf.split("/").pop()))
-            );
+            const protectedFiles = [
+              ".github/CODEOWNERS",
+            ];
+            const isProtected = (name) =>
+              protectedDirs.some(d => name.startsWith(d)) ||
+              protectedFiles.includes(name);
+
+            const touchedNames = files.map(f => f.filename).filter(isProtected);
+            const touched = touchedNames.length > 0;
 
             core.info(`PR author_association=${assoc}; protected files touched=${touched}`);
 
+            // Pin the head SHA observed here so the subsequent PR-HEAD
+            // checkout resolves to the same commit the safeguard just
+            // evaluated. Closes the TOCTOU window on refs/pull/N/head.
+            const headSha = prData.data.head.sha;
+            core.setOutput("head_sha", headSha);
+            core.info(`Pinned PR head SHA for downstream checkout: ${headSha}`);
+
             if (touched && !allowed.has(assoc)) {
-              const touchedNames = files
-                .filter(f => protectedFiles.some(pf => f.filename === pf || f.filename.endsWith("/" + pf.split("/").pop())))
-                .map(f => f.filename);
               core.setFailed(
                 `Blocked: protected file(s) ${touchedNames.join(', ')} modified by PR author with ` +
                 `author_association='${assoc}'. Only MEMBER or OWNER may modify these files.`
@@ -1492,7 +1522,7 @@ jobs:
         if: steps.preflight.outputs.skip != 'true'
         uses: actions/checkout@v4
         with:
-          ref: refs/pull/${{ steps.pr.outputs.number }}/head
+          ref: ${{ steps.safeguard.outputs.head_sha }}
 
       # Paginate PR changed files to locate the single added/modified metadata.json
       - name: Find metadata.json from PR changed files
