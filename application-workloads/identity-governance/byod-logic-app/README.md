@@ -201,23 +201,22 @@ After deploying the Logic App and assigning the required API permissions, you ne
 
 3. **Link the Logic App** — When configuring the CDPR, select the **Resource Group** where you deployed the Logic App, then pick the Logic App by name from the dropdown. This binds the Logic App's HTTP trigger endpoint as the callback URL for the BYOD flow.
 
-4. **Create an Access Package** — Still within the same catalog, create (or update) an **Access Package** and add the CDPR as a resource. Configure an **Access Review** policy on the package. When the Access Review runs, Entitlement Management will automatically call the Logic App with the appropriate trigger payload (`catalogId`, `resourceId`, and `data`) to start the BYOD data upload.
-
 ### Steps (Microsoft Graph API)
 
-You can also attach the Logic App to a CDPR programmatically using the Microsoft Graph beta API. All requests below use the endpoint `https://graph.microsoft.com/beta` and require a bearer token with the `EntitlementManagement.ReadWrite.All` permission.
+You can also attach the Logic App to a CDPR programmatically using the Microsoft Graph API. All requests below use the endpoint `https://graph.microsoft.com/v1.0` and require a bearer token with the `EntitlementManagement.ReadWrite.All` permission.
 
 #### 1. Create a catalog (skip if you already have one)
 
 ```http
-POST https://graph.microsoft.com/beta/identityGovernance/entitlementManagement/accessPackageCatalogs
+POST https://graph.microsoft.com/v1.0/identityGovernance/entitlementManagement/catalogs
 Content-Type: application/json
 Authorization: Bearer <token>
 
 {
   "displayName": "My BYOD Catalog",
   "description": "Catalog for BYOD resources",
-  "isExternallyVisible": false
+  "state": "published",
+  "isExternallyVisible": true
 }
 ```
 
@@ -228,13 +227,13 @@ Save the `id` from the response — this is your `catalogId`.
 This creates the Custom Data Provided Resource and configures the Logic App as the notification endpoint in a single request:
 
 ```http
-POST https://graph.microsoft.com/beta/identityGovernance/entitlementManagement/accessPackageResourceRequests
+POST https://graph.microsoft.com/v1.0/identityGovernance/entitlementManagement/resourceRequests
 Content-Type: application/json
 Authorization: Bearer <token>
 
 {
-  "catalogId": "<catalogId>",
-  "accessPackageResource": {
+  "requestType": "adminAdd",
+  "resource": {
     "@odata.type": "#microsoft.graph.customDataProvidedResource",
     "displayName": "BYOD Data Provider",
     "description": "Uploads external data via Logic App for Access Reviews",
@@ -248,7 +247,9 @@ Authorization: Bearer <token>
       "url": "<logic-app-trigger-url>"
     }
   },
-  "requestType": "AdminAdd"
+  "catalog": {
+    "id": "<catalogId>"
+  }
 }
 ```
 
@@ -266,13 +267,13 @@ Authorization: Bearer <token>
 If you already created a CDPR without a notification endpoint, you can update it:
 
 ```http
-POST https://graph.microsoft.com/beta/identityGovernance/entitlementManagement/accessPackageResourceRequests
+POST https://graph.microsoft.com/v1.0/identityGovernance/entitlementManagement/resourceRequests
 Content-Type: application/json
 Authorization: Bearer <token>
 
 {
-  "catalogId": "<catalogId>",
-  "accessPackageResource": {
+  "requestType": "adminUpdate",
+  "resource": {
     "@odata.type": "#microsoft.graph.customDataProvidedResource",
     "displayName": "<existing-cdpr-display-name>",
     "description": "<existing-cdpr-description>",
@@ -286,16 +287,18 @@ Authorization: Bearer <token>
       "url": "<logic-app-trigger-url>"
     }
   },
-  "requestType": "AdminUpdate"
+  "catalog": {
+    "id": "<catalogId>"
+  }
 }
 ```
 
-> **Note:** The `requestType` is `"AdminUpdate"` instead of `"AdminAdd"`. The `originId`, `displayName`, and `description` must match the existing CDPR.
+> **Note:** The `requestType` is `"adminUpdate"` instead of `"adminAdd"`. The `originId`, `displayName`, and `description` must match the existing CDPR.
 
 #### 3. Verify the CDPR was created
 
 ```http
-GET https://graph.microsoft.com/beta/identityGovernance/entitlementManagement/accessPackageCatalogs/<catalogId>/accessPackageResources?$filter=originSystem eq 'CustomDataProvidedResource'
+GET https://graph.microsoft.com/v1.0/identityGovernance/entitlementManagement/catalogs/<catalogId>/resources?$filter=originSystem eq 'CustomDataProvidedResource'
 Authorization: Bearer <token>
 ```
 
