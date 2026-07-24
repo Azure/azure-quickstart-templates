@@ -24,7 +24,7 @@ param workspaceName string = 'ws-${uniqueString(resourceGroup().id)}'
 @description('Name of the Chat Model Deployment created under the Workspace.')
 @minLength(3)
 @maxLength(24)
-param chatModelDeploymentName string = 'gpt-5-2'
+param chatModelDeploymentName string = 'gpt-5-4'
 
 @description('Name of the Microsoft Discovery Storage Container resource. Must be 3-24 characters, alphanumeric and hyphens only.')
 @minLength(3)
@@ -36,8 +36,10 @@ param storageContainerName string = 'stc-${uniqueString(resourceGroup().id)}'
 @maxLength(24)
 param projectName string = 'prj-${uniqueString(resourceGroup().id)}'
 
-@description('Name of the Virtual Network.')
-param vnetName string = 'vnet-${uniqueString(resourceGroup().id)}'
+@description('Name of the Virtual Network. Must be 2-64 characters: letters, numbers, underscores, periods, or hyphens; must start with a letter or number and end with a letter, number, or underscore.')
+@minLength(2)
+@maxLength(64)
+param vnetName string = 'discovery-vnet'
 
 @description('Name of the User-Assigned Managed Identity.')
 param managedIdentityName string = 'uami-${uniqueString(resourceGroup().id)}'
@@ -49,6 +51,16 @@ param storageAccountName string = 'stg${uniqueString(resourceGroup().id)}'
 
 @description('Name of the blob container inside the Storage Account used for Discovery outputs.')
 param blobContainerName string = 'discoveryoutputs'
+
+@description('Replication SKU for the Storage Account. Zone/geo-redundant options are recommended over locally-redundant storage for resiliency.')
+@allowed([
+  'Standard_ZRS'
+  'Standard_GRS'
+  'Standard_GZRS'
+  'Standard_RAGRS'
+  'Standard_RAGZRS'
+])
+param storageAccountSku string = 'Standard_GRS'
 
 @description('Address space for the Virtual Network.')
 param vnetAddressPrefix string = '10.0.0.0/16'
@@ -93,7 +105,7 @@ param nodePoolScaleSetPriority string = 'Regular'
 param chatModelFormat string = 'OpenAI'
 
 @description('Chat model name to deploy.')
-param chatModelName string = 'gpt-5.2'
+param chatModelName string = 'gpt-5.4'
 
 @description('Enable GitHub Copilot and AI features in the Discovery workspace via the discovery.workbench.enableGhcpAiFeatures tag.')
 param enableGhcpAiFeatures bool = true
@@ -102,7 +114,7 @@ param enableGhcpAiFeatures bool = true
 param enableExtensions bool = true
 
 @description('Workspace network isolation mode via the NetworkIsolation tag. Set to false to enable public preview access as documented in the Infrastructure portal quickstart.')
-param networkIsolation bool = false
+param networkIsolation bool = true
 
 // Built-in role definition IDs
 var storageBlobDataContributorRoleId = 'ba92f5b4-2d11-453d-a403-e96b0029c9fe'
@@ -123,12 +135,22 @@ resource vnet 'Microsoft.Network/virtualNetworks@2024-05-01' = {
         name: 'supercomputerNodepoolSubnet'
         properties: {
           addressPrefix: supercomputerNodepoolSubnetPrefix
+          serviceEndpoints: [
+            {
+              service: 'Microsoft.Storage'
+            }
+          ]
         }
       }
       {
         name: 'aksSubnet'
         properties: {
           addressPrefix: aksSubnetPrefix
+          serviceEndpoints: [
+            {
+              service: 'Microsoft.Storage'
+            }
+          ]
         }
       }
       {
@@ -141,6 +163,11 @@ resource vnet 'Microsoft.Network/virtualNetworks@2024-05-01' = {
               properties: {
                 serviceName: 'Microsoft.App/environments'
               }
+            }
+          ]
+          serviceEndpoints: [
+            {
+              service: 'Microsoft.Storage'
             }
           ]
         }
@@ -163,6 +190,11 @@ resource vnet 'Microsoft.Network/virtualNetworks@2024-05-01' = {
               }
             }
           ]
+          serviceEndpoints: [
+            {
+              service: 'Microsoft.Storage'
+            }
+          ]
         }
       }
       {
@@ -175,6 +207,11 @@ resource vnet 'Microsoft.Network/virtualNetworks@2024-05-01' = {
               properties: {
                 serviceName: 'Microsoft.App/environments'
               }
+            }
+          ]
+          serviceEndpoints: [
+            {
+              service: 'Microsoft.Storage'
             }
           ]
         }
@@ -196,14 +233,44 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2023-05-01' = {
   location: location
   kind: 'StorageV2'
   sku: {
-    name: 'Standard_LRS'
+    name: storageAccountSku
   }
+  dependsOn: [
+    vnet
+  ]
   properties: {
     accessTier: 'Hot'
     allowBlobPublicAccess: false
     allowSharedKeyAccess: false
     minimumTlsVersion: 'TLS1_2'
     supportsHttpsTrafficOnly: true
+    // NOTE: defaultAction is intentionally 'Allow'. 
+    networkAcls: {
+      defaultAction: 'Allow'
+      bypass: 'AzureServices'
+      virtualNetworkRules: [
+        {
+          id: resourceId('Microsoft.Network/virtualNetworks/subnets', vnetName, 'supercomputerNodepoolSubnet')
+          action: 'Allow'
+        }
+        {
+          id: resourceId('Microsoft.Network/virtualNetworks/subnets', vnetName, 'aksSubnet')
+          action: 'Allow'
+        }
+        {
+          id: resourceId('Microsoft.Network/virtualNetworks/subnets', vnetName, 'workspaceSubnet')
+          action: 'Allow'
+        }
+        {
+          id: resourceId('Microsoft.Network/virtualNetworks/subnets', vnetName, 'agentSubnet')
+          action: 'Allow'
+        }
+        {
+          id: resourceId('Microsoft.Network/virtualNetworks/subnets', vnetName, 'searchSubnet')
+          action: 'Allow'
+        }
+      ]
+    }
   }
 }
 
@@ -241,6 +308,9 @@ resource blobServices 'Microsoft.Storage/storageAccounts/blobServices@2023-05-01
 resource blobContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-05-01' = {
   parent: blobServices
   name: blobContainerName
+  properties: {
+    publicAccess: 'None'
+  }
 }
 
 resource storageBlobDataContributorAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {

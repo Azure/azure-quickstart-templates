@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.41.2.15936",
-      "templateHash": "14496888216474008546"
+      "templateHash": "8768352531566673814"
     }
   },
   "parameters": {
@@ -50,7 +50,7 @@
     },
     "chatModelDeploymentName": {
       "type": "string",
-      "defaultValue": "gpt-5-2",
+      "defaultValue": "gpt-5-4",
       "minLength": 3,
       "maxLength": 24,
       "metadata": {
@@ -77,9 +77,11 @@
     },
     "vnetName": {
       "type": "string",
-      "defaultValue": "[format('vnet-{0}', uniqueString(resourceGroup().id))]",
+      "defaultValue": "discovery-vnet",
+      "minLength": 2,
+      "maxLength": 64,
       "metadata": {
-        "description": "Name of the Virtual Network."
+        "description": "Name of the Virtual Network. Must be 2-64 characters: letters, numbers, underscores, periods, or hyphens; must start with a letter or number and end with a letter, number, or underscore."
       }
     },
     "managedIdentityName": {
@@ -103,6 +105,20 @@
       "defaultValue": "discoveryoutputs",
       "metadata": {
         "description": "Name of the blob container inside the Storage Account used for Discovery outputs."
+      }
+    },
+    "storageAccountSku": {
+      "type": "string",
+      "defaultValue": "Standard_GRS",
+      "allowedValues": [
+        "Standard_ZRS",
+        "Standard_GRS",
+        "Standard_GZRS",
+        "Standard_RAGRS",
+        "Standard_RAGZRS"
+      ],
+      "metadata": {
+        "description": "Replication SKU for the Storage Account. Zone/geo-redundant options are recommended over locally-redundant storage for resiliency."
       }
     },
     "vnetAddressPrefix": {
@@ -197,7 +213,7 @@
     },
     "chatModelName": {
       "type": "string",
-      "defaultValue": "gpt-5.2",
+      "defaultValue": "gpt-5.4",
       "metadata": {
         "description": "Chat model name to deploy."
       }
@@ -218,7 +234,7 @@
     },
     "networkIsolation": {
       "type": "bool",
-      "defaultValue": false,
+      "defaultValue": true,
       "metadata": {
         "description": "Workspace network isolation mode via the NetworkIsolation tag. Set to false to enable public preview access as documented in the Infrastructure portal quickstart."
       }
@@ -245,13 +261,23 @@
           {
             "name": "supercomputerNodepoolSubnet",
             "properties": {
-              "addressPrefix": "[parameters('supercomputerNodepoolSubnetPrefix')]"
+              "addressPrefix": "[parameters('supercomputerNodepoolSubnetPrefix')]",
+              "serviceEndpoints": [
+                {
+                  "service": "Microsoft.Storage"
+                }
+              ]
             }
           },
           {
             "name": "aksSubnet",
             "properties": {
-              "addressPrefix": "[parameters('aksSubnetPrefix')]"
+              "addressPrefix": "[parameters('aksSubnetPrefix')]",
+              "serviceEndpoints": [
+                {
+                  "service": "Microsoft.Storage"
+                }
+              ]
             }
           },
           {
@@ -264,6 +290,11 @@
                   "properties": {
                     "serviceName": "Microsoft.App/environments"
                   }
+                }
+              ],
+              "serviceEndpoints": [
+                {
+                  "service": "Microsoft.Storage"
                 }
               ]
             }
@@ -285,6 +316,11 @@
                     "serviceName": "Microsoft.App/environments"
                   }
                 }
+              ],
+              "serviceEndpoints": [
+                {
+                  "service": "Microsoft.Storage"
+                }
               ]
             }
           },
@@ -298,6 +334,11 @@
                   "properties": {
                     "serviceName": "Microsoft.App/environments"
                   }
+                }
+              ],
+              "serviceEndpoints": [
+                {
+                  "service": "Microsoft.Storage"
                 }
               ]
             }
@@ -321,15 +362,44 @@
       "location": "[parameters('location')]",
       "kind": "StorageV2",
       "sku": {
-        "name": "Standard_LRS"
+        "name": "[parameters('storageAccountSku')]"
       },
       "properties": {
         "accessTier": "Hot",
         "allowBlobPublicAccess": false,
         "allowSharedKeyAccess": false,
         "minimumTlsVersion": "TLS1_2",
-        "supportsHttpsTrafficOnly": true
-      }
+        "supportsHttpsTrafficOnly": true,
+        "networkAcls": {
+          "defaultAction": "Allow",
+          "bypass": "AzureServices",
+          "virtualNetworkRules": [
+            {
+              "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), 'supercomputerNodepoolSubnet')]",
+              "action": "Allow"
+            },
+            {
+              "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), 'aksSubnet')]",
+              "action": "Allow"
+            },
+            {
+              "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), 'workspaceSubnet')]",
+              "action": "Allow"
+            },
+            {
+              "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), 'agentSubnet')]",
+              "action": "Allow"
+            },
+            {
+              "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), 'searchSubnet')]",
+              "action": "Allow"
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+      ]
     },
     {
       "type": "Microsoft.Storage/storageAccounts/blobServices",
@@ -369,6 +439,9 @@
       "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
       "apiVersion": "2023-05-01",
       "name": "[format('{0}/{1}/{2}', parameters('storageAccountName'), 'default', parameters('blobContainerName'))]",
+      "properties": {
+        "publicAccess": "None"
+      },
       "dependsOn": [
         "[resourceId('Microsoft.Storage/storageAccounts/blobServices', parameters('storageAccountName'), 'default')]"
       ]
