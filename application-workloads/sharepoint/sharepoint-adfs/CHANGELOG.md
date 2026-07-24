@@ -2,6 +2,31 @@
 
 ## Unreleased
 
+## Enhancements & bug-fixes - Published in July 20, 2026
+
+### Changed
+
+- Template
+  - Updated bicep modules and resources to their latest version
+  - Value `Subscription-Latest` for parameter `sharePointVersion` now installs the July 2026 CU for SharePoint Subscription
+- DSC
+
+## Enhancements & bug-fixes - Published in June 16, 2026
+
+### Added
+
+- Template
+  - Added parameter `customSharePointConfiguration`, to choose what SharePoint features will be configured in the farm
+
+### Changed
+
+- Template
+  - **BREAKING CHANGE**: Renamed parameter `enableAzureBastion` to `addBastion`
+  - Updated bicep modules and resources to their latest version
+  - Value `Subscription-Latest` for parameter `sharePointVersion` now installs the June 2026 CU for SharePoint Subscription
+- DSC
+  - Updated the DSC configurations published in repository https://github.com/Yvand/SharePointInfraDsc to [v3.1.1](https://github.com/Yvand/SharePointInfraDsc/releases/tag/releases%2Fv3.1.1) over [v2.3.0](https://github.com/Yvand/SharePointInfraDsc/releases/tag/releases%2Fv2.3.0) ([seee changelog](https://github.com/Yvand/SharePointInfraDsc/blob/main/CHANGELOG.md)).
+
 ## Enhancements & bug-fixes - Published in April 15, 2026
 
 ### Changed
