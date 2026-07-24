@@ -8,23 +8,19 @@ configuration ConfigSpFrontend
         [Parameter(Mandatory)] [String]$SQLServerName,
         [Parameter(Mandatory)] [String]$SQLAlias,
         [Parameter(Mandatory)] [SharePointBuild] $SharePointVersion,
-        [Parameter(Mandatory)] [String]$SharePointSitesAuthority,
         [Parameter(Mandatory)] [Boolean]$EnableAnalysis,
         [Parameter(Mandatory)] [SharePointBuildInfo[]] $SharePointBits,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$DomainAdminCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSetupCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPFarmCreds,
-        [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPPassphraseCreds,
-        [Parameter(Mandatory = $false)] [Boolean] $DefaultZoneMustBeHttps = $false,
-        [Parameter(Mandatory = $false)] [ConfigurationLevel] $ConfigurationLevel = [ConfigurationLevel]::Full
+        [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPPassphraseCreds
     )
 
     Import-DscResource -ModuleName ComputerManagementDsc -ModuleVersion 10.0.0
     Import-DscResource -ModuleName NetworkingDsc -ModuleVersion 9.1.0
     Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion 6.7.1
     Import-DscResource -ModuleName WebAdministrationDsc -ModuleVersion 4.2.1
-    Import-DscResource -ModuleName SharePointDsc -ModuleVersion 5.7.0 # Custom workaround on SPInstall and SPInstallPrereqs
-    Import-DscResource -ModuleName DnsServerDsc -ModuleVersion 3.0.3
+    Import-DscResource -ModuleName SharePointDsc -ModuleVersion 5.7.1
     Import-DscResource -ModuleName CertificateDsc -ModuleVersion 6.0.0
     Import-DscResource -ModuleName SqlServerDsc -ModuleVersion 17.5.1 # Custom workaround on SqlSecureConnection
     Import-DscResource -ModuleName cChoco -ModuleVersion 2.6.0.0    # With custom changes to implement retry on package downloads
@@ -42,34 +38,6 @@ configuration ConfigSpFrontend
     [System.Management.Automation.PSCredential] $DomainAdminCredsQualified = New-Object System.Management.Automation.PSCredential ("$($DomainNetbiosName)\$($DomainAdminCreds.UserName)", $DomainAdminCreds.Password)
     [System.Management.Automation.PSCredential] $SPSetupCredsQualified = New-Object System.Management.Automation.PSCredential ("$($DomainNetbiosName)\$($SPSetupCreds.UserName)", $SPSetupCreds.Password)
     [System.Management.Automation.PSCredential] $SPFarmCredsQualified = New-Object System.Management.Automation.PSCredential ("$($DomainNetbiosName)\$($SPFarmCreds.UserName)", $SPFarmCreds.Password)
-
-    #################### DUPLICATED ####################
-    # Provisioning options - set to $true to provision, $false to skip provisioning of the corresponding component. These are set based on the selected configuration level, but can be overridden by setting them directly.
-    [Boolean] $ProvisionStateServiceApplication = $false
-    [Boolean] $ProvisionTrustedAuthentication = $false
-    [Boolean] $ProvisionUserProfilesService = $false
-    [Boolean] $ProvisionAddins = $false
-    [Boolean] $ProvisionHnscSites = $false
-    [Boolean] $ProvisionExtendedZone = $false
-    if ($ConfigurationLevel -ge [ConfigurationLevel]::Minimum) {}
-    if ($ConfigurationLevel -ge [ConfigurationLevel]::Light) {
-        $ProvisionStateServiceApplication = $true
-        $ProvisionTrustedAuthentication = $true
-    }
-    if ($ConfigurationLevel -ge [ConfigurationLevel]::Medium) {
-        $ProvisionUserProfilesService = $true
-        $ProvisionExtendedZone = $true
-    }
-    if ($ConfigurationLevel -ge [ConfigurationLevel]::Full) {
-        $ProvisionAddins = $true
-        $ProvisionHnscSites = $true
-    }
-
-    # Final value for $DefaultZoneMustBeHttps must be set before setting $WebApplicationUrl
-    if ($ProvisionTrustedAuthentication -and -not $ProvisionExtendedZone) {
-        $DefaultZoneMustBeHttps = $true
-    }
-    #################### DUPLICATED ####################
     
     # Setup settings
     [String] $SetupPath = "C:\DSC Data"
@@ -80,13 +48,12 @@ configuration ConfigSpFrontend
     [String] $SharePointIsoDriveLetter = "S"
     [String] $AdfsDnsEntryName = "adfs"
     [String] $NonceCookieCertificateFileName = "SharePoint OIDC nonce cert.pfx"
+    [String] $SharePointFarmReadyDnsTxtName = "SharePointFarmReady"
 
     # SharePoint settings
     [String] $SPDBPrefix = "SPDSC_"
     [String] $MySiteHostAlias = "OhMy"
     [String] $HNSC1Alias = "HNSC1"
-    [String] $WebApplicationUrl = if ($DefaultZoneMustBeHttps) { "https://$SharePointSitesAuthority.$DomainFQDN" } else { "http://$SharePointSitesAuthority" }
-    [String] $FarmReadinessTestUrl = "$WebApplicationUrl/sites/team"
 
     Node localhost
     {
@@ -474,25 +441,6 @@ configuration ConfigSpFrontend
             DependsOn  = "[DnsServerAddress]SetDNS"
         }
 
-        # # If WaitForADDomain does not find the domain whtin "WaitTimeout" secs, it will signar a restart to DSC engine "RestartCount" times
-        # WaitForADDomain WaitForDCReady
-        # {
-        #     DomainName              = $DomainFQDN
-        #     WaitTimeout             = 1800
-        #     RestartCount            = 2
-        #     WaitForValidCredentials = $True
-        #     Credential              = $DomainAdminCredsQualified
-        #     DependsOn               = "[DnsServerAddress]SetDNS"
-        # }
-
-        # # WaitForADDomain sets reboot signal only if WaitForADDomain did not find domain within "WaitTimeout" secs
-        # PendingReboot RebootOnSignalFromWaitForDCReady
-        # {
-        #     Name             = "RebootOnSignalFromWaitForDCReady"
-        #     SkipCcmClientSDK = $true
-        #     DependsOn        = "[WaitForADDomain]WaitForDCReady"
-        # }
-
         Computer JoinDomain {
             Name       = $ComputerName
             DomainName = $DomainFQDN
@@ -562,6 +510,15 @@ configuration ConfigSpFrontend
             DependsOn            = "[cChocoInstaller]InstallChoco", "[PendingReboot]RebootOnSignalFromJoinDomain"
         }
 
+        # Setup account is created by SP VM so it must be added to local admins group after the waiting script, to be sure it was created
+        Group AddSPSetupAccountToAdminGroup {
+            GroupName            = "Administrators"
+            Ensure               = "Present"
+            MembersToInclude     = @("$($SPSetupCredsQualified.UserName)")
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+            DependsOn            = "[PendingReboot]RebootOnSignalFromJoinDomain"
+        }
+
         #********************************************************************
         # Wait for SharePoint app server to be ready
         #********************************************************************
@@ -573,60 +530,37 @@ configuration ConfigSpFrontend
             GetScript  = { } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
             TestScript = { return $false } # If the TestScript returns $false, DSC executes the SetScript to bring the node back to the desired state
         }
-
-        # The best test is to check the latest HTTP team site to be created, after all SharePoint services are provisioned.
-        # If this server joins the farm while a SharePoint service is being created on the 1st server, it may block its creation forever.
-        # Not testing HTTPS avoid potential issues with the root CA cert maybe not present in the machine store yet
-        Script WaitForSPFarmReadyToJoin {
+        
+        # Wait for DNS TXT record SPFarmReady to be present before joining the farm
+        Script WaitForDNSTxtRecordSPFarmReady {
             SetScript            =
             {
-                $uri = $using:FarmReadinessTestUrl
+                $dnsServer = $using:DCServerName
+                $domainFQDN = $using:DomainFQDN
+                $txtRecordName = $using:SharePointFarmReadyDnsTxtName
                 $sleepTime = 30
-                $currentStatusCode = 0
-                $expectedStatusCode = 200
+                $recordFound = $false
+                
+                Write-Verbose -Verbose -Message "Waiting for DNS TXT record '$txtRecordName' in domain '$domainFQDN' on DNS server '$dnsServer'..."
                 do {
-                    try {
-                        Write-Verbose -Verbose -Message "Trying to connect to $uri..."
-                        # -UseDefaultCredentials: Does NTLM authN
-                        # -UseBasicParsing: Avoid exception because IE was not first launched yet
-                        $Response = Invoke-WebRequest -UseBasicParsing -Uri $uri -UseDefaultCredentials -TimeoutSec 10 -ErrorAction Stop
-                        # When it will be actually ready, site will respond 401/302/200, and $Response.StatusCode will be 200
-                        $currentStatusCode = $Response.StatusCode
-                    }
-                    catch [System.Net.WebException] {
-                        # We always expect a WebException until site is actually up. 
-                        # Write-Verbose -Verbose -Message "Request failed with a WebException: $($_.Exception)"
-                        if ($null -ne $_.Exception.Response) {
-                            $currentStatusCode = $_.Exception.Response.StatusCode.value__
-                        }
-                    }
-                    catch {
-                        Write-Verbose -Verbose -Message "Request failed with an unexpected exception: $($_.Exception)"
-                    }
-
-                    if ($currentStatusCode -ne $expectedStatusCode) {
-                        Write-Verbose -Verbose -Message "Connection to $uri... returned status code $currentStatusCode while $expectedStatusCode is expected, retrying in $sleepTime secs..."
-                        Start-Sleep -Seconds $sleepTime
+                    $txtRecords = Resolve-DnsName -Name "$txtRecordName.$domainFQDN" -Type TXT -Server $dnsServer -ErrorAction SilentlyContinue
+                    if ($null -ne $txtRecords) {
+                        $recordFound = $true
+                        Write-Verbose -Verbose -Message "DNS TXT record '$txtRecordName' found in domain '$domainFQDN'"
                     }
                     else {
-                        Write-Verbose -Verbose -Message "Connection to $uri... returned expected status code $currentStatusCode, exiting..."
+                        Write-Verbose -Verbose -Message "DNS TXT record '$txtRecordName' not found yet, retrying in $sleepTime secs..."
+                        Start-Sleep -Seconds $sleepTime
                     }
-                } while ($currentStatusCode -ne $expectedStatusCode)
+                } while (-not $recordFound)
             }
-            GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-            TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+            GetScript            = { return @{ "Result" = "false" } }
+            TestScript           = { return $false }
             PsDscRunAsCredential = $DomainAdminCredsQualified
             DependsOn            = "[Script]CreateWSManSPNsIfNeeded"
         }
 
-        # Setup account is created by SP VM so it must be added to local admins group after the waiting script, to be sure it was created
-        Group AddSPSetupAccountToAdminGroup {
-            GroupName            = "Administrators"
-            Ensure               = "Present"
-            MembersToInclude     = @("$($SPSetupCredsQualified.UserName)")
-            PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[Script]WaitForSPFarmReadyToJoin"
-        }
+        
 
         # Update GPO to ensure the root certificate of the CA is present in "cert:\LocalMachine\Root\", otherwise certificate request will fail
         # At this point it is safe to assume that the DC finished provisioning AD CS
@@ -650,7 +584,7 @@ configuration ConfigSpFrontend
                     return $true    # Root CA already present
                 }
             }
-            DependsOn            = "[Script]WaitForSPFarmReadyToJoin"
+            DependsOn            = "[Script]WaitForDNSTxtRecordSPFarmReady"
             PsDscRunAsCredential = $DomainAdminCredsQualified
         }
 
@@ -678,7 +612,7 @@ configuration ConfigSpFrontend
                 return (Test-Path HKLM:\SOFTWARE\DscScriptExecution\Flag_WaitToAvoidServersJoiningFarmSimultaneously)
             }
             PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[Group]AddSPSetupAccountToAdminGroup"
+            DependsOn            = "[Script]UpdateGPOToTrustRootCACert"
         }
 
         #**********************************************************
@@ -701,116 +635,48 @@ configuration ConfigSpFrontend
             DependsOn                          = "[Script]WaitToAvoidServersJoiningFarmSimultaneously"
         }
 
-        DnsRecordCname UpdateDNSAliasSPSites {
-            Name                 = $SharePointSitesAuthority
-            ZoneName             = $DomainFQDN
-            DnsServer            = $DCServerName
-            HostNameAlias        = "$ComputerName.$DomainFQDN"
-            Ensure               = "Present"
-            PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[SPFarm]JoinSPFarm"
-        }
-
-        DnsRecordCname UpdateDNSAliasOhMy {
-            Name                 = $MySiteHostAlias
-            ZoneName             = $DomainFQDN
-            DnsServer            = $DCServerName
-            HostNameAlias        = "$ComputerName.$DomainFQDN"
-            Ensure               = "Present"
-            PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[SPFarm]JoinSPFarm"
-        }
-
-        DnsRecordCname UpdateDNSAliasHNSC1 {
-            Name                 = $HNSC1Alias
-            ZoneName             = $DomainFQDN
-            DnsServer            = $DCServerName
-            HostNameAlias        = "$ComputerName.$DomainFQDN"
-            Ensure               = "Present"
-            PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[SPFarm]JoinSPFarm"
-        }
-
-        Script WarmupSites {
-            SetScript            =
+        Script SetFarmPropertiesForOIDC {
+            SetScript            = 
             {
-                $jobBlock = {
-                    $uri = $args[0]
-                    try {
-                        Write-Verbose -Verbose -Message "Connecting to $uri..."
-                        # -UseDefaultCredentials: Does NTLM authN
-                        # -UseBasicParsing: Avoid exception because IE was not first launched yet
-                        # Expected traffic is HTTP 401/302/200, and $Response.StatusCode is 200
-                        Invoke-WebRequest -UseBasicParsing -Uri $uri -UseDefaultCredentials -TimeoutSec 40 -ErrorAction SilentlyContinue
-                        Write-Verbose -Verbose -Message "Connected successfully to $uri"
-                    }
-                    catch [System.Exception] {
-                        Write-Verbose -Verbose -Message "Unexpected error while connecting to '$uri': $_"
-                    }
-                    catch {
-                        # It may typically be a System.Management.Automation.ErrorRecord, which does not inherit System.Exception
-                        Write-Verbose -Verbose -Message "Unexpected error while connecting to '$uri'"
-                    }
-                }
-                [System.Management.Automation.Job[]] $jobs = @()
-                $uri = $using:WebApplicationUrl
-                Write-Verbose -Verbose -Message "Warming up '$uri'..."
-                $jobs += Start-Job -ScriptBlock $jobBlock -ArgumentList @($uri)
-
-                # Must wait for the jobs to complete, otherwise they do not actually run
-                Receive-Job -Job $jobs -AutoRemoveJob -Wait
-            }
-            GetScript            = { return @{ "Result" = "false" } } # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-            TestScript           = { return $false } # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
-            PsDscRunAsCredential = $DomainAdminCredsQualified
-            DependsOn            = "[DnsRecordCname]UpdateDNSAliasSPSites"
-        }
-
-        if ($ProvisionTrustedAuthentication) {
-            Script SetFarmPropertiesForOIDC {
-                SetScript            = 
-                {
-                    # Import OIDC-specific cookie certificate and set required permissions
-                    $DCSetupPath = Join-Path -Path $using:DCSetupPath -ChildPath "Certificates"
+                # Import OIDC-specific cookie certificate and set required permissions
+                $DCSetupPath = Join-Path -Path $using:DCSetupPath -ChildPath "Certificates"
                 
-                    # Import OIDC-specific cookie certificate created in 1st SharePoint Server of the farm
-                    $cookieCertificateFileName = $using:NonceCookieCertificateFileName
-                    $cookieCertificateFilePath = Join-Path -Path $DCSetupPath -ChildPath $cookieCertificateFileName
-                    $cert = Import-PfxCertificate -FilePath $cookieCertificateFilePath -CertStoreLocation Cert:\localMachine\My -Exportable
+                # Import OIDC-specific cookie certificate created in 1st SharePoint Server of the farm
+                $cookieCertificateFileName = $using:NonceCookieCertificateFileName
+                $cookieCertificateFilePath = Join-Path -Path $DCSetupPath -ChildPath $cookieCertificateFileName
+                $cert = Import-PfxCertificate -FilePath $cookieCertificateFilePath -CertStoreLocation Cert:\localMachine\My -Exportable
 
-                    # Grant the application pool access to the private key of the cookie certificate
-                    $uri = $using:WebApplicationUrl
-                    $wa = Get-SPWebApplication $uri
-                    $apppoolUserName = $wa.ApplicationPool.Username
-                    $rsaCert = [System.Security.Cryptography.X509Certificates.RSACertificateExtensions]::GetRSAPrivateKey($cert)
-                    $fileName = $rsaCert.key.UniqueName
-                    $path = "$env:ALLUSERSPROFILE\Microsoft\Crypto\RSA\MachineKeys\$fileName"
-                    $permissions = Get-Acl -Path $path
-                    $access_rule = New-Object System.Security.AccessControl.FileSystemAccessRule($apppoolUserName, 'Read', 'None', 'None', 'Allow')
-                    $permissions.AddAccessRule($access_rule)
-                    Set-Acl -Path $path -AclObject $permissions
-                }
-                GetScript            =  
-                {
-                    # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
-                    return @{ "Result" = "false" }
-                }
-                TestScript           = 
-                {
-                    # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
-                    # Import-Module SharePointServer | Out-Null
-                    # $f = Get-SPFarm
-                    # if ($f.Farm.Properties.ContainsKey('SP-NonceCookieCertificateThumbprint') -eq $false) {
-                    if ((Get-ChildItem -Path "cert:\LocalMachine\My\" | Where-Object { $_.Subject -eq "CN=SharePoint Cookie Cert" }) -eq $null) {
-                        return $false
-                    }
-                    else {
-                        return $true
-                    }
-                }
-                DependsOn            = "[SPFarm]JoinSPFarm"
-                PsDscRunAsCredential = $DomainAdminCredsQualified
+                # Grant the application pool access to the private key of the cookie certificate
+                $wa = (Get-SPWebApplication)[0]
+                $apppoolUserName = $wa.ApplicationPool.Username
+                $rsaCert = [System.Security.Cryptography.X509Certificates.RSACertificateExtensions]::GetRSAPrivateKey($cert)
+                $fileName = $rsaCert.key.UniqueName
+                $path = "$env:ALLUSERSPROFILE\Microsoft\Crypto\RSA\MachineKeys\$fileName"
+                $permissions = Get-Acl -Path $path
+                $access_rule = New-Object System.Security.AccessControl.FileSystemAccessRule($apppoolUserName, 'Read', 'None', 'None', 'Allow')
+                $permissions.AddAccessRule($access_rule)
+                Set-Acl -Path $path -AclObject $permissions
             }
+            GetScript            =  
+            {
+                # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+                return @{ "Result" = "false" }
+            }
+            TestScript           = 
+            {
+                # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+                $nonceCertificateInstalled = (Get-ChildItem -Path "cert:\LocalMachine\My\" | Where-Object { $_.Subject -eq "CN=SharePoint Cookie Cert" }) -ne $null
+                $farm = Get-SPFarm
+                $trustedAuthenticationIsConfigured = $farm.Farm.Properties.ContainsKey('SP-NonceCookieCertificateThumbprint')
+                if ($trustedAuthenticationIsConfigured -and -not $nonceCertificateInstalled) {
+                    return $false
+                }
+                else {
+                    return $true
+                }
+            }
+            DependsOn            = "[SPFarm]JoinSPFarm"
+            PsDscRunAsCredential = $DomainAdminCredsQualified
         }
 
         Script CreateShortcuts {
@@ -920,13 +786,6 @@ function Get-NetBIOSName {
     }
 }
 
-enum ConfigurationLevel {
-    Minimum
-    Light
-    Medium
-    Full
-}
-
 # enum values cannot start with a digit - https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_enum?view=powershell-5.1#syntax
 enum SharePointBuild {
     SPRTM
@@ -965,11 +824,8 @@ $DomainFQDN = "contoso.local"
 $DCServerName = "DC"
 $SQLServerName = "SQL"
 $SQLAlias = "SQLAlias"
-$SharePointVersion = "SPRTM"
-$SharePointSitesAuthority = "spsites"
+$SharePointVersion = "SPRTM" #"SPLatest"
 $EnableAnalysis = $true
-$DefaultZoneMustBeHttps = $false
-$ConfigurationLevel = "Light"
 $SharePointBits = @(
     @{
         Label = "SPRTM"; 
@@ -987,14 +843,13 @@ $SharePointBits = @(
     @{
         Label = "SPLatest"; 
         Packages = @(
-            @{ DownloadUrl = "https://download.microsoft.com/download/d/6/d/d6dcc9e7-744e-43e1-b4be-206a6acd4f88/sts-subscription-kb5002331-fullfile-x64-glb.exe" },
-            @{ DownloadUrl = "https://download.microsoft.com/download/d/3/5/d354b6e2-fa16-48e0-b3f8-423f7ca279a0/wssloc-subscription-kb5002326-fullfile-x64-glb.exe" }
+            @{ DownloadUrl = "https://download.microsoft.com/download/f839c57c-7b4e-4213-b03b-2c1508e13588/uber-subscription-kb5002853-fullfile-x64-glb.exe" }
         )
     }
 )
 
 $outputPath = "C:\Packages\Plugins\Microsoft.Powershell.DSC\2.83.5\DSCWork\ConfigureFESE.0\ConfigSpFrontend"
-ConfigSpFrontend -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPPassphraseCreds $SPPassphraseCreds -DNSServerIP $DNSServerIP -DomainFQDN $DomainFQDN -DCServerName $DCServerName -SQLServerName $SQLServerName -SQLAlias $SQLAlias -SharePointVersion $SharePointVersion -SharePointSitesAuthority $SharePointSitesAuthority -EnableAnalysis $EnableAnalysis -DefaultZoneMustBeHttps $DefaultZoneMustBeHttps -ConfigurationLevel $ConfigurationLevel -SharePointBits $SharePointBits -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath $outputPath
+ConfigSpFrontend -DomainAdminCreds $DomainAdminCreds -SPSetupCreds $SPSetupCreds -SPFarmCreds $SPFarmCreds -SPPassphraseCreds $SPPassphraseCreds -DNSServerIP $DNSServerIP -DomainFQDN $DomainFQDN -DCServerName $DCServerName -SQLServerName $SQLServerName -SQLAlias $SQLAlias -SharePointVersion $SharePointVersion -EnableAnalysis $EnableAnalysis -SharePointBits $SharePointBits -ConfigurationData @{AllNodes=@(@{ NodeName="localhost"; PSDscAllowPlainTextPassword=$true })} -OutputPath $outputPath
 Set-DscLocalConfigurationManager -Path $outputPath
 Start-DscConfiguration -Path $outputPath -Wait -Verbose -Force
 

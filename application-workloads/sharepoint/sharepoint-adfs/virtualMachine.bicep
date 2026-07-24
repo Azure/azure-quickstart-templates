@@ -55,7 +55,7 @@ param tags object
 
 var modulePrefix = 'virtualMachine'
 
-module virtualMachine 'br/public:avm/res/compute/virtual-machine:0.21.0' = {
+module virtualMachine 'br/public:avm/res/compute/virtual-machine:0.22.2' = {
   name: '${modulePrefix}-${virtualMachineName}-module-avm'
   scope: resourceGroup()
   params: {
@@ -128,7 +128,7 @@ module virtualMachine 'br/public:avm/res/compute/virtual-machine:0.21.0' = {
   }
 }
 
-resource virtualMachineCreated 'Microsoft.Compute/virtualMachines@2025-04-01' existing = {
+resource virtualMachineCreated 'Microsoft.Compute/virtualMachines@2025-11-01' existing = {
   dependsOn: [
     virtualMachine
   ]
@@ -136,7 +136,7 @@ resource virtualMachineCreated 'Microsoft.Compute/virtualMachines@2025-04-01' ex
   name: 'vm-${virtualMachineName}'
 }
 
-// resource runcommand_increase_dsc_quota 'Microsoft.Compute/virtualMachines/runCommands@2025-04-01' = if (increaseDscQuota == true) {
+// resource runcommand_increase_dsc_quota 'Microsoft.Compute/virtualMachines/runCommands@2025-11-01' = if (increaseDscQuota == true) {
 //   parent: virtualMachineCreated
 //   name: '${modulePrefix}-${virtualMachineName}-runcommand-increase-dsc-quota'
 //   location: location
@@ -149,14 +149,14 @@ resource virtualMachineCreated 'Microsoft.Compute/virtualMachines@2025-04-01' ex
 //   }
 // }
 
-resource runcommand 'Microsoft.Compute/virtualMachines/runCommands@2025-04-01' = if (runCommandProperties != null) {
+resource runcommand 'Microsoft.Compute/virtualMachines/runCommands@2025-11-01' = if (runCommandProperties != null) {
   parent: virtualMachineCreated
   name: '${modulePrefix}-${virtualMachineName}-runcommand'
   location: location
   properties: runCommandProperties!
 }
 
-resource extension 'Microsoft.Compute/virtualMachines/extensions@2025-04-01' = if (dscSettings != null) {
+resource extension 'Microsoft.Compute/virtualMachines/extensions@2025-11-01' = if (dscSettings != null) {
   dependsOn: [
     // runcommand_increase_dsc_quota
     runcommand
