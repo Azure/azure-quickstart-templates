@@ -84,9 +84,10 @@ Add additional Node Pools, Storage Containers, or Tools via the Azure portal or 
 - All resources must reside in the same region.
 - The `storageAccountName` parameter must be globally unique (3-24 lowercase alphanumeric characters).
 - GPU SKU examples for `nodePoolVmSize`: `Standard_NC24ads_A100_v4`, `Standard_NC4as_T4_v3`.
+- The storage account denies public network access by default (`networkAcls.defaultAction: Deny`), trusts Azure services, and allows traffic only from the deployment's own subnets. It uses `Standard_GRS` replication (`storageAccountSku`) and disables anonymous blob container access.
 - The workspace includes quickstart-aligned tags:
   - `discovery.workbench.enableGhcpAiFeatures`: defaults to `true`
   - `discovery.workbench.enableExtensions`: defaults to `true`
-  - `NetworkIsolation`: defaults to `false`
+  - `NetworkIsolation`: defaults to `true`, but Discovery Studio's workbench currently only supports connecting when `networkIsolation` is set to `false`; set the `networkIsolation` parameter to `false` at deployment time if you need public preview workbench access.
 
 Tags: `Microsoft.Discovery/supercomputers`, `Microsoft.Discovery/workspaces`, `Microsoft.Discovery/storageContainers`, `Microsoft.Discovery/workspaces/projects`, `Microsoft.Network/virtualNetworks`, `Microsoft.ManagedIdentity/userAssignedIdentities`, `Microsoft.Storage/storageAccounts`
