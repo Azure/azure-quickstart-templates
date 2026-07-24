@@ -84,7 +84,7 @@ Add additional Node Pools, Storage Containers, or Tools via the Azure portal or 
 - All resources must reside in the same region.
 - The `storageAccountName` parameter must be globally unique (3-24 lowercase alphanumeric characters).
 - GPU SKU examples for `nodePoolVmSize`: `Standard_NC24ads_A100_v4`, `Standard_NC4as_T4_v3`.
-- The storage account denies public network access by default (`networkAcls.defaultAction: Deny`), trusts Azure services, and allows traffic only from the deployment's own subnets. It uses `Standard_GRS` replication (`storageAccountSku`) and disables anonymous blob container access.
+- The storage account allows network access by default (`networkAcls.defaultAction: Allow`) because the `Microsoft.Discovery` control plane is not yet on the Azure Storage trusted-services bypass list and requires this to provision successfully; `virtualNetworkRules` for the deployment's own subnets are pre-configured and ready to enforce once Discovery supports trusted-service access. The account also uses `Standard_GRS` replication (`storageAccountSku`), disables shared-key/public-blob access, and disables anonymous blob container access.
 - The workspace includes quickstart-aligned tags:
   - `discovery.workbench.enableGhcpAiFeatures`: defaults to `true`
   - `discovery.workbench.enableExtensions`: defaults to `true`
