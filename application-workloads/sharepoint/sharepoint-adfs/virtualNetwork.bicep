@@ -15,7 +15,7 @@ param networkSecurityRules array
 @description('Tags to apply on the resources.')
 param tags object
 
-module nsg_subnet_main 'br/public:avm/res/network/network-security-group:0.5.2' = {
+module nsg_subnet_main 'br/public:avm/res/network/network-security-group:0.5.3' = {
   name: 'nsg-subnet-main-deployment'
   params: {
     name: 'nsg-subnet-main'
@@ -24,7 +24,7 @@ module nsg_subnet_main 'br/public:avm/res/network/network-security-group:0.5.2' 
   }
 }
 
-module virtualNetwork 'br/public:avm/res/network/virtual-network:0.7.1' = {
+module virtualNetwork 'br/public:avm/res/network/virtual-network:0.9.0' = {
   name: '${virtualNetworkName}-module-avm'
   params: {
     addressPrefixes: [

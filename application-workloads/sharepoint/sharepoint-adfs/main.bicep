@@ -23,12 +23,26 @@ param sharePointVersion string = 'Subscription-Latest'
 
 @description('Level of configuration to apply on the SharePoint farm.')
 @allowed([
+  'Custom'
   'Minimum'
   'Light'
   'Medium'
   'Full'
 ])
-param sharePointConfigurationLevel string = 'Light'
+param sharePointConfigurationLevel string = 'Medium'
+
+@description('Configuration to apply to the SharePoint farm. Used only if sharePointConfigurationLevel is set to "Custom".')
+@allowed([
+  'TrustedAuthentication'
+  'UserProfilesService'
+  'ExtendedWebApplication'
+  'Addins'
+  'AdditionalSiteCollections'
+  'StateService'
+  'ProjectServer'
+  'Search'
+])
+param customSharePointConfiguration array = []
 
 @description('Set to true if the default zone of the main web application must use HTTPS protocol.')
 param defaultZoneMustBeHttps bool = false
@@ -89,7 +103,7 @@ param outboundAccessMethod string = 'PublicIPAddress'
 param addNameToPublicIpAddresses string = 'SharePointVMsOnly'
 
 @description('Specify if Azure Bastion Developer should be provisioned. See https://go.microsoft.com/fwlink/?linkid=2249215 for more information.')
-param enableAzureBastion bool = false
+param addBastion bool = false
 
 @description('Enable the Azure Hybrid Benefit on virtual machines, to use your on-premises Windows Server licenses and reduce cost. See https://docs.microsoft.com/en-us/azure/virtual-machines/windows/hybrid-use-benefit-licensing for more information.')
 param enableHybridBenefitServerLicenses bool = false
@@ -398,7 +412,7 @@ var sharePointSettings = {
       Label: 'SPLatest'
       Packages: [
         {
-          DownloadUrl: 'https://download.microsoft.com/download/f839c57c-7b4e-4213-b03b-2c1508e13588/uber-subscription-kb5002853-fullfile-x64-glb.exe'
+          DownloadUrl: 'https://download.microsoft.com/download/70fee67e-b93a-44f0-9386-803dc69e378d/uber-subscription-kb5002882-fullfile-x64-glb.exe'
         }
       ]
     }
@@ -434,7 +448,6 @@ var environmentSettings = {
     : sharePointVersion)
   localAdminUserName: 'l-${uniqueString(subscription().subscriptionId)}'
   enableAnalysis: false
-  applyBrowserPolicies: true
   sqlAlias: 'SQLAlias'
   spSuperUserName: 'spSuperUser'
   spSuperReaderName: 'spSuperReader'
@@ -445,6 +458,7 @@ var environmentSettings = {
   spSvcUserName: 'spsvc'
   spAppPoolUserName: 'spapppool'
   spADDirSyncUserName: 'spdirsync'
+  defaultGlobalConfiguration: ['ApplyBrowserPolicies']
 }
 
 // Azure Firewall proxy settings
@@ -528,7 +542,7 @@ var baseVirtualMachines = [
         SPServerName: templateSettings.vmSPName
         SharePointSitesAuthority: environmentSettings.sharePointSitesAuthority
         SharePointCentralAdminPort: environmentSettings.sharePointCentralAdminPort
-        ApplyBrowserPolicies: environmentSettings.applyBrowserPolicies
+        GlobalConfiguration: environmentSettings.defaultGlobalConfiguration
       }
       privacy: {
         dataCollection: 'enable'
@@ -666,7 +680,8 @@ var baseVirtualMachines = [
         EnableAnalysis: environmentSettings.enableAnalysis
         SharePointBits: environmentSettings.sharePointBitsDsc
         DefaultZoneMustBeHttps: defaultZoneMustBeHttps
-        ConfigurationLevel: sharePointConfigurationLevel
+        SharePointConfigurationLevel: sharePointConfigurationLevel
+        CustomSharePointConfiguration: customSharePointConfiguration
       }
       privacy: {
         dataCollection: 'enable'
@@ -748,11 +763,8 @@ var frontendVirtualMachinesSettings = {
       SQLServerName: templateSettings.vmSQLName
       SQLAlias: environmentSettings.sqlAlias
       SharePointVersion: environmentSettings.sharePointVersion
-      SharePointSitesAuthority: environmentSettings.sharePointSitesAuthority
       EnableAnalysis: environmentSettings.enableAnalysis
       SharePointBits: environmentSettings.sharePointBitsDsc
-      DefaultZoneMustBeHttps: defaultZoneMustBeHttps
-      ConfigurationLevel: sharePointConfigurationLevel
     }
     privacy: {
       dataCollection: 'enable'
@@ -878,7 +890,7 @@ module frontends 'virtualMachine.bicep' = [
   }
 ]
 
-module bastion 'bastion.bicep' = if (enableAzureBastion == true) {
+module bastion 'bastion.bicep' = if (addBastion == true) {
   name: 'bastion-module'
   params: {
     virtualNetworkName: virtualNetwork.outputs.vnetName

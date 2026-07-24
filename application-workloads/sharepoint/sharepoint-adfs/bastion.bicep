@@ -2,7 +2,7 @@ param virtualNetworkName string
 @description('Tags to apply on the resources.')
 param tags object
 
-resource virtualNetwork 'Microsoft.Network/virtualNetworks@2025-05-01' existing = {
+resource virtualNetwork 'Microsoft.Network/virtualNetworks@2025-07-01' existing = {
   scope: resourceGroup()
   name: virtualNetworkName
 }
