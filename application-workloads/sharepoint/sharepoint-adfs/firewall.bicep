@@ -8,12 +8,12 @@ param https_port int = 8443
 @description('Tags to apply on the resources.')
 param tags object
 
-resource virtualNetwork 'Microsoft.Network/virtualNetworks@2025-05-01' existing = {
+resource virtualNetwork 'Microsoft.Network/virtualNetworks@2025-07-01' existing = {
   scope: resourceGroup()
   name: virtualNetworkName
 }
 
-resource bastion_subnet 'Microsoft.Network/virtualNetworks/subnets@2025-05-01' = {
+resource bastion_subnet 'Microsoft.Network/virtualNetworks/subnets@2025-07-01' = {
   parent: virtualNetwork
   name: 'AzureFirewallSubnet'
   properties: {
@@ -22,7 +22,7 @@ resource bastion_subnet 'Microsoft.Network/virtualNetworks/subnets@2025-05-01' =
   }
 }
 
-resource firewall_policy_proxy 'Microsoft.Network/firewallPolicies@2025-05-01' = {
+resource firewall_policy_proxy 'Microsoft.Network/firewallPolicies@2025-07-01' = {
   name: 'firewall-policy-proxy'
   location: location
   tags: tags
@@ -40,7 +40,7 @@ resource firewall_policy_proxy 'Microsoft.Network/firewallPolicies@2025-05-01' =
   }
 }
 
-resource firewall_proxy_rules 'Microsoft.Network/firewallPolicies/ruleCollectionGroups@2025-05-01' = {
+resource firewall_proxy_rules 'Microsoft.Network/firewallPolicies/ruleCollectionGroups@2025-07-01' = {
   name: 'rules'
   parent: firewall_policy_proxy
   properties: {
@@ -79,7 +79,7 @@ resource firewall_proxy_rules 'Microsoft.Network/firewallPolicies/ruleCollection
   }
 }
 
-module firewall 'br/public:avm/res/network/azure-firewall:0.9.1' = {
+module firewall 'br/public:avm/res/network/azure-firewall:0.10.1' = {
   name: 'firewall'
   params: {
     name: 'firewall'
