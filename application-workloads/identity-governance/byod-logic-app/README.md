@@ -28,7 +28,7 @@ languages:
 
 ## Overview
 
-This template deploys a **request-triggered Logic App** for Microsoft Entra Entitlement Management BYOD (Bring Your Own Data) scenarios. When triggered, the Logic App reads files from a blob storage container and uploads them to Microsoft Graph for use in Access Reviews.
+This template deploys a **request-triggered Logic App** for Microsoft Entra Entitlement Management BYOD (Bring Your Own Data) scenarios. When triggered, the Logic App reads files from a blob storage container and uploads them to Microsoft Graph for use in Access Reviews. At the end of the review, if there are any deny or unreviewed decisions, the the Logic App is then triggered to set the applyResult on each decision item.
 
 The template only requires two inputs — a **Logic App name** and a **Storage Account name**. Everything else is auto-configured.
 
