@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## Enhancements & bug-fixes - Published in July 29, 2026
+
+### Fixed
+
+- Template
+  - Fixed template validation error when deploying from Azure portal: "Deployment template language expression evaluation failed: 'Evaluation result of language expression 'TrustedAuthentication' is type 'String', expected type is 'Array'.'"
+
 ## Enhancements & bug-fixes - Published in July 20, 2026
 
 ### Changed
