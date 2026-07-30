@@ -1,11 +1,12 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "languageVersion": "2.0",
   "contentVersion": "1.0.0.0",
   "metadata": {
     "_generator": {
       "name": "bicep",
       "version": "0.45.15.27210",
-      "templateHash": "216207517210725131"
+      "templateHash": "15474021826982612734"
     },
     "description": "Create a DC, a SQL Server 2025, and from 1 to 5 server(s) hosting a SharePoint Subscription / 2019 / 2016 farm with an extensive configuration, including trusted authentication, user profiles with personal sites, an OAuth trust (using a certificate), a dedicated IIS site for hosting high-trust add-ins, etc... The latest version of key softwares (including Fiddler, vscode, np++, 7zip, ULS Viewer) is installed. SharePoint machines have additional fine-tuning to make them immediately usable (remote administration tools, custom policies for Edge and Chrome, shortcuts, etc...).",
     "author": "Yvand"
@@ -54,8 +55,14 @@
     },
     "customSharePointConfiguration": {
       "type": "array",
-      "defaultValue": [],
+      "items": {
+        "type": "string"
+      },
+      "defaultValue": [
+        "null"
+      ],
       "allowedValues": [
+        "null",
         "TrustedAuthentication",
         "UserProfilesService",
         "ExtendedWebApplication",
@@ -66,7 +73,7 @@
         "Search"
       ],
       "metadata": {
-        "description": "Configuration to apply to the SharePoint farm. Used only if sharePointConfigurationLevel is set to \"Custom\"."
+        "description": "Custom SharePoint configuration. Used only if parameter sharePointConfigurationLevel is set to Custom.\n"
       }
     },
     "defaultZoneMustBeHttps": {
@@ -724,7 +731,7 @@
             "SharePointBits": "[variables('environmentSettings').sharePointBitsDsc]",
             "DefaultZoneMustBeHttps": "[parameters('defaultZoneMustBeHttps')]",
             "SharePointConfigurationLevel": "[parameters('sharePointConfigurationLevel')]",
-            "CustomSharePointConfiguration": "[parameters('customSharePointConfiguration')]"
+            "CustomSharePointConfiguration": "[filter(parameters('customSharePointConfiguration'), lambda('item', not(equals(lambdaVariables('item'), 'null'))))]"
           },
           "privacy": {
             "dataCollection": "enable"
@@ -831,8 +838,8 @@
       }
     }
   },
-  "resources": [
-    {
+  "resources": {
+    "virtualNetwork": {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2025-04-01",
       "name": "vnet-module",
@@ -3409,7 +3416,7 @@
         }
       }
     },
-    {
+    "baseVirtualMachinesModule": {
       "copy": {
         "name": "baseVirtualMachinesModule",
         "count": "[length(variables('baseVirtualMachines'))]"
@@ -3433,7 +3440,7 @@
             "value": "[parameters('adminPassword')]"
           },
           "subnetResourceId": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'vnet-module'), '2025-04-01').outputs.mainSubnetResourceId.value]"
+            "value": "[reference('virtualNetwork').outputs.mainSubnetResourceId.value]"
           },
           "licenseType": "[if(parameters('enableHybridBenefitServerLicenses'), createObject('value', 'Windows_Server'), createObject('value', null()))]",
           "timeZone": {
@@ -13105,10 +13112,10 @@
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Resources/deployments', 'vnet-module')]"
+        "virtualNetwork"
       ]
     },
-    {
+    "frontends": {
       "copy": {
         "name": "frontends",
         "count": "[length(range(0, parameters('frontEndServersCount')))]"
@@ -13132,7 +13139,7 @@
             "value": "[parameters('adminPassword')]"
           },
           "subnetResourceId": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'vnet-module'), '2025-04-01').outputs.mainSubnetResourceId.value]"
+            "value": "[reference('virtualNetwork').outputs.mainSubnetResourceId.value]"
           },
           "licenseType": "[if(parameters('enableHybridBenefitServerLicenses'), createObject('value', 'Windows_Server'), createObject('value', null()))]",
           "timeZone": {
@@ -22802,10 +22809,10 @@
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Resources/deployments', 'vnet-module')]"
+        "virtualNetwork"
       ]
     },
-    {
+    "bastion": {
       "condition": "[equals(parameters('addBastion'), true())]",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2025-04-01",
@@ -22817,7 +22824,7 @@
         "mode": "Incremental",
         "parameters": {
           "virtualNetworkName": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'vnet-module'), '2025-04-01').outputs.vnetName.value]"
+            "value": "[reference('virtualNetwork').outputs.vnetName.value]"
           },
           "tags": {
             "value": "[variables('allTags')]"
@@ -24560,10 +24567,10 @@
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Resources/deployments', 'vnet-module')]"
+        "virtualNetwork"
       ]
     },
-    {
+    "firewall": {
       "condition": "[equals(parameters('outboundAccessMethod'), 'AzureFirewallProxy')]",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2025-04-01",
@@ -24575,7 +24582,7 @@
         "mode": "Incremental",
         "parameters": {
           "virtualNetworkName": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'vnet-module'), '2025-04-01').outputs.vnetName.value]"
+            "value": "[reference('virtualNetwork').outputs.vnetName.value]"
           },
           "tags": {
             "value": "[variables('allTags')]"
@@ -26804,10 +26811,10 @@
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Resources/deployments', 'vnet-module')]"
+        "virtualNetwork"
       ]
     }
-  ],
+  },
   "outputs": {
     "domainAdminAccount": {
       "type": "string",
@@ -26826,8 +26833,8 @@
       "copy": {
         "count": "[length(range(0, 3))]",
         "input": {
-          "name": "[reference(resourceId('Microsoft.Resources/deployments', format('virtualMachine-{0}-module', variables('baseVirtualMachines')[range(0, 3)[copyIndex()]].virtualMachineSettings.virtualMachineName)), '2025-04-01').outputs.name.value]",
-          "publicIP": "[reference(resourceId('Microsoft.Resources/deployments', format('virtualMachine-{0}-module', variables('baseVirtualMachines')[range(0, 3)[copyIndex()]].virtualMachineSettings.virtualMachineName)), '2025-04-01').outputs.publicIP.value]"
+          "name": "[reference(format('baseVirtualMachinesModule[{0}]', range(0, 3)[copyIndex()])).outputs.name.value]",
+          "publicIP": "[reference(format('baseVirtualMachinesModule[{0}]', range(0, 3)[copyIndex()])).outputs.publicIP.value]"
         }
       }
     },
@@ -26836,8 +26843,8 @@
       "copy": {
         "count": "[length(range(0, parameters('frontEndServersCount')))]",
         "input": {
-          "name": "[reference(resourceId('Microsoft.Resources/deployments', format('virtualMachine-FE-{0}-module', range(0, parameters('frontEndServersCount'))[range(0, parameters('frontEndServersCount'))[copyIndex()]])), '2025-04-01').outputs.name.value]",
-          "publicIP": "[reference(resourceId('Microsoft.Resources/deployments', format('virtualMachine-FE-{0}-module', range(0, parameters('frontEndServersCount'))[range(0, parameters('frontEndServersCount'))[copyIndex()]])), '2025-04-01').outputs.publicIP.value]"
+          "name": "[reference(format('frontends[{0}]', range(0, parameters('frontEndServersCount'))[copyIndex()])).outputs.name.value]",
+          "publicIP": "[reference(format('frontends[{0}]', range(0, parameters('frontEndServersCount'))[copyIndex()])).outputs.publicIP.value]"
         }
       }
     }
