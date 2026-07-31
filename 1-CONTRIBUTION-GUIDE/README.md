@@ -345,129 +345,18 @@ Triggered by a `/summarize` comment on a PR, this workflow generates an AI-power
 6. A **maintainer** runs `/validate` to validate your deployment results against Azure logs
 7. Optionally, a reviewer runs `/summarize` for an AI-generated PR summary
 
-### Parameters File Placeholders
-
-To ensure your template passes, special placeholder values are required when deploying a template, depending on how the parameter is used.  For static values you can see the actual value used in the [.config.json](../test/ci-gen-setup/.config.json) file in this repo.
-
-+ **GEN-UNIQUE[-N]** - use this for a new globally unique resource name. The value will always be alpha numeric value with a length of `[N]`, where `[N]` can be any number from 3 to 32 inclusive.  The default length when N is not specified is 18.
-+ **GEN-SSH-PUB-KEY** - use this if you need an SSH public key
-+ **GEN-PASSWORD** - use this if you need a password
-+ **GEN-GUID** - use this to generate a random GUID
-
-Quickstart CI engine provides few pre-created azure components which can be used by templates for automated validation. This includes a key vault with sample SSL certificate stored, specialized and generalized Windows Server VHD's, a custom domain and SSL cert data for Azure App Service templates and more.
-
-**Virtual Network Related placeholders:**
-
-+ **GEN-VNET-NAME** - the name of the virtual network - this uses an existing vnet in the subscription and will **not** create a new vnet
-+ **GEN-VNET-RESOURCEGROUP-NAME** - the name of the resource group for the virtual network
-+ **GEN-VNET-SUBNET1-NAME** - the name of subnet-1
-+ **GEN-VNET-SUBNET2-NAME** - the name of subnet-2
-
-**Key Vault Related placeholders:**
-
-+ **GEN-KEYVAULT-NAME** - the name of the keyvault
-+ **GEN-KEYVAULT-RESOURCEGROUP-NAME** - the name of the resource group for the keyvault
-+ **GEN-KEYVAULT-FQDN-URI** - the FQDN URI of the keyvault
-+ **GEN-KEYVAULT-RESOURCE-ID** - the resource ID of the keyvault
-+ **GEN-KEYVAULT-PASSWORD-SECRET-NAME** - the secret name for a password reference
-+ **GEN-KEYVAULT-PASSWORD-REFERENCE** - the reference parameter used to retrieve a KeyVault Secret (use "reference" for the property name, not "value")
-+ **GEN-KEYVAULT-SSL-SECRET-NAME** - the name of the secret where the sample SSL cert is stored in the keyvault
-+ **GEN-KEYVAULT-SSL-SECRET-URI** - the URI of the sample SSL cert stored in the test keyvault
-+ **GEN-KEYVAULT-ENCRYPTION-KEY** - the name of the sample encryption key stored in keyvault, used for disk encryption
-+ **GEN-KEYVAULT-ENCRYPTION-KEY-URI** - the URI of the sample encryption key
-+ **GEN-KEYVAULT-ENCRYPTION-KEY-VERSION** - the secret version of the sample encryption key
-+ **GEN-SF-CERT-URL** - the URL of the sample service fabric certificate stored in keyvault
-+ **GEN-SF-CERT-THUMBPRINT** - the thumbprint of the sample service fabric certificate stored in keyvault
-
-**Existing VHD related placeholders:**
-
-+ **GEN-SPECIALIZED-WINVHD-URI** - URI of a specialized Windows VHD stored in an existing storage account
-+ **GEN-GENERALIZED-WINVHD-URI** - URI of a generalized Windows VHD stored in an existing storage account
-+ **GEN-GENERALIZED-WINVHD-FILENAME** - the filename of the existing VHD
-+ **GEN-DATAVHD-URI** - URI of a sample data disk VHD stored in an existing storage account
-+ **GEN-VHDSTORAGEACCOUNT-NAME** - Name of storage account in which the VHD's are stored
-+ **GEN-VHDRESOURCEGROUP-NAME** - Name of resource group in which the existing storage account having VHD's resides
-
-**Custom Domain & SSL Cert related placeholders:**
-
-+ **GEN-CUSTOM-WEBAPP-NAME** - placeholder for the name of azure app service where you'd want to attach custom domain
-+ **GEN-CUSTOM-FQDN-NAME** - sample custom domain which can be added to an App Service
-+ **GEN-CUSTOM-DOMAIN-SSLCERT-THUMBPRINT** - SSL cert thumbprint for the custom domain used in the custom FQDN
-+ **GEN-CUSTOM-DOMAIN-SSLCERT-PASSWORD** - Password of the sample SSL cert
-+ **GEN-CUSTOM-DOMAIN-SSLCERT-PFXDATA** - PFX data for the sample SSL cert
-+ **GEN-SELFSIGNED-CERT-PFXDATA** - PFX data for a sample self signed cert
-+ **GEN-SELFSIGNED-CERT-CERDATA** - CER data for a sample self signed cert
-+ **GEN-SELFSIGNED-CERT-PASSWORD** - password for a sample self signed cert
-+ **GEN-SELFSIGNED-CERT-DNSNAME** - DNS name for a sample self signed cert
-
-**Custom Domain & SSL Cert related placeholders:**
-
-+ **GEN-FRONTDOOR-NAME** - placeholder for the frontdoor name reserved for CI/CD
-+ **GEN-FRONTDOOR-CUSTOM-HOSTNAME** - custom hostname with CNAME record mapped for the GEN-FRONTDOOR-NAME value
-
-**AppConfiguration Store related placeholders:**
-
-+ **GEN-APPCONFIGSTORE-NAME** - placeholder for the Microsoft.AppConfiguration/configurationStores
-+ **GEN-APPCONFIGSTORE-RESOURCEGROUP-NAME** - resource group name for the AppConfig store
-+ **GEN-APPCONFIGSTORE-KEY1** - sample key/value stored in the AppConfig store, label is "template"
-+ **GEN-APPCONFIGSTORE-WINDOWSOSVERSION** - sample key/value with a SKU Name for a windows server image, label is "template"
-+ **GEN-APPCONFIGSTORE-DISKSIZEGB** - sample key/value with a disk size, in GB for a VM disk, label is "template"
-
-+ **GEN-USER-ASSIGNED-IDENTITY-NAME** - name of a userAssigned MSI that has permission to the keyvault secrets
-+ **GEN-USER-ASSIGNED-IDENTITY-RESOURCEGROUP-NAME** - resource group of the userAssigned identity for retrieving the resourceId
-
-+ **GEN-MACHINE-LEARNING-SP-OBJECTID** - objectId of the Azure ML Service Principal in the tenant
-+ **GEN-COSMOS-DB-SP-OBJECTID** - objectId of the Cosmos DB Service Principal in the tenant
-
-**Static website related placeholders:**
-
-+ **GEN-STATIC-WEBSITE-URL** - full URL of a static website
-+ **GEN-STATIC-WEBSITE-HOST-NAME** - host name of a static website
-
-Here's an example in an `azuredeploy.parameters.json` file:
-
-```json
-
-{
-"$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
-"contentVersion": "1.0.0.0",
-"parameters": {
- "newStorageAccountName":{
-  "value": "GEN-UNIQUE"
- },
- "adminUsername": {
-  "value": "GEN-UNIQUE"
- },
- "sshKeyData": {
-  "value": "GEN-SSH-PUB-KEY"
- },
- "dnsNameForPublicIP": {
-  "value": "GEN-UNIQUE-13"
- }
-}
-```
-
 ### Artifacts Required for Deployment and raw.githubusercontent.com Links
 
 In general, when following the best practices for the repo, you should never have any absolute URLs in a sample.  Any files needed for the sample must be hosted in the **Azure/azure-quickstart-templates** repo and the samples must reference those samples using the pattern described in the [best practices document](./best-practices.md).
 
 ### Template Pre-requisites
 
-If your template has some pre-requisite such as existing Virtual Network or storage account, you should also submit pre-requisite template which deploys the pre-requisite components. CI automated validation engine automatically validates and deploy the pre-requisite template first and then deploys the main template. Prereqs can be provided using JSON or bicep templates following the same guidelines used for the sample templates.  In addition, the following guidelines would help you in understanding how to leverage this capability.
+If your sample requires pre-existing resources (for example an existing Virtual Network or Storage Account) that a customer would not normally create as part of the sample itself, place the templates that provision those resources in a `prereqs` folder inside your sample folder. When you record deployment results in `metadata.json`, use the `prereqs/` path in `templateFileName` so `validate-samples.yml` and `ValidateSampleDeployments.yml` can locate and compile the correct file.
 
-+ Create a folder named `prereqs` in root of your template folder, Store pre-requisite template file, parameters file and artifacts inside this folder.
-+ Store pre-requisite template file with name `prereq.azuredeploy.json` or `prereq.main.bicep` and parameters files with name `prereq.azuredeploy.parameters.json`
-+ The prereq template should deploy all required pre-existing resources by your main template and also output the values required by main template to leverage those resources. For example, if your template needs an existing VNET to be available prior to the deployment of main template, you should develop a pre-req template which deploys a VNET and outputs the VNET ID or VNET name of the virtual network created.
-+ In order to use the values generated by outputs after deployment of the prereq template, you will need to define parameter values as `GET-PREREQ-OutputName`. For example, if you generated a output with name `vnetID` in pre-req template, in order use the value of this output in main template, enter the value of corresponding parameter in main template parameters file as `GET-PREREQ-vnetID`
-+ You can search for other samples that use prereqs to see examples of how to provide them
-+ If the prereqs and the sample must be deployed to the same resource group add a file named `.settings.json` to the prereqs folder and put the following json snippet into the file (the comment is optional).  Do this only if required by the sample, otherwise it may block customer deployment scenarios:
-
-```json
-{
-    "comment": "If prereqs need to be deployed to the same resourceGroup as the rest of the sample set the PrereqResourceGroupNameSuffix property to an empty string - otherwise you can omit this file",
-    "PrereqResourceGroupNameSuffix": ""
-}
-```
++ Create a folder named `prereqs` in the root of your sample folder and store the prereq template, parameters file, and any artifacts inside it.
++ Name the prereq template `prereq.azuredeploy.json` or `prereq.main.bicep`, and the parameters file `prereq.azuredeploy.parameters.json`.
++ The prereq template should deploy every pre-existing resource that your main template expects, and expose their identifiers (resource IDs, names, etc.) as `outputs` so you can pass them into your main deployment.
++ Search other samples with a `prereqs` folder for concrete examples.
 
 ### Portal Deployments with createUiDefinition.json
 
