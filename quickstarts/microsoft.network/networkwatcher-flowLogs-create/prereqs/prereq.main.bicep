@@ -9,32 +9,8 @@ param location string = resourceGroup().location
 
 var virtualNetworkName = 'virtualNetwork1'
 var subnetName = 'subnet'
-var networkSecurityGroupName = 'networkSecurityGroup1'
 
-resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2022-01-01' = {
-  name: networkSecurityGroupName
-  location: location
-  properties: {
-    securityRules: [
-      {
-        name: 'first_rule'
-        properties: {
-          description: 'This is the first rule'
-          protocol: 'Tcp'
-          sourcePortRange: '23-45'
-          destinationPortRange: '46-56'
-          sourceAddressPrefix: '*'
-          destinationAddressPrefix: '*'
-          access: 'Allow'
-          priority: 123
-          direction: 'Inbound'
-        }
-      }
-    ]
-  }
-}
-
-resource virtualNetwork 'Microsoft.Network/virtualNetworks@2022-01-01' = {
+resource virtualNetwork 'Microsoft.Network/virtualNetworks@2024-10-01' = {
   name: virtualNetworkName
   location: location
   properties: {
@@ -48,13 +24,10 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2022-01-01' = {
         name: subnetName
         properties: {
           addressPrefix: subnetPrefix
-          networkSecurityGroup: {
-            id: networkSecurityGroup.id
-          }
         }
       }
     ]
   }
 }
 
-output existingNSG string = networkSecurityGroup.id
+output existingVNet string = virtualNetwork.id
