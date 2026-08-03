@@ -7,11 +7,11 @@
         [Parameter(Mandatory)] [String]$SPServerName,
         [Parameter(Mandatory)] [String]$SharePointSitesAuthority,
         [Parameter(Mandatory)] [String]$SharePointCentralAdminPort,
-        [Parameter ()] [Boolean]$ApplyBrowserPolicies = $true,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$Admincreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$AdfsSvcCreds,
         [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SqlSvcCreds,
-        [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSetupCreds
+        [Parameter(Mandatory)] [System.Management.Automation.PSCredential]$SPSetupCreds,
+        [Parameter(Mandatory = $false)] [GlobalConfigurations[]] $GlobalConfiguration = @("ApplyBrowserPolicies")
     )
 
     Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion 6.7.1
@@ -583,7 +583,31 @@
             DependsOn            = "[AdfsNativeClientApplication]OidcNativeApp", "[AdfsWebApiApplication]OidcWebApiApp"
         }
 
-        if ($true -eq $ApplyBrowserPolicies) {
+        # if (@($GlobalConfiguration) -contains [GlobalConfigurations]::EXP_DenyNtlmToAllDomainAccounts -or @($GlobalConfiguration) -contains [GlobalConfigurations]::EXP_DenyNtlmToAllAccounts) {
+        #     # https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/security-policy-settings/network-security-restrict-ntlm-ntlm-authentication-in-this-domain
+        #     # https://chader.fr/en/ntlm-migration-to-kerberos/
+        #     Script DenyNTLMPolicy {
+        #         SetScript  = {
+        #             $domain = Get-ADDomain -Current LocalComputer
+        #             $gpo = New-GPO -name "DenyNTLM" -Comment "Deny NTLM authentication."
+        #             New-GPLink -Guid $gpo.Id -Target $domain.DistinguishedName -Order 1
+        #             Set-GPRegistryValue -Guid $gpo.Id -key "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Netlogon\Parameters" -ValueName "RestrictNTLMInDomain" -Type DWord -value 7
+        #         }
+        #         GetScript  = { return @{ "Result" = "false" } }
+        #         TestScript = {
+        #             $policy = Get-GPO -name "DenyNTLM" -ErrorAction SilentlyContinue
+        #             if ($null -eq $policy) {
+        #                 return $false
+        #             }
+        #             else {
+        #                 return $true
+        #             }
+        #         }
+        #         DependsOn  = "[WaitForADDomain]WaitForDCReady"
+        #     }
+        # }
+
+        if (@($GlobalConfiguration) -contains [GlobalConfigurations]::ApplyBrowserPolicies) {
             # Edge - https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies
             Script ConfigureEdgePolicies {
                 SetScript  = {
@@ -591,7 +615,7 @@
                     $registryKey = "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Edge"
                     $policies = $using:EdgePolicies
                     $gpo = New-GPO -name "Edge_browser"
-                    New-GPLink -Guid $gpo.Id -Target $domain.DistinguishedName -order 1
+                    New-GPLink -Guid $gpo.Id -Target $domain.DistinguishedName -Order 1
 
                     foreach ($policy in $policies) {
                         $key = $registryKey
@@ -610,7 +634,7 @@
                         return $true
                     }
                 }
-                DependsOn = "[WaitForADDomain]WaitForDCReady"
+                DependsOn  = "[WaitForADDomain]WaitForDCReady"
             }
 
             # Chrome - https://chromeenterprise.google/intl/en_us/policies/
@@ -620,7 +644,7 @@
                     $registryKey = "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Google\Chrome"
                     $policies = $using:ChromePolicies
                     $gpo = New-GPO -name "Chrome_browser"
-                    New-GPLink -Guid $gpo.Id -Target $domain.DistinguishedName -order 1
+                    New-GPLink -Guid $gpo.Id -Target $domain.DistinguishedName -Order 1
 
                     foreach ($policy in $policies) {
                         $key = $registryKey
@@ -639,7 +663,7 @@
                         return $true
                     }
                 }
-                DependsOn = "[WaitForADDomain]WaitForDCReady"
+                DependsOn  = "[WaitForADDomain]WaitForDCReady"
             }
         }
 
@@ -678,7 +702,7 @@
                     return $true
                 }
             }
-            DependsOn = "[WaitForADDomain]WaitForDCReady"
+            DependsOn  = "[WaitForADDomain]WaitForDCReady"
         }
 
         ADOrganizationalUnit AdditionalUsersOU {
@@ -742,6 +766,13 @@ function Get-NetBIOSName {
             return $DomainFQDN
         }
     }
+}
+
+enum GlobalConfigurations {
+    ApplyBrowserPolicies
+    EnableDscPerformanceAnalysis
+    # EXP_DenyNtlmToAllDomainAccounts
+    # EXP_DenyNtlmToAllAccounts
 }
 
 <#
