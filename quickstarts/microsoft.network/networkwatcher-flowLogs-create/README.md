@@ -66,8 +66,8 @@ Select **Deploy to Azure** or **Deploy to Azure US Gov** at the beginning of thi
 - [Virtual network flow logs overview](https://learn.microsoft.com/azure/network-watcher/vnet-flow-logs-overview)
 - [Create, change, enable, disable, or delete virtual network flow logs](https://learn.microsoft.com/azure/network-watcher/vnet-flow-logs-manage)
 - [Register the Microsoft.Insights provider](https://learn.microsoft.com/azure/network-watcher/vnet-flow-logs-manage#register-insights-provider)
-- [Network Watcher deployment model](https://learn.microsoft.com/azure/network-watcher/frequently-asked-questions#what-is-the-network-watcher-deployment-model)
-- [What is NetworkWatcherRG?](https://learn.microsoft.com/azure/network-watcher/frequently-asked-questions#what-is-networkwatcherrg)
+- [Network Watcher deployment model](https://learn.microsoft.com/azure/network-watcher/frequently-asked-questions#what-is-the-network-watcher-deployment-model-)
+- [What is NetworkWatcherRG?](https://learn.microsoft.com/azure/network-watcher/frequently-asked-questions#what-is-networkwatcherrg-)
 - [Azure RBAC permissions required to use Network Watcher](https://learn.microsoft.com/azure/network-watcher/rbac-permissions)
 
 `Tags: Network Watcher, virtual network flow logs, Microsoft.Storage/storageAccounts, Microsoft.Resources/deployments, Microsoft.Network/networkWatchers/flowLogs, JSON, Microsoft.Network/virtualNetworks`
