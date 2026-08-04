@@ -302,7 +302,7 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
-      models: read
+      copilot-requests: write
       security-events: write
 
     steps:
@@ -513,6 +513,7 @@ jobs:
 
                   const location = result.locations?.[0]?.physicalLocation;
                   let filePath = location?.artifactLocation?.uri || '';
+
                   // Normalize file path relative to workspace
                   if (filePath.startsWith('file://')) {
                     filePath = filePath.replace('file://', '');
@@ -553,11 +554,23 @@ jobs:
             core.setOutput('findings_json', JSON.stringify(capped));
             core.setOutput('scan_status', 'completed');
 
-      # ── 7. Agentic summary with tool calling ────────────────────────────
-      - name: Generate and post summary
+      # ── 7. Build bounded context and run Copilot inference ──────────────
+      - name: Checkout trusted summarizer assets
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository }}
+          ref: ${{ github.sha }}
+          fetch-depth: 1
+          path: .trusted-summary
+          sparse-checkout: |
+            .github/agents/summarizer.agent.md
+            .github/scripts/build-summary-prompt.cjs
+          sparse-checkout-cone-mode: false
+
+      - name: Prepare summary prompt
+        id: prompt
         uses: actions/github-script@v7
         env:
-          GITHUB_TOKEN: ${{ github.token }}
           SAMPLES_JSON: ${{ steps.detect.outputs.samples_json }}
           SECURITY_FINDINGS_JSON: ${{ steps.security.outputs.findings_json }}
           SCAN_STATUS: ${{ steps.security.outputs.scan_status }}
@@ -565,667 +578,141 @@ jobs:
           script: |
             const fs = require('fs');
             const path = require('path');
-
-            // ── 1. Read summarizer agent instructions ──────────────────
-            const agentPath = path.join(
+            const { buildSummaryPrompt } = require(path.join(
               process.env.GITHUB_WORKSPACE,
-              '.github', 'agents', 'summarizer.agent.md'
-            );
-            if (!fs.existsSync(agentPath)) {
-              core.warning('summarizer.agent.md not found – skipping summary.');
-              return;
-            }
-            const systemPrompt = fs.readFileSync(agentPath, 'utf8');
+              '.trusted-summary',
+              '.github',
+              'scripts',
+              'build-summary-prompt.cjs'
+            ));
 
-            // ── 2. Parse inputs ────────────────────────────────────────
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const pull_number = context.issue.number;
             const samples = JSON.parse(process.env.SAMPLES_JSON || '[]');
-            if (!samples.length) {
-              core.warning('No sample folders detected – skipping summary.');
-              return;
-            }
-
             const securityFindings = JSON.parse(
               process.env.SECURITY_FINDINGS_JSON || '[]'
             );
-            const scanStatus = process.env.SCAN_STATUS || 'unavailable';
 
-            const owner = context.repo.owner;
-            const repo  = context.repo.repo;
-            const pull_number = context.issue.number;
-            const workspace = process.env.GITHUB_WORKSPACE;
-
-            // ── 3. Gather PR context via API ───────────────────────────
             const prData = await github.rest.pulls.get({
               owner, repo, pull_number
             });
-
             const files = await github.paginate(
               github.rest.pulls.listFiles,
               { owner, repo, pull_number, per_page: 100 }
             );
-            const changedFilesList = files.map(f => f.filename);
+            const changedFiles = files.map(file => file.filename);
 
             const MAX_DIFF_CHARS = 2000;
-            const diffResp = await github.rest.pulls.get({
+            const diffResponse = await github.rest.pulls.get({
               owner, repo, pull_number,
               mediaType: { format: 'diff' }
             });
-            const fullDiff = typeof diffResp.data === 'string'
-              ? diffResp.data : '';
+            const fullDiff = typeof diffResponse.data === 'string'
+              ? diffResponse.data
+              : '';
             const diffExcerpt = fullDiff.length > MAX_DIFF_CHARS
-              ? fullDiff.substring(0, MAX_DIFF_CHARS) + '\n... (truncated)'
+              ? `${fullDiff.substring(0, MAX_DIFF_CHARS)}\n... (truncated)`
               : fullDiff;
 
-            // ── 4. Build compact file manifest for each sample ──────────
-            // Only list template-relevant files to keep the prompt small;
-            // the model can use list_directory / search_files for more.
-            function buildCompactManifest(dir, relBase) {
-              const entries = [];
-              if (!fs.existsSync(dir)) return entries;
-              const TEMPLATE_EXTS = new Set(['.bicep', '.json', '.bicepparam']);
-              for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-                const fullPath = path.join(dir, entry.name);
-                const relPath = path.posix.join(relBase, entry.name);
-                if (entry.name.startsWith('.')) continue;
-                if (entry.isDirectory()) {
-                  entries.push(...buildCompactManifest(fullPath, relPath));
-                } else if (entry.isFile()) {
-                  const ext = path.extname(entry.name).toLowerCase();
-                  if (TEMPLATE_EXTS.has(ext) || entry.name === 'README.md' || entry.name === 'metadata.json') {
-                    entries.push(relPath);
-                  }
-                }
-              }
-              return entries;
-            }
+            const prompt = buildSummaryPrompt({
+              workspaceRoot: process.env.GITHUB_WORKSPACE,
+              pullNumber: pull_number,
+              pullTitle: prData.data.title,
+              samples,
+              changedFiles,
+              diffExcerpt,
+              scanStatus: process.env.SCAN_STATUS || 'unavailable',
+              securityFindings
+            });
 
-            const sampleSections = [];
-            for (const sample of samples) {
-              const sampleDir = path.join(workspace, sample);
-              let section = `## Sample: ${sample}\n`;
+            const promptFile = path.join(
+              process.env.RUNNER_TEMP,
+              'quickstart-summary-prompt.txt'
+            );
+            fs.writeFileSync(promptFile, prompt, 'utf8');
+            core.info(`Prepared bounded summary prompt (${Buffer.byteLength(prompt)} bytes).`);
+            core.setOutput('prompt_file', promptFile);
 
-              // Compact file manifest (template files only)
-              const manifest = buildCompactManifest(sampleDir, '.');
-              section += `Key files: ${manifest.join(', ')}\n`;
+      - name: Set up Node.js for Copilot CLI
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
 
-              // Changed files in this sample
-              const relevantFiles = changedFilesList.filter(
-                f => f.startsWith(sample + '/')
+      - name: Install Copilot CLI
+        shell: bash
+        run: npm install --global @github/copilot@1.0.78
+
+      - name: Run Copilot inference
+        id: inference
+        continue-on-error: true
+        uses: actions/ai-inference@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          provider: copilot
+          token: ${{ github.token }}
+          model: gpt-4.1
+          prompt-file: ${{ steps.prompt.outputs.prompt_file }}
+          system-prompt-file: .trusted-summary/.github/agents/summarizer.agent.md
+
+      # ── 8. Post the summary when inference succeeds ────────────────────
+      - name: Generate and post summary
+        uses: actions/github-script@v7
+        env:
+          INFERENCE_OUTCOME: ${{ steps.inference.outcome }}
+          INFERENCE_RESPONSE_FILE: ${{ steps.inference.outputs.response-file }}
+        with:
+          script: |
+            const fs = require('fs');
+            const outcome = process.env.INFERENCE_OUTCOME;
+            const responseFile = process.env.INFERENCE_RESPONSE_FILE;
+
+            if (outcome !== 'success' || !responseFile || !fs.existsSync(responseFile)) {
+              core.warning(
+                'Copilot inference was unavailable; skipping the informational PR summary.'
               );
-              section += `Changed: ${relevantFiles.join(', ') || 'None'}`;
-
-              sampleSections.push(section);
-            }
-
-            // ── 5. Build initial user message ──────────────────────────
-            // Keep this minimal — the model uses tools to read file content.
-            let securitySection = '';
-            if (scanStatus !== 'completed') {
-              securitySection = 'Security scan: unavailable (use get_security_findings tool).';
-            } else if (securityFindings.length > 0) {
-              securitySection = `Security scan: ${securityFindings.length} finding(s) detected. Use get_security_findings tool for details.`;
-            } else {
-              securitySection = 'Security scan: ✅ No findings from MSDO.';
-            }
-
-            const userMessage = [
-              `PR #${pull_number}: ${prData.data.title}`,
-              '',
-              ...sampleSections,
-              '',
-              securitySection,
-              '',
-              diffExcerpt ? `Diff excerpt:\n\`\`\`diff\n${diffExcerpt}\n\`\`\`` : '',
-              '',
-              'Use the tools to read template files (main.bicep or azuredeploy.json first), then produce a complete summary.'
-            ].join('\n');
-
-            // ── 6. Define tool schemas ─────────────────────────────────
-            const tools = [
-              {
-                type: 'function',
-                function: {
-                  name: 'read_file',
-                  description: 'Read a file from the sample directory. Returns the file content. For large files, use start_line and max_lines to read a specific range.',
-                  parameters: {
-                    type: 'object',
-                    properties: {
-                      sample: {
-                        type: 'string',
-                        description: 'The sample folder path (e.g., "quickstarts/my-sample")'
-                      },
-                      path: {
-                        type: 'string',
-                        description: 'Relative path within the sample folder (e.g., "main.bicep", "prereqs/prereq.main.bicep")'
-                      },
-                      start_line: {
-                        type: 'integer',
-                        description: 'Optional 1-based start line for partial reads. Defaults to 1.'
-                      },
-                      max_lines: {
-                        type: 'integer',
-                        description: 'Optional max lines to return. Defaults to all lines up to 50KB.'
-                      }
-                    },
-                    required: ['sample', 'path']
-                  }
-                }
-              },
-              {
-                type: 'function',
-                function: {
-                  name: 'list_directory',
-                  description: 'List files and subdirectories in a path within the sample directory. Returns names, types, and sizes.',
-                  parameters: {
-                    type: 'object',
-                    properties: {
-                      sample: {
-                        type: 'string',
-                        description: 'The sample folder path'
-                      },
-                      path: {
-                        type: 'string',
-                        description: 'Relative path within the sample folder. Use "." for the root.'
-                      }
-                    },
-                    required: ['sample', 'path']
-                  }
-                }
-              },
-              {
-                type: 'function',
-                function: {
-                  name: 'search_files',
-                  description: 'Search for files matching a glob pattern within the sample directory. Returns matching file paths and sizes.',
-                  parameters: {
-                    type: 'object',
-                    properties: {
-                      sample: {
-                        type: 'string',
-                        description: 'The sample folder path'
-                      },
-                      pattern: {
-                        type: 'string',
-                        description: 'Glob pattern (e.g., "**/*.bicep", "**/*.json")'
-                      }
-                    },
-                    required: ['sample', 'pattern']
-                  }
-                }
-              },
-              {
-                type: 'function',
-                function: {
-                  name: 'get_security_findings',
-                  description: 'Retrieve security findings from the MSDO scan (Template Analyzer, Checkov, Trivy, Terrascan). Optionally filter by severity.',
-                  parameters: {
-                    type: 'object',
-                    properties: {
-                      severity: {
-                        type: 'string',
-                        enum: ['high', 'medium', 'low', 'all'],
-                        description: 'Filter by severity. Defaults to "all".'
-                      }
-                    }
-                  }
-                }
-              }
-            ];
-
-            // ── 7. Tool executor with path sandboxing ──────────────────
-            const MAX_FILE_BYTES = 50 * 1024;
-            const MAX_LIST_ENTRIES = 200;
-            const MAX_SEARCH_RESULTS = 50;
-            const TOTAL_CONTENT_BUDGET = 100 * 1024;
-            let totalContentBytes = 0;
-
-            // Cache tool results to avoid repeated reads
-            const toolCache = new Map();
-
-            function sanitizePath(sample, relPath) {
-              // Validate sample is in our known list
-              if (!samples.includes(sample)) {
-                return { error: `Unknown sample folder: ${sample}` };
-              }
-
-              // Normalize and validate the relative path
-              const normalized = path.posix.normalize(relPath || '.');
-
-              // Reject path traversal, absolute paths, hidden dirs
-              if (normalized.startsWith('/') || normalized.startsWith('\\')) {
-                return { error: 'Absolute paths are not allowed.' };
-              }
-              if (normalized.includes('..')) {
-                return { error: 'Path traversal ("..") is not allowed.' };
-              }
-              // Allow "." as root, but reject other hidden paths
-              if (normalized.split('/').some(p => p.startsWith('.') && p !== '.')) {
-                return { error: 'Hidden files/directories are not allowed.' };
-              }
-
-              const fullPath = path.join(workspace, sample, normalized);
-
-              // Resolve realpath and verify it stays under sample root
-              const sampleRoot = path.join(workspace, sample);
+              await core.summary
+                .addHeading('Quickstart sample summary')
+                .addRaw('Copilot inference was unavailable. Deployment validation was not affected.')
+                .write();
               try {
-                const resolved = fs.realpathSync(fullPath);
-                const resolvedRoot = fs.realpathSync(sampleRoot);
-                if (!resolved.startsWith(resolvedRoot + path.sep) && resolved !== resolvedRoot) {
-                  return { error: 'Path escapes the sample directory (symlink?).' };
-                }
-                return { fullPath: resolved, relPath: normalized };
-              } catch {
-                return { fullPath, relPath: normalized };
-              }
-            }
-
-            function executeTool(name, args) {
-              const cacheKey = JSON.stringify({ name, args });
-              if (toolCache.has(cacheKey)) {
-                core.info(`  [cache hit] ${name}(${JSON.stringify(args)})`);
-                return toolCache.get(cacheKey);
-              }
-
-              let result;
-              switch (name) {
-                case 'read_file': {
-                  const check = sanitizePath(args.sample, args.path);
-                  if (check.error) { result = check.error; break; }
-
-                  if (!fs.existsSync(check.fullPath)) {
-                    result = `File not found: ${args.path}`; break;
-                  }
-                  const stat = fs.statSync(check.fullPath);
-                  if (!stat.isFile()) {
-                    result = `Not a file: ${args.path}`; break;
-                  }
-
-                  // Content budget check
-                  if (totalContentBytes >= TOTAL_CONTENT_BUDGET) {
-                    result = 'Content budget exhausted (100KB total). No more file reads available.';
-                    break;
-                  }
-
-                  let content = fs.readFileSync(check.fullPath, 'utf8');
-                  const lines = content.split('\n');
-                  const startLine = Math.max(1, args.start_line || 1);
-                  const maxLines = args.max_lines || lines.length;
-                  const sliced = lines.slice(startLine - 1, startLine - 1 + maxLines);
-                  content = sliced.join('\n');
-
-                  const budget = Math.min(MAX_FILE_BYTES, TOTAL_CONTENT_BUDGET - totalContentBytes);
-                  let truncated = false;
-                  if (content.length > budget) {
-                    content = content.substring(0, budget);
-                    truncated = true;
-                  }
-                  totalContentBytes += content.length;
-
-                  const totalLines = lines.length;
-                  const returnedRange = `lines ${startLine}-${startLine + sliced.length - 1} of ${totalLines}`;
-                  result = content;
-                  if (truncated) {
-                    result += `\n\n[TRUNCATED — ${returnedRange}, content budget remaining: ${TOTAL_CONTENT_BUDGET - totalContentBytes} bytes. Use start_line/max_lines to read more.]`;
-                  } else if (sliced.length < totalLines) {
-                    result += `\n\n[Returned ${returnedRange}. Use start_line/max_lines for other sections.]`;
-                  }
-                  break;
-                }
-
-                case 'list_directory': {
-                  const check = sanitizePath(args.sample, args.path || '.');
-                  if (check.error) { result = check.error; break; }
-
-                  if (!fs.existsSync(check.fullPath)) {
-                    result = `Directory not found: ${args.path}`; break;
-                  }
-                  const stat = fs.statSync(check.fullPath);
-                  if (!stat.isDirectory()) {
-                    result = `Not a directory: ${args.path}`; break;
-                  }
-
-                  const entries = fs.readdirSync(check.fullPath, { withFileTypes: true });
-                  const items = [];
-                  for (const entry of entries.slice(0, MAX_LIST_ENTRIES)) {
-                    if (entry.name.startsWith('.')) continue;
-                    const entryPath = path.join(check.fullPath, entry.name);
-                    if (entry.isDirectory()) {
-                      items.push({ name: entry.name, type: 'directory' });
-                    } else if (entry.isFile()) {
-                      try {
-                        const s = fs.statSync(entryPath);
-                        items.push({ name: entry.name, type: 'file', size: s.size });
-                      } catch {
-                        items.push({ name: entry.name, type: 'file', size: null });
-                      }
-                    }
-                  }
-                  const truncMsg = entries.length > MAX_LIST_ENTRIES
-                    ? `\n(Showing first ${MAX_LIST_ENTRIES} of ${entries.length} entries)`
-                    : '';
-                  result = JSON.stringify(items, null, 2) + truncMsg;
-                  break;
-                }
-
-                case 'search_files': {
-                  if (!args.sample || !samples.includes(args.sample)) {
-                    result = `Unknown sample folder: ${args.sample}`; break;
-                  }
-                  // Simple glob implementation using recursive scan
-                  const sampleDir = path.join(workspace, args.sample);
-                  const pattern = (args.pattern || '*').replace(/\\/g, '/');
-
-                  // Reject dangerous patterns
-                  if (pattern.includes('..') || pattern.startsWith('/')) {
-                    result = 'Invalid pattern: must be relative, no ".."'; break;
-                  }
-
-                  function matchGlob(str, pat) {
-                    const regex = new RegExp(
-                      '^' + pat.split('**').map(segment =>
-                        segment.split('*').map(s =>
-                          s.replace(/[.+^${}()|[\]\\]/g, '\\$&')
-                        ).join('[^/]*')
-                      ).join('.*') + '$'
-                    );
-                    return regex.test(str);
-                  }
-
-                  function scanDir(dir, relBase) {
-                    const results = [];
-                    if (!fs.existsSync(dir)) return results;
-                    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-                      if (entry.name.startsWith('.')) continue;
-                      const fullP = path.join(dir, entry.name);
-                      const relP = path.posix.join(relBase, entry.name);
-                      if (entry.isDirectory()) {
-                        results.push(...scanDir(fullP, relP));
-                      } else if (entry.isFile() && matchGlob(relP, pattern)) {
-                        try {
-                          const s = fs.statSync(fullP);
-                          results.push({ path: relP, size: s.size });
-                        } catch {
-                          results.push({ path: relP, size: null });
-                        }
-                      }
-                      if (results.length >= MAX_SEARCH_RESULTS) break;
-                    }
-                    return results;
-                  }
-
-                  const matches = scanDir(sampleDir, '.').slice(0, MAX_SEARCH_RESULTS);
-                  result = JSON.stringify(matches, null, 2);
-                  if (matches.length >= MAX_SEARCH_RESULTS) {
-                    result += `\n(Results capped at ${MAX_SEARCH_RESULTS})`;
-                  }
-                  break;
-                }
-
-                case 'get_security_findings': {
-                  const severity = args.severity || 'all';
-                  const filtered = severity === 'all'
-                    ? securityFindings
-                    : securityFindings.filter(f => f.severity === severity);
-                  if (filtered.length === 0) {
-                    result = severity === 'all'
-                      ? 'No security findings from MSDO scan.'
-                      : `No ${severity}-severity findings from MSDO scan.`;
-                  } else {
-                    result = JSON.stringify(filtered, null, 2);
-                  }
-                  break;
-                }
-
-                default:
-                  result = `Unknown tool: ${name}`;
-              }
-
-              toolCache.set(cacheKey, result);
-              return result;
-            }
-
-            // ── 8. Agentic tool-calling loop ───────────────────────────
-            const MODEL_ENDPOINT = 'https://models.github.ai/inference/chat/completions';
-            const PRIMARY_MODEL = 'openai/gpt-4.1-mini';
-            const FALLBACK_MODEL = 'openai/gpt-4.1';
-            const MAX_ROUNDS = 8;
-            const MAX_REQUEST_BYTES = 100_000;
-            const FETCH_TIMEOUT_MS = 60_000;
-            const messages = [
-              { role: 'system', content: systemPrompt },
-              { role: 'user',   content: userMessage }
-            ];
-
-            // Compact old tool-call turns when payload exceeds budget.
-            // Removes complete assistant+tool turn pairs from the middle,
-            // preserving the system prompt, initial user message, and recent turns.
-            function compactMessages() {
-              const serialized = JSON.stringify(messages);
-              if (serialized.length <= MAX_REQUEST_BYTES) return;
-
-              core.info(`  Compacting messages (${(serialized.length / 1024).toFixed(1)} KB > ${(MAX_REQUEST_BYTES / 1024).toFixed(1)} KB limit)...`);
-
-              const KEEP_TAIL = 4;
-              const KEEP_HEAD = 2; // system + user
-              while (messages.length > KEEP_HEAD + KEEP_TAIL) {
-                const check = JSON.stringify(messages);
-                if (check.length <= MAX_REQUEST_BYTES) break;
-
-                let i = KEEP_HEAD;
-                if (messages[i]?.role === 'assistant' && messages[i]?.tool_calls?.length) {
-                  let end = i + 1;
-                  while (end < messages.length && messages[end].role === 'tool') end++;
-                  const removed = end - i;
-                  messages.splice(i, removed);
-                  core.info(`    Removed ${removed} messages (1 assistant + ${removed - 1} tool results)`);
-                } else {
-                  break;
-                }
-              }
-              core.info(`  After compaction: ${(JSON.stringify(messages).length / 1024).toFixed(1)} KB, ${messages.length} messages`);
-            }
-
-            // Send a chat completion request with automatic model fallback.
-            // Tries PRIMARY_MODEL first; on persistent failure, retries with FALLBACK_MODEL.
-            async function chatCompletion(extraBody = {}) {
-              const MAX_RETRIES = 3;          // per model (lower to preserve rate budget for fallback)
-              const modelsToTry = [PRIMARY_MODEL, FALLBACK_MODEL];
-
-              for (const model of modelsToTry) {
-                let resp = null;
-                let lastError = null;
-
-                const body = JSON.stringify({
-                  model,
-                  messages,
-                  max_completion_tokens: 4000,
-                  ...extraBody
+                await github.rest.reactions.createForIssueComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: context.payload.comment.id,
+                  content: 'confused'
                 });
-                core.info(`  Request: model=${model}, payload=${(body.length / 1024).toFixed(1)} KB, ${messages.length} messages`);
-
-                for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
-                  try {
-                    resp = await fetch(MODEL_ENDPOINT, {
-                      method: 'POST',
-                      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-                      headers: {
-                        'Authorization': `Bearer ${process.env.GITHUB_TOKEN}`,
-                        'Content-Type': 'application/json'
-                      },
-                      body
-                    });
-                    lastError = null;
-
-                    // Log rate-limit headers for diagnostics
-                    const rl = resp.headers.get('x-ratelimit-remaining');
-                    if (rl !== null) core.info(`  Rate-limit remaining: ${rl}`);
-
-                    if (resp.ok) {
-                      core.info(`  ✓ Success with ${model}`);
-                      return { resp, model };
-                    }
-
-                    // 429 and 5xx are retryable
-                    if (resp.status === 429 || resp.status >= 500) {
-                      // Respect Retry-After header for 429, else exponential backoff
-                      let delay;
-                      const retryAfter = resp.headers.get('retry-after');
-                      if (resp.status === 429 && retryAfter) {
-                        delay = (parseInt(retryAfter, 10) || 30) * 1000;
-                      } else {
-                        const base = Math.pow(2, attempt + 1) * 1000;
-                        const jitter = Math.floor(Math.random() * 1000);
-                        delay = base + jitter;
-                      }
-                      if (attempt < MAX_RETRIES - 1) {
-                        core.warning(`GitHub Models API (${model}) returned ${resp.status} — retrying in ${(delay / 1000).toFixed(1)}s (attempt ${attempt + 1}/${MAX_RETRIES})...`);
-                        await new Promise(r => setTimeout(r, delay));
-                      }
-                      continue;
-                    }
-
-                    // Other 4xx — don't retry, try fallback model
-                    lastError = new Error(`HTTP ${resp.status}: ${await resp.text()}`);
-                    core.warning(`  ${model} returned ${resp.status}: ${lastError.message.slice(9)}`);
-                    resp = null;
-                    break;
-                  } catch (fetchErr) {
-                    lastError = fetchErr;
-                    resp = null;
-                    if (attempt < MAX_RETRIES - 1) {
-                      const base = Math.pow(2, attempt + 1) * 1000;
-                      const jitter = Math.floor(Math.random() * 1000);
-                      const delay = base + jitter;
-                      core.warning(`GitHub Models API (${model}) network error: ${fetchErr.message} — retrying in ${(delay / 1000).toFixed(1)}s (attempt ${attempt + 1}/${MAX_RETRIES})...`);
-                      await new Promise(r => setTimeout(r, delay));
-                    }
-                  }
-                }
-
-                // If primary failed, pause before fallback to let rate limits reset
-                if (model === PRIMARY_MODEL) {
-                  const reason = lastError ? lastError.message : `HTTP ${resp?.status}`;
-                  core.warning(`Primary model ${model} failed (${reason}). Waiting 10s then falling back to ${FALLBACK_MODEL}...`);
-                  await new Promise(r => setTimeout(r, 10_000));
-                } else {
-                  // Fallback also failed
-                  if (lastError) {
-                    return { error: lastError.message };
-                  }
-                  let errBody = 'no response';
-                  try { errBody = resp ? await resp.text() : 'no response'; } catch (e) { /* body consumed */ }
-                  return { error: `${model} returned ${resp?.status}: ${errBody}` };
-                }
+              } catch (reactionError) {
+                core.warning(`Could not add inference-failure reaction: ${reactionError.message}`);
               }
-            }
-
-            let summary = null;
-
-            for (let round = 0; round < MAX_ROUNDS; round++) {
-              core.info(`\n── Agent round ${round + 1}/${MAX_ROUNDS} ──`);
-
-              // Compact conversation history if it's grown too large
-              compactMessages();
-
-              const completion = await chatCompletion({ tools, tool_choice: 'auto' });
-              if (completion.error) {
-                core.setFailed(`GitHub Models API failed: ${completion.error}`);
-                return;
-              }
-
-              const result = await completion.resp.json();
-              const choice = result.choices?.[0];
-              if (!choice) {
-                core.setFailed('GitHub Models API returned no choices.');
-                return;
-              }
-
-              const assistantMsg = choice.message;
-              messages.push(assistantMsg);
-
-              // If the model produced a final text response (no tool calls)
-              if (choice.finish_reason === 'stop') {
-                summary = assistantMsg.content;
-                core.info('Agent produced final summary.');
-                break;
-              }
-
-              // If model stopped for token limit or has no tool calls, treat as incomplete
-              if (!assistantMsg.tool_calls?.length) {
-                if (choice.finish_reason === 'length') {
-                  core.warning('Model response truncated (max_completion_tokens). Will request finalization.');
-                } else {
-                  summary = assistantMsg.content;
-                  core.info('Agent produced final summary (no tool calls).');
-                }
-                break;
-              }
-
-              // Execute tool calls
-              core.info(`  Model requested ${assistantMsg.tool_calls.length} tool call(s).`);
-              const MAX_TOOL_RESULT_CHARS = 8000;
-              for (const toolCall of assistantMsg.tool_calls) {
-                const fnName = toolCall.function.name;
-                let fnArgs;
-                try {
-                  fnArgs = JSON.parse(toolCall.function.arguments);
-                } catch {
-                  fnArgs = {};
-                  core.warning(`  Malformed tool args for ${fnName}`);
-                }
-
-                core.info(`  → ${fnName}(${JSON.stringify(fnArgs)})`);
-                let toolResult = executeTool(fnName, fnArgs);
-                let content = typeof toolResult === 'string'
-                  ? toolResult
-                  : JSON.stringify(toolResult);
-
-                // Cap individual tool results to manage conversation size
-                if (content.length > MAX_TOOL_RESULT_CHARS) {
-                  content = content.substring(0, MAX_TOOL_RESULT_CHARS) +
-                    '\n... [truncated — use start_line/max_lines for more]';
-                }
-
-                messages.push({
-                  role: 'tool',
-                  tool_call_id: toolCall.id,
-                  content
-                });
-              }
-            }
-
-            if (!summary) {
-              // If we exhausted rounds, ask for final answer without tools
-              core.info('Max rounds reached – requesting final summary without tools.');
-              messages.push({
-                role: 'user',
-                content: 'You have reached the tool call limit. Please produce your final summary now using the information gathered so far.'
-              });
-              compactMessages();
-
-              const completion = await chatCompletion();
-              if (completion.error) {
-                core.warning(`Final summary request failed: ${completion.error}`);
-              } else {
-                const finalResult = await completion.resp.json();
-                summary = finalResult.choices?.[0]?.message?.content;
-              }
-            }
-
-            if (!summary) {
-              core.setFailed('Agent failed to produce a summary after all rounds.');
               return;
             }
 
-            // ── 9. Post or update PR comment ───────────────────────────
-            const MARKER = '<!-- quickstart-summarizer-bot -->';
-            const commentBody = `${MARKER}\n## 🤖 Quickstart Sample Summary\n\n${summary}\n\n---\n*Generated by the quickstart summarizer agent (v2 — agentic + MSDO security) · triggered by /validate*`;
+            const summary = fs.readFileSync(responseFile, 'utf8').trim();
+            if (!summary) {
+              core.warning(
+                'Copilot inference returned an empty response; skipping the informational PR summary.'
+              );
+              await core.summary
+                .addHeading('Quickstart sample summary')
+                .addRaw('Copilot inference returned an empty response. Deployment validation was not affected.')
+                .write();
+              return;
+            }
 
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const pull_number = context.issue.number;
+            const marker = '<!-- quickstart-summarizer-bot -->';
+            const commentBody = `${marker}\n## 🤖 Quickstart Sample Summary\n\n${summary}\n\n---\n*Generated by the quickstart summarizer agent (v3 · GitHub Copilot + MSDO security) · triggered by /validate*`;
             const comments = await github.paginate(
               github.rest.issues.listComments,
               { owner, repo, issue_number: pull_number, per_page: 100 }
             );
-            const existing = comments.find(c => c.body && c.body.includes(MARKER));
+            const existing = comments.find(
+              comment => comment.body && comment.body.includes(marker)
+            );
 
             if (existing) {
               await github.rest.issues.updateComment({
@@ -1244,13 +731,10 @@ jobs:
             }
 
             await github.rest.reactions.createForIssueComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
+              owner, repo,
               comment_id: context.payload.comment.id,
               content: 'rocket'
             });
-
-
 
   selected-pipeline:
     name: Validate ARM Deployments via ADX
