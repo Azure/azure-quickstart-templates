@@ -7,7 +7,7 @@ param workloadId string
 @description('The metadata to be applied to the workload resource.')
 param tags object = {}
 
-@description('The resource ID of the target virtual enclave.')
+@description('The resource ID of the target enclave.')
 param virtualEnclaveResourceId string
 
 param workloadResourceGroup string
