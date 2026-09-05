@@ -37,7 +37,7 @@ test('builds delimited context from relevant sample files', () => {
 test('rejects sample paths outside the workspace', () => {
   const { workspace } = createWorkspace();
   assert.throws(
-    () => resolveSampleRoot(workspace, '..\\outside'),
+    () => resolveSampleRoot(workspace, path.join('..', 'outside')),
     /escapes the workspace/
   );
 });
