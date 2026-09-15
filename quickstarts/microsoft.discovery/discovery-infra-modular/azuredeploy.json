@@ -1,0 +1,1627 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "languageVersion": "2.0",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.46.1.21595",
+      "templateHash": "10898400990147884249"
+    }
+  },
+  "definitions": {
+    "discoverySubnetIds": {
+      "type": "object",
+      "properties": {
+        "nodePoolSubnetId": {
+          "type": "string",
+          "minLength": 1,
+          "metadata": {
+            "description": "Subnet for the Supercomputer node pool. Requires the Microsoft.Storage service endpoint."
+          }
+        },
+        "aksSubnetId": {
+          "type": "string",
+          "minLength": 1,
+          "metadata": {
+            "description": "Subnet used by the Supercomputer AKS system. Requires the Microsoft.Storage service endpoint."
+          }
+        },
+        "workspaceSubnetId": {
+          "type": "string",
+          "minLength": 1,
+          "metadata": {
+            "description": "Subnet delegated to Microsoft.App/environments for the Workspace. Requires the Microsoft.Storage service endpoint."
+          }
+        },
+        "privateEndpointSubnetId": {
+          "type": "string",
+          "minLength": 1,
+          "metadata": {
+            "description": "Subnet that hosts private endpoints."
+          }
+        },
+        "agentSubnetId": {
+          "type": "string",
+          "minLength": 1,
+          "metadata": {
+            "description": "Subnet delegated to Microsoft.App/environments for agents. Requires the Microsoft.Storage service endpoint."
+          }
+        },
+        "searchSubnetId": {
+          "type": "string",
+          "minLength": 1,
+          "metadata": {
+            "description": "Subnet delegated to Microsoft.App/environments for search. Requires the Microsoft.Storage service endpoint."
+          }
+        }
+      },
+      "metadata": {
+        "description": "Resource IDs of the six subnets a Microsoft Discovery deployment consumes. Supply these when bringing your own virtual network. A virtual network can be associated with only one Discovery workspace.",
+        "__bicep_imported_from!": {
+          "sourceTemplate": "modules/types.bicep"
+        }
+      }
+    },
+    "workspaceFeatureTags": {
+      "type": "object",
+      "properties": {
+        "enableGhcpAiFeatures": {
+          "type": "bool",
+          "metadata": {
+            "description": "Enable GitHub Copilot and AI features (discovery.workbench.enableGhcpAiFeatures tag)."
+          }
+        },
+        "enableExtensions": {
+          "type": "bool",
+          "metadata": {
+            "description": "Enable the VS Code Extension Marketplace (discovery.workbench.enableExtensions tag)."
+          }
+        },
+        "networkIsolation": {
+          "type": "bool",
+          "metadata": {
+            "description": "Workspace network isolation mode (NetworkIsolation tag)."
+          }
+        }
+      },
+      "metadata": {
+        "description": "Workspace workbench feature tags aligned with the Discovery portal quickstart.",
+        "__bicep_imported_from!": {
+          "sourceTemplate": "modules/types.bicep"
+        }
+      }
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources. Microsoft Discovery is currently supported in East US, Sweden Central, and UK South; deploy into a supported region. All resources for a deployment must share the same region."
+      }
+    },
+    "deployNetwork": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Provision the virtual network and subnets. Set false to bring your own network."
+      }
+    },
+    "vnetName": {
+      "type": "string",
+      "defaultValue": "discovery-vnet",
+      "metadata": {
+        "description": "Name of the virtual network (when deployNetwork = true)."
+      }
+    },
+    "vnetAddressPrefix": {
+      "type": "string",
+      "defaultValue": "10.0.0.0/16",
+      "metadata": {
+        "description": "Address space for the virtual network (when deployNetwork = true)."
+      }
+    },
+    "existingSubnetIds": {
+      "$ref": "#/definitions/discoverySubnetIds",
+      "nullable": true,
+      "metadata": {
+        "description": "Subnet IDs to use when bringing your own network (deployNetwork = false)."
+      }
+    },
+    "deployManagedIdentity": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Provision the user-assigned managed identity. Set false to bring your own."
+      }
+    },
+    "managedIdentityName": {
+      "type": "string",
+      "defaultValue": "[format('uami-{0}', uniqueString(resourceGroup().id))]",
+      "minLength": 3,
+      "maxLength": 128,
+      "metadata": {
+        "description": "Name of the managed identity (when deployManagedIdentity = true). 3-128 characters: letters, numbers, hyphens, and underscores."
+      }
+    },
+    "existingManagedIdentityResourceId": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Resource ID of an existing managed identity (when deployManagedIdentity = false). Must be a Microsoft.ManagedIdentity/userAssignedIdentities resource ID."
+      }
+    },
+    "existingManagedIdentityPrincipalId": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Optional principal (object) ID override for an existing managed identity. Leave empty to read it automatically from existingManagedIdentityResourceId."
+      }
+    },
+    "deployStorage": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Provision the Azure storage account and container. Set false to bring your own."
+      }
+    },
+    "storageAccountName": {
+      "type": "string",
+      "defaultValue": "[format('stg{0}', uniqueString(resourceGroup().id))]",
+      "minLength": 3,
+      "maxLength": 24,
+      "metadata": {
+        "description": "Globally unique storage account name (when deployStorage = true)."
+      }
+    },
+    "storageAccountSku": {
+      "type": "string",
+      "defaultValue": "Standard_GRS",
+      "allowedValues": [
+        "Standard_ZRS",
+        "Standard_GRS",
+        "Standard_GZRS",
+        "Standard_RAGRS",
+        "Standard_RAGZRS"
+      ],
+      "metadata": {
+        "description": "Replication SKU for the storage account (when deployStorage = true)."
+      }
+    },
+    "blobContainerName": {
+      "type": "string",
+      "defaultValue": "discoveryoutputs",
+      "minLength": 3,
+      "maxLength": 63,
+      "metadata": {
+        "description": "Name of the blob container for Discovery outputs. Discovery expects a container named \"discoveryoutputs\". Must be 3-63 lowercase letters, numbers, and hyphens."
+      }
+    },
+    "existingStorageAccountResourceId": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Resource ID of an existing storage account (when deployStorage = false). Must be in this resource group for role assignment."
+      }
+    },
+    "assignStorageRole": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Assign Storage Blob Data Contributor to the identity on the storage account. Set false if the storage account is in another resource group."
+      }
+    },
+    "discoveryContributorGroupObjectId": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Optional Entra ID group object ID to grant Discovery Platform Contributor for existing user groups."
+      }
+    },
+    "supercomputerName": {
+      "type": "string",
+      "defaultValue": "[format('sc-{0}', uniqueString(resourceGroup().id))]",
+      "minLength": 3,
+      "maxLength": 24,
+      "metadata": {
+        "description": "Name of the Supercomputer."
+      }
+    },
+    "nodePoolName": {
+      "type": "string",
+      "defaultValue": "nodepool1",
+      "minLength": 1,
+      "maxLength": 12,
+      "metadata": {
+        "description": "Name of the node pool."
+      }
+    },
+    "nodePoolVmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D4s_v6",
+      "metadata": {
+        "description": "VM SKU for the node pool."
+      }
+    },
+    "nodePoolMaxNodeCount": {
+      "type": "int",
+      "defaultValue": 3,
+      "minValue": 1,
+      "metadata": {
+        "description": "Maximum number of nodes in the node pool."
+      }
+    },
+    "nodePoolMinNodeCount": {
+      "type": "int",
+      "defaultValue": 0,
+      "minValue": 0,
+      "metadata": {
+        "description": "Minimum number of nodes in the node pool (0 allows scale-to-zero)."
+      }
+    },
+    "nodePoolScaleSetPriority": {
+      "type": "string",
+      "defaultValue": "Regular",
+      "allowedValues": [
+        "Regular",
+        "Spot"
+      ],
+      "metadata": {
+        "description": "Scale set priority for the node pool."
+      }
+    },
+    "workspaceName": {
+      "type": "string",
+      "defaultValue": "[format('ws-{0}', uniqueString(resourceGroup().id))]",
+      "minLength": 3,
+      "maxLength": 24,
+      "metadata": {
+        "description": "Name of the Workspace."
+      }
+    },
+    "workspaceFeatures": {
+      "$ref": "#/definitions/workspaceFeatureTags",
+      "defaultValue": {
+        "enableGhcpAiFeatures": true,
+        "enableExtensions": true,
+        "networkIsolation": true
+      },
+      "metadata": {
+        "description": "Workbench feature tags for the Workspace."
+      }
+    },
+    "chatModelDeploymentName": {
+      "type": "string",
+      "defaultValue": "gpt-5-4",
+      "minLength": 3,
+      "maxLength": 24,
+      "metadata": {
+        "description": "Name of the chat model deployment."
+      }
+    },
+    "chatModelFormat": {
+      "type": "string",
+      "defaultValue": "OpenAI",
+      "allowedValues": [
+        "OpenAI"
+      ],
+      "metadata": {
+        "description": "Chat model format. Microsoft Discovery uses the OpenAI model format."
+      }
+    },
+    "chatModelName": {
+      "type": "string",
+      "defaultValue": "gpt-5.4",
+      "minLength": 1,
+      "maxLength": 64,
+      "metadata": {
+        "description": "Chat model name to deploy. Discovery Engine tasks require the primary deployment to use gpt-5.4 (with deployment name gpt-5-4)."
+      }
+    },
+    "storageContainerName": {
+      "type": "string",
+      "defaultValue": "[format('stc-{0}', uniqueString(resourceGroup().id))]",
+      "minLength": 3,
+      "maxLength": 24,
+      "metadata": {
+        "description": "Name of the Discovery storage container resource."
+      }
+    },
+    "projectName": {
+      "type": "string",
+      "defaultValue": "[format('prj-{0}', uniqueString(resourceGroup().id))]",
+      "minLength": 3,
+      "maxLength": 24,
+      "metadata": {
+        "description": "Name of the project."
+      }
+    }
+  },
+  "resources": {
+    "existingManagedIdentity": {
+      "condition": "[and(not(parameters('deployManagedIdentity')), not(empty(parameters('existingManagedIdentityResourceId'))))]",
+      "existing": true,
+      "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+      "apiVersion": "2024-11-30",
+      "subscriptionId": "[split(parameters('existingManagedIdentityResourceId'), '/')[2]]",
+      "resourceGroup": "[split(parameters('existingManagedIdentityResourceId'), '/')[4]]",
+      "name": "[last(split(parameters('existingManagedIdentityResourceId'), '/'))]"
+    },
+    "network": {
+      "condition": "[parameters('deployNetwork')]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "[format('network-{0}', uniqueString('network', deployment().name))]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "vnetName": {
+            "value": "[parameters('vnetName')]"
+          },
+          "vnetAddressPrefix": {
+            "value": "[parameters('vnetAddressPrefix')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "languageVersion": "2.0",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.46.1.21595",
+              "templateHash": "13811863515079996180"
+            }
+          },
+          "definitions": {
+            "discoverySubnetIds": {
+              "type": "object",
+              "properties": {
+                "nodePoolSubnetId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "metadata": {
+                    "description": "Subnet for the Supercomputer node pool. Requires the Microsoft.Storage service endpoint."
+                  }
+                },
+                "aksSubnetId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "metadata": {
+                    "description": "Subnet used by the Supercomputer AKS system. Requires the Microsoft.Storage service endpoint."
+                  }
+                },
+                "workspaceSubnetId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "metadata": {
+                    "description": "Subnet delegated to Microsoft.App/environments for the Workspace. Requires the Microsoft.Storage service endpoint."
+                  }
+                },
+                "privateEndpointSubnetId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "metadata": {
+                    "description": "Subnet that hosts private endpoints."
+                  }
+                },
+                "agentSubnetId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "metadata": {
+                    "description": "Subnet delegated to Microsoft.App/environments for agents. Requires the Microsoft.Storage service endpoint."
+                  }
+                },
+                "searchSubnetId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "metadata": {
+                    "description": "Subnet delegated to Microsoft.App/environments for search. Requires the Microsoft.Storage service endpoint."
+                  }
+                }
+              },
+              "metadata": {
+                "description": "Resource IDs of the six subnets a Microsoft Discovery deployment consumes. Supply these when bringing your own virtual network. A virtual network can be associated with only one Discovery workspace.",
+                "__bicep_imported_from!": {
+                  "sourceTemplate": "types.bicep"
+                }
+              }
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]",
+              "metadata": {
+                "description": "Azure region for the virtual network."
+              }
+            },
+            "vnetName": {
+              "type": "string",
+              "defaultValue": "discovery-vnet",
+              "minLength": 2,
+              "maxLength": 64,
+              "metadata": {
+                "description": "Name of the virtual network."
+              }
+            },
+            "vnetAddressPrefix": {
+              "type": "string",
+              "defaultValue": "10.0.0.0/16",
+              "metadata": {
+                "description": "Address space for the virtual network."
+              }
+            },
+            "nodePoolSubnetPrefix": {
+              "type": "string",
+              "defaultValue": "10.0.1.0/24",
+              "metadata": {
+                "description": "Address prefix for the Supercomputer node pool subnet."
+              }
+            },
+            "aksSubnetPrefix": {
+              "type": "string",
+              "defaultValue": "10.0.2.0/24",
+              "metadata": {
+                "description": "Address prefix for the AKS system subnet used by the Supercomputer."
+              }
+            },
+            "workspaceSubnetPrefix": {
+              "type": "string",
+              "defaultValue": "10.0.3.0/24",
+              "metadata": {
+                "description": "Address prefix for the Workspace subnet (delegated to Microsoft.App/environments)."
+              }
+            },
+            "privateEndpointSubnetPrefix": {
+              "type": "string",
+              "defaultValue": "10.0.4.0/24",
+              "metadata": {
+                "description": "Address prefix for the private endpoint subnet."
+              }
+            },
+            "agentSubnetPrefix": {
+              "type": "string",
+              "defaultValue": "10.0.5.0/24",
+              "metadata": {
+                "description": "Address prefix for the agent subnet."
+              }
+            },
+            "searchSubnetPrefix": {
+              "type": "string",
+              "defaultValue": "10.0.6.0/24",
+              "metadata": {
+                "description": "Address prefix for the search subnet."
+              }
+            }
+          },
+          "variables": {
+            "appEnvironmentDelegation": [
+              {
+                "name": "Microsoft.App.environments",
+                "properties": {
+                  "serviceName": "Microsoft.App/environments"
+                }
+              }
+            ],
+            "storageServiceEndpoint": [
+              {
+                "service": "Microsoft.Storage"
+              }
+            ]
+          },
+          "resources": {
+            "vnet": {
+              "type": "Microsoft.Network/virtualNetworks",
+              "apiVersion": "2024-05-01",
+              "name": "[parameters('vnetName')]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "addressSpace": {
+                  "addressPrefixes": [
+                    "[parameters('vnetAddressPrefix')]"
+                  ]
+                },
+                "subnets": [
+                  {
+                    "name": "supercomputerNodepoolSubnet",
+                    "properties": {
+                      "addressPrefix": "[parameters('nodePoolSubnetPrefix')]",
+                      "serviceEndpoints": "[variables('storageServiceEndpoint')]"
+                    }
+                  },
+                  {
+                    "name": "aksSubnet",
+                    "properties": {
+                      "addressPrefix": "[parameters('aksSubnetPrefix')]",
+                      "serviceEndpoints": "[variables('storageServiceEndpoint')]"
+                    }
+                  },
+                  {
+                    "name": "workspaceSubnet",
+                    "properties": {
+                      "addressPrefix": "[parameters('workspaceSubnetPrefix')]",
+                      "delegations": "[variables('appEnvironmentDelegation')]",
+                      "serviceEndpoints": "[variables('storageServiceEndpoint')]"
+                    }
+                  },
+                  {
+                    "name": "privateEndpointSubnet",
+                    "properties": {
+                      "addressPrefix": "[parameters('privateEndpointSubnetPrefix')]"
+                    }
+                  },
+                  {
+                    "name": "agentSubnet",
+                    "properties": {
+                      "addressPrefix": "[parameters('agentSubnetPrefix')]",
+                      "delegations": "[variables('appEnvironmentDelegation')]",
+                      "serviceEndpoints": "[variables('storageServiceEndpoint')]"
+                    }
+                  },
+                  {
+                    "name": "searchSubnet",
+                    "properties": {
+                      "addressPrefix": "[parameters('searchSubnetPrefix')]",
+                      "delegations": "[variables('appEnvironmentDelegation')]",
+                      "serviceEndpoints": "[variables('storageServiceEndpoint')]"
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          "outputs": {
+            "vnetId": {
+              "type": "string",
+              "metadata": {
+                "description": "Resource ID of the virtual network."
+              },
+              "value": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+            },
+            "subnetIds": {
+              "$ref": "#/definitions/discoverySubnetIds",
+              "metadata": {
+                "description": "Resource IDs of the six Discovery subnets."
+              },
+              "value": {
+                "nodePoolSubnetId": "[format('{0}/subnets/supercomputerNodepoolSubnet', resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName')))]",
+                "aksSubnetId": "[format('{0}/subnets/aksSubnet', resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName')))]",
+                "workspaceSubnetId": "[format('{0}/subnets/workspaceSubnet', resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName')))]",
+                "privateEndpointSubnetId": "[format('{0}/subnets/privateEndpointSubnet', resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName')))]",
+                "agentSubnetId": "[format('{0}/subnets/agentSubnet', resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName')))]",
+                "searchSubnetId": "[format('{0}/subnets/searchSubnet', resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName')))]"
+              }
+            }
+          }
+        }
+      }
+    },
+    "identity": {
+      "condition": "[parameters('deployManagedIdentity')]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "[format('identity-{0}', uniqueString('identity', deployment().name))]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "managedIdentityName": {
+            "value": "[parameters('managedIdentityName')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.46.1.21595",
+              "templateHash": "15300268373400286796"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]",
+              "metadata": {
+                "description": "Azure region for the managed identity."
+              }
+            },
+            "managedIdentityName": {
+              "type": "string",
+              "defaultValue": "[format('uami-{0}', uniqueString(resourceGroup().id))]",
+              "minLength": 3,
+              "maxLength": 128,
+              "metadata": {
+                "description": "Name of the user-assigned managed identity (3-128 characters: letters, numbers, hyphens, and underscores; must start with a letter or number)."
+              }
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+              "apiVersion": "2024-11-30",
+              "name": "[parameters('managedIdentityName')]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "isolationScope": "Regional"
+              }
+            }
+          ],
+          "outputs": {
+            "resourceId": {
+              "type": "string",
+              "metadata": {
+                "description": "Resource ID of the managed identity."
+              },
+              "value": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managedIdentityName'))]"
+            },
+            "principalId": {
+              "type": "string",
+              "metadata": {
+                "description": "Principal (object) ID of the managed identity, used for role assignments."
+              },
+              "value": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managedIdentityName')), '2024-11-30').principalId]"
+            },
+            "clientId": {
+              "type": "string",
+              "metadata": {
+                "description": "Client ID of the managed identity."
+              },
+              "value": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managedIdentityName')), '2024-11-30').clientId]"
+            }
+          }
+        }
+      }
+    },
+    "storage": {
+      "condition": "[parameters('deployStorage')]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "[format('storage-{0}', uniqueString('storage', deployment().name))]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "storageAccountName": {
+            "value": "[parameters('storageAccountName')]"
+          },
+          "storageAccountSku": {
+            "value": "[parameters('storageAccountSku')]"
+          },
+          "blobContainerName": {
+            "value": "[parameters('blobContainerName')]"
+          },
+          "allowedSubnetIds": "[if(parameters('deployNetwork'), createObject('value', createArray(if(parameters('deployNetwork'), reference('network').outputs.subnetIds.value, parameters('existingSubnetIds')).nodePoolSubnetId, if(parameters('deployNetwork'), reference('network').outputs.subnetIds.value, parameters('existingSubnetIds')).aksSubnetId, if(parameters('deployNetwork'), reference('network').outputs.subnetIds.value, parameters('existingSubnetIds')).workspaceSubnetId, if(parameters('deployNetwork'), reference('network').outputs.subnetIds.value, parameters('existingSubnetIds')).agentSubnetId, if(parameters('deployNetwork'), reference('network').outputs.subnetIds.value, parameters('existingSubnetIds')).searchSubnetId)), createObject('value', createArray()))]"
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "languageVersion": "2.0",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.46.1.21595",
+              "templateHash": "95253537530384553"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]",
+              "metadata": {
+                "description": "Azure region for the storage account."
+              }
+            },
+            "storageAccountName": {
+              "type": "string",
+              "defaultValue": "[format('stg{0}', uniqueString(resourceGroup().id))]",
+              "minLength": 3,
+              "maxLength": 24,
+              "metadata": {
+                "description": "Globally unique storage account name (3-24 lowercase alphanumeric characters)."
+              }
+            },
+            "storageAccountSku": {
+              "type": "string",
+              "defaultValue": "Standard_GRS",
+              "allowedValues": [
+                "Standard_ZRS",
+                "Standard_GRS",
+                "Standard_GZRS",
+                "Standard_RAGRS",
+                "Standard_RAGZRS"
+              ],
+              "metadata": {
+                "description": "Replication SKU for the storage account."
+              }
+            },
+            "blobContainerName": {
+              "type": "string",
+              "defaultValue": "discoveryoutputs",
+              "minLength": 3,
+              "maxLength": 63,
+              "metadata": {
+                "description": "Name of the blob container for Discovery outputs. Discovery expects a container named \"discoveryoutputs\". Must be 3-63 lowercase letters, numbers, and hyphens."
+              }
+            },
+            "allowedSubnetIds": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "defaultValue": [],
+              "metadata": {
+                "description": "Subnet resource IDs granted access via virtual network rules. Leave empty to skip network rules."
+              }
+            }
+          },
+          "resources": {
+            "storageAccount": {
+              "type": "Microsoft.Storage/storageAccounts",
+              "apiVersion": "2023-05-01",
+              "name": "[parameters('storageAccountName')]",
+              "location": "[parameters('location')]",
+              "kind": "StorageV2",
+              "sku": {
+                "name": "[parameters('storageAccountSku')]"
+              },
+              "properties": {
+                "accessTier": "Hot",
+                "allowBlobPublicAccess": false,
+                "allowSharedKeyAccess": false,
+                "minimumTlsVersion": "TLS1_2",
+                "supportsHttpsTrafficOnly": true,
+                "networkAcls": {
+                  "copy": [
+                    {
+                      "name": "virtualNetworkRules",
+                      "count": "[length(parameters('allowedSubnetIds'))]",
+                      "input": {
+                        "id": "[parameters('allowedSubnetIds')[copyIndex('virtualNetworkRules')]]",
+                        "action": "Allow"
+                      }
+                    }
+                  ],
+                  "defaultAction": "Allow",
+                  "bypass": "AzureServices"
+                }
+              }
+            },
+            "blobServices": {
+              "type": "Microsoft.Storage/storageAccounts/blobServices",
+              "apiVersion": "2023-05-01",
+              "name": "[format('{0}/{1}', parameters('storageAccountName'), 'default')]",
+              "properties": {
+                "cors": {
+                  "corsRules": [
+                    {
+                      "allowedOrigins": [
+                        "https://studio.discovery.microsoft.com",
+                        "https://*.vscode-cdn.net",
+                        "https://vscode.dev"
+                      ],
+                      "allowedMethods": [
+                        "GET",
+                        "HEAD",
+                        "DELETE",
+                        "PUT"
+                      ],
+                      "allowedHeaders": [
+                        "*"
+                      ],
+                      "exposedHeaders": [
+                        "*"
+                      ],
+                      "maxAgeInSeconds": 200
+                    }
+                  ]
+                }
+              },
+              "dependsOn": [
+                "storageAccount"
+              ]
+            },
+            "blobContainer": {
+              "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+              "apiVersion": "2023-05-01",
+              "name": "[format('{0}/{1}/{2}', parameters('storageAccountName'), 'default', parameters('blobContainerName'))]",
+              "properties": {
+                "publicAccess": "None"
+              },
+              "dependsOn": [
+                "blobServices"
+              ]
+            }
+          },
+          "outputs": {
+            "resourceId": {
+              "type": "string",
+              "metadata": {
+                "description": "Resource ID of the storage account."
+              },
+              "value": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+            },
+            "name": {
+              "type": "string",
+              "metadata": {
+                "description": "Name of the storage account."
+              },
+              "value": "[parameters('storageAccountName')]"
+            },
+            "blobContainerName": {
+              "type": "string",
+              "metadata": {
+                "description": "Name of the blob container."
+              },
+              "value": "[parameters('blobContainerName')]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "network"
+      ]
+    },
+    "rbac": {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "[format('rbac-{0}', uniqueString('rbac', deployment().name))]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "principalId": "[if(parameters('deployManagedIdentity'), createObject('value', reference('identity').outputs.principalId.value), if(empty(parameters('existingManagedIdentityPrincipalId')), createObject('value', reference('existingManagedIdentity').principalId), createObject('value', parameters('existingManagedIdentityPrincipalId'))))]",
+          "storageAccountName": "[if(parameters('deployStorage'), createObject('value', reference('storage').outputs.name.value), createObject('value', last(split(parameters('existingStorageAccountResourceId'), '/'))))]",
+          "assignStorageRole": {
+            "value": "[parameters('assignStorageRole')]"
+          },
+          "discoveryContributorGroupObjectId": {
+            "value": "[parameters('discoveryContributorGroupObjectId')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.46.1.21595",
+              "templateHash": "151724401918330672"
+            }
+          },
+          "parameters": {
+            "principalId": {
+              "type": "string",
+              "metadata": {
+                "description": "Principal (object) ID of the managed identity to grant Discovery roles to."
+              }
+            },
+            "storageAccountName": {
+              "type": "string",
+              "metadata": {
+                "description": "Name of the storage account (in this resource group) to scope the Storage Blob Data Contributor role to."
+              }
+            },
+            "assignStorageRole": {
+              "type": "bool",
+              "defaultValue": true,
+              "metadata": {
+                "description": "Assign Storage Blob Data Contributor on the storage account. Set false when the storage account lives in another resource group."
+              }
+            },
+            "discoveryContributorGroupObjectId": {
+              "type": "string",
+              "defaultValue": "",
+              "metadata": {
+                "description": "Optional Entra ID group object ID to grant Discovery Platform Contributor at resource-group scope. Leave empty to skip."
+              }
+            }
+          },
+          "variables": {
+            "storageBlobDataContributorRoleId": "ba92f5b4-2d11-453d-a403-e96b0029c9fe",
+            "discoveryPlatformContributorRoleId": "01288891-85ee-45a7-b367-9db3b752fc65",
+            "acrPullRoleId": "7f951dda-4ed3-4680-a7ca-43fe172d538d"
+          },
+          "resources": [
+            {
+              "condition": "[parameters('assignStorageRole')]",
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2022-04-01",
+              "scope": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]",
+              "name": "[guid(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), parameters('principalId'), variables('storageBlobDataContributorRoleId'))]",
+              "properties": {
+                "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', variables('storageBlobDataContributorRoleId'))]",
+                "principalId": "[parameters('principalId')]",
+                "principalType": "ServicePrincipal"
+              }
+            },
+            {
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2022-04-01",
+              "name": "[guid(resourceGroup().id, parameters('principalId'), variables('discoveryPlatformContributorRoleId'))]",
+              "properties": {
+                "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', variables('discoveryPlatformContributorRoleId'))]",
+                "principalId": "[parameters('principalId')]",
+                "principalType": "ServicePrincipal"
+              }
+            },
+            {
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2022-04-01",
+              "name": "[guid(resourceGroup().id, parameters('principalId'), variables('acrPullRoleId'))]",
+              "properties": {
+                "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', variables('acrPullRoleId'))]",
+                "principalId": "[parameters('principalId')]",
+                "principalType": "ServicePrincipal"
+              }
+            },
+            {
+              "condition": "[not(empty(parameters('discoveryContributorGroupObjectId')))]",
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2022-04-01",
+              "name": "[guid(resourceGroup().id, parameters('discoveryContributorGroupObjectId'), variables('discoveryPlatformContributorRoleId'))]",
+              "properties": {
+                "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', variables('discoveryPlatformContributorRoleId'))]",
+                "principalId": "[parameters('discoveryContributorGroupObjectId')]",
+                "principalType": "Group"
+              }
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "existingManagedIdentity",
+        "identity",
+        "storage"
+      ]
+    },
+    "supercomputer": {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "[format('supercomputer-{0}', uniqueString('supercomputer', deployment().name))]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "supercomputerName": {
+            "value": "[parameters('supercomputerName')]"
+          },
+          "nodePoolName": {
+            "value": "[parameters('nodePoolName')]"
+          },
+          "aksSubnetId": {
+            "value": "[if(parameters('deployNetwork'), reference('network').outputs.subnetIds.value, parameters('existingSubnetIds')).aksSubnetId]"
+          },
+          "nodePoolSubnetId": {
+            "value": "[if(parameters('deployNetwork'), reference('network').outputs.subnetIds.value, parameters('existingSubnetIds')).nodePoolSubnetId]"
+          },
+          "managedIdentityResourceId": "[if(parameters('deployManagedIdentity'), createObject('value', reference('identity').outputs.resourceId.value), createObject('value', parameters('existingManagedIdentityResourceId')))]",
+          "nodePoolVmSize": {
+            "value": "[parameters('nodePoolVmSize')]"
+          },
+          "nodePoolMaxNodeCount": {
+            "value": "[parameters('nodePoolMaxNodeCount')]"
+          },
+          "nodePoolMinNodeCount": {
+            "value": "[parameters('nodePoolMinNodeCount')]"
+          },
+          "nodePoolScaleSetPriority": {
+            "value": "[parameters('nodePoolScaleSetPriority')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.46.1.21595",
+              "templateHash": "2630424056079265435"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]",
+              "metadata": {
+                "description": "Azure region for the Supercomputer."
+              }
+            },
+            "supercomputerName": {
+              "type": "string",
+              "defaultValue": "[format('sc-{0}', uniqueString(resourceGroup().id))]",
+              "minLength": 3,
+              "maxLength": 24,
+              "metadata": {
+                "description": "Name of the Supercomputer (3-24 characters, alphanumeric and hyphens)."
+              }
+            },
+            "nodePoolName": {
+              "type": "string",
+              "defaultValue": "nodepool1",
+              "minLength": 1,
+              "maxLength": 12,
+              "metadata": {
+                "description": "Name of the node pool (1-12 lowercase alphanumeric characters, starting with a letter)."
+              }
+            },
+            "aksSubnetId": {
+              "type": "string",
+              "metadata": {
+                "description": "Resource ID of the AKS system subnet used by the Supercomputer."
+              }
+            },
+            "nodePoolSubnetId": {
+              "type": "string",
+              "metadata": {
+                "description": "Resource ID of the node pool subnet."
+              }
+            },
+            "managedIdentityResourceId": {
+              "type": "string",
+              "metadata": {
+                "description": "Resource ID of the user-assigned managed identity used for cluster, kubelet, and workload identities."
+              }
+            },
+            "nodePoolVmSize": {
+              "type": "string",
+              "defaultValue": "Standard_D4s_v6",
+              "minLength": 1,
+              "metadata": {
+                "description": "VM SKU for the node pool. The SKU and quota must be available in the deployment region. GPU examples: Standard_NC24ads_A100_v4, Standard_NC4as_T4_v3."
+              }
+            },
+            "nodePoolMaxNodeCount": {
+              "type": "int",
+              "defaultValue": 3,
+              "minValue": 1,
+              "metadata": {
+                "description": "Maximum number of nodes in the node pool."
+              }
+            },
+            "nodePoolMinNodeCount": {
+              "type": "int",
+              "defaultValue": 0,
+              "minValue": 0,
+              "metadata": {
+                "description": "Minimum number of nodes in the node pool (0 allows scale-to-zero)."
+              }
+            },
+            "nodePoolScaleSetPriority": {
+              "type": "string",
+              "defaultValue": "Regular",
+              "allowedValues": [
+                "Regular",
+                "Spot"
+              ],
+              "metadata": {
+                "description": "Scale set priority for the node pool."
+              }
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Discovery/supercomputers",
+              "apiVersion": "2026-06-01",
+              "name": "[parameters('supercomputerName')]",
+              "location": "[parameters('location')]",
+              "tags": {
+                "version": "v2"
+              },
+              "properties": {
+                "subnetId": "[parameters('aksSubnetId')]",
+                "identities": {
+                  "clusterIdentity": {
+                    "id": "[parameters('managedIdentityResourceId')]"
+                  },
+                  "kubeletIdentity": {
+                    "id": "[parameters('managedIdentityResourceId')]"
+                  },
+                  "workloadIdentities": {
+                    "[format('{0}', parameters('managedIdentityResourceId'))]": {}
+                  }
+                }
+              }
+            },
+            {
+              "type": "Microsoft.Discovery/supercomputers/nodePools",
+              "apiVersion": "2026-06-01",
+              "name": "[format('{0}/{1}', parameters('supercomputerName'), parameters('nodePoolName'))]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "subnetId": "[parameters('nodePoolSubnetId')]",
+                "vmSize": "[parameters('nodePoolVmSize')]",
+                "maxNodeCount": "[parameters('nodePoolMaxNodeCount')]",
+                "minNodeCount": "[parameters('nodePoolMinNodeCount')]",
+                "scaleSetPriority": "[parameters('nodePoolScaleSetPriority')]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Discovery/supercomputers', parameters('supercomputerName'))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "resourceId": {
+              "type": "string",
+              "metadata": {
+                "description": "Resource ID of the Supercomputer."
+              },
+              "value": "[resourceId('Microsoft.Discovery/supercomputers', parameters('supercomputerName'))]"
+            },
+            "nodePoolId": {
+              "type": "string",
+              "metadata": {
+                "description": "Resource ID of the node pool."
+              },
+              "value": "[resourceId('Microsoft.Discovery/supercomputers/nodePools', parameters('supercomputerName'), parameters('nodePoolName'))]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "identity",
+        "network"
+      ]
+    },
+    "workspace": {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "[format('workspace-{0}', uniqueString('workspace', deployment().name))]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "workspaceName": {
+            "value": "[parameters('workspaceName')]"
+          },
+          "featureTags": {
+            "value": "[parameters('workspaceFeatures')]"
+          },
+          "managedIdentityResourceId": "[if(parameters('deployManagedIdentity'), createObject('value', reference('identity').outputs.resourceId.value), createObject('value', parameters('existingManagedIdentityResourceId')))]",
+          "supercomputerId": {
+            "value": "[reference('supercomputer').outputs.resourceId.value]"
+          },
+          "agentSubnetId": {
+            "value": "[if(parameters('deployNetwork'), reference('network').outputs.subnetIds.value, parameters('existingSubnetIds')).agentSubnetId]"
+          },
+          "privateEndpointSubnetId": {
+            "value": "[if(parameters('deployNetwork'), reference('network').outputs.subnetIds.value, parameters('existingSubnetIds')).privateEndpointSubnetId]"
+          },
+          "workspaceSubnetId": {
+            "value": "[if(parameters('deployNetwork'), reference('network').outputs.subnetIds.value, parameters('existingSubnetIds')).workspaceSubnetId]"
+          },
+          "chatModelDeploymentName": {
+            "value": "[parameters('chatModelDeploymentName')]"
+          },
+          "chatModelFormat": {
+            "value": "[parameters('chatModelFormat')]"
+          },
+          "chatModelName": {
+            "value": "[parameters('chatModelName')]"
+          },
+          "storageContainerName": {
+            "value": "[parameters('storageContainerName')]"
+          },
+          "storageAccountResourceId": "[if(parameters('deployStorage'), createObject('value', reference('storage').outputs.resourceId.value), createObject('value', parameters('existingStorageAccountResourceId')))]"
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "languageVersion": "2.0",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.46.1.21595",
+              "templateHash": "16378700374078128033"
+            }
+          },
+          "definitions": {
+            "workspaceFeatureTags": {
+              "type": "object",
+              "properties": {
+                "enableGhcpAiFeatures": {
+                  "type": "bool",
+                  "metadata": {
+                    "description": "Enable GitHub Copilot and AI features (discovery.workbench.enableGhcpAiFeatures tag)."
+                  }
+                },
+                "enableExtensions": {
+                  "type": "bool",
+                  "metadata": {
+                    "description": "Enable the VS Code Extension Marketplace (discovery.workbench.enableExtensions tag)."
+                  }
+                },
+                "networkIsolation": {
+                  "type": "bool",
+                  "metadata": {
+                    "description": "Workspace network isolation mode (NetworkIsolation tag)."
+                  }
+                }
+              },
+              "metadata": {
+                "description": "Workspace workbench feature tags aligned with the Discovery portal quickstart.",
+                "__bicep_imported_from!": {
+                  "sourceTemplate": "types.bicep"
+                }
+              }
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]",
+              "metadata": {
+                "description": "Azure region for the Workspace and its child resources."
+              }
+            },
+            "workspaceName": {
+              "type": "string",
+              "defaultValue": "[format('ws-{0}', uniqueString(resourceGroup().id))]",
+              "minLength": 3,
+              "maxLength": 24,
+              "metadata": {
+                "description": "Name of the Workspace (3-24 characters, alphanumeric and hyphens)."
+              }
+            },
+            "featureTags": {
+              "$ref": "#/definitions/workspaceFeatureTags",
+              "defaultValue": {
+                "enableGhcpAiFeatures": true,
+                "enableExtensions": true,
+                "networkIsolation": true
+              },
+              "metadata": {
+                "description": "Workbench feature tags for the Workspace."
+              }
+            },
+            "managedIdentityResourceId": {
+              "type": "string",
+              "metadata": {
+                "description": "Resource ID of the user-assigned managed identity for the Workspace."
+              }
+            },
+            "supercomputerId": {
+              "type": "string",
+              "metadata": {
+                "description": "Resource ID of the Supercomputer to link to the Workspace."
+              }
+            },
+            "agentSubnetId": {
+              "type": "string",
+              "metadata": {
+                "description": "Resource ID of the agent subnet."
+              }
+            },
+            "privateEndpointSubnetId": {
+              "type": "string",
+              "metadata": {
+                "description": "Resource ID of the private endpoint subnet."
+              }
+            },
+            "workspaceSubnetId": {
+              "type": "string",
+              "metadata": {
+                "description": "Resource ID of the Workspace subnet."
+              }
+            },
+            "chatModelDeploymentName": {
+              "type": "string",
+              "defaultValue": "gpt-5-4",
+              "minLength": 3,
+              "maxLength": 24,
+              "metadata": {
+                "description": "Name of the chat model deployment."
+              }
+            },
+            "chatModelFormat": {
+              "type": "string",
+              "defaultValue": "OpenAI",
+              "allowedValues": [
+                "OpenAI"
+              ],
+              "metadata": {
+                "description": "Chat model format. Microsoft Discovery uses the OpenAI model format."
+              }
+            },
+            "chatModelName": {
+              "type": "string",
+              "defaultValue": "gpt-5.4",
+              "minLength": 1,
+              "maxLength": 64,
+              "metadata": {
+                "description": "Chat model name to deploy. Discovery Engine tasks require the primary deployment to use gpt-5.4 (with deployment name gpt-5-4)."
+              }
+            },
+            "storageContainerName": {
+              "type": "string",
+              "defaultValue": "[format('stc-{0}', uniqueString(resourceGroup().id))]",
+              "minLength": 3,
+              "maxLength": 24,
+              "metadata": {
+                "description": "Name of the Discovery storage container resource (3-24 characters, alphanumeric and hyphens)."
+              }
+            },
+            "storageAccountResourceId": {
+              "type": "string",
+              "metadata": {
+                "description": "Resource ID of the Azure storage account backing the Discovery storage container."
+              }
+            }
+          },
+          "resources": {
+            "workspace": {
+              "type": "Microsoft.Discovery/workspaces",
+              "apiVersion": "2026-06-01",
+              "name": "[parameters('workspaceName')]",
+              "location": "[parameters('location')]",
+              "tags": {
+                "version": "v2",
+                "discovery.workbench.enableGhcpAiFeatures": "[string(parameters('featureTags').enableGhcpAiFeatures)]",
+                "discovery.workbench.enableExtensions": "[string(parameters('featureTags').enableExtensions)]",
+                "NetworkIsolation": "[string(parameters('featureTags').networkIsolation)]"
+              },
+              "properties": {
+                "workspaceIdentity": {
+                  "id": "[parameters('managedIdentityResourceId')]"
+                },
+                "supercomputerIds": [
+                  "[parameters('supercomputerId')]"
+                ],
+                "agentSubnetId": "[parameters('agentSubnetId')]",
+                "privateEndpointSubnetId": "[parameters('privateEndpointSubnetId')]",
+                "workspaceSubnetId": "[parameters('workspaceSubnetId')]"
+              }
+            },
+            "chatModelDeployment": {
+              "type": "Microsoft.Discovery/workspaces/chatModelDeployments",
+              "apiVersion": "2026-06-01",
+              "name": "[format('{0}/{1}', parameters('workspaceName'), parameters('chatModelDeploymentName'))]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "modelFormat": "[parameters('chatModelFormat')]",
+                "modelName": "[parameters('chatModelName')]"
+              },
+              "dependsOn": [
+                "workspace"
+              ]
+            },
+            "discoveryStorageContainer": {
+              "type": "Microsoft.Discovery/storageContainers",
+              "apiVersion": "2026-06-01",
+              "name": "[parameters('storageContainerName')]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "storageStore": {
+                  "kind": "AzureStorageBlob",
+                  "storageAccountId": "[parameters('storageAccountResourceId')]"
+                }
+              }
+            }
+          },
+          "outputs": {
+            "workspaceId": {
+              "type": "string",
+              "metadata": {
+                "description": "Resource ID of the Workspace."
+              },
+              "value": "[resourceId('Microsoft.Discovery/workspaces', parameters('workspaceName'))]"
+            },
+            "chatModelDeploymentId": {
+              "type": "string",
+              "metadata": {
+                "description": "Resource ID of the chat model deployment."
+              },
+              "value": "[resourceId('Microsoft.Discovery/workspaces/chatModelDeployments', parameters('workspaceName'), parameters('chatModelDeploymentName'))]"
+            },
+            "storageContainerId": {
+              "type": "string",
+              "metadata": {
+                "description": "Resource ID of the Discovery storage container."
+              },
+              "value": "[resourceId('Microsoft.Discovery/storageContainers', parameters('storageContainerName'))]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "identity",
+        "network",
+        "storage",
+        "supercomputer"
+      ]
+    },
+    "project": {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "[format('project-{0}', uniqueString('project', deployment().name))]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "workspaceName": {
+            "value": "[parameters('workspaceName')]"
+          },
+          "projectName": {
+            "value": "[parameters('projectName')]"
+          },
+          "storageContainerIds": {
+            "value": [
+              "[reference('workspace').outputs.storageContainerId.value]"
+            ]
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "languageVersion": "2.0",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.46.1.21595",
+              "templateHash": "17757970096618213977"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]",
+              "metadata": {
+                "description": "Azure region for the project."
+              }
+            },
+            "workspaceName": {
+              "type": "string",
+              "minLength": 3,
+              "maxLength": 24,
+              "metadata": {
+                "description": "Name of the parent Workspace that owns this project."
+              }
+            },
+            "projectName": {
+              "type": "string",
+              "defaultValue": "[format('prj-{0}', uniqueString(resourceGroup().id))]",
+              "minLength": 3,
+              "maxLength": 24,
+              "metadata": {
+                "description": "Name of the project (3-24 characters, alphanumeric and hyphens)."
+              }
+            },
+            "storageContainerIds": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "minLength": 1,
+              "metadata": {
+                "description": "Resource IDs of the Discovery storage containers to attach to the project. Passing the container ID also orders this module after the workspace module that creates it."
+              }
+            }
+          },
+          "resources": {
+            "workspace": {
+              "existing": true,
+              "type": "Microsoft.Discovery/workspaces",
+              "apiVersion": "2026-06-01",
+              "name": "[parameters('workspaceName')]"
+            },
+            "project": {
+              "type": "Microsoft.Discovery/workspaces/projects",
+              "apiVersion": "2026-06-01",
+              "name": "[format('{0}/{1}', parameters('workspaceName'), parameters('projectName'))]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "storageContainerIds": "[parameters('storageContainerIds')]"
+              }
+            }
+          },
+          "outputs": {
+            "projectId": {
+              "type": "string",
+              "metadata": {
+                "description": "Resource ID of the project."
+              },
+              "value": "[resourceId('Microsoft.Discovery/workspaces/projects', parameters('workspaceName'), parameters('projectName'))]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "workspace"
+      ]
+    }
+  },
+  "outputs": {
+    "supercomputerId": {
+      "type": "string",
+      "metadata": {
+        "description": "Resource ID of the Supercomputer."
+      },
+      "value": "[reference('supercomputer').outputs.resourceId.value]"
+    },
+    "nodePoolId": {
+      "type": "string",
+      "metadata": {
+        "description": "Resource ID of the node pool."
+      },
+      "value": "[reference('supercomputer').outputs.nodePoolId.value]"
+    },
+    "workspaceId": {
+      "type": "string",
+      "metadata": {
+        "description": "Resource ID of the Workspace."
+      },
+      "value": "[reference('workspace').outputs.workspaceId.value]"
+    },
+    "chatModelDeploymentId": {
+      "type": "string",
+      "metadata": {
+        "description": "Resource ID of the chat model deployment."
+      },
+      "value": "[reference('workspace').outputs.chatModelDeploymentId.value]"
+    },
+    "storageContainerId": {
+      "type": "string",
+      "metadata": {
+        "description": "Resource ID of the Discovery storage container."
+      },
+      "value": "[reference('workspace').outputs.storageContainerId.value]"
+    },
+    "projectId": {
+      "type": "string",
+      "metadata": {
+        "description": "Resource ID of the project."
+      },
+      "value": "[reference('project').outputs.projectId.value]"
+    },
+    "managedIdentityId": {
+      "type": "string",
+      "metadata": {
+        "description": "Resource ID of the managed identity in use."
+      },
+      "value": "[if(parameters('deployManagedIdentity'), reference('identity').outputs.resourceId.value, parameters('existingManagedIdentityResourceId'))]"
+    },
+    "storageAccountId": {
+      "type": "string",
+      "metadata": {
+        "description": "Resource ID of the storage account in use."
+      },
+      "value": "[if(parameters('deployStorage'), reference('storage').outputs.resourceId.value, parameters('existingStorageAccountResourceId'))]"
+    }
+  }
+}
