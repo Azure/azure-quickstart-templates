@@ -1,6 +1,7 @@
-// Workspace module: Microsoft Discovery Workspace plus its chat model deployment,
-// Discovery storage container, and project. Bind it to a Supercomputer, a managed
-// identity, subnets, and the Azure storage account that backs the container.
+// Workspace module: Microsoft Discovery Workspace plus its chat model deployment
+// and Discovery storage container. Bind it to a Supercomputer, a managed identity,
+// subnets, and the Azure storage account that backs the container. The project is
+// created separately by modules/project.bicep.
 
 import { workspaceFeatureTags } from 'types.bicep'
 
@@ -58,11 +59,6 @@ param storageContainerName string = 'stc-${uniqueString(resourceGroup().id)}'
 @description('Resource ID of the Azure storage account backing the Discovery storage container.')
 param storageAccountResourceId string
 
-@description('Name of the project (3-24 characters, alphanumeric and hyphens).')
-@minLength(3)
-@maxLength(24)
-param projectName string = 'prj-${uniqueString(resourceGroup().id)}'
-
 resource workspace 'Microsoft.Discovery/workspaces@2026-06-01' = {
   name: workspaceName
   location: location
@@ -106,20 +102,6 @@ resource discoveryStorageContainer 'Microsoft.Discovery/storageContainers@2026-0
   }
 }
 
-resource project 'Microsoft.Discovery/workspaces/projects@2026-06-01' = {
-  parent: workspace
-  name: projectName
-  location: location
-  dependsOn: [
-    chatModelDeployment
-  ]
-  properties: {
-    storageContainerIds: [
-      discoveryStorageContainer.id
-    ]
-  }
-}
-
 @description('Resource ID of the Workspace.')
 output workspaceId string = workspace.id
 
@@ -128,6 +110,3 @@ output chatModelDeploymentId string = chatModelDeployment.id
 
 @description('Resource ID of the Discovery storage container.')
 output storageContainerId string = discoveryStorageContainer.id
-
-@description('Resource ID of the project.')
-output projectId string = project.id

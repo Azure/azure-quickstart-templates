@@ -24,7 +24,7 @@ type discoverySubnetIds = {
   @minLength(1)
   agentSubnetId: string
 
-  @description('Subnet delegated to Microsoft.App/environments for search.')
+  @description('Subnet delegated to Microsoft.App/environments for search. Requires the Microsoft.Storage service endpoint.')
   @minLength(1)
   searchSubnetId: string
 }

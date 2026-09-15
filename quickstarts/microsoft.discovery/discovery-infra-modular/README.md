@@ -48,7 +48,8 @@ Same as the [single-file sample](../discovery-infra-deployment/README.md#prerequ
 | [modules/storage.bicep](modules/storage.bicep) | Storage account (CORS) and blob container. |
 | [modules/rbac.bicep](modules/rbac.bicep) | Role assignments for the identity and an optional user group. |
 | [modules/supercomputer.bicep](modules/supercomputer.bicep) | Discovery Supercomputer with a basic node node pool. |
-| [modules/workspace.bicep](modules/workspace.bicep) | Discovery Workspace, chat model deployment, storage container, and project. |
+| [modules/workspace.bicep](modules/workspace.bicep) | Discovery Workspace, chat model deployment, and storage container. |
+| [modules/project.bicep](modules/project.bicep) | Discovery project bound to the Workspace and its storage container. |
 
 ## Architecture
 
@@ -62,7 +63,8 @@ flowchart TD
   end
   subgraph Discovery["Discovery (always deployed)"]
     sc[supercomputer.bicep<br/>Supercomputer + node pool]
-    ws[workspace.bicep<br/>Workspace + chat model<br/>+ storage container + project]
+    ws[workspace.bicep<br/>Workspace + chat model<br/>+ storage container]
+    prj[project.bicep<br/>Project]
   end
 
   net -- subnetIds --> stg
@@ -74,6 +76,7 @@ flowchart TD
   stg -- storageAccountName --> rbac
   stg -- resourceId --> ws
   sc -- supercomputerId --> ws
+  ws -- storageContainerId --> prj
 ```
 
 ## Module reference
@@ -87,7 +90,8 @@ Each module is self-contained: each takes explicit inputs and returns typed outp
 | `storage.bicep` | `storageAccountName`, `storageAccountSku`, `blobContainerName`, `allowedSubnetIds[]` | `resourceId`, `name`, `blobContainerName` |
 | `rbac.bicep` | `principalId`, `storageAccountName`, `assignStorageRole`, `discoveryContributorGroupObjectId` | *(none — creates role assignments)* |
 | `supercomputer.bicep` | `aksSubnetId`, `nodePoolSubnetId`, `managedIdentityResourceId`, `nodePoolVmSize`, node counts | `resourceId`, `nodePoolId` |
-| `workspace.bicep` | `managedIdentityResourceId`, `supercomputerId`, agent/PE/workspace subnet IDs, `storageAccountResourceId`, chat model + project names | `workspaceId`, `chatModelDeploymentId`, `storageContainerId`, `projectId` |
+| `workspace.bicep` | `managedIdentityResourceId`, `supercomputerId`, agent/PE/workspace subnet IDs, `storageAccountResourceId`, chat model name | `workspaceId`, `chatModelDeploymentId`, `storageContainerId` |
+| `project.bicep` | `workspaceName`, `projectName`, `storageContainerIds[]` | `projectId` |
 
 ## How the bring-your-own switches work
 
@@ -99,11 +103,11 @@ Each module is self-contained: each takes explicit inputs and returns typed outp
 | Identity | `deployManagedIdentity = true` | `deployManagedIdentity = false` + `existingManagedIdentityResourceId` (principal ID is read automatically; `existingManagedIdentityPrincipalId` is an optional override) |
 | Storage | `deployStorage = true` | `deployStorage = false` + `existingStorageAccountResourceId` |
 
-The `Supercomputer` and `Workspace` modules always deploy — they are the Discovery-specific resources this sample exists to create.
+The `Supercomputer`, `Workspace`, and `Project` modules always deploy — they are the Discovery-specific resources this sample exists to create.
 
 ### Bring your own network
 
-A single parameters file — [main.byo-network.bicepparam](main.byo-network.bicepparam) — drives the whole bring-your-own-network deployment. You do **not** need to edit `main.bicep`, run multiple steps, or pre-run any wiring: pass the one param file to `az deployment group create` and the template deploys identity, storage, RBAC, the Supercomputer, and the Workspace against your existing subnets.
+A single parameters file — [main.byo-network.bicepparam](main.byo-network.bicepparam) — drives the whole bring-your-own-network deployment. You do **not** need to edit `main.bicep`, run multiple steps, or pre-run any wiring: pass the one param file to `az deployment group create` and the template deploys identity, storage, RBAC, the Supercomputer, Workspace, and Project against your existing subnets.
 
 It does, however, need to be **configured before its first use** — it is not deployable as shipped, because it contains placeholder values:
 
@@ -113,7 +117,7 @@ It does, however, need to be **configured before its first use** — it is not d
 The template **consumes** your subnets; it does not create or reconfigure them. So the subnets must already exist and already satisfy Discovery's requirements:
 
 - `workspaceSubnet`, `agentSubnet`, and `searchSubnet` must be delegated to `Microsoft.App/environments`.
-- `nodePool`, `aks`, `workspace`, and `agent` subnets should carry the `Microsoft.Storage` service endpoint (the search subnet does not need it).
+- `nodePool`, `aks`, `workspace`, `agent`, and `search` subnets should carry the `Microsoft.Storage` service endpoint.
 
 When you bring your own network, the template does **not** add storage account virtual-network rules for your subnets (it can't guarantee they carry the storage service endpoint, and the storage account already uses `defaultAction: Allow`). The storage VNet rules are only applied to subnets this sample creates itself.
 
@@ -212,6 +216,12 @@ SUBNETS=$(az network vnet subnet list -g $VNET_RG --vnet-name $VNET -o json | jq
   searchSubnetId:          (.[] | select(.name=="discovery-search")   | .id)
 }')
 
+# Fail early if any subnet name was not found. jq omits the whole object when a
+# `select` matches nothing, so this checks that all six fields are present and
+# non-empty locally, before the deployment is submitted.
+echo "$SUBNETS" | jq -e 'objects and (keys|length==6) and all(.[]; . != null and . != "")' >/dev/null \
+  || { echo "ERROR: one or more subnets were not found; check the subnet names above." >&2; exit 1; }
+
 az deployment group create -g $RG -n discovery-byo-net \
   --template-file main.bicep \
   --parameters deployNetwork=false \
@@ -219,7 +229,7 @@ az deployment group create -g $RG -n discovery-byo-net \
   --parameters storageAccountName=$STORAGE
 ```
 
-The template validates that all six subnet IDs are non-empty, so a typo in a subnet name fails fast at validation time rather than mid-deployment.
+The template validates that all six subnet IDs are non-empty (the `discoverySubnetIds` type applies `@minLength(1)` to every field), so a typo in a subnet name fails fast at validation time rather than mid-deployment. The `jq -e` guard above catches the same mistake locally before the deployment is even submitted.
 
 ### Example 4 — Bring your own managed identity (query principalId)
 
@@ -319,6 +329,14 @@ az deployment group create -g $RG -n ws --template-file modules/workspace.bicep 
   --parameters managedIdentityResourceId="$UAMI_ID" supercomputerId="$SC_ID" \
   --parameters agentSubnetId="$AGENT_SUBNET" privateEndpointSubnetId="$PE_SUBNET" \
   --parameters workspaceSubnetId="$WS_SUBNET" storageAccountResourceId="$STG_ID"
+WORKSPACE_ID=$(az deployment group show -g $RG -n ws --query properties.outputs.workspaceId.value -o tsv)
+STORAGE_CONTAINER_ID=$(az deployment group show -g $RG -n ws --query properties.outputs.storageContainerId.value -o tsv)
+WORKSPACE_NAME=${WORKSPACE_ID##*/}
+PROJECT_STORAGE=$(jq -cn --arg id "$STORAGE_CONTAINER_ID" '[$id]')
+
+# 7) Project — bind the Workspace to its Discovery storage container
+az deployment group create -g $RG -n project --template-file modules/project.bicep \
+  --parameters workspaceName="$WORKSPACE_NAME" storageContainerIds="$PROJECT_STORAGE"
 ```
 
 The same chaining in **PowerShell**, using `ConvertFrom-Json` instead of `jq`:
@@ -357,6 +375,14 @@ az deployment group create -g $RG -n ws --template-file modules/workspace.bicep 
   --parameters managedIdentityResourceId=$uamiId supercomputerId=$scId `
   --parameters agentSubnetId=$($subnets.agentSubnetId) privateEndpointSubnetId=$($subnets.privateEndpointSubnetId) `
   --parameters workspaceSubnetId=$($subnets.workspaceSubnetId) storageAccountResourceId=$stgId
+$workspaceId = az deployment group show -g $RG -n ws --query properties.outputs.workspaceId.value -o tsv
+$storageContainerId = az deployment group show -g $RG -n ws --query properties.outputs.storageContainerId.value -o tsv
+$workspaceName = ($workspaceId -split '/')[-1]
+$projectStorage = @($storageContainerId) | ConvertTo-Json -Compress
+
+# 7) Project
+az deployment group create -g $RG -n project --template-file modules/project.bicep `
+  --parameters workspaceName=$workspaceName storageContainerIds=$projectStorage
 ```
 
 ### Example 8 — Consume a module directly from your own Bicep
