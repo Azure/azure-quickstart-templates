@@ -77,10 +77,18 @@
       "type": "string",
       "allowedValues": [
         "Cloud",
+        "ClusterWitnessDisk",
         "No Witness"
       ],
       "metadata": {
-        "description": "Witness Type must be 'cloud' for a 2 node cluster. It can  be empty of other cluster sizes"
+        "description": "Witness type for the cluster. Use ClusterWitnessDisk for RAC SAN clusters."
+      }
+    },
+    "witnessLunId": {
+      "defaultValue": "",
+      "type": "string",
+      "metadata": {
+        "description": "Witness volume LUN ID. Required when witnessType is ClusterWitnessDisk. Minimum LUN size is 1 GB."
       }
     },
     "clusterWitnessStorageAccountName": {
@@ -472,7 +480,7 @@
     "storageWitnessSecretName": "[concat( parameters('clusterName'), '-', 'WitnessStorageKey')]",
     "LocalAdminCredentialSecretName": "[concat( parameters('clusterName'), '-', 'LocalAdminCredential')]",
     "domainAdminSecretName": "[concat( parameters('clusterName'), '-', 'AzureStackLCMUserCredential')]",
-    "witnessTypeVar": "[if(equals(parameters('witnessType'), 'No Witness'), '','Cloud')]",
+    "witnessTypeVar": "[if(equals(parameters('witnessType'), 'No Witness'), '', parameters('witnessType'))]",
     "clusterWitnessStorageAccountNameVar": "[if(equals(parameters('witnessType'), 'No Witness'), '', parameters('clusterWitnessStorageAccountName'))]",
     "AzureServiceEndpointVar": "[if(equals(parameters('witnessType'), 'No Witness'), '', if(equals(environment().name, 'AzureCloud'), 'core.windows.net', 'core.usgovcloudapi.net'))]",
     "localAdminSecretValue": "[base64(concat(parameters('localAdminUserName'),':',parameters('localAdminPassword')))]",
@@ -579,7 +587,7 @@
           "count": "[length(parameters('arcNodeResourceIds'))]"
         },
         "type": "Microsoft.AzureStackHCI/edgeDevices",
-        "apiVersion": "2026-04-01-preview",
+        "apiVersion": "2026-03-15-preview",
         "name": "default",
         "scope": "[concat('Microsoft.HybridCompute/machines', '/', last(split(parameters('arcNodeResourceIds')[copyindex()], '/')))]",
         "kind": "HCI",
@@ -801,7 +809,7 @@
     "HCICluster":{
       "condition": "[equals(parameters('deploymentMode'), 'Validate')]",
       "type": "Microsoft.AzureStackHCI/clusters",
-      "apiVersion": "2026-04-01-preview",
+      "apiVersion": "2026-03-15-preview",
       "name": "[parameters('clusterName')]",
       "dependsOn": [
         "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]",
@@ -888,7 +896,7 @@
     },
     "DeploymentSettings": {
       "type": "microsoft.azurestackhci/clusters/deploymentSettings",
-      "apiVersion": "2026-04-01-preview",
+      "apiVersion": "2026-03-15-preview",
       "name": "[format('{0}/default', parameters('clusterName'))]",
       "dependsOn": [
         "[resourceId('Microsoft.AzureStackHCI/clusters', parameters('clusterName'))]"
@@ -923,7 +931,8 @@
                   "witnessType": "[variables('witnessTypeVar')]",
                   "witnessPath": "",
                   "cloudAccountName": "[variables('clusterWitnessStorageAccountNameVar')]",
-                  "azureServiceEndpoint": "[variables('AzureServiceEndpointVar')]"
+                  "azureServiceEndpoint": "[variables('AzureServiceEndpointVar')]",
+                  "witnessLunId": "[parameters('witnessLunId')]"
                 },
                 "storage": {
                   "configurationMode": "[parameters('configurationMode')]",
