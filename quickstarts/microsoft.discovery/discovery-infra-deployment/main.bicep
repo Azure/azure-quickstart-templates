@@ -176,6 +176,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2024-05-01' = {
         name: 'privateEndpointSubnet'
         properties: {
           addressPrefix: privateEndpointSubnetPrefix
+          defaultOutboundAccess: false
         }
       }
       {
