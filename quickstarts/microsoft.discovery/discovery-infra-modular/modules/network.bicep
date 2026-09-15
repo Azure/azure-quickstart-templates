@@ -99,6 +99,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2024-05-01' = {
         properties: {
           addressPrefix: searchSubnetPrefix
           delegations: appEnvironmentDelegation
+          serviceEndpoints: storageServiceEndpoint
         }
       }
     ]

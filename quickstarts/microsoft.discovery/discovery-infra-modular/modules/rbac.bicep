@@ -44,6 +44,7 @@ resource discoveryPlatformContributorAssignment 'Microsoft.Authorization/roleAss
 }
 
 resource acrPullAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  // ACR Pull lets the Supercomputer pull container images from Azure Container Registry.
   name: guid(resourceGroup().id, principalId, acrPullRoleId)
   properties: {
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', acrPullRoleId)

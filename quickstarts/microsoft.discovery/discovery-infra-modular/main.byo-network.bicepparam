@@ -15,7 +15,7 @@ using 'main.bicep'
 // The template CONSUMES these subnets; it does not create or reconfigure them. The
 // subnets must already exist and already meet Discovery's requirements:
 //   * workspaceSubnet, agentSubnet, searchSubnet -> delegated to Microsoft.App/environments
-//   * nodePool, aks, workspace, agent             -> Microsoft.Storage service endpoint
+//   * nodePool, aks, workspace, agent, search     -> Microsoft.Storage service endpoint
 
 param location = 'swedencentral'
 

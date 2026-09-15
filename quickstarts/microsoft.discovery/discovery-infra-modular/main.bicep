@@ -1,6 +1,6 @@
 // Modular Microsoft Discovery deployment.
 //
-// This orchestrator wires together six independent modules. Each "deploy*" switch
+// This orchestrator wires together seven independent modules. Each "deploy*" switch
 // lets you either provision a component here, or bring your own existing resource
 // and pass its identifiers in. This makes it easy to drop the Discovery-specific
 // pieces (Supercomputer, Workspace) into an existing landing zone that already owns
@@ -177,6 +177,9 @@ module network 'modules/network.bicep' = if (deployNetwork) {
 }
 
 // Resolve subnet IDs from either the new network or the bring-your-own input.
+// When deployNetwork = false, existingSubnetIds must be supplied: the discoverySubnetIds
+// type (modules/types.bicep) applies @minLength(1) to all six fields, so any missing or
+// empty subnet ID fails fast at validation time rather than mid-deployment.
 var subnets discoverySubnetIds = deployNetwork ? network!.outputs.subnetIds : existingSubnetIds!
 
 module identity 'modules/identity.bicep' = if (deployManagedIdentity) {
@@ -216,14 +219,15 @@ module storage 'modules/storage.bicep' = if (deployStorage) {
     // service endpoint. We only add rules for the subnets we create (deployNetwork),
     // which network.bicep configures with that endpoint. For bring-your-own networks
     // we skip the rules, since we can't guarantee the endpoint is present and the
-    // account uses defaultAction 'Allow'. The search subnet is intentionally excluded
-    // (Discovery does not require the storage endpoint there).
+    // account uses defaultAction 'Allow'. The search subnet is included so its search
+    // components retain storage access, matching the single-file Discovery template.
     allowedSubnetIds: deployNetwork
       ? [
           subnets.nodePoolSubnetId
           subnets.aksSubnetId
           subnets.workspaceSubnetId
           subnets.agentSubnetId
+          subnets.searchSubnetId
         ]
       : []
   }
@@ -273,7 +277,19 @@ module workspace 'modules/workspace.bicep' = {
     chatModelName: chatModelName
     storageContainerName: storageContainerName
     storageAccountResourceId: storageAccountResourceId
+  }
+}
+
+module project 'modules/project.bicep' = {
+  params: {
+    location: location
+    workspaceName: workspaceName
     projectName: projectName
+    // Referencing the workspace module's storage container output orders this module
+    // after the workspace, its chat model deployment, and the storage container.
+    storageContainerIds: [
+      workspace.outputs.storageContainerId
+    ]
   }
 }
 
@@ -297,7 +313,7 @@ output chatModelDeploymentId string = workspace.outputs.chatModelDeploymentId
 output storageContainerId string = workspace.outputs.storageContainerId
 
 @description('Resource ID of the project.')
-output projectId string = workspace.outputs.projectId
+output projectId string = project.outputs.projectId
 
 @description('Resource ID of the managed identity in use.')
 output managedIdentityId string = managedIdentityResourceId
