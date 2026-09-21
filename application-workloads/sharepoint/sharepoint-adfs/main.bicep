@@ -415,7 +415,7 @@ var sharePointSettings = {
       Label: 'SPLatest'
       Packages: [
         {
-          DownloadUrl: 'https://download.microsoft.com/download/70fee67e-b93a-44f0-9386-803dc69e378d/uber-subscription-kb5002882-fullfile-x64-glb.exe'
+          DownloadUrl: 'https://download.microsoft.com/download/28e5d95a-225d-4669-b3da-2fe1aec3399c/uber-subscription-kb5002908-fullfile-x64-glb.exe'
         }
       ]
     }
@@ -467,8 +467,8 @@ var environmentSettings = {
 // Azure Firewall proxy settings
 var firewallProxySettings = {
   firewallAddressPrefix: cidrSubnet(templateSettings.vNetPrivatePrefix, 24, 3)
-  httpPort: 8080
-  httpsPort: 8443
+  httpPort: 9009
+  httpsPort: 9009
 }
 
 var allTags = union(tags, defaultTags)
@@ -849,6 +849,8 @@ module baseVirtualMachinesModule 'virtualMachine.bicep' = [
       dscProtectedSettings: baseVirtualMachine.dscProtectedSettings
       runCommandProperties: outboundAccessMethod == 'AzureFirewallProxy' ? firewall_runCommandProperties : null
     }
+    // Ensure the firewall (and its proxy listener) is up before the VM run command tries to configure the proxy
+    dependsOn: outboundAccessMethod == 'AzureFirewallProxy' ? [firewall] : []
   }
 ]
 
@@ -890,6 +892,8 @@ module frontends 'virtualMachine.bicep' = [
       dscProtectedSettings: frontendVirtualMachinesSettings.dscProtectedSettings
       runCommandProperties: outboundAccessMethod == 'AzureFirewallProxy' ? firewall_runCommandProperties : null
     }
+    // Ensure the firewall (and its proxy listener) is up before the VM run command tries to configure the proxy
+    dependsOn: outboundAccessMethod == 'AzureFirewallProxy' ? [firewall] : []
   }
 ]
 
@@ -907,8 +911,9 @@ module firewall 'firewall.bicep' = if (outboundAccessMethod == 'AzureFirewallPro
     virtualNetworkName: virtualNetwork.outputs.vnetName
     tags: allTags
     addressPrefix: firewallProxySettings.firewallAddressPrefix
+    firewallPrivateIpAddress: cidrHost(firewallProxySettings.firewallAddressPrefix, 3)
     http_port: firewallProxySettings.httpPort
-    https_port: firewallProxySettings.httpsPort
+    // https_port: firewallProxySettings.httpsPort
   }
 }
 

@@ -47,11 +47,18 @@ About SharePoint legacy: SharePoint 2016 / 2019 use outdated images ([2016](http
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fsharepoint%2Fsharepoint-adfs%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fsharepoint%2Fsharepoint-adfs%2Fazuredeploy.json)
 
+### Deploy using az cli (in PowerShell)
+
+```powershell
+az group create --location "france central" --name "sharepoint-quickstart"
+# This is an example, many other parameters / combinations are possible
+az deployment group create --name "sharepoint-quickstart" --resource-group "sharepoint-quickstart" --template-uri "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/refs/heads/master/application-workloads/sharepoint/sharepoint-adfs/azuredeploy.json" --parameters sharePointVersion='Subscription-Latest' sharePointConfigurationLevel='Custom' customSharePointConfiguration="['Addins', 'TrustedAuthentication']" adminUsername='yvand' adminPassword='<PASSWORD>' otherAccountsPassword='<PASSWORD>'
+```
 
 ## SharePoint configuration
 
 - Parameter `sharePointVersion` sets which version of SharePoint will be installed:
-  - `Subscription-Latest` (default): SharePoint Subscription with the latest public update available at the time of publishing this version: July 2026 ([kb5002882](https://support.microsoft.com/help/5002882)).
+  - `Subscription-Latest` (default): SharePoint Subscription with the latest public update available at the time of publishing this version: September 2026 ([kb5002908](https://support.microsoft.com/help/5002908)).
   - `Subscription-25H2`: SharePoint Subscription with the [Feature Update 25H2](https://learn.microsoft.com/sharepoint/what-s-new/new-improved-features-sharepoint-server-subscription-edition-2025-h2-release) (September 2025 PU / [KB5002784](https://support.microsoft.com/help/5002784)).
   - `Subscription-25H1`: SharePoint Subscription with the [Feature Update 25H1](https://learn.microsoft.com/sharepoint/what-s-new/new-and-improved-features-in-sharepoint-server-subscription-edition-25h1-release) (March 2025 PU / [KB5002698](https://support.microsoft.com/help/5002698)).
   - `Subscription-24H2`: SharePoint Subscription with the [Feature Update 24H2](https://learn.microsoft.com/sharepoint/what-s-new/new-and-improved-features-in-sharepoint-server-subscription-edition-24h2-release) (September 2024 PU / [kb5002640](https://support.microsoft.com/help/5002640)).
