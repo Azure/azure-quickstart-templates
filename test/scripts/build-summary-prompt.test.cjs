@@ -37,7 +37,7 @@ test('builds delimited context from relevant sample files', () => {
 test('rejects sample paths outside the workspace', () => {
   const { workspace } = createWorkspace();
   assert.throws(
-    () => resolveSampleRoot(workspace, '..\\outside'),
+    () => resolveSampleRoot(workspace, path.join('..', 'outside')),
     /escapes the workspace/
   );
 });
@@ -97,7 +97,10 @@ test('workflow uses non-fatal Copilot inference and removes GitHub Models', () =
   );
 
   assert.match(workflow, /copilot-requests: write/);
-  assert.match(workflow, /uses: actions\/ai-inference@v1/);
+  assert.match(
+    workflow,
+    /uses: actions\/ai-inference@b81b2afb8390ee6839b494a404766bef6493c7d9 # v1\.2\.8/
+  );
   assert.match(workflow, /id: inference\s+continue-on-error: true/);
   assert.doesNotMatch(workflow, /models\.github\.ai|models: read/);
 });

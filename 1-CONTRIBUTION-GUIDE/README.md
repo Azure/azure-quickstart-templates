@@ -160,14 +160,13 @@ See also [Best practices for Bicep](https://docs.microsoft.com/azure/azure-resou
 The README.md describes your deployment. A good description helps other community members to understand your deployment. The README.md uses [GitHub Flavored Markdown](https://guides.github.com/features/mastering-markdown/) for formatting text. If you want to add images to your README.md file, store the images in the **images** folder. Reference the images in the README.md with a relative path (e.g. `![alt text](images/namingConvention.png "Files, folders and naming conventions")`). This ensures the link will reference the target repository if the source repository is forked. A good README.md contains the following sections:
 
 + Deploy to Azure/AzureGov button
-+ Visualize button
 + Description of what the template will deploy
 + Tags, that can be used for search. Specify the tags comma separated and enclosed between two back-ticks (e.g Tags: `cluster, ha, sql`)
 + *Optional: Prerequisites
 + *Optional: Description on how to use the application
 + *Optional: Notes
 
-You can download a [**sample README.md**](/1-CONTRIBUTION-GUIDE/sample-README.md) for use in your deployment scenario. The **sample README.md** also contains the code for the **Deploy to Azure** and **Visualize** buttons, that you can use as a reference.
+You can download a [**sample README.md**](/1-CONTRIBUTION-GUIDE/sample-README.md) for use in your deployment scenario. The **sample README.md** also contains the code for the **Deploy to Azure** buttons, that you can use as a reference.
 
 ## metadata.json
 
