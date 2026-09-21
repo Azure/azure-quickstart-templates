@@ -24,7 +24,7 @@ module nsg_subnet_main 'br/public:avm/res/network/network-security-group:0.5.3' 
   }
 }
 
-module virtualNetwork 'br/public:avm/res/network/virtual-network:0.9.0' = {
+module virtualNetwork 'br/public:avm/res/network/virtual-network:0.10.2' = {
   name: '${virtualNetworkName}-module-avm'
   params: {
     addressPrefixes: [

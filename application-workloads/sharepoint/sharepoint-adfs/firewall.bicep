@@ -3,8 +3,9 @@ param location string = resourceGroup().location
 
 param virtualNetworkName string
 param addressPrefix string
-param http_port int = 8080
-param https_port int = 8443
+param firewallPrivateIpAddress string
+param http_port int
+// param https_port int
 @description('Tags to apply on the resources.')
 param tags object
 
@@ -34,7 +35,7 @@ resource firewall_policy_proxy 'Microsoft.Network/firewallPolicies@2025-07-01' =
     explicitProxy: {
       enableExplicitProxy: true
       httpPort: http_port
-      httpsPort: https_port
+      // httpsPort: https_port
       enablePacFile: false
     }
   }
@@ -79,7 +80,7 @@ resource firewall_proxy_rules 'Microsoft.Network/firewallPolicies/ruleCollection
   }
 }
 
-module firewall 'br/public:avm/res/network/azure-firewall:0.10.1' = {
+module firewall 'br/public:avm/res/network/azure-firewall:0.11.1' = {
   name: 'firewall'
   params: {
     name: 'firewall'
@@ -87,6 +88,7 @@ module firewall 'br/public:avm/res/network/azure-firewall:0.10.1' = {
     azureSkuTier: 'Standard'
     virtualNetworkResourceId: virtualNetwork.id
     firewallPolicyId: firewall_policy_proxy.id
+    firewallPrivateIpAddress: firewallPrivateIpAddress
     threatIntelMode: 'Alert'
     publicIPAddressObject: {
       name: 'firewall-pip'
@@ -96,4 +98,8 @@ module firewall 'br/public:avm/res/network/azure-firewall:0.10.1' = {
       skuTier: 'Regional'
     }
   }
+  // The allow-outbound rule must be committed to the policy before callers treat the firewall as ready to use
+  dependsOn: [
+    firewall_proxy_rules
+  ]
 }
