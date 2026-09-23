@@ -4,7 +4,10 @@
   'swedencentral'
   'uksouth'
 ])
-param location string = 'swedencentral'
+param location string = 'uksouth'
+
+@description('Azure region for all dataplane resources. Defaults to location when not specified.')
+param overridemrgregion string = location
 
 @description('Name of the Microsoft Discovery Supercomputer. Must be 3-24 characters, alphanumeric and hyphens only.')
 @minLength(3)
@@ -123,7 +126,7 @@ var acrPullRoleId = '7f951dda-4ed3-4680-a7ca-43fe172d538d'
 
 resource vnet 'Microsoft.Network/virtualNetworks@2024-05-01' = {
   name: vnetName
-  location: location
+  location: overridemrgregion
   properties: {
     addressSpace: {
       addressPrefixes: [
@@ -223,7 +226,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2024-05-01' = {
 
 resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2024-11-30' = {
   name: managedIdentityName
-  location: location
+  location: overridemrgregion
   properties: {
     isolationScope: 'Regional'
   }
@@ -231,7 +234,7 @@ resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2024-
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2023-05-01' = {
   name: storageAccountName
-  location: location
+  location: overridemrgregion
   kind: 'StorageV2'
   sku: {
     name: storageAccountSku
@@ -350,6 +353,7 @@ resource supercomputer 'Microsoft.Discovery/supercomputers@2026-06-01' = {
   location: location
   tags: {
     version: 'v2'
+    'discovery.overridemrgregion': string(overridemrgregion)
   }
   dependsOn: [
     vnet
@@ -393,6 +397,7 @@ resource workspace 'Microsoft.Discovery/workspaces@2026-06-01' = {
     version: 'v2'
     'discovery.workbench.enableGhcpAiFeatures': string(enableGhcpAiFeatures)
     'discovery.workbench.enableExtensions': string(enableExtensions)
+    'discovery.overridemrgregion': string(overridemrgregion)
     NetworkIsolation: string(networkIsolation)
   }
   dependsOn: [
