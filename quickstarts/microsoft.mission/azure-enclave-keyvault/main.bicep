@@ -24,7 +24,7 @@ param privateDnsRegistrationType string = ''
 param newDnsZoneResourceGroupToCreateIn string = ''
 param enableDiagnostics bool = false
 param workspaceId string = ''
-param enableTelemetry bool = false
+param enableTelemetry bool = true
 param isMsisrTenant bool = false
 param isPlxTenant bool = false
 
