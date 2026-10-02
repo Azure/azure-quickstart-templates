@@ -8,27 +8,27 @@ param workloadId string
 param tags object = {}
 param newWorkloadName string
 
-@description('The resource ID of the target enclave.')
+@description('The resource ID of the target virtual enclave.')
 param virtualEnclaveResourceId string
 
 param workloadUseExisting bool = false
 
-resource virtualEnclave 'Microsoft.Mission/virtualEnclaves@2025-05-01-preview' existing = {
+resource virtualEnclave 'Microsoft.Mission/virtualEnclaves@2026-03-01-preview' existing = {
   name: split(virtualEnclaveResourceId, '/')[8]
 }
 
-resource workloadNew 'Microsoft.Mission/virtualEnclaves/workloads@2025-05-01-preview' = if (!workloadUseExisting) {
+resource workloadNew 'Microsoft.Mission/virtualEnclaves/workloads@2026-03-01-preview' = if (!workloadUseExisting) {
   parent: virtualEnclave
   name: newWorkloadName
   location: location
-  tags: tags[?'Microsoft.Mission/virtualEnclaves'] ?? {}
+  tags: tags
 }
 
-resource workloadExisting 'Microsoft.Mission/virtualEnclaves/workloads@2025-05-01-preview' existing = if (workloadUseExisting) {
+resource workloadExisting 'Microsoft.Mission/virtualEnclaves/workloads@2026-03-01-preview' existing = if (workloadUseExisting) {
   parent: virtualEnclave
   name: split(workloadId, '/')[10]
 }
 
 //output workloadResourceGroupName string = workload.properties.resourceGroupName
-output workloadId string = workloadUseExisting ? workloadExisting.id : workloadNew.id
-output resourceGroupCollection array = workloadUseExisting ? workloadExisting.properties.resourceGroupCollection : workloadNew.properties.resourceGroupCollection
+output workloadId string = workloadUseExisting ? workloadExisting.?id ?? '' : workloadNew.?id ?? ''
+output resourceGroupCollection array = workloadUseExisting ? workloadExisting.?properties.?resourceGroupCollection ?? [] : workloadNew.?properties.?resourceGroupCollection ?? []

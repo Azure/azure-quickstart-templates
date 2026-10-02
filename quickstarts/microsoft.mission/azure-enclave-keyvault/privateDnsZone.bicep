@@ -14,7 +14,7 @@ param newDnsZoneResourceGroupToCreateIn string
 
 //var workloadResourceGroupId = '/subscriptions/${subscription().subscriptionId}/resourceGroups/${workloadResourceGroup}'
 
-resource virtualEnclaveExisting 'Microsoft.Mission/virtualEnclaves@2025-05-01-preview' existing = {
+resource virtualEnclaveExisting 'Microsoft.Mission/virtualEnclaves@2026-03-01-preview' existing = {
   name: split(virtualEnclaveResourceId, '/')[8]
 }
 

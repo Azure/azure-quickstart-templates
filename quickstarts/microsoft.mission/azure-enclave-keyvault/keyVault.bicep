@@ -60,7 +60,7 @@ resource keyvaultkeys 'Microsoft.KeyVault/vaults/keys@2023-07-01' = [
         lifetimeActions: [
           {
             action: {
-              type: 'Rotate'
+              type: 'rotate'
             }
             trigger: {
               timeAfterCreate: 'P30D'

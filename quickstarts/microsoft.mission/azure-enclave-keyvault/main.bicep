@@ -16,6 +16,7 @@ param workloadResourceGroup string
 param virtualEnclaveResourceId string = ''
 param workloadUseExisting bool
 param workloadResourceGroupUseExisting bool
+param existingWorkloadTags object = {}
 param deploymentid string = substring(uniqueString(utcNow()), 0, 6)
 param existingManagedResourceGroupPrivateDnsZone string = ''
 param manuallySelectedPrivateDnsZone string = ''
@@ -23,10 +24,12 @@ param privateDnsRegistrationType string = ''
 param newDnsZoneResourceGroupToCreateIn string = ''
 param enableDiagnostics bool = false
 param workspaceId string = ''
-param enableTelemetry bool = true
+param enableTelemetry bool = false
 param isMsisrTenant bool = false
+param isPlxTenant bool = false
 
 var privateLinkDnsZoneName = 'privatelink${replace(environment().suffixes.keyvaultDns, 'vault', 'vaultcore')}' // Key Vault
+var effectiveNewDnsZoneResourceGroupToCreateIn = isPlxTenant && !isMsisrTenant && !empty(virtualEnclaveResourceId) ? vnetRG : newDnsZoneResourceGroupToCreateIn
 
 resource workloadRg 'Microsoft.Resources/resourceGroups@2021-04-01' = if (!workloadResourceGroupUseExisting && empty(virtualEnclaveResourceId)) {
   name: workloadResourceGroup
@@ -65,12 +68,35 @@ module workloadRgModule './workloadResourceGroup.bicep' = if (!workloadResourceG
     virtualEnclaveResourceId: virtualEnclaveResourceId
     workloadResourceGroup: workloadResourceGroup
     resourceGroupCollection: workloadModule.outputs.resourceGroupCollection
+    existingWorkloadTags: existingWorkloadTags
+  }
+}
+
+module resourceGroupTagsModule './resourceGroupTags.bicep' = if (contains(tagsByResource, 'Microsoft.Resources/resourceGroups')) {
+  name: 'resourceGroupTags-${deploymentid}'
+  scope: resourceGroup(workloadResourceGroup)
+  dependsOn: [
+    workloadRg
+    workloadRgModule
+  ]
+  params: {
+    tags: tagsByResource['Microsoft.Resources/resourceGroups']
+  }
+}
+
+module enclaveMaintenanceModePreflight './enclaveMaintenanceModePreflight.bicep' = if (!empty(virtualEnclaveResourceId)) {
+  name: 'enclaveMaintenanceModePreflight-${deploymentid}'
+  params: {
+    virtualEnclaveResourceId: virtualEnclaveResourceId
   }
 }
 
 module privateDnsModule './privateDnsZone.bicep' = {
   name: 'privateDns-${deploymentid}'
-  scope: resourceGroup(empty(newDnsZoneResourceGroupToCreateIn) ? vnetRG : newDnsZoneResourceGroupToCreateIn)
+  scope: resourceGroup(empty(effectiveNewDnsZoneResourceGroupToCreateIn) ? vnetRG : effectiveNewDnsZoneResourceGroupToCreateIn)
+  dependsOn: [
+    enclaveMaintenanceModePreflight
+  ]
   params: {
     location: location
     tagsByResource: tagsByResource
@@ -82,7 +108,7 @@ module privateDnsModule './privateDnsZone.bicep' = {
     vnetName: vnetName
     vnetRG: vnetRG
     deploymentid: deploymentid
-    newDnsZoneResourceGroupToCreateIn: newDnsZoneResourceGroupToCreateIn
+    newDnsZoneResourceGroupToCreateIn: effectiveNewDnsZoneResourceGroupToCreateIn
   }
 }
 
@@ -96,6 +122,7 @@ var newManagedResourceGroupPrivateDnsZone = privateDnsModule.outputs.privateDnsZ
 module keyvaultModule './keyVault.bicep' = {
   name: 'keyVault-${deploymentid}'
   dependsOn: [
+    enclaveMaintenanceModePreflight
     workloadRg
     workloadModule
     workloadRgModule

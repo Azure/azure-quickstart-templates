@@ -7,7 +7,10 @@ param workloadId string
 @description('The metadata to be applied to the workload resource.')
 param tags object = {}
 
-@description('The resource ID of the target enclave.')
+@description('The existing workload metadata to preserve when attaching a resource group.')
+param existingWorkloadTags object = {}
+
+@description('The resource ID of the target virtual enclave.')
 param virtualEnclaveResourceId string
 
 param workloadResourceGroup string
@@ -16,22 +19,21 @@ param resourceGroupCollection array
 
 var workloadResourceGroupId = '/subscriptions/${subscription().subscriptionId}/resourceGroups/${workloadResourceGroup}'
 
-var updatedResourceGroupCollection = concat(resourceGroupCollection, [workloadResourceGroupId])
+var normalizedResourceGroupCollection = map(resourceGroupCollection, resourceGroupId => toLower(resourceGroupId))
+var workloadResourceGroupAlreadyAttached = contains(normalizedResourceGroupCollection, toLower(workloadResourceGroupId))
+var updatedResourceGroupCollection = workloadResourceGroupAlreadyAttached
+  ? resourceGroupCollection
+  : union(resourceGroupCollection, [workloadResourceGroupId])
 
-resource virtualEnclave 'Microsoft.Mission/virtualEnclaves@2025-05-01-preview' existing = {
+resource virtualEnclave 'Microsoft.Mission/virtualEnclaves@2026-03-01-preview' existing = {
   name: split(virtualEnclaveResourceId, '/')[8]
 }
 
-resource workload 'Microsoft.Mission/virtualEnclaves/workloads@2025-05-01-preview' existing = {
-  parent: virtualEnclave
-  name: split(workloadId, '/')[10]
-}
-
-resource updatedWorkload 'Microsoft.Mission/virtualEnclaves/workloads@2025-05-01-preview' = {
+resource updatedWorkload 'Microsoft.Mission/virtualEnclaves/workloads@2026-03-01-preview' = {
   parent: virtualEnclave
   name: split(workloadId, '/')[10]
   location: location
-  tags: tags[?'Microsoft.Mission/virtualEnclaves'] ?? {}
+  tags: union(existingWorkloadTags, tags)
   properties: {
     resourceGroupCollection: updatedResourceGroupCollection
   }
