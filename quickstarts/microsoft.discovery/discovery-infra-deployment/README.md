@@ -14,17 +14,17 @@
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.discovery%2Fdiscovery-infra-deployment%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.discovery%2Fdiscovery-infra-deployment%2Fazuredeploy.json)
 
-This template deploys the full **Microsoft Discovery** stack into a single resource group using the `2026-06-01` API. Microsoft Discovery is a platform for scientific computing that provisions networking, identity, storage, supercomputer, workspace, and project resources.
+This template deploys the full **Microsoft Discovery** stack into a single resource group using the `2026-06-01` API. Microsoft Discovery is a platform for scientific computing that provisions networking, identity, storage, supercomputer, workspace, and project resources. The supporting dataplane resources can optionally be deployed to a region different from the Discovery control-plane resources.
 
 ## Sample overview and deployed resources
 
-This template provisions the complete infrastructure for a Microsoft Discovery environment in a single deployment. It creates a virtual network with five purpose-built subnets, a user-assigned managed identity with the required role assignments, a CORS-enabled storage account, and the core Discovery resources: a Supercomputer with a Node Pool, a Workspace with a Chat Model Deployment and Project, and a Storage Container.
+This template provisions the complete infrastructure for a Microsoft Discovery environment in a single deployment. It creates a virtual network with six purpose-built subnets, a user-assigned managed identity with the required role assignments, a CORS-enabled storage account, and the core Discovery resources: a Supercomputer with a Node Pool, a Workspace with a Chat Model Deployment and Project, and a Storage Container.
 
 The following resources are deployed as part of the solution
 
 ### Microsoft.Network
 
-- **Microsoft.Network/virtualNetworks**: Virtual network with five subnets for Supercomputer Node Pool, AKS, Workspace, Private Endpoint, and Agent workloads.
+- **Microsoft.Network/virtualNetworks**: Virtual network with six subnets for Supercomputer Node Pool, AKS, Workspace, Private Endpoint, Agent, and Search workloads.
 
 ### Microsoft.ManagedIdentity
 
@@ -89,7 +89,8 @@ az group create --name rg-discovery --location eastus
 
 az deployment group create \
   --resource-group rg-discovery \
-  --template-file main.bicep
+  --template-file main.bicep \
+  --parameters location=uksouth overridemrgregion=swedencentral
 ```
 
 > **Note** – The Supercomputer and Workspace resources can each take **15–30 minutes** to provision.
@@ -106,7 +107,8 @@ Add additional Node Pools, Storage Containers, or Tools via the Azure portal or 
 
 ## Notes
 
-- All resources must reside in the same region.
+- The `location` parameter controls the region of the Microsoft Discovery resources. The `overridemrgregion` parameter controls the region of the virtual network, managed identity, and storage account, and defaults to `location`. Set the parameters to different supported regions for a cross-MRG deployment.
+- The Supercomputer and Workspace receive the `discovery.overridemrgregion` tag so the Discovery service can locate the supporting dataplane resources.
 - The private endpoint subnet explicitly disables default outbound access (`defaultOutboundAccess: false`). No NAT gateway is attached because this subnet is reserved for private endpoints. This setting does not apply to the other subnets in this template.
 - The `storageAccountName` parameter must be globally unique (3-24 lowercase alphanumeric characters).
 - GPU SKU examples for `nodePoolVmSize`: `Standard_NC24ads_A100_v4`, `Standard_NC4as_T4_v3`.
