@@ -1,0 +1,938 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.47.16.16243",
+      "templateHash": "12535899749474282382"
+    }
+  },
+  "parameters": {
+    "enablePurgeProtection": {
+      "type": "bool",
+      "defaultValue": false
+    },
+    "keys": {
+      "type": "array",
+      "defaultValue": []
+    },
+    "keyvaultname": {
+      "type": "string"
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "usgovarizona"
+    },
+    "newWorkloadName": {
+      "type": "string",
+      "defaultValue": "placeholder"
+    },
+    "skuname": {
+      "type": "string"
+    },
+    "softDeleteRetentionInDays": {
+      "type": "int",
+      "defaultValue": 90
+    },
+    "subnetName": {
+      "type": "string"
+    },
+    "tagsByResource": {
+      "type": "object",
+      "defaultValue": {}
+    },
+    "tenant_id": {
+      "type": "string",
+      "defaultValue": "[tenant().tenantId]"
+    },
+    "vnetName": {
+      "type": "string"
+    },
+    "vnetRG": {
+      "type": "string"
+    },
+    "workloadId": {
+      "type": "string",
+      "defaultValue": "placeholder"
+    },
+    "workloadResourceGroup": {
+      "type": "string"
+    },
+    "virtualEnclaveResourceId": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "workloadUseExisting": {
+      "type": "bool"
+    },
+    "workloadResourceGroupUseExisting": {
+      "type": "bool"
+    },
+    "existingWorkloadTags": {
+      "type": "object",
+      "defaultValue": {}
+    },
+    "deploymentid": {
+      "type": "string",
+      "defaultValue": "[substring(uniqueString(utcNow()), 0, 6)]"
+    },
+    "existingManagedResourceGroupPrivateDnsZone": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "manuallySelectedPrivateDnsZone": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "privateDnsRegistrationType": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "newDnsZoneResourceGroupToCreateIn": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "enableDiagnostics": {
+      "type": "bool",
+      "defaultValue": false
+    },
+    "workspaceId": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "enableTelemetry": {
+      "type": "bool",
+      "defaultValue": true
+    },
+    "isMsisrTenant": {
+      "type": "bool",
+      "defaultValue": false
+    },
+    "isPlxTenant": {
+      "type": "bool",
+      "defaultValue": false
+    }
+  },
+  "variables": {
+    "privateLinkDnsZoneName": "[format('privatelink{0}', replace(environment().suffixes.keyvaultDns, 'vault', 'vaultcore'))]",
+    "effectiveNewDnsZoneResourceGroupToCreateIn": "[if(and(and(parameters('isPlxTenant'), not(parameters('isMsisrTenant'))), not(empty(parameters('virtualEnclaveResourceId')))), parameters('vnetRG'), parameters('newDnsZoneResourceGroupToCreateIn'))]"
+  },
+  "resources": [
+    {
+      "condition": "[and(not(parameters('workloadResourceGroupUseExisting')), empty(parameters('virtualEnclaveResourceId')))]",
+      "type": "Microsoft.Resources/resourceGroups",
+      "apiVersion": "2021-04-01",
+      "name": "[parameters('workloadResourceGroup')]",
+      "location": "[parameters('location')]"
+    },
+    {
+      "condition": "[not(empty(parameters('virtualEnclaveResourceId')))]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "[format('workload-{0}', parameters('deploymentid'))]",
+      "resourceGroup": "[if(not(empty(parameters('virtualEnclaveResourceId'))), split(parameters('virtualEnclaveResourceId'), '/')[4], parameters('workloadResourceGroup'))]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "workloadId": {
+            "value": "[parameters('workloadId')]"
+          },
+          "workloadUseExisting": {
+            "value": "[parameters('workloadUseExisting')]"
+          },
+          "newWorkloadName": {
+            "value": "[parameters('newWorkloadName')]"
+          },
+          "tags": "[if(contains(parameters('tagsByResource'), 'Microsoft.Mission/virtualEnclaves/workloads'), createObject('value', parameters('tagsByResource')['Microsoft.Mission/virtualEnclaves/workloads']), createObject('value', createObject()))]",
+          "virtualEnclaveResourceId": {
+            "value": "[parameters('virtualEnclaveResourceId')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.47.16.16243",
+              "templateHash": "13691462871915048336"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string",
+              "metadata": {
+                "description": "The location for the workload resource."
+              }
+            },
+            "workloadId": {
+              "type": "string",
+              "metadata": {
+                "description": "The name of the workload resource."
+              }
+            },
+            "tags": {
+              "type": "object",
+              "defaultValue": {},
+              "metadata": {
+                "description": "The metadata to be applied to the workload resource."
+              }
+            },
+            "newWorkloadName": {
+              "type": "string"
+            },
+            "virtualEnclaveResourceId": {
+              "type": "string",
+              "metadata": {
+                "description": "The resource ID of the target virtual enclave."
+              }
+            },
+            "workloadUseExisting": {
+              "type": "bool",
+              "defaultValue": false
+            }
+          },
+          "resources": [
+            {
+              "condition": "[not(parameters('workloadUseExisting'))]",
+              "type": "Microsoft.Mission/virtualEnclaves/workloads",
+              "apiVersion": "2026-03-01-preview",
+              "name": "[format('{0}/{1}', split(parameters('virtualEnclaveResourceId'), '/')[8], parameters('newWorkloadName'))]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]"
+            }
+          ],
+          "outputs": {
+            "workloadId": {
+              "type": "string",
+              "value": "[if(parameters('workloadUseExisting'), coalesce(if(parameters('workloadUseExisting'), resourceId('Microsoft.Mission/virtualEnclaves/workloads', split(parameters('virtualEnclaveResourceId'), '/')[8], split(parameters('workloadId'), '/')[10]), null()), ''), coalesce(if(not(parameters('workloadUseExisting')), resourceId('Microsoft.Mission/virtualEnclaves/workloads', split(parameters('virtualEnclaveResourceId'), '/')[8], parameters('newWorkloadName')), null()), ''))]"
+            },
+            "resourceGroupCollection": {
+              "type": "array",
+              "value": "[if(parameters('workloadUseExisting'), coalesce(tryGet(tryGet(if(parameters('workloadUseExisting'), reference(resourceId('Microsoft.Mission/virtualEnclaves/workloads', split(parameters('virtualEnclaveResourceId'), '/')[8], split(parameters('workloadId'), '/')[10]), '2026-03-01-preview', 'full'), null()), 'properties'), 'resourceGroupCollection'), createArray()), coalesce(tryGet(tryGet(if(not(parameters('workloadUseExisting')), reference(resourceId('Microsoft.Mission/virtualEnclaves/workloads', split(parameters('virtualEnclaveResourceId'), '/')[8], parameters('newWorkloadName')), '2026-03-01-preview', 'full'), null()), 'properties'), 'resourceGroupCollection'), createArray()))]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', parameters('workloadResourceGroup'))]"
+      ]
+    },
+    {
+      "condition": "[and(not(parameters('workloadResourceGroupUseExisting')), not(empty(parameters('virtualEnclaveResourceId'))))]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "[format('workloadResourceGroup-{0}', parameters('deploymentid'))]",
+      "resourceGroup": "[if(not(empty(parameters('virtualEnclaveResourceId'))), split(parameters('virtualEnclaveResourceId'), '/')[4], parameters('workloadResourceGroup'))]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "workloadId": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, if(not(empty(parameters('virtualEnclaveResourceId'))), split(parameters('virtualEnclaveResourceId'), '/')[4], parameters('workloadResourceGroup'))), 'Microsoft.Resources/deployments', format('workload-{0}', parameters('deploymentid'))), '2025-04-01').outputs.workloadId.value]"
+          },
+          "tags": "[if(contains(parameters('tagsByResource'), 'Microsoft.Mission/virtualEnclaves/workloads'), createObject('value', parameters('tagsByResource')['Microsoft.Mission/virtualEnclaves/workloads']), createObject('value', createObject()))]",
+          "virtualEnclaveResourceId": {
+            "value": "[parameters('virtualEnclaveResourceId')]"
+          },
+          "workloadResourceGroup": {
+            "value": "[parameters('workloadResourceGroup')]"
+          },
+          "resourceGroupCollection": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, if(not(empty(parameters('virtualEnclaveResourceId'))), split(parameters('virtualEnclaveResourceId'), '/')[4], parameters('workloadResourceGroup'))), 'Microsoft.Resources/deployments', format('workload-{0}', parameters('deploymentid'))), '2025-04-01').outputs.resourceGroupCollection.value]"
+          },
+          "existingWorkloadTags": {
+            "value": "[parameters('existingWorkloadTags')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.47.16.16243",
+              "templateHash": "17548171281569163477"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string",
+              "metadata": {
+                "description": "The location for the workload resource."
+              }
+            },
+            "workloadId": {
+              "type": "string",
+              "metadata": {
+                "description": "The name of the workload resource."
+              }
+            },
+            "tags": {
+              "type": "object",
+              "defaultValue": {},
+              "metadata": {
+                "description": "The metadata to be applied to the workload resource."
+              }
+            },
+            "existingWorkloadTags": {
+              "type": "object",
+              "defaultValue": {},
+              "metadata": {
+                "description": "The existing workload metadata to preserve when attaching a resource group."
+              }
+            },
+            "virtualEnclaveResourceId": {
+              "type": "string",
+              "metadata": {
+                "description": "The resource ID of the target virtual enclave."
+              }
+            },
+            "workloadResourceGroup": {
+              "type": "string"
+            },
+            "resourceGroupCollection": {
+              "type": "array"
+            }
+          },
+          "variables": {
+            "workloadResourceGroupId": "[format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('workloadResourceGroup'))]",
+            "normalizedResourceGroupCollection": "[map(parameters('resourceGroupCollection'), lambda('resourceGroupId', toLower(lambdaVariables('resourceGroupId'))))]",
+            "workloadResourceGroupAlreadyAttached": "[contains(variables('normalizedResourceGroupCollection'), toLower(variables('workloadResourceGroupId')))]",
+            "updatedResourceGroupCollection": "[if(variables('workloadResourceGroupAlreadyAttached'), parameters('resourceGroupCollection'), union(parameters('resourceGroupCollection'), createArray(variables('workloadResourceGroupId'))))]"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Mission/virtualEnclaves/workloads",
+              "apiVersion": "2026-03-01-preview",
+              "name": "[format('{0}/{1}', split(parameters('virtualEnclaveResourceId'), '/')[8], split(parameters('workloadId'), '/')[10])]",
+              "location": "[parameters('location')]",
+              "tags": "[union(parameters('existingWorkloadTags'), parameters('tags'))]",
+              "properties": {
+                "resourceGroupCollection": "[variables('updatedResourceGroupCollection')]"
+              }
+            }
+          ],
+          "outputs": {
+            "workloadId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Mission/virtualEnclaves/workloads', split(parameters('virtualEnclaveResourceId'), '/')[8], split(parameters('workloadId'), '/')[10])]"
+            },
+            "updatedResourceGroupCollection": {
+              "type": "array",
+              "value": "[reference(resourceId('Microsoft.Mission/virtualEnclaves/workloads', split(parameters('virtualEnclaveResourceId'), '/')[8], split(parameters('workloadId'), '/')[10]), '2026-03-01-preview').resourceGroupCollection]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, if(not(empty(parameters('virtualEnclaveResourceId'))), split(parameters('virtualEnclaveResourceId'), '/')[4], parameters('workloadResourceGroup'))), 'Microsoft.Resources/deployments', format('workload-{0}', parameters('deploymentid')))]"
+      ]
+    },
+    {
+      "condition": "[contains(parameters('tagsByResource'), 'Microsoft.Resources/resourceGroups')]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "[format('resourceGroupTags-{0}', parameters('deploymentid'))]",
+      "resourceGroup": "[parameters('workloadResourceGroup')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "tags": {
+            "value": "[parameters('tagsByResource')['Microsoft.Resources/resourceGroups']]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.47.16.16243",
+              "templateHash": "11688404516296494082"
+            }
+          },
+          "parameters": {
+            "tags": {
+              "type": "object"
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Resources/tags",
+              "apiVersion": "2021-04-01",
+              "name": "default",
+              "properties": {
+                "tags": "[union(resourceGroup().tags, parameters('tags'))]"
+              }
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', parameters('workloadResourceGroup'))]",
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, if(not(empty(parameters('virtualEnclaveResourceId'))), split(parameters('virtualEnclaveResourceId'), '/')[4], parameters('workloadResourceGroup'))), 'Microsoft.Resources/deployments', format('workloadResourceGroup-{0}', parameters('deploymentid')))]"
+      ]
+    },
+    {
+      "condition": "[not(empty(parameters('virtualEnclaveResourceId')))]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "[format('enclaveMaintenanceModePreflight-{0}', parameters('deploymentid'))]",
+      "location": "[deployment().location]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "virtualEnclaveResourceId": {
+            "value": "[parameters('virtualEnclaveResourceId')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.47.16.16243",
+              "templateHash": "16495684867536601518"
+            }
+          },
+          "parameters": {
+            "virtualEnclaveResourceId": {
+              "type": "string",
+              "metadata": {
+                "description": "The resource ID of the existing virtual enclave whose network will be joined."
+              }
+            }
+          },
+          "variables": {
+            "virtualEnclaveResourceIdSegments": "[split(parameters('virtualEnclaveResourceId'), '/')]",
+            "virtualEnclaveResourceIdIsValid": "[and(and(and(and(and(and(and(and(and(equals(length(variables('virtualEnclaveResourceIdSegments')), 9), empty(variables('virtualEnclaveResourceIdSegments')[0])), equals(toLower(variables('virtualEnclaveResourceIdSegments')[1]), 'subscriptions')), not(empty(variables('virtualEnclaveResourceIdSegments')[2]))), equals(toLower(variables('virtualEnclaveResourceIdSegments')[3]), 'resourcegroups')), not(empty(variables('virtualEnclaveResourceIdSegments')[4]))), equals(toLower(variables('virtualEnclaveResourceIdSegments')[5]), 'providers')), equals(toLower(variables('virtualEnclaveResourceIdSegments')[6]), 'microsoft.mission')), equals(toLower(variables('virtualEnclaveResourceIdSegments')[7]), 'virtualenclaves')), not(empty(variables('virtualEnclaveResourceIdSegments')[8])))]",
+            "validatedVirtualEnclaveResourceId": "[if(variables('virtualEnclaveResourceIdIsValid'), parameters('virtualEnclaveResourceId'), fail('The virtual enclave resource ID is invalid. Expected /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Mission/virtualEnclaves/{name}.'))]",
+            "validatedVirtualEnclaveResourceIdSegments": "[split(variables('validatedVirtualEnclaveResourceId'), '/')]",
+            "virtualEnclaveSubscriptionId": "[variables('validatedVirtualEnclaveResourceIdSegments')[2]]",
+            "virtualEnclaveResourceGroupName": "[variables('validatedVirtualEnclaveResourceIdSegments')[4]]",
+            "virtualEnclaveName": "[variables('validatedVirtualEnclaveResourceIdSegments')[8]]"
+          },
+          "resources": [],
+          "outputs": {
+            "validatedVirtualEnclaveResourceId": {
+              "type": "string",
+              "value": "[if(contains(createArray('general', 'advanced'), toLower(coalesce(tryGet(tryGet(reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', variables('virtualEnclaveSubscriptionId'), variables('virtualEnclaveResourceGroupName')), 'Microsoft.Mission/virtualEnclaves', variables('virtualEnclaveName')), '2026-03-01-preview'), 'maintenanceModeConfiguration'), 'mode'), ''))), variables('validatedVirtualEnclaveResourceId'), fail(format('The selected virtual enclave must use General maintenance mode with the deploying identity listed in maintenance mode principals, or Advanced maintenance mode, before this deployment can attach resources to its virtual network. Current mode: {0}.', if(empty(toLower(coalesce(tryGet(tryGet(reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', variables('virtualEnclaveSubscriptionId'), variables('virtualEnclaveResourceGroupName')), 'Microsoft.Mission/virtualEnclaves', variables('virtualEnclaveName')), '2026-03-01-preview'), 'maintenanceModeConfiguration'), 'mode'), ''))), 'unknown', toLower(coalesce(tryGet(tryGet(reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', variables('virtualEnclaveSubscriptionId'), variables('virtualEnclaveResourceGroupName')), 'Microsoft.Mission/virtualEnclaves', variables('virtualEnclaveName')), '2026-03-01-preview'), 'maintenanceModeConfiguration'), 'mode'), ''))))))]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "[format('privateDns-{0}', parameters('deploymentid'))]",
+      "resourceGroup": "[if(empty(variables('effectiveNewDnsZoneResourceGroupToCreateIn')), parameters('vnetRG'), variables('effectiveNewDnsZoneResourceGroupToCreateIn'))]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "tagsByResource": {
+            "value": "[parameters('tagsByResource')]"
+          },
+          "virtualEnclaveResourceId": {
+            "value": "[parameters('virtualEnclaveResourceId')]"
+          },
+          "privateDnsRegistrationType": {
+            "value": "[parameters('privateDnsRegistrationType')]"
+          },
+          "existingManagedResourceGroupPrivateDnsZone": {
+            "value": "[parameters('existingManagedResourceGroupPrivateDnsZone')]"
+          },
+          "manuallySelectedPrivateDnsZone": {
+            "value": "[parameters('manuallySelectedPrivateDnsZone')]"
+          },
+          "privateLinkDnsZoneName": {
+            "value": "[variables('privateLinkDnsZoneName')]"
+          },
+          "vnetName": {
+            "value": "[parameters('vnetName')]"
+          },
+          "vnetRG": {
+            "value": "[parameters('vnetRG')]"
+          },
+          "deploymentid": {
+            "value": "[parameters('deploymentid')]"
+          },
+          "newDnsZoneResourceGroupToCreateIn": {
+            "value": "[variables('effectiveNewDnsZoneResourceGroupToCreateIn')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.47.16.16243",
+              "templateHash": "11135197339443689095"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string"
+            },
+            "existingManagedResourceGroupPrivateDnsZone": {
+              "type": "string",
+              "defaultValue": ""
+            },
+            "manuallySelectedPrivateDnsZone": {
+              "type": "string"
+            },
+            "tagsByResource": {
+              "type": "object"
+            },
+            "privateDnsRegistrationType": {
+              "type": "string"
+            },
+            "tags": {
+              "type": "object",
+              "defaultValue": {}
+            },
+            "virtualEnclaveResourceId": {
+              "type": "string"
+            },
+            "privateLinkDnsZoneName": {
+              "type": "string"
+            },
+            "vnetName": {
+              "type": "string"
+            },
+            "vnetRG": {
+              "type": "string"
+            },
+            "deploymentid": {
+              "type": "string"
+            },
+            "newDnsZoneResourceGroupToCreateIn": {
+              "type": "string"
+            }
+          },
+          "resources": [
+            {
+              "condition": "[and(and(equals(parameters('privateDnsRegistrationType'), 'defaultManagedResourceGroupZone'), equals(parameters('existingManagedResourceGroupPrivateDnsZone'), '')), not(equals(parameters('newDnsZoneResourceGroupToCreateIn'), '')))]",
+              "type": "Microsoft.Network/privateDnsZones",
+              "apiVersion": "2024-06-01",
+              "name": "[parameters('privateLinkDnsZoneName')]",
+              "location": "global"
+            },
+            {
+              "condition": "[and(and(equals(parameters('privateDnsRegistrationType'), 'defaultManagedResourceGroupZone'), equals(parameters('existingManagedResourceGroupPrivateDnsZone'), '')), not(equals(parameters('newDnsZoneResourceGroupToCreateIn'), '')))]",
+              "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+              "apiVersion": "2024-06-01",
+              "name": "[format('{0}/{1}', parameters('privateLinkDnsZoneName'), 'pdns-vnetlink')]",
+              "location": "global",
+              "properties": {
+                "virtualNetwork": {
+                  "id": "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('vnetRG')), 'Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+                },
+                "registrationEnabled": false
+              },
+              "tags": "[if(contains(parameters('tagsByResource'), 'Microsoft.Network/privateDnsZones/virtualNetworkLinks'), parameters('tagsByResource')['Microsoft.Network/privateDnsZones/virtualNetworkLinks'], createObject())]",
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/privateDnsZones', parameters('privateLinkDnsZoneName'))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "privateDnsZoneId": {
+              "type": "string",
+              "value": "[if(and(and(equals(parameters('privateDnsRegistrationType'), 'defaultManagedResourceGroupZone'), equals(parameters('existingManagedResourceGroupPrivateDnsZone'), '')), not(equals(parameters('newDnsZoneResourceGroupToCreateIn'), ''))), resourceId('Microsoft.Network/privateDnsZones', parameters('privateLinkDnsZoneName')), '')]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[subscriptionResourceId('Microsoft.Resources/deployments', format('enclaveMaintenanceModePreflight-{0}', parameters('deploymentid')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "[format('keyVault-{0}', parameters('deploymentid'))]",
+      "resourceGroup": "[parameters('workloadResourceGroup')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "enablePurgeProtection": {
+            "value": "[parameters('enablePurgeProtection')]"
+          },
+          "keys": {
+            "value": "[parameters('keys')]"
+          },
+          "keyvaultname": {
+            "value": "[parameters('keyvaultname')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "skuname": {
+            "value": "[parameters('skuname')]"
+          },
+          "softDeleteRetentionInDays": {
+            "value": "[parameters('softDeleteRetentionInDays')]"
+          },
+          "subnetName": {
+            "value": "[parameters('subnetName')]"
+          },
+          "tagsByResource": {
+            "value": "[parameters('tagsByResource')]"
+          },
+          "tenant_id": {
+            "value": "[parameters('tenant_id')]"
+          },
+          "vnetName": {
+            "value": "[parameters('vnetName')]"
+          },
+          "vnetRG": {
+            "value": "[parameters('vnetRG')]"
+          },
+          "privateDnsRegistrationType": {
+            "value": "[parameters('privateDnsRegistrationType')]"
+          },
+          "vnetLocation": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('vnetRG')), 'Microsoft.Network/virtualNetworks', parameters('vnetName')), '2023-09-01', 'full').location]"
+          },
+          "existingManagedResourceGroupPrivateDnsZone": {
+            "value": "[parameters('existingManagedResourceGroupPrivateDnsZone')]"
+          },
+          "manuallySelectedPrivateDnsZone": {
+            "value": "[parameters('manuallySelectedPrivateDnsZone')]"
+          },
+          "newManagedResourceGroupPrivateDnsZone": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, if(empty(variables('effectiveNewDnsZoneResourceGroupToCreateIn')), parameters('vnetRG'), variables('effectiveNewDnsZoneResourceGroupToCreateIn'))), 'Microsoft.Resources/deployments', format('privateDns-{0}', parameters('deploymentid'))), '2025-04-01').outputs.privateDnsZoneId.value]"
+          },
+          "enableDiagnostics": {
+            "value": "[parameters('enableDiagnostics')]"
+          },
+          "workspaceId": {
+            "value": "[parameters('workspaceId')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.47.16.16243",
+              "templateHash": "13809706331283084854"
+            }
+          },
+          "parameters": {
+            "enablePurgeProtection": {
+              "type": "bool",
+              "defaultValue": false
+            },
+            "keys": {
+              "type": "array",
+              "defaultValue": []
+            },
+            "keyvaultname": {
+              "type": "string"
+            },
+            "location": {
+              "type": "string",
+              "defaultValue": "usgovarizona"
+            },
+            "skuname": {
+              "type": "string"
+            },
+            "softDeleteRetentionInDays": {
+              "type": "int",
+              "defaultValue": 90
+            },
+            "subnetName": {
+              "type": "string"
+            },
+            "tagsByResource": {
+              "type": "object",
+              "defaultValue": {}
+            },
+            "tenant_id": {
+              "type": "string"
+            },
+            "vnetName": {
+              "type": "string"
+            },
+            "vnetRG": {
+              "type": "string"
+            },
+            "privateDnsRegistrationType": {
+              "type": "string",
+              "defaultValue": ""
+            },
+            "existingManagedResourceGroupPrivateDnsZone": {
+              "type": "string",
+              "defaultValue": ""
+            },
+            "manuallySelectedPrivateDnsZone": {
+              "type": "string",
+              "defaultValue": ""
+            },
+            "newManagedResourceGroupPrivateDnsZone": {
+              "type": "string",
+              "defaultValue": ""
+            },
+            "enableDiagnostics": {
+              "type": "bool",
+              "defaultValue": false
+            },
+            "workspaceId": {
+              "type": "string",
+              "defaultValue": ""
+            },
+            "vnetLocation": {
+              "type": "string",
+              "defaultValue": ""
+            }
+          },
+          "variables": {
+            "selectedDnsZoneId": "[if(equals(parameters('privateDnsRegistrationType'), 'manuallySelectZone'), parameters('manuallySelectedPrivateDnsZone'), if(and(equals(parameters('privateDnsRegistrationType'), 'defaultManagedResourceGroupZone'), not(empty(parameters('existingManagedResourceGroupPrivateDnsZone')))), parameters('existingManagedResourceGroupPrivateDnsZone'), if(and(equals(parameters('privateDnsRegistrationType'), 'defaultManagedResourceGroupZone'), not(empty(parameters('newManagedResourceGroupPrivateDnsZone')))), parameters('newManagedResourceGroupPrivateDnsZone'), '')))]"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.KeyVault/vaults",
+              "apiVersion": "2023-07-01",
+              "name": "[parameters('keyvaultname')]",
+              "tags": "[if(contains(parameters('tagsByResource'), 'Microsoft.KeyVault/vaults'), parameters('tagsByResource')['Microsoft.KeyVault/vaults'], createObject())]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "sku": {
+                  "family": "A",
+                  "name": "[parameters('skuname')]"
+                },
+                "tenantId": "[parameters('tenant_id')]",
+                "enableRbacAuthorization": true,
+                "publicNetworkAccess": "disabled",
+                "enableSoftDelete": true,
+                "softDeleteRetentionInDays": "[parameters('softDeleteRetentionInDays')]",
+                "enablePurgeProtection": "[if(parameters('enablePurgeProtection'), true(), null())]"
+              }
+            },
+            {
+              "copy": {
+                "name": "keyvaultkeys",
+                "count": "[length(parameters('keys'))]"
+              },
+              "type": "Microsoft.KeyVault/vaults/keys",
+              "apiVersion": "2023-07-01",
+              "name": "[format('{0}/{1}', parameters('keyvaultname'), parameters('keys')[copyIndex()].name)]",
+              "properties": {
+                "keySize": "[parameters('keys')[copyIndex()].keySize]",
+                "kty": "[parameters('keys')[copyIndex()].keyType]",
+                "rotationPolicy": {
+                  "attributes": {
+                    "expiryTime": "P1Y"
+                  },
+                  "lifetimeActions": [
+                    {
+                      "action": {
+                        "type": "rotate"
+                      },
+                      "trigger": {
+                        "timeAfterCreate": "P30D"
+                      }
+                    }
+                  ]
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.KeyVault/vaults', parameters('keyvaultname'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/privateEndpoints",
+              "apiVersion": "2023-11-01",
+              "name": "[format('{0}-kv-pe', parameters('keyvaultname'))]",
+              "tags": "[if(contains(parameters('tagsByResource'), 'Microsoft.Network/privateEndpoints'), parameters('tagsByResource')['Microsoft.Network/privateEndpoints'], createObject())]",
+              "location": "[if(not(empty(parameters('vnetLocation'))), parameters('vnetLocation'), parameters('location'))]",
+              "properties": {
+                "privateLinkServiceConnections": [
+                  {
+                    "name": "[format('{0}-plsc', parameters('keyvaultname'))]",
+                    "properties": {
+                      "privateLinkServiceId": "[resourceId('Microsoft.KeyVault/vaults', parameters('keyvaultname'))]",
+                      "groupIds": [
+                        "vault"
+                      ]
+                    }
+                  }
+                ],
+                "subnet": {
+                  "id": "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('vnetRG')), 'Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('subnetName'))]"
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.KeyVault/vaults', parameters('keyvaultname'))]"
+              ]
+            },
+            {
+              "condition": "[not(empty(variables('selectedDnsZoneId')))]",
+              "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+              "apiVersion": "2021-05-01",
+              "name": "[format('{0}/{1}', format('{0}-kv-pe', parameters('keyvaultname')), 'dnsZoneGroup')]",
+              "properties": {
+                "privateDnsZoneConfigs": [
+                  {
+                    "name": "privateDnsZoneConfig",
+                    "properties": {
+                      "privateDnsZoneId": "[variables('selectedDnsZoneId')]"
+                    }
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/privateEndpoints', format('{0}-kv-pe', parameters('keyvaultname')))]"
+              ]
+            },
+            {
+              "condition": "[parameters('enableDiagnostics')]",
+              "type": "Microsoft.Insights/diagnosticSettings",
+              "apiVersion": "2021-05-01-preview",
+              "scope": "[resourceId('Microsoft.KeyVault/vaults', parameters('keyvaultname'))]",
+              "name": "default",
+              "properties": {
+                "workspaceId": "[parameters('workspaceId')]",
+                "logs": [
+                  {
+                    "category": "AuditEvent",
+                    "enabled": true
+                  },
+                  {
+                    "category": "AzurePolicyEvaluationDetails",
+                    "enabled": true
+                  }
+                ],
+                "metrics": [
+                  {
+                    "category": "AllMetrics",
+                    "enabled": true
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.KeyVault/vaults', parameters('keyvaultname'))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "keyVaultId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.KeyVault/vaults', parameters('keyvaultname'))]"
+            },
+            "vaultUri": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.KeyVault/vaults', parameters('keyvaultname')), '2023-07-01').vaultUri]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[subscriptionResourceId('Microsoft.Resources/deployments', format('enclaveMaintenanceModePreflight-{0}', parameters('deploymentid')))]",
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, if(empty(variables('effectiveNewDnsZoneResourceGroupToCreateIn')), parameters('vnetRG'), variables('effectiveNewDnsZoneResourceGroupToCreateIn'))), 'Microsoft.Resources/deployments', format('privateDns-{0}', parameters('deploymentid')))]",
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, if(not(empty(parameters('virtualEnclaveResourceId'))), split(parameters('virtualEnclaveResourceId'), '/')[4], parameters('workloadResourceGroup'))), 'Microsoft.Resources/deployments', format('workload-{0}', parameters('deploymentid')))]",
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', parameters('workloadResourceGroup'))]",
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, if(not(empty(parameters('virtualEnclaveResourceId'))), split(parameters('virtualEnclaveResourceId'), '/')[4], parameters('workloadResourceGroup'))), 'Microsoft.Resources/deployments', format('workloadResourceGroup-{0}', parameters('deploymentid')))]"
+      ]
+    },
+    {
+      "condition": "[and(parameters('enableTelemetry'), not(parameters('isMsisrTenant')))]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "[format('telemetry-{0}', parameters('deploymentid'))]",
+      "resourceGroup": "[parameters('workloadResourceGroup')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "enableTelemetry": {
+            "value": "[parameters('enableTelemetry')]"
+          },
+          "name": {
+            "value": "[format('ve.sc2.kv.97c081ef-4a88-4448-944c-2d74b9e6387f.ver{0}', deployment().properties.template.contentVersion)]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.47.16.16243",
+              "templateHash": "18027600113982077229"
+            }
+          },
+          "parameters": {
+            "enableTelemetry": {
+              "type": "bool"
+            },
+            "name": {
+              "type": "string"
+            }
+          },
+          "resources": [
+            {
+              "condition": "[parameters('enableTelemetry')]",
+              "type": "Microsoft.Resources/deployments",
+              "apiVersion": "2024-03-01",
+              "name": "[parameters('name')]",
+              "properties": {
+                "mode": "Incremental",
+                "template": {
+                  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                  "contentVersion": "1.0.0.0",
+                  "resources": [],
+                  "outputs": {
+                    "telemetry": {
+                      "type": "String",
+                      "value": ""
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', parameters('workloadResourceGroup'))]",
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, if(not(empty(parameters('virtualEnclaveResourceId'))), split(parameters('virtualEnclaveResourceId'), '/')[4], parameters('workloadResourceGroup'))), 'Microsoft.Resources/deployments', format('workloadResourceGroup-{0}', parameters('deploymentid')))]"
+      ]
+    }
+  ]
+}
