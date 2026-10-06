@@ -21,7 +21,7 @@ resource dnsZone 'Microsoft.Network/dnsZones@2018-05-01' = {
   location: 'global'
 }
 
-resource trafficManagerProfile 'Microsoft.Network/trafficManagerProfiles@2024-04-01-preview' = {
+resource trafficManagerProfile 'Microsoft.Network/trafficManagerProfiles@2026-09-01' = {
   name: trafficManagerProfileName
   location: 'global'
   properties: {

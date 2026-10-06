@@ -25,12 +25,11 @@ languages:
 
 This Bicep template creates an Azure DNS zone, a strictly typed Azure Traffic Manager profile with two external endpoints, and an Azure DNS A record linked directly to the Traffic Manager profile.
 
-> [!IMPORTANT]
-> Traffic Manager linked records are in preview. Preview features are provided under the [Supplemental Terms of Use for Microsoft Azure Previews](https://azure.microsoft.com/support/legal/preview-supplemental-terms/).
-
 ## Sample overview and deployed resources
 
 The Traffic Manager profile uses priority routing and A records. The linked Azure DNS record returns the selected endpoint IPv4 address directly, without an intermediate CNAME lookup to `trafficmanager.net`.
+
+The Traffic Manager profile uses the stable `2026-09-01` API version, which supports the `recordType` property for Strictly Typed Profiles. The repository generates the matching ARM template from `main.bicep`.
 
 The following resources are deployed:
 
