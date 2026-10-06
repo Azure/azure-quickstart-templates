@@ -84,10 +84,18 @@
       "type": "string",
       "allowedValues": [
         "Cloud",
+        "ClusterWitnessDisk",
         "No Witness"
       ],
       "metadata": {
-        "description": "Witness Type must be 'cloud' for a 2 node cluster. It can  be empty of other cluster sizes"
+        "description": "Witness type for the cluster. Use ClusterWitnessDisk for RAC SAN clusters."
+      }
+    },
+    "witnessLunId": {
+      "defaultValue": "",
+      "type": "string",
+      "metadata": {
+        "description": "Witness volume LUN ID. Required when witnessType is ClusterWitnessDisk. Minimum LUN size is 1 GB."
       }
     },
     "clusterWitnessStorageAccountName": {
@@ -402,10 +410,9 @@
       }
     },
     "sanNetworkList": {
-      "defaultValue": {},
       "type": "object",
       "metadata": {
-        "description": "SAN network configuration for the host network. Contains a clusterNetworkConfig object with: adapterProperties (bandwidthPercentageSmb [1-97], jumboPacket size in bytes, priorityValue8021ActionCluster [802.1p priority for cluster traffic], priorityValue8021ActionSmb [802.1p priority for SMB traffic]) and adapterIPConfig array (each with name [logical adapter name, e.g. clusterNetwork-A], networkAdapterName [physical NIC name, e.g. ethernet 3], vlanId [0-4095, 0 or omitted means untagged], addressPrefix [subnet in CIDR notation, e.g. 10.10.30.0/24])."
+        "description": "Required SAN network configuration for the host network. Contains a clusterNetworkConfig object with: adapterProperties (bandwidthPercentageSmb [1-97], jumboPacket size in bytes, priorityValue8021ActionCluster [802.1p priority for cluster traffic], priorityValue8021ActionSmb [802.1p priority for SMB traffic]) and adapterIPConfig array (each with name [logical adapter name, e.g. clusterNetwork-A], networkAdapterName [physical NIC name, e.g. ethernet 3], vlanId [0-4095, 0 or omitted means untagged], addressPrefix [subnet in CIDR notation, e.g. 10.10.30.0/24])."
       }
     },
     "storageConnectivitySwitchless": {
@@ -479,11 +486,11 @@
     "LocalAdminCredentialSecretName": "[concat( parameters('clusterName'), '-', 'LocalAdminCredential')]",
     "KeyVaultDNS": "[if(equals(environment().name, 'AzureCloud'), 'vault.azure.net', 'vault.usgovcloudapi.net')]",
     "secretsLocationVar": "[concat('https://',parameters('keyVaultName'), '.', variables('KeyVaultDNS'))]",
-    "witnessTypeVar": "[if(equals(parameters('witnessType'), 'No Witness'), '','Cloud')]",
-    "clusterWitnessStorageAccountNameVar": "[if(equals(parameters('witnessType'), 'No Witness'), '', parameters('clusterWitnessStorageAccountName'))]",
-    "AzureServiceEndpointVar": "[if(equals(parameters('witnessType'), 'No Witness'), '', if(equals(environment().name, 'AzureCloud'), 'core.windows.net', 'core.usgovcloudapi.net'))]",
+    "witnessTypeVar": "[if(equals(parameters('witnessType'), 'No Witness'), '', parameters('witnessType'))]",
+    "clusterWitnessStorageAccountNameVar": "[if(equals(parameters('witnessType'), 'Cloud'), parameters('clusterWitnessStorageAccountName'), '')]",
+    "AzureServiceEndpointVar": "[if(equals(parameters('witnessType'), 'Cloud'), if(equals(environment().name, 'AzureCloud'), 'core.windows.net', 'core.usgovcloudapi.net'), '')]",
+    "witnessLunIdVar": "[if(equals(parameters('witnessType'), 'ClusterWitnessDisk'), parameters('witnessLunId'), '')]",
     "localAdminSecretValue": "[base64(concat(parameters('localAdminUserName'),':',parameters('localAdminPassword')))]",
-    "CloudWithnessStorageAccountIdVar": "[resourceId('Microsoft.Storage/storageAccounts', parameters('clusterWitnessStorageAccountName'))]",
     "copy": [
       {
           "name": "answerfileSBESecrets",
@@ -500,22 +507,25 @@
           "input": "[if(equals(parameters('clusterName'), parameters('physicalNodesSettings')[copyIndex('isNodeNameValid')].name), 'false', 'true')]"
       }
     ],
-    "deploymentSecretsList":[
+    "cloudWitnessSecretList": [
       {
         "secretName": "[variables('storageWitnessSecretName')]",
         "eceSecretName" : "[variables('storageWitnessECEName')]",
         "secretLocation": "[concat('https://', parameters('keyVaultName'), '.', variables('KeyVaultDNS'), '/secrets/', variables('storageWitnessSecretName'))]"
-      },
+      }
+    ],
+    "deploymentSecretsWithoutWitness": [
       {
         "secretName":  "[variables('LocalAdminCredentialSecretName')]",
         "eceSecretName" :  "[variables('LocalAdminCredentialECEName')]",
         "secretLocation": "[concat('https://', parameters('keyVaultName'), '.', variables('KeyVaultDNS'), '/secrets/', variables('LocalAdminCredentialSecretName'))]"
       }
-
-    ]
+    ],
+    "deploymentSecretsList": "[concat(if(equals(parameters('witnessType'), 'Cloud'), variables('cloudWitnessSecretList'), createArray()), variables('deploymentSecretsWithoutWitness'))]"
   },
   "resources":{
     "witnessStorageAcc" : {
+      "condition": "[equals(parameters('witnessType'), 'Cloud')]",
       "type": "Microsoft.Storage/storageAccounts",
       "apiVersion": "2023-01-01",
       "name": "[parameters('clusterWitnessStorageAccountName')]",
@@ -579,7 +589,7 @@
           "count": "[length(parameters('arcNodeResourceIds'))]"
         },
         "type": "Microsoft.AzureStackHCI/edgeDevices",
-        "apiVersion": "2026-04-01-preview",
+        "apiVersion": "2026-03-15-preview",
         "name": "default",
         "scope": "[concat('Microsoft.HybridCompute/machines', '/', last(split(parameters('arcNodeResourceIds')[copyindex()], '/')))]",
         "kind": "HCI",
@@ -785,7 +795,6 @@
       "location": "[parameters('location')]",
       "condition": "[parameters('createNewKeyVault')]",
       "dependsOn": [
-        "[resourceId('Microsoft.Storage/storageAccounts', parameters('clusterWitnessStorageAccountName'))]",
         "[resourceId('Microsoft.Storage/storageAccounts', parameters('diagnosticStorageAccountName'))]"
       ],
       "properties": {
@@ -844,7 +853,7 @@
     "HCICluster":{
       "condition": "[equals(parameters('deploymentMode'), 'Validate')]",
       "type": "Microsoft.AzureStackHCI/clusters",
-      "apiVersion": "2026-04-01-preview",
+      "apiVersion": "2026-03-15-preview",
       "name": "[parameters('clusterName')]",
       "dependsOn": [
         "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]",
@@ -882,17 +891,19 @@
       }
     },
     "KVWitnessSecret":{
+      "condition": "[equals(parameters('witnessType'), 'Cloud')]",
       "type": "Microsoft.KeyVault/vaults/secrets",
       "apiVersion": "2021-06-01-preview",
       "name": "[concat(parameters('keyVaultName'), '/', variables('storageWitnessSecretName'))]",
       "dependsOn": [
+        "witnessStorageAcc",
         "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]"
       ],
       "location": "[parameters('location')]",
       "scale": null,
       "properties": {
         "contentType": "Secret",
-        "value": "[base64(listKeys(variables('CloudWithnessStorageAccountIdVar'), '2019-04-01').keys[0].value)]",
+        "value": "[if(equals(parameters('witnessType'), 'Cloud'), base64(listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('clusterWitnessStorageAccountName')), '2019-04-01').keys[0].value), '')]",
         "attributes": {
           "enabled": true
         }
@@ -921,7 +932,7 @@
     },
     "DeploymentSettings": {
       "type": "microsoft.azurestackhci/clusters/deploymentSettings",
-      "apiVersion": "2026-04-01-preview",
+      "apiVersion": "2026-03-15-preview",
       "name": "[format('{0}/default', parameters('clusterName'))]",
       "dependsOn": [
         "[resourceId('Microsoft.AzureStackHCI/clusters', parameters('clusterName'))]"
@@ -956,7 +967,8 @@
                   "witnessType": "[variables('witnessTypeVar')]",
                   "witnessPath": "",
                   "cloudAccountName": "[variables('clusterWitnessStorageAccountNameVar')]",
-                  "azureServiceEndpoint": "[variables('AzureServiceEndpointVar')]"
+                  "azureServiceEndpoint": "[variables('AzureServiceEndpointVar')]",
+                  "witnessLunId": "[variables('witnessLunIdVar')]"
                 },
                 "storage": {
                   "configurationMode": "[parameters('configurationMode')]",
