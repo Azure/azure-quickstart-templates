@@ -137,3 +137,4 @@ module serverRoleAssignment 'modules/server-role-assignment.bicep' = if (assignS
 output automationAccountResourceId string = automationAccount.id
 output runbookResourceId string = runbook.id
 output managedIdentityPrincipalId string = automationAccount.identity.principalId
+
