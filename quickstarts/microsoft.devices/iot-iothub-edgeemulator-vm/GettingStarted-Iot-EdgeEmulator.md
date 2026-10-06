@@ -71,9 +71,9 @@ Log in to Azure:
 
 You will be redirected to the Azure Portal where you can insert your credentials and log in.
 
-After logged in, you will see your credentials on the terminal.
+After logging in, you will see your credentials on the terminal.
 
-To set the right subscription, type following command:
+To set the right subscription, type the following command:
 
 #### az account set --subscription "your subscription id"
 
@@ -101,7 +101,7 @@ Now we can look at the template file:
 
 ## The Template
 
-Don't let the size of the template scares you. The structure is very intuitive and once that you get the gist of it, you will see how easier your life will be regarding deploying resources to Azure.
+Don't let the size of the template scare you. The structure is very intuitive and once that you get the gist of it, you will see how easier your life will be regarding deploying resources to Azure.
 
 These are the parameters on the template, most of them already have values inserted, the ones that you need to inform are: **adminUsername**, **adminPassword**, **resourceGroup** and the size of your Virtual Machine.
 
@@ -134,7 +134,7 @@ For Azure CLI I'm the Visual Code with Azure CLI and PowerShell extensions. Chec
 
 ### Resource Group
 
-Now you need a Resource Group for our deployment. If you haven't yet created a Resource Group, you can do it now. If you are new on Azure and wonder what is a Resource Group? Bare with me! A Resource Group is a container that holds related resources for an Azure solution. The resource group includes those resources that you want to manage as a group. Simply saying, it's like a folder that contains files. Simple as that.
+Now you need a Resource Group for our deployment. If you haven't yet created a Resource Group, you can do it now. If you are new on Azure and wonder what is a Resource Group? Bear with me! A Resource Group is a container that holds related resources for an Azure solution. The resource group includes those resources that you want to manage as a group. Simply saying, it's like a folder that contains files. Simple as that.
 
 To create a Resource Group, you need a name and a location for your Resource Group.
 
@@ -167,7 +167,7 @@ On the portal, go to Resource Groups. On this blade, you can see the Resource Gr
 
 ![Screen](./images/azdeployportal.png)
 
-Click on the Resource Group and there it's the resources **Resources**:
+Click on the Resource Group and there are the resources **Resources**:
 
 - Virtual machine
 - Disk

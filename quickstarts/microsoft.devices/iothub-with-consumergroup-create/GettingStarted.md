@@ -2,7 +2,7 @@
 
 The purpose of this ARM Template is **Deploy a IoT Hub and Device to Cloud Consumer Group**.
 
-Let's understand a bit better how all this work.
+Let's understand a bit better how all this works.
 
 ## Overview
 
@@ -14,9 +14,9 @@ Before processing to the deployment of the template, we need to perform the foll
 
 ### The template
 
-Don't let the size of the template scares you. The structure is very intuitive and once that you get the gist of it, you will see how easier your life will be regarding deploying resources to Azure.
+Don't let the size of the template scare you. The structure is very intuitive and once that you get the gist of it, you will see how easier your life will be regarding deploying resources to Azure.
 
-Those are the parameters on the template. Some of them are already with the values, the ones that you need to inform are **IOT Hub Name** and the **sku** in case that need a powerful service.
+Those are the parameters on the template. Some of them are already filled with values, the ones that you need to inform are **IOT Hub Name** and the **sku** in case that need a powerful service.
 
 Parameter         | Suggested value     | Description
 :--------------- |:-------------      |:---------------------
@@ -30,7 +30,7 @@ Parameter         | Suggested value     | Description
 There are a few ways to deploy this template.
 You can use [PowerShell](https://docs.microsoft.com/azure/azure-resource-manager/resource-group-template-deploy), [Azure CLI](https://docs.microsoft.com/azure/azure-resource-manager/resource-group-template-deploy-cli), [Azure Portal](https://docs.microsoft.com/azure/azure-resource-manager/resource-group-template-deploy-portal) or your favorite SDK.
 
-For Azure CLI I'm using the Visual Code with Azure CLI extensions, if you like, you can find more information [here](https://code.visualstudio.com/docs/azure/extensions). But bare in mind that you don't need to use the Visual Code, you can stick with the old good always present **Command Line** on Windows or any **bash terminal**
+For Azure CLI I'm using the Visual Code with Azure CLI extensions, if you like, you can find more information [here](https://code.visualstudio.com/docs/azure/extensions). But bear in mind that you don't need to use the Visual Code, you can stick with the old good always present **Command Line** on Windows or any **bash terminal**
 
 ### Using Azure CLI with Visual Code
 
@@ -40,15 +40,15 @@ Type on the terminal window: **az login**
 
 You will be redirected to the Azure Portal where you can insert your credentials and log in.
 
-After logged in, you will see your credentials on the terminal.
+After logging in, you will see your credentials on the terminal.
 
-To set the right subscription, type following command:
+To set the right subscription, type the following command:
 
 #### az account set --subscription "your subscription id"
 
 ### Resource Group
 
-Now you need a Resource Group for our deployment. If you haven't yet created a Resource Group, you can do it now. If you are new on Azure and wonder what is a Resource Group? Bare with me! A Resource Group is a container that holds related resources for an Azure solution. The resource group includes those resources that you want to manage as a group. Simply saying, it's like a folder that contains files. Simple as that.
+Now you need a Resource Group for our deployment. If you haven't yet created a Resource Group, you can do it now. If you are new on Azure and wonder what is a Resource Group? Bear with me! A Resource Group is a container that holds related resources for an Azure solution. The resource group includes those resources that you want to manage as a group. Simply saying, it's like a folder that contains files. Simple as that.
 
 To create a Resource Group, you need a name and a location for your Resource Group.
 
@@ -70,7 +70,7 @@ Let's check the resource on the [Azure Portal](https://portal.azure.com).
 
 On the portal, go to Resource Groups. In this blade, you can see the Resource Group that you created.
 
-Click on the Resource Group and there it's the resources
+Click on the Resource Group and there are the resources
 
 ![Screen](./images/portal-resource.png)
 
