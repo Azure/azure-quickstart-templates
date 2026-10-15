@@ -44,6 +44,12 @@ param projectName string = 'prj-${uniqueString(resourceGroup().id)}'
 @maxLength(64)
 param vnetName string = 'discovery-vnet'
 
+@description('Name of the NAT gateway providing explicit outbound connectivity for the workload subnets.')
+param natGatewayName string = 'nat-${uniqueString(resourceGroup().id)}'
+
+@description('Name of the static Standard IPv4 public IP used by the NAT gateway.')
+param natGatewayPublicIpName string = 'pip-nat-${uniqueString(resourceGroup().id)}'
+
 @description('Name of the User-Assigned Managed Identity.')
 param managedIdentityName string = 'uami-${uniqueString(resourceGroup().id)}'
 
@@ -86,6 +92,9 @@ param agentSubnetPrefix string = '10.0.5.0/24'
 @description('Address prefix for Search Subnet.')
 param searchSubnetPrefix string = '10.0.6.0/24'
 
+@description('Address prefix for the Supercomputer management subnet used by AKS API Server VNet Integration. Must be /28 or larger.')
+param managementSubnetPrefix string = '10.0.7.0/28'
+
 @description('VM SKU for the Node Pool.')
 param nodePoolVmSize string = 'Standard_D4s_v6'
 
@@ -124,6 +133,34 @@ var storageBlobDataContributorRoleId = 'ba92f5b4-2d11-453d-a403-e96b0029c9fe'
 var discoveryPlatformContributorRoleId = '01288891-85ee-45a7-b367-9db3b752fc65'
 var acrPullRoleId = '7f951dda-4ed3-4680-a7ca-43fe172d538d'
 
+resource natGatewayPublicIp 'Microsoft.Network/publicIPAddresses@2024-05-01' = {
+  name: natGatewayPublicIpName
+  location: overridemrgregion
+  sku: {
+    name: 'Standard'
+    tier: 'Regional'
+  }
+  properties: {
+    publicIPAllocationMethod: 'Static'
+    publicIPAddressVersion: 'IPv4'
+  }
+}
+
+resource natGateway 'Microsoft.Network/natGateways@2024-05-01' = {
+  name: natGatewayName
+  location: overridemrgregion
+  sku: {
+    name: 'Standard'
+  }
+  properties: {
+    publicIpAddresses: [
+      {
+        id: natGatewayPublicIp.id
+      }
+    ]
+  }
+}
+
 resource vnet 'Microsoft.Network/virtualNetworks@2024-05-01' = {
   name: vnetName
   location: overridemrgregion
@@ -138,6 +175,10 @@ resource vnet 'Microsoft.Network/virtualNetworks@2024-05-01' = {
         name: 'supercomputerNodepoolSubnet'
         properties: {
           addressPrefix: supercomputerNodepoolSubnetPrefix
+          defaultOutboundAccess: false
+          natGateway: {
+            id: natGateway.id
+          }
           serviceEndpoints: [
             {
               service: 'Microsoft.Storage'
@@ -149,6 +190,10 @@ resource vnet 'Microsoft.Network/virtualNetworks@2024-05-01' = {
         name: 'aksSubnet'
         properties: {
           addressPrefix: aksSubnetPrefix
+          defaultOutboundAccess: false
+          natGateway: {
+            id: natGateway.id
+          }
           serviceEndpoints: [
             {
               service: 'Microsoft.Storage'
@@ -160,6 +205,10 @@ resource vnet 'Microsoft.Network/virtualNetworks@2024-05-01' = {
         name: 'workspaceSubnet'
         properties: {
           addressPrefix: workspaceSubnetPrefix
+          defaultOutboundAccess: false
+          natGateway: {
+            id: natGateway.id
+          }
           delegations: [
             {
               name: 'Microsoft.App.environments'
@@ -186,6 +235,10 @@ resource vnet 'Microsoft.Network/virtualNetworks@2024-05-01' = {
         name: 'agentSubnet'
         properties: {
           addressPrefix: agentSubnetPrefix
+          defaultOutboundAccess: false
+          natGateway: {
+            id: natGateway.id
+          }
           delegations: [
             {
               name: 'Microsoft.App.environments'
@@ -205,6 +258,10 @@ resource vnet 'Microsoft.Network/virtualNetworks@2024-05-01' = {
         name: 'searchSubnet'
         properties: {
           addressPrefix: searchSubnetPrefix
+          defaultOutboundAccess: false
+          natGateway: {
+            id: natGateway.id
+          }
           delegations: [
             {
               name: 'Microsoft.App.environments'
@@ -216,6 +273,21 @@ resource vnet 'Microsoft.Network/virtualNetworks@2024-05-01' = {
           serviceEndpoints: [
             {
               service: 'Microsoft.Storage'
+            }
+          ]
+        }
+      }
+      {
+        name: 'sc-mgmt'
+        properties: {
+          addressPrefix: managementSubnetPrefix
+          defaultOutboundAccess: false
+          delegations: [
+            {
+              name: 'Microsoft.ContainerService.managedClusters'
+              properties: {
+                serviceName: 'Microsoft.ContainerService/managedClusters'
+              }
             }
           ]
         }
@@ -360,6 +432,7 @@ resource supercomputer 'Microsoft.Discovery/supercomputers@2026-06-01' = {
   ]
   properties: {
     subnetId: resourceId('Microsoft.Network/virtualNetworks/subnets', vnetName, 'aksSubnet')
+    managementSubnetId: resourceId('Microsoft.Network/virtualNetworks/subnets', vnetName, 'sc-mgmt')
     identities: {
       clusterIdentity: {
         id: managedIdentity.id
