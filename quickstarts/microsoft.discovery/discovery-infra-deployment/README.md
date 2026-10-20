@@ -18,13 +18,14 @@ This template deploys the full **Microsoft Discovery** stack into a single resou
 
 ## Sample overview and deployed resources
 
-This template provisions the complete infrastructure for a Microsoft Discovery environment in a single deployment. It creates a virtual network with six purpose-built subnets, a user-assigned managed identity with the required role assignments, a CORS-enabled storage account, and the core Discovery resources: a Supercomputer with a Node Pool, a Workspace with a Chat Model Deployment and Project, and a Storage Container.
+This template provisions the complete infrastructure for a Microsoft Discovery environment in a single deployment. It creates a virtual network with seven purpose-built subnets, a user-assigned managed identity with the required role assignments, a CORS-enabled storage account, and the core Discovery resources: a Supercomputer with a Node Pool, a Workspace with a Chat Model Deployment and Project, and a Storage Container.
 
 The following resources are deployed as part of the solution
 
 ### Microsoft.Network
 
-- **Microsoft.Network/virtualNetworks**: Virtual network with six subnets for Supercomputer Node Pool, AKS, Workspace, Private Endpoint, Agent, and Search workloads.
+- **Microsoft.Network/virtualNetworks**: Virtual network with seven subnets for Supercomputer Node Pool, AKS, AKS API server management, Workspace, Private Endpoint, Agent, and Search workloads.
+- **Microsoft.Network/natGateways** and **Microsoft.Network/publicIPAddresses**: Explicit outbound connectivity with a stable public IP for workload subnets.
 
 ### Microsoft.ManagedIdentity
 
@@ -41,10 +42,10 @@ The following resources are deployed as part of the solution
 
 ### Microsoft.Discovery
 
-- **Microsoft.Discovery/supercomputers**: Supercomputer resource with cluster, kubelet, and workload identities.
+- **Microsoft.Discovery/supercomputers**: Supercomputer resource with cluster, kubelet, and workload identities and AKS API Server VNet Integration through the dedicated `sc-mgmt` subnet.
 - **Microsoft.Discovery/supercomputers/nodePools**: Configurable Node Pool with VM size, min/max node count, and scale set priority.
 - **Microsoft.Discovery/workspaces**: Workspace linked to the Supercomputer with agent, private endpoint, and workspace subnets.
-- **Microsoft.Discovery/workspaces/chatModelDeployments**: Chat model deployment (e.g. GPT-5.2) under the Workspace.
+- **Microsoft.Discovery/workspaces/chatModelDeployments**: Chat model deployment (e.g. GPT-5.4) under the Workspace.
 - **Microsoft.Discovery/workspaces/projects**: Project linked to the Discovery Storage Container.
 - **Microsoft.Discovery/storageContainers**: Storage Container backed by the Azure Blob Storage account.
 
@@ -109,7 +110,8 @@ Add additional Node Pools, Storage Containers, or Tools via the Azure portal or 
 
 - The `location` parameter controls the region of the Microsoft Discovery resources. The `overridemrgregion` parameter controls the region of the virtual network, managed identity, and storage account, and defaults to `location`. Set the parameters to different supported regions for a cross-MRG deployment.
 - The Supercomputer and Workspace receive the `discovery.overridemrgregion` tag so the Discovery service can locate the supporting dataplane resources.
-- The private endpoint subnet explicitly disables default outbound access (`defaultOutboundAccess: false`). No NAT gateway is attached because this subnet is reserved for private endpoints. This setting does not apply to the other subnets in this template.
+- Default outbound access is disabled on every subnet. The workload subnets use the NAT gateway for explicit outbound connectivity; the private endpoint and `sc-mgmt` subnets don't use the NAT gateway.
+- The `sc-mgmt` subnet is a dedicated `/28` subnet delegated to `Microsoft.ContainerService/managedClusters`. The Supercomputer's `managementSubnetId` enables AKS API Server VNet Integration so node-to-control-plane traffic remains within the virtual network.
 - The `storageAccountName` parameter must be globally unique (3-24 lowercase alphanumeric characters).
 - GPU SKU examples for `nodePoolVmSize`: `Standard_NC24ads_A100_v4`, `Standard_NC4as_T4_v3`.
 - The storage account allows network access by default (`networkAcls.defaultAction: Allow`) because the `Microsoft.Discovery` control plane is not yet on the Azure Storage trusted-services bypass list and requires this to provision successfully; `virtualNetworkRules` for the deployment's own subnets are pre-configured and ready to enforce once Discovery supports trusted-service access. The account also uses `Standard_GRS` replication (`storageAccountSku`), disables shared-key/public-blob access, and disables anonymous blob container access.
