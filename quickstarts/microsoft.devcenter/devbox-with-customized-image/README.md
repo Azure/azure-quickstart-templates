@@ -1,5 +1,5 @@
 ---
-description: This template would create all Dev Box admin resources as per Dev Box quick start guide (https&#58;//learn.microsoft.com/en-us/azure/dev-box/quickstart-create-dev-box). You can view all resources created, or directly go to DevPortal.microsoft.com to create your first Dev Box.
+description: This template would create all Dev Box admin resources as per the [Dev Box quick start guide](https://learn.microsoft.com/azure/dev-box/quickstart-create-dev-box). You can view all resources created, or directly go to DevPortal.microsoft.com to create your first Dev Box.
 page_type: sample
 products:
 - azure
