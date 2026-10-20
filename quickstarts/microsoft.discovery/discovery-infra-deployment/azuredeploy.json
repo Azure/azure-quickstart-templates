@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.41.2.15936",
-      "templateHash": "16360094452697659431"
+      "templateHash": "10641364354312728184"
     }
   },
   "parameters": {
@@ -89,6 +89,20 @@
       "maxLength": 64,
       "metadata": {
         "description": "Name of the Virtual Network. Must be 2-64 characters: letters, numbers, underscores, periods, or hyphens; must start with a letter or number and end with a letter, number, or underscore."
+      }
+    },
+    "natGatewayName": {
+      "type": "string",
+      "defaultValue": "[format('nat-{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Name of the NAT gateway providing explicit outbound connectivity for the workload subnets."
+      }
+    },
+    "natGatewayPublicIpName": {
+      "type": "string",
+      "defaultValue": "[format('pip-nat-{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Name of the static Standard IPv4 public IP used by the NAT gateway."
       }
     },
     "managedIdentityName": {
@@ -177,6 +191,13 @@
         "description": "Address prefix for Search Subnet."
       }
     },
+    "managementSubnetPrefix": {
+      "type": "string",
+      "defaultValue": "10.0.7.0/28",
+      "metadata": {
+        "description": "Address prefix for the Supercomputer management subnet used by AKS API Server VNet Integration. Must be /28 or larger."
+      }
+    },
     "nodePoolVmSize": {
       "type": "string",
       "defaultValue": "Standard_D4s_v6",
@@ -254,6 +275,39 @@
   },
   "resources": [
     {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2024-05-01",
+      "name": "[parameters('natGatewayPublicIpName')]",
+      "location": "[parameters('overridemrgregion')]",
+      "sku": {
+        "name": "Standard",
+        "tier": "Regional"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Static",
+        "publicIPAddressVersion": "IPv4"
+      }
+    },
+    {
+      "type": "Microsoft.Network/natGateways",
+      "apiVersion": "2024-05-01",
+      "name": "[parameters('natGatewayName')]",
+      "location": "[parameters('overridemrgregion')]",
+      "sku": {
+        "name": "Standard"
+      },
+      "properties": {
+        "publicIpAddresses": [
+          {
+            "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('natGatewayPublicIpName'))]"
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', parameters('natGatewayPublicIpName'))]"
+      ]
+    },
+    {
       "type": "Microsoft.Network/virtualNetworks",
       "apiVersion": "2024-05-01",
       "name": "[parameters('vnetName')]",
@@ -269,6 +323,10 @@
             "name": "supercomputerNodepoolSubnet",
             "properties": {
               "addressPrefix": "[parameters('supercomputerNodepoolSubnetPrefix')]",
+              "defaultOutboundAccess": false,
+              "natGateway": {
+                "id": "[resourceId('Microsoft.Network/natGateways', parameters('natGatewayName'))]"
+              },
               "serviceEndpoints": [
                 {
                   "service": "Microsoft.Storage"
@@ -280,6 +338,10 @@
             "name": "aksSubnet",
             "properties": {
               "addressPrefix": "[parameters('aksSubnetPrefix')]",
+              "defaultOutboundAccess": false,
+              "natGateway": {
+                "id": "[resourceId('Microsoft.Network/natGateways', parameters('natGatewayName'))]"
+              },
               "serviceEndpoints": [
                 {
                   "service": "Microsoft.Storage"
@@ -291,6 +353,10 @@
             "name": "workspaceSubnet",
             "properties": {
               "addressPrefix": "[parameters('workspaceSubnetPrefix')]",
+              "defaultOutboundAccess": false,
+              "natGateway": {
+                "id": "[resourceId('Microsoft.Network/natGateways', parameters('natGatewayName'))]"
+              },
               "delegations": [
                 {
                   "name": "Microsoft.App.environments",
@@ -317,6 +383,10 @@
             "name": "agentSubnet",
             "properties": {
               "addressPrefix": "[parameters('agentSubnetPrefix')]",
+              "defaultOutboundAccess": false,
+              "natGateway": {
+                "id": "[resourceId('Microsoft.Network/natGateways', parameters('natGatewayName'))]"
+              },
               "delegations": [
                 {
                   "name": "Microsoft.App.environments",
@@ -336,6 +406,10 @@
             "name": "searchSubnet",
             "properties": {
               "addressPrefix": "[parameters('searchSubnetPrefix')]",
+              "defaultOutboundAccess": false,
+              "natGateway": {
+                "id": "[resourceId('Microsoft.Network/natGateways', parameters('natGatewayName'))]"
+              },
               "delegations": [
                 {
                   "name": "Microsoft.App.environments",
@@ -350,9 +424,27 @@
                 }
               ]
             }
+          },
+          {
+            "name": "sc-mgmt",
+            "properties": {
+              "addressPrefix": "[parameters('managementSubnetPrefix')]",
+              "defaultOutboundAccess": false,
+              "delegations": [
+                {
+                  "name": "Microsoft.ContainerService.managedClusters",
+                  "properties": {
+                    "serviceName": "Microsoft.ContainerService/managedClusters"
+                  }
+                }
+              ]
+            }
           }
         ]
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/natGateways', parameters('natGatewayName'))]"
+      ]
     },
     {
       "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
@@ -506,6 +598,7 @@
       },
       "properties": {
         "subnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), 'aksSubnet')]",
+        "managementSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), 'sc-mgmt')]",
         "identities": {
           "clusterIdentity": {
             "id": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('managedIdentityName'))]"
