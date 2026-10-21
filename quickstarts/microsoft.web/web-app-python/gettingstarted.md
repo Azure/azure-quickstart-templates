@@ -2,7 +2,7 @@
 
 The purpose of this ARM Template is **deploy a web app with Python** using a **web app**.
 
-But let's understand a bit better how all this work.
+But let's understand a bit better how all this works.
 
 ## Overview
 
@@ -14,9 +14,9 @@ Before proceeding to the deployment of the template, we need to perform the foll
 
 ### The Template
 
-Don't let the size of the template scares you. The structure is very intuitive and once that you get the gist of it, you will see how easier your life will be regarding deploying resources to Azure.
+Don't let the size of the template scare you. The structure is very intuitive and once that you get the gist of it, you will see how easier your life will be regarding deploying resources to Azure.
 
-Those are the parameters on the template. Most of them are already with the values, the ones that you need to inform are **web app name** and **location**.
+Those are the parameters on the template. Most of them are already filled with values, the ones that you need to inform are **web app name** and **location**.
 
 Parameter         | Suggested value     | Description
 :--------------- |:-------------      |:---------------------
@@ -29,7 +29,7 @@ Parameter         | Suggested value     | Description
 There are a few ways to deploy this template.
 You can use [PowerShell](https://docs.microsoft.com/azure/azure-resource-manager/resource-group-template-deploy), [Azure CLI](https://docs.microsoft.com/azure/azure-resource-manager/resource-group-template-deploy-cli), [Azure Portal](https://docs.microsoft.com/azure/azure-resource-manager/resource-group-template-deploy-portal) or your favorite SDK.
 
-For Azure CLI I'm using the Visual Code with Azure CLI extensions, if you like, you can find more information [here](https://code.visualstudio.com/docs/azure/extensions). But bare in mind that you don't need to use the Visual Code, you can stick with the old good always present **Command Line** on Windows or any **bash terminal**
+For Azure CLI I'm using the Visual Code with Azure CLI extensions, if you like, you can find more information [here](https://code.visualstudio.com/docs/azure/extensions). But bear in mind that you don't need to use the Visual Code, you can stick with the old good always present **Command Line** on Windows or any **bash terminal**
 
 ### Using Azure CLI with Visual Code
 
@@ -39,15 +39,15 @@ Type on the terminal window: **az login**
 
 You will be redirected to the Azure Portal where you can insert your credentials and log in.
 
-After logged in, you will see your credentials on the terminal.
+After logging in, you will see your credentials on the terminal.
 
-To set the right subscription, type following command:
+To set the right subscription, type the following command:
 
 #### az account set --subscription "your subscription id"
 
 ### Resource Group
 
-Now you need a Resource Group for our deployment. If you haven't yet created a Resource Group, you can do it now. If you are new on Azure and wonder what is a Resource Group? Bare with me! A Resource Group is a container that holds related resources for an Azure solution. The resource group includes those resources that you want to manage as a group. Simply saying, it's like a folder that contains files. Simple as that.
+Now you need a Resource Group for our deployment. If you haven't yet created a Resource Group, you can do it now. If you are new on Azure and wonder what is a Resource Group? Bear with me! A Resource Group is a container that holds related resources for an Azure solution. The resource group includes those resources that you want to manage as a group. Simply saying, it's like a folder that contains files. Simple as that.
 
 To create a Resource Group, you need a name and a location for your Resource Group.
 
@@ -74,11 +74,11 @@ And there we go, your deployment is Succeeded. Let's check the resource on the [
 
 On the portal, go to Resource Groups. In this blade, you can see the Resource Group that you created.
 
-Click on the Resource Group and there it's the resources
+Click on the Resource Group and there are the resources
 
 ![Screen](./images/portal-resource.png)
 
-Congratulations! You have deployed the template successfully. We can see our web visiting an URL like that:
+Congratulations! You have deployed the template successfully. We can see our web visiting a URL like that:
 
 #### webAppName.azurewebsites.net
 
@@ -96,7 +96,7 @@ On ARM Template, replace the contents of the template with your template, and cl
 
 ![Screen](./images/aztemplate3.png)
 
-Click on the refresh button and you will find your template. Click on it and the click in [Deploy].
+Click on the refresh button and you will find your template. Click on it and then click on [Deploy].
 
 ![Screen](./images/azportaldeploy.png)
 
@@ -153,7 +153,7 @@ On the portal, open your Resource Group, if you will not use the Web App anymore
 
 ![Screen](./images/delete-rsc.png)
 
-You can also just stop the Web App in case you gonna need the resource. Open the resource and click on Stop.
+You can also just stop the Web App in case you're going to need the resource. Open the resource and click on Stop.
 
 ![Screen](./images/stop-rsc.png)
 
