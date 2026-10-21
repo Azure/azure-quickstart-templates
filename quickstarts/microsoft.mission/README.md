@@ -16,7 +16,7 @@ Always verify that the template version you choose matches your requirements and
 
 | Template | Description | Features |
 |----------|-------------|----------|
-| **azure-enclave-keyvault** | Deploys a secure key management solution within an Azure Enclave environment | Azure Key Vault, Private DNS integration, RBAC, Network isolation |
+| **enclave-keyvault** | Deploys a secure key management solution within an Azure Enclave environment | Azure Key Vault, Private DNS integration, RBAC, Network isolation |
 
 ## Contributing
 
