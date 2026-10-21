@@ -12,6 +12,8 @@ languages:
 
 This template allows you to create an ADLess Azure Local 24H2 cluster (Local Identity with Azure Key Vault) with external SAN Storage. First you deploy the template in validate mode which does confirm the parameters at the device. Once passed you re-deploy the template with mode set to deploy.
 
+For a RAC SAN cluster, set `witnessType` to `ClusterWitnessDisk` and provide the witness volume LUN ID in `witnessLunId`. The witness LUN must be at least 1 GB. For a cloud witness, set `witnessType` to `Cloud` and provide a valid, globally unique `clusterWitnessStorageAccountName`.
+
 [![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.azurestackhci%2Fcreate-cluster%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.azurestackhci%2Fcreate-cluster%2Fazuredeploy.json)
 
