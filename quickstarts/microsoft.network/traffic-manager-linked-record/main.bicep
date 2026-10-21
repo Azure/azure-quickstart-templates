@@ -77,3 +77,4 @@ resource linkedRecord 'Microsoft.Network/dnsZones/A@2023-07-01-preview' = {
 output dnsZoneNameServers array = dnsZone.properties.nameServers
 output linkedRecordResourceId string = linkedRecord.id
 output trafficManagerProfileResourceId string = trafficManagerProfile.id
+
