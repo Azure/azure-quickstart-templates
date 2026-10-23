@@ -150,7 +150,7 @@ module telemetry './telemetry.bicep' = if (enableTelemetry && !isMsisrTenant) {
   scope: resourceGroup(split(communityResourceId, '/')[2], split(communityResourceId, '/')[4])
   params: {
     enableTelemetry: enableTelemetry
-    name: 've.sc2.avdcommunityendpoint.fce90515-0f7d-433d-b756-d32b39058d4d.ver${deployment().properties.template.contentVersion}'
+    name: 've.sc2.avdce.fce90515-0f7d-433d-b756-d32b39058d4d.v${deployment().properties.template.contentVersion}'
   }
 }
 
