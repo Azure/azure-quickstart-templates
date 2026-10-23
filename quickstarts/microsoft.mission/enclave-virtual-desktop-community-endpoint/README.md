@@ -28,6 +28,8 @@ languages:
 
 This subscription-scope sample deploys a `Microsoft.Mission/communities/communityEndpoints` resource into an existing Azure Enclave community for Azure Virtual Desktop connectivity.
 
+It also supports optional anonymous deployment telemetry; telemetry is skipped for MSISR tenants.
+
 ## Prerequisites
 
 - An existing Azure Enclave community (`Microsoft.Mission/communities`) in the target subscription.

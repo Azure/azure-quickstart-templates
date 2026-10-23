@@ -23,6 +23,9 @@ param communityResourceId string
 @description('The suffix to use for naming deployments uniquely. It defaults to the Bicep resolution of the "utcNow()" function.')
 param deploymentNameSuffix string = utcNow()
 
+@description('Enable anonymous usage telemetry for this template.')
+param enableTelemetry bool = true
+
 @description('Determine whether to enable access to Windows Update services through the firewall.')
 param enableWindowsUpdateFwRules bool = false
 
@@ -139,6 +142,15 @@ module communityEndpoint './modules/community-endpoint.bicep' = {
       }
     ] : [])
     tags: tags
+  }
+}
+
+module telemetry './telemetry.bicep' = if (enableTelemetry && !isMsisrTenant) {
+  name: 'telemetry-${deploymentNameSuffix}'
+  scope: resourceGroup(split(communityResourceId, '/')[2], split(communityResourceId, '/')[4])
+  params: {
+    enableTelemetry: enableTelemetry
+    name: 've.sc2.avdcommunityendpoint.fce90515-0f7d-433d-b756-d32b39058d4d.ver${deployment().properties.template.contentVersion}'
   }
 }
 
