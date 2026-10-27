@@ -1,0 +1,434 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "languageVersion": "2.0",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "keyVaultName": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Key Vault for CHAP credentials. Required when CHAP is enabled."
+      }
+    },
+    "createNewKeyVault": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Set to false to reuse an existing RBAC-enabled Key Vault in this resource group."
+      }
+    },
+    "softDeleteRetentionDays": {
+      "type": "int",
+      "defaultValue": 30
+    },
+    "diagnosticStorageAccountName": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Audit storage account name. Required when creating a Key Vault for CHAP."
+      }
+    },
+    "logsRetentionInDays": {
+      "type": "int",
+      "defaultValue": 30,
+      "minValue": 0,
+      "maxValue": 365,
+      "metadata": {
+        "description": "Key Vault audit log retention in days. Use 0 for indefinite retention."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]"
+    },
+    "tenantId": {
+      "type": "string",
+      "defaultValue": "[subscription().tenantId]"
+    },
+    "hciResourceProviderObjectID": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "Object ID of the HCI resource provider service principal."
+      }
+    },
+    "nodes": {
+      "type": "array",
+      "minLength": 1,
+      "metadata": {
+        "description": "Node settings: arcNodeResourceId (existing Arc machine resource ID) and iScsiNetworkConfig. The iSCSI initiator IQN is discovered from the edge machine."
+      }
+    },
+    "chapType": {
+      "type": "string",
+      "defaultValue": "OneWay",
+      "allowedValues": [
+        "None",
+        "OneWay",
+        "Mutual"
+      ],
+      "metadata": {
+        "description": "CHAP mode: None, OneWay, or Mutual. Mutual uses the same credential in both directions."
+      }
+    },
+    "chapUsername": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "CHAP username. Required when chapType is OneWay or Mutual."
+      }
+    },
+    "chapCredential": {
+      "type": "securestring",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Shared CHAP secret. Required for OneWay or Mutual; ignored for None."
+      }
+    }
+  },
+  "variables": {
+    "useChap": "[not(equals(parameters('chapType'), 'None'))]",
+    "createChapKeyVault": "[and(variables('useChap'), parameters('createNewKeyVault'))]",
+    "chapCredentialECEName": "chapCredential",
+    "mutualChapCredentialECEName": "mutualChapCredential",
+    "chapCredentialSecretName": "chapCredential",
+    "chapCredentialSecretValue": "[base64(concat(parameters('chapUsername'), ':', parameters('chapCredential')))]",
+    "KeyVaultDNS": "[if(equals(environment().name, 'AzureCloud'), 'vault.azure.net', 'vault.usgovcloudapi.net')]",
+    "chapCredentialSecretLocation": "[concat('https://', parameters('keyVaultName'), '.', variables('KeyVaultDNS'), '/secrets/', variables('chapCredentialSecretName'))]",
+    "chapOneWaySecretObject": {
+      "secretName": "[variables('chapCredentialSecretName')]",
+      "eceSecretName": "[variables('chapCredentialECEName')]",
+      "secretLocation": "[variables('chapCredentialSecretLocation')]"
+    },
+    "chapMutualSecretObject": {
+      "secretName": "[variables('chapCredentialSecretName')]",
+      "eceSecretName": "[variables('mutualChapCredentialECEName')]",
+      "secretLocation": "[variables('chapCredentialSecretLocation')]"
+    },
+    "chapSecretsList": "[if(equals(parameters('chapType'), 'None'), json('[]'), if(equals(parameters('chapType'), 'Mutual'), createArray(variables('chapOneWaySecretObject'), variables('chapMutualSecretObject')), createArray(variables('chapOneWaySecretObject'))))]",
+    "copy": [
+      {
+        "name": "arcNodeResourceIdsVar",
+        "count": "[length(parameters('nodes'))]",
+        "input": "[parameters('nodes')[copyIndex('arcNodeResourceIdsVar')].arcNodeResourceId]"
+      }
+    ]
+  },
+  "resources": {
+    "chapCredentialValidation": {
+      "condition": "[variables('useChap')]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2021-04-01",
+      "name": "CHAPCredentials-Validation",
+      "properties": {
+        "mode": "Incremental",
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {
+            "chapUsername": {
+              "type": "string",
+              "minLength": 1
+            },
+            "chapCredential": {
+              "type": "securestring",
+              "minLength": 1
+            }
+          },
+          "resources": []
+        },
+        "parameters": {
+          "chapUsername": {
+            "value": "[parameters('chapUsername')]"
+          },
+          "chapCredential": {
+            "value": "[parameters('chapCredential')]"
+          }
+        }
+      }
+    },
+    "StorageAccountConfigurations": {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2023-01-01",
+      "name": "[parameters('diagnosticStorageAccountName')]",
+      "location": "[parameters('location')]",
+      "condition": "[variables('createChapKeyVault')]",
+      "dependsOn": [
+        "chapCredentialValidation"
+      ],
+      "sku": {
+        "name": "Standard_LRS",
+        "tier": "Standard"
+      },
+      "kind": "StorageV2",
+      "properties": {
+        "publicNetworkAccess": "Disabled",
+        "allowSharedKeyAccess": false,
+        "supportsHttpsTrafficOnly": true,
+        "minimumTlsVersion": "TLS1_2",
+        "networkAcls": {
+          "defaultAction": "Deny"
+        }
+      }
+    },
+    "hcirproleassignment": {
+      "dependsOn": [
+        "chapCredentialValidation"
+      ],
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2021-04-01",
+      "name": "AzureConnectedMachineResourceManager-RoleAssignment",
+      "subscriptionId": "[subscription().subscriptionId]",
+      "resourceGroup": "[resourceGroup().name]",
+      "properties": {
+        "mode": "Incremental",
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {
+            "hciResourceProviderObjectID1": {
+              "type": "string"
+            }
+          },
+          "variables": {},
+          "resources": [
+            {
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2022-04-01",
+              "name": "[guid(concat('HCIRP-', resourceGroup().id, parameters('hciResourceProviderObjectID1')))]",
+              "properties": {
+                "mode": "Incremental",
+                "roleDefinitionId": "[concat(subscription().id, '/providers/Microsoft.Authorization/roleDefinitions/', 'f5819b54-e033-4d82-ac66-4fec3cbf3f4c')]",
+                "principalId": "[parameters('hciResourceProviderObjectID1')]",
+                "scope": "[resourceGroup().id]",
+                "description": "Azure Connected Machine Resource Manager role assignment to HCI Resource Provider"
+              }
+            }
+          ]
+        },
+        "parameters": {
+          "hciResourceProviderObjectID1": {
+            "value": "[parameters('hciResourceProviderObjectID')]"
+          }
+        }
+      }
+    },
+    "arcMachineRoleAssignment": {
+      "dependsOn": [
+        "chapCredentialValidation"
+      ],
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2021-04-01",
+      "name": "AzureStackHCIDeviceManagementRole-RoleAssignment",
+      "subscriptionId": "[subscription().subscriptionId]",
+      "resourceGroup": "[resourceGroup().name]",
+      "properties": {
+        "mode": "Incremental",
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {
+            "arcNodeResourceIds1": {
+              "type": "array"
+            }
+          },
+          "variables": {},
+          "resources": [
+            {
+              "copy": {
+                "name": "DVMroleAssignmentCopy",
+                "count": "[length(parameters('arcNodeResourceIds1'))]"
+              },
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2022-04-01",
+              "name": "[guid(concat('DMR-', parameters('arcNodeResourceIds1')[copyIndex()]))]",
+              "properties": {
+                "mode": "Incremental",
+                "roleDefinitionId": "[concat(subscription().id, '/providers/Microsoft.Authorization/roleDefinitions/', '865ae368-6a45-4bd1-8fbf-0d5151f56fc1')]",
+                "principalId": "[reference(parameters('arcNodeResourceIds1')[copyIndex()], '2023-10-03-preview', 'full').identity.principalId]",
+                "scope": "[resourceGroup().id]",
+                "description": "[concat(substring(parameters('arcNodeResourceIds1')[copyIndex()], lastIndexOf(parameters('arcNodeResourceIds1')[copyIndex()], '/')), '- Azure Stack HCI Device Management Role')]"
+              }
+            }
+          ]
+        },
+        "parameters": {
+          "arcNodeResourceIds1": {
+            "value": "[variables('arcNodeResourceIdsVar')]"
+          }
+        }
+      }
+    },
+    "ArcMachineKVRoleAssignment": {
+      "condition": "[variables('useChap')]",
+      "dependsOn": [
+        "chapCredentialValidation"
+      ],
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2021-04-01",
+      "name": "KeyVaultSecretsUser-RoleAssignment",
+      "subscriptionId": "[subscription().subscriptionId]",
+      "resourceGroup": "[resourceGroup().name]",
+      "properties": {
+        "mode": "Incremental",
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {
+            "arcNodeResourceIds1": {
+              "type": "array"
+            }
+          },
+          "variables": {},
+          "resources": [
+            {
+              "copy": {
+                "name": "KVroleAssignmentCopy",
+                "count": "[length(parameters('arcNodeResourceIds1'))]"
+              },
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2022-04-01",
+              "name": "[guid(concat('KVSU-RoleAssign', parameters('arcNodeResourceIds1')[copyIndex()]))]",
+              "properties": {
+                "mode": "Incremental",
+                "roleDefinitionId": "[concat(subscription().id, '/providers/Microsoft.Authorization/roleDefinitions/', '4633458b-17de-408a-b874-0445c86b69e6')]",
+                "principalId": "[reference(parameters('arcNodeResourceIds1')[copyIndex()], '2023-10-03-preview', 'full').identity.principalId]",
+                "scope": "[resourceGroup().id]",
+                "description": "[concat(substring(parameters('arcNodeResourceIds1')[copyIndex()], lastIndexOf(parameters('arcNodeResourceIds1')[copyIndex()], '/')), '- Key Vault Secrets User')]"
+              }
+            }
+          ]
+        },
+        "parameters": {
+          "arcNodeResourceIds1": {
+            "value": "[variables('arcNodeResourceIdsVar')]"
+          }
+        }
+      }
+    },
+    "KVConfigurations": {
+      "type": "Microsoft.KeyVault/vaults",
+      "apiVersion": "2021-06-01-preview",
+      "name": "[parameters('keyVaultName')]",
+      "location": "[parameters('location')]",
+      "condition": "[variables('createChapKeyVault')]",
+      "dependsOn": [
+        "StorageAccountConfigurations"
+      ],
+      "properties": {
+        "enabledForDeployment": true,
+        "enabledForTemplateDeployment": true,
+        "enabledForDiskEncryption": true,
+        "enableSoftDelete": false,
+        "softDeleteRetentionInDays": "[parameters('softDeleteRetentionDays')]",
+        "enableRbacAuthorization": true,
+        "publicNetworkAccess": "Enabled",
+        "accessPolicies": [],
+        "tenantId": "[parameters('tenantId')]",
+        "sku": {
+          "name": "standard",
+          "family": "A"
+        }
+      }
+    },
+    "KVDiagnosticsConfig": {
+      "type": "Microsoft.KeyVault/vaults/providers/diagnosticsettings",
+      "name": "[concat(parameters('keyVaultName'), '/Microsoft.Insights/service')]",
+      "apiVersion": "2016-09-01",
+      "location": "[resourceGroup().location]",
+      "condition": "[variables('createChapKeyVault')]",
+      "dependsOn": [
+        "KVConfigurations",
+        "StorageAccountConfigurations"
+      ],
+      "properties": {
+        "storageAccountId": "[resourceId('Microsoft.Storage/storageAccounts', parameters('diagnosticStorageAccountName'))]",
+        "logs": [
+          {
+            "category": "AuditEvent",
+            "enabled": true,
+            "retentionPolicy": {
+              "enabled": true,
+              "days": "[parameters('logsRetentionInDays')]"
+            }
+          }
+        ]
+      }
+    },
+    "KVChapCredentialSecret": {
+      "condition": "[variables('useChap')]",
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2021-06-01-preview",
+      "name": "[concat(parameters('keyVaultName'), '/', variables('chapCredentialSecretName'))]",
+      "dependsOn": [
+        "chapCredentialValidation",
+        "KVConfigurations"
+      ],
+      "location": "[parameters('location')]",
+      "scale": null,
+      "properties": {
+        "contentType": "Secret",
+        "value": "[variables('chapCredentialSecretValue')]",
+        "attributes": {
+          "enabled": true
+        }
+      }
+    },
+    "edgeMachines": {
+      "dependsOn": [
+        "hcirproleassignment"
+      ],
+      "copy": {
+        "name": "edgeMachineCopy",
+        "count": "[length(parameters('nodes'))]"
+      },
+      "type": "Microsoft.AzureStackHCI/edgeMachines",
+      "apiVersion": "2026-10-01",
+      "name": "[last(split(parameters('nodes')[copyIndex()].arcNodeResourceId, '/'))]",
+      "location": "[parameters('location')]",
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "properties": {
+        "edgeMachineKind": "Dedicated",
+        "arcMachineResourceId": "[parameters('nodes')[copyIndex()].arcNodeResourceId]"
+      }
+    },
+    "edgeMachineDeploymentSettings": {
+      "copy": {
+        "name": "edgeMachineDeploymentSettingsCopy",
+        "count": "[length(parameters('nodes'))]"
+      },
+      "type": "Microsoft.AzureStackHCI/edgeMachines/deploymentSettings",
+      "apiVersion": "2026-10-01",
+      "name": "[format('{0}/default', last(split(parameters('nodes')[copyIndex()].arcNodeResourceId, '/')))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.AzureStackHCI/edgeMachines', last(split(parameters('nodes')[copyIndex()].arcNodeResourceId, '/')))]",
+        "KVConfigurations",
+        "KVChapCredentialSecret",
+        "arcMachineRoleAssignment",
+        "ArcMachineKVRoleAssignment"
+      ],
+      "properties": {
+        "deploymentConfiguration": {
+          "version": "1.0.0.0",
+          "scaleUnits": [
+            {
+              "deploymentData": {
+                "storageType": "SANISCSI",
+                "iScsiConfig": {
+                  "initiatorIqn": "[first(filter(reference(resourceId('Microsoft.AzureStackHCI/edgeMachines', last(split(parameters('nodes')[copyIndex()].arcNodeResourceId, '/'))), '2026-10-01').reportedProperties.storageInitiators, lambda('initiator', equals(lambdaVariables('initiator').initiatorType, 'iSCSI')))).initiatorIdentifier]",
+                  "iScsiNetworkConfig": "[parameters('nodes')[copyIndex()].iScsiNetworkConfig]",
+                  "chapSettings": {
+                    "chapType": "[parameters('chapType')]"
+                  }
+                },
+                "secrets": "[variables('chapSecretsList')]"
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
+}
