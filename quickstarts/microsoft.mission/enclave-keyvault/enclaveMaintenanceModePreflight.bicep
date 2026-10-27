@@ -1,13 +1,13 @@
 targetScope = 'subscription'
 
-@description('The resource ID of the existing virtual enclave whose network will be joined.')
+@description('The resource ID of the existing enclave whose network will be joined.')
 param virtualEnclaveResourceId string
 
 var virtualEnclaveResourceIdSegments = split(virtualEnclaveResourceId, '/')
 var virtualEnclaveResourceIdIsValid = length(virtualEnclaveResourceIdSegments) == 9 && empty(virtualEnclaveResourceIdSegments[0]) && toLower(virtualEnclaveResourceIdSegments[1]) == 'subscriptions' && !empty(virtualEnclaveResourceIdSegments[2]) && toLower(virtualEnclaveResourceIdSegments[3]) == 'resourcegroups' && !empty(virtualEnclaveResourceIdSegments[4]) && toLower(virtualEnclaveResourceIdSegments[5]) == 'providers' && toLower(virtualEnclaveResourceIdSegments[6]) == 'microsoft.mission' && toLower(virtualEnclaveResourceIdSegments[7]) == 'virtualenclaves' && !empty(virtualEnclaveResourceIdSegments[8])
 var validatedVirtualEnclaveResourceId = virtualEnclaveResourceIdIsValid
   ? virtualEnclaveResourceId
-  : fail('The virtual enclave resource ID is invalid. Expected /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Mission/virtualEnclaves/{name}.')
+  : fail('The enclave resource ID is invalid. Expected /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Mission/virtualEnclaves/{name}.')
 var validatedVirtualEnclaveResourceIdSegments = split(validatedVirtualEnclaveResourceId, '/')
 var virtualEnclaveSubscriptionId = validatedVirtualEnclaveResourceIdSegments[2]
 var virtualEnclaveResourceGroupName = validatedVirtualEnclaveResourceIdSegments[4]
@@ -27,4 +27,4 @@ var networkJoinAllowed = contains([
 
 output validatedVirtualEnclaveResourceId string = networkJoinAllowed
   ? validatedVirtualEnclaveResourceId
-  : fail('The selected virtual enclave must use General maintenance mode with the deploying identity listed in maintenance mode principals, or Advanced maintenance mode, before this deployment can attach resources to its virtual network. Current mode: ${empty(maintenanceMode) ? 'unknown' : maintenanceMode}.')
+  : fail('The selected enclave must use General maintenance mode with the deploying identity listed in maintenance mode principals, or Advanced maintenance mode, before this deployment can attach resources to its virtual network. Current mode: ${empty(maintenanceMode) ? 'unknown' : maintenanceMode}.')

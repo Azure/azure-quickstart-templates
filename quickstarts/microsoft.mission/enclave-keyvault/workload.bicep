@@ -8,7 +8,7 @@ param workloadId string
 param tags object = {}
 param newWorkloadName string
 
-@description('The resource ID of the target virtual enclave.')
+@description('The resource ID of the target enclave.')
 param virtualEnclaveResourceId string
 
 param workloadUseExisting bool = false
