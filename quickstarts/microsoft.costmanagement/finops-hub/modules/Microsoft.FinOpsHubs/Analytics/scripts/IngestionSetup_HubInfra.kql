@@ -1,0 +1,115 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
+//======================================================================================================================
+// Ingestion database
+// Used for data ingestion, normalization, and cleansing.
+//======================================================================================================================
+
+// For allowed commands, see https://learn.microsoft.com/azure/data-explorer/database-script
+
+//===| Settings |=======================================================================================================
+
+.create-merge table HubSettingsLog (
+    version:   string,
+    scopes:    dynamic,
+    retention: dynamic
+)
+
+//----------------------------------------------------------------------------------------------------------------------
+
+// HubSettings function
+.create-or-alter function
+with (docstring='Gets the latest version of hub settings.', folder='Settings')
+HubSettings()
+{
+    HubSettingsLog
+    | extend timestamp = ingestion_time()
+    | summarize arg_max(timestamp, *)
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
+// HubScopes function
+.create-or-alter function
+with (docstring='Gets the currently configured scopes.', folder='Settings')
+HubScopes()
+{
+    HubSettings
+    | project scopes
+    | mv-expand scopes
+}
+
+
+//===| Open data |======================================================================================================
+
+// PricingUnits -- Create table if it doesn't exist
+.create-merge table PricingUnits ( ignore: string )
+
+// PricingUnits -- Remove all columns
+.alter table PricingUnits ( ignore: string )
+
+// PricingUnits -- Redefine all columns to change types
+.alter table PricingUnits (
+    x_PricingUnitDescription: string,
+    x_PricingBlockSize:       real,
+    PricingUnit:              string
+)
+
+// Regions
+.create-merge table Regions(
+    ResourceLocation: string,
+    RegionId:         string,
+    RegionName:       string
+)
+
+// ResourceTypes
+.create-merge table ResourceTypes(
+    x_ResourceType:           string,
+    SingularDisplayName:      string,
+    PluralDisplayName:        string,
+    LowerSingularDisplayName: string,
+    LowerPluralDisplayName:   string,
+    IsPreview:                bool,
+    Description:              string,
+    IconUri:                  string
+)
+
+// Services
+.create-merge table Services(
+    x_ConsumedService:        string,
+    x_ResourceType:           string,
+    ServiceName:              string,
+    ServiceCategory:          string,
+    ServiceSubcategory:       string,
+    PublisherName:            string,
+    x_PublisherCategory:      string,
+    x_Environment:            string,
+    x_ServiceModel:           string
+)
+
+//----------------------------------------------------------------------------------------------------------------------
+
+// parse_resourceid
+.create-or-alter function
+with (docstring = 'Parses an Azure resource ID to extract resource attributes like the name, type, resource group, and subaccount ID.', folder = 'Common')
+parse_resourceid(resourceId: string) {
+    let ResourceId = tolower(resourceId);
+    // let ResourceId = tolower('/providers/Microsoft.BillingBenefits/savingsPlanOrders/2d2e284b-0638-427e-b8c6-1b874d4f17c8/sp/xxx');
+    let SubAccountId = tostring(extract('/subscriptions/[^/]+', 1, ResourceId));
+    let x_ResourceGroupName = tostring(extract('/resourcegroups/[^/]+', 1, ResourceId));
+    let tmp_ResourceId = iff(ResourceId !has '/providers/' and ResourceId startswith '/subscriptions/', strcat('/providers/microsoft.resources', ResourceId), ResourceId);
+    let providerPath = iff(tmp_ResourceId !has '/providers/', '', tostring(split(tmp_ResourceId, '/providers/')[-1]));
+    let x_ResourceProvider = iff(isempty(providerPath), '', split(providerPath, '/')[0]);
+    let tmp_ResourceProviderPath = iff(isempty(providerPath), '', substring(providerPath, strlen(x_ResourceProvider) + 1));
+    let segments = split(tmp_ResourceProviderPath, '/');
+    let ResourceName = trim(@'/+', replace_string(strcat_array(array_iff(
+        dynamic([false, true, false, true, false, true, false, true, false, true, false, true, false, true, false, true, false, true]),
+        segments, dynamic([])), '/'), '//', '/'));
+    let x_ResourceTypePath = trim(@'/+', replace_string(strcat_array(array_iff(
+        dynamic([true, false, true, false, true, false, true, false, true, false, true, false, true, false, true, false, true, false]),
+        segments, dynamic([])), '/'), '//', '/'));
+    let xRT = iff(isempty(x_ResourceProvider) or isempty(x_ResourceTypePath), '', strcat(x_ResourceProvider, '/', x_ResourceTypePath));
+    // TODO: Remove ResourceType in 0.9
+    bag_pack('ResourceId', ResourceId, 'ResourceName', ResourceName, 'ResourceType', xRT, 'SubAccountId', SubAccountId, 'x_ResourceGroupName', x_ResourceGroupName, 'x_ResourceProvider', x_ResourceProvider, 'x_ResourceType', xRT)
+}

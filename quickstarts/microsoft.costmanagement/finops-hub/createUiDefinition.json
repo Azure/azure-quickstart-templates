@@ -48,57 +48,86 @@
         "visible": true
       },
       {
-        "name": "dataExplorer",
+        "name": "analyticsBackend",
         "type": "Microsoft.Common.Section",
-        "label": "Azure Data Explorer (optional)",
+        "label": "Analytics backend",
         "elements": [
           {
-            "name": "dataExplorerIntro",
+            "name": "analyticsIntro",
             "type": "Microsoft.Common.TextBlock",
             "visible": true,
             "options": {
-              "text": "Azure Data Explorer is a fast, scalable service for advanced, big data analytics. Data Explorer is optional but recommended when monitoring more than $100K in spend. FinOps hubs with Data Explorer starts at $120/mo for a single node cluster plus $10/mo per million in monitored spend (<0.02% of annual spend)."
+              "text": "Select how this hub will process and store data. Azure Data Explorer or Microsoft Fabric are recommended for medium to large accounts. Select Remote hub to push data to a central FinOps hub in another tenant. Only select storage-only for small accounts with simple requirements."
+            }
+          },
+          {
+            "name": "analyticsEngine",
+            "type": "Microsoft.Common.OptionsGroup",
+            "label": "Hub mode",
+            "defaultValue": "Azure Data Explorer",
+            "toolTip": "Select the analytics backend for this hub. Azure Data Explorer and Microsoft Fabric provide analytics. None uses storage only for Power BI reports. Remote Hub forwards data to a central hub for cross-tenant scenarios.",
+            "constraints": {
+              "allowedValues": [
+                {
+                  "label": "Azure Data Explorer",
+                  "value": "adx"
+                },
+                {
+                  "label": "Microsoft Fabric",
+                  "value": "fabric"
+                },
+                {
+                  "label": "None (storage only)",
+                  "value": "none"
+                },
+                {
+                  "label": "Remote hub",
+                  "value": "remote"
+                }
+              ],
+              "required": true
+            },
+            "visible": true
+          },
+          {
+            "name": "dataExplorerIntro",
+            "type": "Microsoft.Common.TextBlock",
+            "visible": "[equals(basics('analyticsBackend').analyticsEngine, 'adx')]",
+            "options": {
+              "text": "Azure Data Explorer is a fast, scalable service for advanced, big data analytics. Recommended when monitoring more than $100K in spend. Starts at $120/mo for a single node cluster plus $10/mo per million in monitored spend (<0.02% of annual spend)."
             }
           },
           {
             "name": "dataExplorerName",
             "type": "Microsoft.Common.TextBox",
             "label": "Cluster name",
-            "toolTip": "Name of the Azure Data Explorer cluster, if desired. If not specified, Data Explorer will not be deployed.",
+            "toolTip": "Name of the Azure Data Explorer cluster.",
             "constraints": {
-              "required": false,
+              "required": "[equals(basics('analyticsBackend').analyticsEngine, 'adx')]",
               "regex": "^[a-zA-Z0-9][a-zA-Z0-9\\-]{0,20}[a-z0-9]$",
               "validationMessage": "Name must be between 4 and 22 characters long and can contain only lowercase letters, numbers, and hyphens. The first and last characters in the name must be alphanumeric."
             },
-            "visible": true
-          }
-        ],
-        "visible": true
-      },
-      {
-        "name": "fabric",
-        "type": "Microsoft.Common.Section",
-        "label": "Microsoft Fabric (optional)",
-        "elements": [
+            "visible": "[equals(basics('analyticsBackend').analyticsEngine, 'adx')]"
+          },
           {
             "name": "fabricIntro",
             "type": "Microsoft.Common.TextBlock",
-            "visible": true,
+            "visible": "[equals(basics('analyticsBackend').analyticsEngine, 'fabric')]",
             "options": {
-              "text": "Microsoft Fabric is a unified data platform for data ingestion, processing, and analytics. FinOps hubs with Fabric starts at $300/mo for an F2 SKU plus $10/mo per million in monitored spend."
+              "text": "Microsoft Fabric is a unified data platform for data ingestion, processing, and analytics. Starts at $300/mo for an F2 SKU plus $10/mo per million in monitored spend."
             }
           },
           {
             "name": "fabricQueryUri",
             "type": "Microsoft.Common.TextBox",
             "label": "Fabric eventhouse query URI",
-            "toolTip": "Query URI for the Microsoft Fabric eventhouse, if applicable.",
+            "toolTip": "Query URI for the Microsoft Fabric eventhouse.",
             "constraints": {
-              "required": false,
+              "required": "[equals(basics('analyticsBackend').analyticsEngine, 'fabric')]",
               "regex": "^https://.*",
               "validationMessage": "Query URI must be a full Microsoft Fabric eventhouse URL."
             },
-            "visible": true
+            "visible": "[equals(basics('analyticsBackend').analyticsEngine, 'fabric')]"
           },
           {
             "name": "fabricCapacity",
@@ -123,7 +152,59 @@
                 { "label": "F2048", "value": "2048" }
               ]
             },
-            "visible": true
+            "visible": "[equals(basics('analyticsBackend').analyticsEngine, 'fabric')]"
+          },
+          {
+            "name": "remoteHubIntro",
+            "type": "Microsoft.Common.TextBlock",
+            "visible": "[equals(basics('analyticsBackend').analyticsEngine, 'remote')]",
+            "options": {
+              "text": "Configure this hub as a satellite that sends data to a remote FinOps hub in another tenant or subscription. This enables cross-tenant cost management scenarios where a central hub collects cost data from multiple tenants."
+            }
+          },
+          {
+            "name": "remoteHubStorageUri",
+            "type": "Microsoft.Common.TextBox",
+            "label": "Remote hub storage URI",
+            "toolTip": "Data Lake storage endpoint from the remote hub storage account. Copy from the storage account Settings > Endpoints > Data Lake storage. Example: https://myremotehub.dfs.core.windows.net/ (endpoint suffix varies by cloud)",
+            "constraints": {
+              "required": "[equals(basics('analyticsBackend').analyticsEngine, 'remote')]",
+              "regex": "^https://.*\\.dfs\\.core\\.[a-z.]+/?$",
+              "validationMessage": "Must be a valid Data Lake storage endpoint URL (e.g., https://storageaccount.dfs.core.windows.net/ for Azure public cloud)"
+            },
+            "visible": "[equals(basics('analyticsBackend').analyticsEngine, 'remote')]"
+          },
+          {
+            "name": "remoteHubStorageKey",
+            "type": "Microsoft.Common.PasswordBox",
+            "label": {
+              "password": "Remote hub storage key"
+            },
+            "toolTip": "Storage account access key for the remote hub. Copy from the remote hub storage account Security + networking > Access keys > key1/2 > Key.",
+            "constraints": {
+              "required": "[equals(basics('analyticsBackend').analyticsEngine, 'remote')]",
+              "regex": "^[A-Za-z0-9+/]{86}==$",
+              "validationMessage": "Must be a valid storage account access key (base64 encoded, ending with ==)"
+            },
+            "options": {
+              "hideConfirmation": true
+            },
+            "visible": "[equals(basics('analyticsBackend').analyticsEngine, 'remote')]"
+          },
+          {
+            "name": "remoteHubSecurityNote",
+            "type": "Microsoft.Common.TextBlock",
+            "visible": "[equals(basics('analyticsBackend').analyticsEngine, 'remote')]",
+            "options": {
+              "text": "The storage key will be securely stored in Azure Key Vault and is never logged or exposed in deployment outputs."
+            }
+          },
+          {
+            "name": "enablePurgeProtection",
+            "type": "Microsoft.Common.CheckBox",
+            "label": "Enable Key Vault purge protection",
+            "toolTip": "Enables purge protection for the Key Vault used to store the remote hub storage key. Purge protection prevents permanent deletion of the Key Vault for 90 days after deletion. Note: If the key is lost, you can regenerate it from the remote hub's storage account.",
+            "visible": "[equals(basics('analyticsBackend').analyticsEngine, 'remote')]"
           }
         ],
         "visible": true
@@ -190,14 +271,14 @@
           {
             "name": "dataExplorer",
             "type": "Microsoft.Common.Section",
-            "label": "Data Explorer (optional)",
+            "label": "Data Explorer",
             "elements": [
               {
                 "name": "dataExplorerPricingIntro",
                 "type": "Microsoft.Common.TextBlock",
                 "visible": true,
                 "options": {
-                  "text": "Azure Data Explorer is optional. If a cluster name is not specified on the Basics tab, this setting is ignored."
+                  "text": "Select the Azure Data Explorer SKU for your analytics workload."
                 }
               },
               {
@@ -478,7 +559,7 @@
                 "visible": true
               }
             ],
-            "visible": true
+            "visible": "[equals(basics('analyticsBackend').analyticsEngine, 'adx')]"
           },
           {
             "name": "spacer",
@@ -505,9 +586,33 @@
           {
             "name": "retentionIntro",
             "type": "Microsoft.Common.TextBlock",
-            "visible": true,
+            "visible": "[equals(basics('analyticsBackend').analyticsEngine, 'adx')]",
             "options": {
               "text": "Data retention settings indicate how long to keep data available for reporting or additional processing. Retained data contributes to monitored spend and the total storage costs for the hub instance."
+            }
+          },
+          {
+            "name": "storageOnlyRetentionInfo",
+            "type": "Microsoft.Common.TextBlock",
+            "visible": "[equals(basics('analyticsBackend').analyticsEngine, 'none')]",
+            "options": {
+              "text": "Storage-only mode keeps all ingested data in Azure Data Lake Storage. Data is retained indefinitely until manually deleted. Use Power BI to connect directly to storage for reporting."
+            }
+          },
+          {
+            "name": "fabricRetentionInfo",
+            "type": "Microsoft.Common.TextBlock",
+            "visible": "[equals(basics('analyticsBackend').analyticsEngine, 'fabric')]",
+            "options": {
+              "text": "Data retention for Microsoft Fabric is managed within your Fabric eventhouse. Configure retention policies directly in Fabric."
+            }
+          },
+          {
+            "name": "remoteHubRetentionInfo",
+            "type": "Microsoft.Common.TextBlock",
+            "visible": "[equals(basics('analyticsBackend').analyticsEngine, 'remote')]",
+            "options": {
+              "text": "Remote Hub satellites forward data to the central hub. Data retention is managed by the central hub, not the satellite."
             }
           },
           {
@@ -521,7 +626,7 @@
                 "type": "Microsoft.Common.TextBlock",
                 "visible": true,
                 "options": {
-                  "text": "Storage retention is not implemented yet. You can set the retention period but files will not be automatically removed."
+                  "text": "Configure how long to retain data in Azure Data Lake Storage. Storage retention is not fully implemented yet - files will not be automatically removed."
                 }
               },
               {
@@ -555,15 +660,15 @@
           {
             "name": "dataExplorer",
             "type": "Microsoft.Common.Section",
-            "label": "Data Explorer (optional)",
-            "visible": true,
+            "label": "Data Explorer",
+            "visible": "[equals(basics('analyticsBackend').analyticsEngine, 'adx')]",
             "elements": [
               {
                 "name": "dataExplorerIntro",
                 "type": "Microsoft.Common.TextBlock",
                 "visible": true,
                 "options": {
-                  "text": "Azure Data Explorer is optional. If a cluster name is not specified on the Basics tab, this setting is ignored."
+                  "text": "Configure data retention settings for Azure Data Explorer. When you redeploy or upgrade a hub, values left at the default keep the current retention settings and changed values are applied. To set a value back to the default, edit config/settings.json in the hub storage account or deploy with PowerShell."
                 }
               },
               {
@@ -597,6 +702,141 @@
         ]
       },
       {
+        "name": "recommendations",
+        "label": "🆕 Recommendations",
+        "elements": [
+          {
+            "name": "recommendationsIntro",
+            "type": "Microsoft.Common.TextBlock",
+            "visible": true,
+            "options": {
+              "text": "Uncover hidden savings with FinOps hubs recommendations. FinOps hubs can automatically scan your environment using Azure Resource Graph to surface cost optimization opportunities like idle resources and missed discounts that aren't available in Microsoft Cost Management or Azure Advisor."
+            }
+          },
+          {
+            "name": "enableRecommendations",
+            "type": "Microsoft.Common.CheckBox",
+            "label": "Enable hubs recommendations (preview)"
+          },
+          {
+            "name": "included",
+            "type": "Microsoft.Common.Section",
+            "label": "Included recommendations",
+            "visible": "[steps('recommendations').enableRecommendations]",
+            "elements": [
+              {
+                "name": "includedIntro",
+                "type": "Microsoft.Common.TextBlock",
+                "visible": true,
+                "options": {
+                  "text": "The following recommendations are always included when enabled:"
+                }
+              },
+              {
+                "name": "advisorCost",
+                "type": "Microsoft.Common.TextBlock",
+                "visible": true,
+                "options": {
+                  "text": "✅  Azure Advisor cost recommendations"
+                }
+              },
+              {
+                "name": "stoppedVMs",
+                "type": "Microsoft.Common.TextBlock",
+                "visible": true,
+                "options": {
+                  "text": "✅  Stopped (not deallocated) VMs"
+                }
+              },
+              {
+                "name": "unattachedDisks",
+                "type": "Microsoft.Common.TextBlock",
+                "visible": true,
+                "options": {
+                  "text": "✅  Unattached managed disks"
+                }
+              },
+              {
+                "name": "unattachedPublicIPs",
+                "type": "Microsoft.Common.TextBlock",
+                "visible": true,
+                "options": {
+                  "text": "✅  Unattached static public IPs"
+                }
+              },
+              {
+                "name": "emptySQLElasticPools",
+                "type": "Microsoft.Common.TextBlock",
+                "visible": true,
+                "options": {
+                  "text": "✅  Empty SQL elastic pools"
+                }
+              },
+              {
+                "name": "backendlessAppGateways",
+                "type": "Microsoft.Common.TextBlock",
+                "visible": true,
+                "options": {
+                  "text": "✅  Application Gateways with empty backend pools"
+                }
+              },
+              {
+                "name": "backendlessLoadBalancers",
+                "type": "Microsoft.Common.TextBlock",
+                "visible": true,
+                "options": {
+                  "text": "✅  Load Balancers without backends"
+                }
+              }
+            ]
+          },
+          {
+            "name": "optional",
+            "type": "Microsoft.Common.Section",
+            "label": "Optional recommendations",
+            "visible": "[steps('recommendations').enableRecommendations]",
+            "elements": [
+              {
+                "name": "optionalIntro",
+                "type": "Microsoft.Common.TextBlock",
+                "visible": true,
+                "options": {
+                  "text": "The following recommendations do not apply in all cases and are optional:"
+                }
+              },
+              {
+                "name": "enableAHBRecommendations",
+                "type": "Microsoft.Common.CheckBox",
+                "label": "➕  Azure Hybrid Benefit",
+                "toolTip": "Flag VMs and SQL VMs without Azure Hybrid Benefit enabled. May generate noise if your organization does not have on-premises licenses."
+              },
+              {
+                "name": "enableSpotRecommendations",
+                "type": "Microsoft.Common.CheckBox",
+                "label": "➕  Non-Spot AKS cluster",
+                "toolTip": "Flag AKS clusters with autoscaling but not using Spot VMs. May generate noise since Spot VMs are only appropriate for interruptible workloads."
+              }
+            ]
+          },
+          {
+            "name": "permissions",
+            "type": "Microsoft.Common.Section",
+            "label": "Required permissions",
+            "visible": "[steps('recommendations').enableRecommendations]",
+            "elements": [
+              {
+                "name": "permissionsNote",
+                "type": "Microsoft.Common.TextBlock",
+                "visible": true,
+                "options": {
+                  "text": "The Data Factory managed identity requires Reader role on the management groups or subscriptions you want to scan. After deployment, grant the hub's managed identity Reader access to the desired scopes."
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
         "name": "advanced",
         "label": "Advanced",
         "elements": [
@@ -610,7 +850,23 @@
                 "type": "Microsoft.Common.TextBlock",
                 "visible": true,
                 "options": {
-                  "text": "Infrastructure encryption can be enabled for the entire storage account. To enable infrastructure encryption for this storage account, you must check this box at the time that you deploy this template. <a href='https://learn.microsoft.com/azure/storage/common/infrastructure-encryption-enable?tabs=portal'>Learn more</a>. To learn about pricing for encryption scopes, see <a href= 'https://azure.microsoft.com/pricing/details/storage/blobs/'>Blob Storage pricing</a>."
+                  "text": "Infrastructure encryption can be enabled for the entire storage account. To enable infrastructure encryption for this storage account, you must check this box at the time that you deploy this template.",
+                  "link": {
+                    "label": "Learn more",
+                    "uri": "https://learn.microsoft.com/azure/storage/common/infrastructure-encryption-enable?tabs=portal"
+                  }
+                }
+              },
+              {
+                "name": "infraEncryptionPricing",
+                "type": "Microsoft.Common.TextBlock",
+                "visible": true,
+                "options": {
+                  "text": "To learn about pricing for encryption scopes, see",
+                  "link": {
+                    "label": "Blob Storage pricing",
+                    "uri": "https://azure.microsoft.com/pricing/details/storage/blobs/"
+                  }
                 }
               },
               {
@@ -618,6 +874,28 @@
                 "type": "Microsoft.Common.CheckBox",
                 "label": "Enable Infrastructure Encryption",
                 "toolTip": "Infrastructure encryption is recommended for scenarios where doubly encrypting data is necessary for compliance requirements. For most other scenarios, Azure Storage encryption provides a sufficiently powerful encryption algorithm, and there is unlikely to be a benefit to using infrastructure encryption unless for compliance requirements."
+              }
+            ],
+            "visible": true
+          },
+          {
+            "name": "managedExports",
+            "type": "Microsoft.Common.Section",
+            "label": "Managed exports",
+            "elements": [
+              {
+                "name": "managedExportsIntro",
+                "type": "Microsoft.Common.TextBlock",
+                "visible": true,
+                "options": {
+                  "text": "Managed exports allow your FinOps hub instance to create and run Cost Management exports on your behalf using a schedule you define. This feature is not supported for Microsoft Customer Agreement (MCA) billing profiles."
+                }
+              },
+              {
+                "name": "enableManagedExports",
+                "type": "Microsoft.Common.CheckBox",
+                "label": "Enable managed exports",
+                "toolTip": "Creating exports in Cost Management requires the ability to grant access to the export destination. You must have access to grant the Role Based Access Control Administrator role to your FinOps hub to enable managed exports."
               }
             ],
             "visible": true
@@ -661,16 +939,25 @@
                 "name": "virtualNetworkAddressPrefix",
                 "type": "Microsoft.Common.TextBox",
                 "label": "Address prefix",
-                "toolTip": "Address space for the workload. A /26 is required for the workload.",
+                "toolTip": "Address space for the workload. Minimum /26 subnet size is required for the workload.",
                 "defaultValue": "10.20.30.0/26",
                 "constraints": {
                   "validations": [
                     {
-                      "regex": "^[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\/26$",
-                      "message": "Address prefix must be a valid IPv4 address in the format 'XXX.XXX.XXX.XXX/26'. The '/26' is required."
+                      "regex": "^[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\/([8-9]|1[0-9]|2[0-6])$",
+                      "message": "Address prefix must be a valid IPv4 address in the format 'XXX.XXX.XXX.XXX/YY' where YY is between 8 and 26 (minimum /26 subnet size required)."
                     }
                   ]
-                }
+                },
+                "visible": "[equals(steps('advanced').networking.enablePublicAccess, false)]"
+              },
+              {
+                "name": "enableNatGateway",
+                "type": "Microsoft.Common.CheckBox",
+                "label": "Deploy NAT Gateway for controlled outbound access",
+                "toolTip": "Required by the September 2025 'Subnets should be private' policy. Adds a Standard NAT Gateway and Standard static Public IP attached to the script and Data Explorer subnets to provide controlled outbound internet access. Leave unchecked if you have your own egress path (UDR to firewall, peered hub with NAT, etc.).",
+                "defaultValue": false,
+                "visible": "[equals(steps('advanced').networking.enablePublicAccess, false)]"
               }
             ],
             "visible": true
@@ -694,6 +981,8 @@
               "Microsoft.Network/privateDnsZones",
               "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
               "Microsoft.Network/privateEndpoints",
+              "Microsoft.Network/publicIPAddresses",
+              "Microsoft.Network/natGateways",
               "Microsoft.Resources/deploymentScripts",
               "Microsoft.Storage/storageAccounts"
             ]
@@ -705,17 +994,25 @@
       "hubName": "[basics('hubName')]",
       "location": "[location()]",
       "storageSku": "[steps('pricing').storage.storageSku]",
-      "dataExplorerName": "[basics('dataExplorer').dataExplorerName]",
-      "fabricQueryUri": "[basics('fabric').fabricQueryUri]",
-      "fabricCapacity": "[basics('fabric').fabricCapacity]",
+      "dataExplorerName": "[if(equals(basics('analyticsBackend').analyticsEngine, 'adx'), basics('analyticsBackend').dataExplorerName, '')]",
+      "fabricQueryUri": "[if(equals(basics('analyticsBackend').analyticsEngine, 'fabric'), basics('analyticsBackend').fabricQueryUri, '')]",
+      "fabricCapacityUnits": "[if(equals(basics('analyticsBackend').analyticsEngine, 'fabric'), basics('analyticsBackend').fabricCapacity, '')]",
       "enableInfrastructureEncryption": "[steps('advanced').storage.enableInfrastructureEncryption]",
+      "enableManagedExports": "[steps('advanced').managedExports.enableManagedExports]",
+      "enableRecommendations": "[steps('recommendations').enableRecommendations]",
+      "enableAHBRecommendations": "[steps('recommendations').optional.enableAHBRecommendations]",
+      "enableSpotRecommendations": "[steps('recommendations').optional.enableSpotRecommendations]",
       "enablePublicAccess": "[steps('advanced').networking.enablePublicAccess]",
+      "enableNatGateway": "[steps('advanced').networking.enableNatGateway]",
       "virtualNetworkAddressPrefix": "[steps('advanced').networking.virtualNetworkAddressPrefix]",
       "dataExplorerSku": "[steps('pricing').dataExplorer.dataExplorerSku]",
-      "exportRetentionInDays": "[steps('retention').storage.msexportsDays]",
-      "ingestionRetentionInMonths": "[steps('retention').storage.ingestionMonths]",
-      "dataExplorerRawRetentionInDays": "[steps('retention').dataExplorer.rawDays]",
-      "dataExplorerFinalRetentionInMonths": "[steps('retention').dataExplorer.finalMonths]",
+      "exportRetentionInDays": "[if(or(equals(steps('retention').storage.msexportsDays, ''), equals(steps('retention').storage.msexportsDays, '0')), parse('null'), steps('retention').storage.msexportsDays)]",
+      "ingestionRetentionInMonths": "[if(or(equals(steps('retention').storage.ingestionMonths, ''), equals(steps('retention').storage.ingestionMonths, '13')), parse('null'), steps('retention').storage.ingestionMonths)]",
+      "dataExplorerRawRetentionInDays": "[if(or(equals(steps('retention').dataExplorer.rawDays, ''), equals(steps('retention').dataExplorer.rawDays, '0')), parse('null'), steps('retention').dataExplorer.rawDays)]",
+      "dataExplorerFinalRetentionInMonths": "[if(or(equals(steps('retention').dataExplorer.finalMonths, ''), equals(steps('retention').dataExplorer.finalMonths, '13')), parse('null'), steps('retention').dataExplorer.finalMonths)]",
+      "remoteHubStorageUri": "[if(equals(basics('analyticsBackend').analyticsEngine, 'remote'), basics('analyticsBackend').remoteHubStorageUri, '')]",
+      "remoteHubStorageKey": "[if(equals(basics('analyticsBackend').analyticsEngine, 'remote'), basics('analyticsBackend').remoteHubStorageKey, '')]",
+      "enablePurgeProtection": "[if(equals(basics('analyticsBackend').analyticsEngine, 'remote'), coalesce(basics('analyticsBackend').enablePurgeProtection, false), false)]",
       "tagsByResource": "[steps('tags').tagsByResource]"
     }
   }
