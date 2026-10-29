@@ -1,0 +1,10 @@
+{
+    "dataset": "Recommendations",
+    "provider": "Microsoft",
+    "query": "resources | where type =~ 'microsoft.network/virtualnetworkgateways' | extend gatewayType = tostring(properties.gatewayType) | where gatewayType in ('Vpn', 'ExpressRoute') | mv-expand ipConfig = properties.ipConfigurations | extend pipId = tostring(ipConfig.properties.publicIPAddress.id) | extend gwId = tolower(id) | join kind=leftouter ( resources | where type =~ 'microsoft.network/connections' | mv-expand gwRef = pack_array(properties.virtualNetworkGateway1.id, properties.virtualNetworkGateway2.id) | extend gwId = tolower(tostring(gwRef)) | summarize connectionCount = count() by gwId ) on gwId | where isnull(connectionCount) or connectionCount == 0 | extend Location=location, SKUName=tostring(properties.sku.name), SKUTier=tostring(properties.sku.tier) | project id, name, resourceGroup, subscriptionId, Location, SKUName, SKUTier, gatewayType, type | project     x_RecommendationId=strcat(tolower(id),'-idleVNetGateway'),     x_ResourceGroupName=tolower(resourceGroup),     SubAccountId=subscriptionId,     x_RecommendationCategory='Cost',     x_RecommendationDescription='Virtual network gateway has no connections',     ResourceId = tolower(id),     ResourceName=tolower(name),     x_RecommendationDetails = tostring(bag_pack('GatewayType', gatewayType, 'SKUName', SKUName, 'SKUTier', SKUTier, 'Location', Location, 'x_RecommendationProvider', 'FinOps hubs', 'x_RecommendationSolution', 'Delete the idle virtual network gateway or add connections', 'x_RecommendationTypeId', 'a3b4c5d6-7e8f-9a0b-1c2d-3e4f5a6b7c8d', 'x_ResourceType', type)),     x_RecommendationDate = now() | join kind=leftouter ( resourcecontainers | where type == 'microsoft.resources/subscriptions' | project SubAccountName=name, SubAccountId=subscriptionId ) on SubAccountId | project-away SubAccountId1",
+    "queryEngine": "ResourceGraph",
+    "scope": "Tenant",
+    "source": "FinOps hubs",
+    "type": "Microsoft-IdleVNetGateways",
+    "version": "1.0"
+}
