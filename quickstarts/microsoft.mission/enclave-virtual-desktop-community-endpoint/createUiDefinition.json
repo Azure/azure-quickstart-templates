@@ -1,0 +1,258 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2021-09-09/uiFormDefinition.schema.json",
+  "view": {
+    "kind": "Form",
+    "properties": {
+      "title": "Azure Virtual Desktop - Community Endpoint",
+      "steps": [
+        {
+          "name": "basics",
+          "label": "Basics",
+          "elements": [
+            {
+              "name": "scope",
+              "type": "Microsoft.Common.ResourceScope",
+              "subscription": {
+                "resourceProviders": [
+                  "Microsoft.Mission"
+                ]
+              },
+              "location": {
+                "label": "Region",
+                "toolTip": "Select the Azure region for the resource.",
+                "resourceTypes": [
+                  "Microsoft.Mission/communities"
+                ]
+              }
+            },
+            {
+              "name": "mgEntities",
+              "type": "Microsoft.Solutions.ArmApiControl",
+              "request": {
+                "method": "POST",
+                "path": "/providers/Microsoft.Management/getEntities?api-version=2020-05-01"
+              }
+            },
+            {
+              "name": "msisrLookup",
+              "type": "Microsoft.Solutions.ArmApiControl",
+              "condition": "[not(empty(steps('basics').scope.subscription.id))]",
+              "request": {
+                "method": "POST",
+                "path": "/providers/Microsoft.ResourceGraph/resources?api-version=2021-03-01",
+                "body": {
+                  "subscriptions": [
+                    "[steps('basics').scope.subscription.id]"
+                  ],
+                  "query": "ResourceContainers | where type == 'microsoft.resources/subscriptions' | mv-expand mgChain = properties.managementGroupAncestorsChain | extend mgName = tostring(mgChain.name) | summarize matchingManagementGroups = countif(mgName matches regex '^[a-z][a-z0-9]{2,3}lz[0-9]{0,2}$') | project MSISR = todynamic(iff(matchingManagementGroups > 0, 'true', 'false'))",
+                  "options": {
+                    "resultFormat": "objectArray"
+                  }
+                }
+              }
+            },
+            {
+              "name": "communitySelector",
+              "type": "Microsoft.Solutions.ResourceSelector",
+              "label": "Community",
+              "resourceType": "Microsoft.Mission/communities",
+              "constraints": {
+                "required": true
+              },
+              "scope": {
+                "location": "[steps('basics').scope.location.name]",
+                "subscriptionId": "[steps('basics').scope.subscription.subscriptionId]"
+              }
+            },
+            {
+              "name": "naming",
+              "type": "Microsoft.Common.Section",
+              "label": "Naming Components",
+              "elements": [
+                {
+                  "name": "description",
+                  "type": "Microsoft.Common.TextBlock",
+                  "options": {
+                    "text": "The values selected below will be used as components in your naming convention to name your Azure resource groups and resources.",
+                    "link": {
+                      "label": "Click here for more information on the naming convention used in this deployment.",
+                      "uri": "https://github.com/Azure/virtual-enclaves/blob/main/service-catalog/templates/azureVirtualDesktopCommunityEndpoint/docs/design/naming.md"
+                    }
+                  }
+                },
+                {
+                  "name": "identifier",
+                  "type": "Microsoft.Common.TextBox",
+                  "label": "Identifier",
+                  "toolTip": "Input a 3 character identifier for the resource group and resource names created with this solution. The identifier should represent a unique value within your organization, such as a business unit or project.",
+                  "placeholder": "Example: it1",
+                  "constraints": {
+                    "required": true,
+                    "regex": "^[a-z][a-z0-9]{1,2}$",
+                    "validationMessage": "The value must be 1 - 3 characters in length, alphanumeric, and lowercase."
+                  }
+                },
+                {
+                  "name": "environment",
+                  "type": "Microsoft.Common.DropDown",
+                  "visible": true,
+                  "label": "Environment Abbreviation",
+                  "defaultValue": "Development (dev)",
+                  "toolTip": "Select the target environment for the solution. The single letter environment abbreviation will be used as part of the naming convention for the resoure groups and resources.",
+                  "constraints": {
+                    "required": true,
+                    "allowedValues": [
+                      {
+                        "label": "Development (dev)",
+                        "value": "dev"
+                      },
+                      {
+                        "label": "Production (prod)",
+                        "value": "prod"
+                      },
+                      {
+                        "label": "Test (test)",
+                        "value": "test"
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "network",
+              "type": "Microsoft.Common.Section",
+              "visible": true,
+              "label": "Network",
+              "elements": [
+                {
+                  "name": "enableAvdPublicAccess",
+                  "type": "Microsoft.Common.OptionsGroup",
+                  "label": "Enable AVD public access firewall rules?",
+                  "defaultValue": "Yes",
+                  "toolTip": "Deploy the required firewall rules to enable AVD public access.",
+                  "constraints": {
+                    "allowedValues": [
+                      {
+                        "label": "Yes",
+                        "value": true
+                      },
+                      {
+                        "label": "No",
+                        "value": false
+                      }
+                    ],
+                    "required": true
+                  },
+                  "visible": true
+                },
+                {
+                  "name": "enableWindowsUpdateFwRules",
+                  "type": "Microsoft.Common.OptionsGroup",
+                  "label": "Enable Windows Update firewall rules?",
+                  "defaultValue": "Yes",
+                  "toolTip": "Deploy the required firewall rules to enable Windows Update connectivity.",
+                  "constraints": {
+                    "allowedValues": [
+                      {
+                        "label": "Yes",
+                        "value": true
+                      },
+                      {
+                        "label": "No",
+                        "value": false
+                      }
+                    ],
+                    "required": true
+                  },
+                  "visible": true
+                },
+                {
+                  "name": "enableIdentityFwRules",
+                  "type": "Microsoft.Common.OptionsGroup",
+                  "label": "Enable identity firewall rules?",
+                  "defaultValue": "Microsoft Entra ID",
+                  "toolTip": "Choose the identity solution that will be used for authentication to the AVD session hosts and FSLogix storage.",
+                  "constraints": {
+                    "allowedValues": [
+                      {
+                        "label": "Active Directory Domain Services (ADDS)",
+                        "value": "ActiveDirectoryDomainServices"
+                      },
+                      {
+                        "label": "Microsoft Entra ID",
+                        "value": "MicrosoftEntraId"
+                      },
+                      {
+                        "label": "Microsoft Entra ID with Intune Enrollment",
+                        "value": "MicrosoftEntraIdIntuneEnrollment"
+                      },
+                      {
+                        "label": "Microsoft Entra Domain Services",
+                        "value": "MicrosoftEntraDomainServices"
+                      }
+                    ],
+                    "required": true
+                  },
+                  "visible": true
+                }
+              ]
+            },
+            {
+              "name": "enableTelemetry",
+              "type": "Microsoft.Common.OptionsGroup",
+              "label": "Enable Usage Telemetry",
+              "defaultValue": "Enabled",
+              "toolTip": "Anonymous usage telemetry helps Microsoft improve the Service Catalog. No customer data is collected.",
+              "constraints": {
+                "allowedValues": [
+                  {
+                    "label": "Enabled",
+                    "value": true
+                  },
+                  {
+                    "label": "Disabled",
+                    "value": false
+                  }
+                ],
+                "required": true
+              },
+              "visible": "[equals(length(filter(coalesce(steps('basics').msisrLookup.data, parse('[]')), (item) => and(equals(toLower(coalesce(item.subscriptionId, '')), toLower(coalesce(steps('basics').scope.subscription.id, ''))), equals(item.MSISR, false)))), 1)]"
+            }
+          ]
+        },
+        {
+          "name": "tags",
+          "label": "Tags",
+          "elements": [
+            {
+              "name": "tags",
+              "type": "Microsoft.Common.TagsByResource",
+              "resources": [
+                "Microsoft.Mission/communities"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "outputs": {
+      "parameters": {
+        "isMsisrTenant": "[greater(length(filter(coalesce(steps('basics').mgEntities.value, parse('[]')), (mg) => and(equals(mg.type, 'Microsoft.Management/managementGroups'), or(endsWith(toLower(mg.name), 'lz-lzs'), endsWith(toLower(mg.name), 'lz7-lzs')), or(endsWith(toLower(if(empty(coalesce(mg.properties.parentNameChain, parse('[]'))), '', last(mg.properties.parentNameChain))), 'lz'), endsWith(toLower(if(empty(coalesce(mg.properties.parentNameChain, parse('[]'))), '', last(mg.properties.parentNameChain))), 'lz7'))))), 0)]",
+        "isPlxTenant": "[if(greater(length(filter(coalesce(steps('basics').mgEntities.value, parse('[]')), (mg) => and(equals(mg.type, 'Microsoft.Management/managementGroups'), or(endsWith(toLower(mg.name), 'lz-lzs'), endsWith(toLower(mg.name), 'lz7-lzs')), or(endsWith(toLower(if(empty(coalesce(mg.properties.parentNameChain, parse('[]'))), '', last(mg.properties.parentNameChain))), 'lz'), endsWith(toLower(if(empty(coalesce(mg.properties.parentNameChain, parse('[]'))), '', last(mg.properties.parentNameChain))), 'lz7'))))), 0), false, greater(length(filter(coalesce(steps('basics').mgEntities.value, parse('[]')), (mg) => and(equals(toLower(coalesce(mg.type, '')), 'microsoft.management/managementgroups'), or(equals(toLower(coalesce(mg.name, '')), 'policyroot'), equals(toLower(coalesce(mg.properties.displayName, '')), 'policyroot'), equals(toLower(coalesce(mg.properties.displayName, '')), 'policy root')), or(equals(length(coalesce(mg.properties.parentNameChain, parse('[]'))), 1), equals(length(coalesce(mg.properties.parentNameChain, parse('[]'))), 2), equals(length(coalesce(mg.properties.parentNameChain, parse('[]'))), 3))))), 0))]",
+        "activeDirectorySolution": "[steps('basics').network.enableIdentityFwRules]",
+        "avdPublicNetworkAccess": "[steps('basics').network.enableAvdPublicAccess]",
+        "communityResourceId": "[steps('basics').communitySelector.id]",
+        "enableTelemetry": "[steps('basics').enableTelemetry]",
+        "enableWindowsUpdateFwRules": "[steps('basics').network.enableWindowsUpdateFwRules]",
+        "environmentAbbreviation": "[steps('basics').naming.environment]",
+        "identifier": "[steps('basics').naming.identifier]",
+        "location": "[steps('basics').communitySelector.location]",
+        "tags": "[steps('tags').tags]"
+      },
+      "kind": "Subscription",
+      "location": "[steps('basics').scope.location.name]",
+      "subscriptionId": "[steps('basics').scope.subscription.id]"
+    }
+  }
+}
