@@ -24,6 +24,10 @@ param privateDnsRegistrationType string = ''
 param newDnsZoneResourceGroupToCreateIn string = ''
 param enableDiagnostics bool = false
 param workspaceId string = ''
+param createDiagnosticWorkspace bool = false
+param newDiagnosticWorkspaceName string = ''
+param newDiagnosticWorkspaceResourceGroup string = ''
+param newDiagnosticWorkspaceLocation string = ''
 param enableTelemetry bool = true
 param isMsisrTenant bool = false
 param isPlxTenant bool = false
@@ -146,7 +150,7 @@ module keyvaultModule './keyVault.bicep' = {
     manuallySelectedPrivateDnsZone: manuallySelectedPrivateDnsZone
     newManagedResourceGroupPrivateDnsZone: newManagedResourceGroupPrivateDnsZone
     enableDiagnostics: enableDiagnostics
-    workspaceId: workspaceId
+    workspaceId: effectiveDiagnosticWorkspaceId
   }
 }
 
@@ -162,3 +166,28 @@ module telemetry './telemetry.bicep' = if (enableTelemetry && !isMsisrTenant) {
     name: 've.sc2.kv.97c081ef-4a88-4448-944c-2d74b9e6387f.ver${deployment().properties.template.contentVersion}'
   }
 }
+
+// Diagnostics workspace: reject a missing selection during template validation, and optionally create a new workspace.
+var createsDiagnosticWorkspace = enableDiagnostics && createDiagnosticWorkspace
+var diagnosticWorkspaceValidationFailures = filter([
+  enableDiagnostics && !createDiagnosticWorkspace && empty(trim(workspaceId)) ? 'Diagnostic settings are enabled, but no Log Analytics workspace was selected. Select an existing workspace, create a new one, or disable diagnostics.' : ''
+  createsDiagnosticWorkspace && (empty(trim(newDiagnosticWorkspaceName)) || empty(trim(newDiagnosticWorkspaceResourceGroup)) || empty(trim(newDiagnosticWorkspaceLocation))) ? 'A new diagnostics Log Analytics workspace needs a name, resource group and region.' : ''
+], message => !empty(message))
+
+module diagnosticWorkspacePreflight './diagnosticWorkspacePreflight.bicep' = {
+  name: empty(diagnosticWorkspaceValidationFailures) ? 'diagnosticWorkspacePreflight-${deploymentid}' : fail('Diagnostics validation failed: ${join(diagnosticWorkspaceValidationFailures, ' ')}')
+}
+
+module newDiagnosticWorkspace './logAnalytics.bicep' = if (createsDiagnosticWorkspace) {
+  name: 'diagnosticWorkspace-${deploymentid}'
+  // A skipped module still needs a valid scope: ARM resolves dependsOn IDs that reference it.
+  scope: resourceGroup(createsDiagnosticWorkspace ? newDiagnosticWorkspaceResourceGroup : 'diagnostic-workspace-not-created')
+  params: {
+    name: newDiagnosticWorkspaceName
+    location: newDiagnosticWorkspaceLocation
+    tagsByResource: tagsByResource
+  }
+}
+
+var effectiveDiagnosticWorkspaceId = createsDiagnosticWorkspace ? newDiagnosticWorkspace!.outputs.workspaceId : workspaceId
+

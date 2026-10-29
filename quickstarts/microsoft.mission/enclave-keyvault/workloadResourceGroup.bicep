@@ -10,7 +10,7 @@ param tags object = {}
 @description('The existing workload metadata to preserve when attaching a resource group.')
 param existingWorkloadTags object = {}
 
-@description('The resource ID of the target virtual enclave.')
+@description('The resource ID of the target enclave.')
 param virtualEnclaveResourceId string
 
 param workloadResourceGroup string
