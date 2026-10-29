@@ -452,6 +452,63 @@
             DependsOn                    = "[WindowsFeature]AddADFS", "[ADUser]CreateAdfsSvcAccount", "[Script]ExportCertificates"
         }
 
+        # On a DC, user rights are defined by the Default Domain Controllers Policy, which overrides local policy.
+        # The ADFS service requires SeAuditPrivilege ("Generate security audits"), otherwise it cannot restart (issue #20)
+        Script GrantAdfsSvcAuditPrivilege {
+            SetScript  = 
+            {
+                $domainFqdn = $using:DomainFQDN
+                $account = "$($using:DomainNetbiosName)\$($using:AdfsSvcCreds.UserName)"
+                $sid = (New-Object System.Security.Principal.NTAccount($account)).Translate([System.Security.Principal.SecurityIdentifier]).Value
+                $gpoGuid = "{6AC1786C-016F-11D2-945F-00C04FB984F9}" # well-known identifier for Default Domain Controllers Policy
+                $gpoPath = "\\$domainFqdn\SYSVOL\$domainFqdn\Policies\$gpoGuid"
+                $infPath = "$gpoPath\MACHINE\Microsoft\Windows NT\SecEdit\GptTmpl.inf"
+                $lines = [System.Collections.Generic.List[string]](Get-Content -Path $infPath -Encoding Unicode)
+                $privIndex = $lines.FindIndex({ param($l) $l.Trim() -eq "[Privilege Rights]" })
+                if ($privIndex -lt 0) {
+                    $lines.Add("[Privilege Rights]")
+                    $privIndex = $lines.Count - 1
+                }
+                $auditIndex = -1
+                for ($i = $privIndex + 1; $i -lt $lines.Count -and $lines[$i].Trim() -notlike "[[]*"; $i++) {
+                    if ($lines[$i] -match "^\s*SeAuditPrivilege\s*=") { $auditIndex = $i; break }
+                }
+                if ($auditIndex -ge 0) {
+                    $lines[$auditIndex] = "$($lines[$auditIndex].TrimEnd()),*$sid"
+                }
+                else {
+                    $lines.Insert($privIndex + 1, "SeAuditPrivilege = *S-1-5-19,*S-1-5-20,*$sid")
+                }
+                Set-Content -Path $infPath -Value $lines -Encoding Unicode
+
+                # Increment the machine version (low 16 bits) in GPT.INI and in the AD object, so the change is applied
+                $gptIniPath = "$gpoPath\GPT.INI"
+                $gptIni = Get-Content -Path $gptIniPath -Raw
+                $newVersion = 0
+                $gptIni = [regex]::Replace($gptIni, "(?m)^Version=(\d+)", {
+                        param($m)
+                        $script:newVersion = [int]$m.Groups[1].Value + 1
+                        "Version=$($script:newVersion)"
+                    })
+                Set-Content -Path $gptIniPath -Value $gptIni.TrimEnd() -Encoding Ascii
+                $gpoDn = "CN=$gpoGuid,CN=Policies,CN=System,$((Get-ADDomain).DistinguishedName)"
+                Set-ADObject -Identity $gpoDn -Replace @{ versionNumber = $script:newVersion }
+
+                gpupdate /force | Out-Null
+                Restart-Service -Name adfssrv -Force
+            }
+            TestScript = 
+            {
+                $account = "$($using:DomainNetbiosName)\$($using:AdfsSvcCreds.UserName)"
+                $sid = (New-Object System.Security.Principal.NTAccount($account)).Translate([System.Security.Principal.SecurityIdentifier]).Value
+                $infPath = "\\$($using:DomainFQDN)\SYSVOL\$($using:DomainFQDN)\Policies\{6AC1786C-016F-11D2-945F-00C04FB984F9}\MACHINE\Microsoft\Windows NT\SecEdit\GptTmpl.inf"
+                $content = Get-Content -Path $infPath -Encoding Unicode -Raw
+                return ($content -match "(?m)^\s*SeAuditPrivilege\s*=.*\*$([regex]::Escape($sid))(,|\s*$)")
+            }
+            GetScript  = { return @{ result = "" } }
+            DependsOn  = "[AdfsFarm]CreateADFSFarm"
+        }
+
         # This DNS record is tested by other VMs, to join the domain once it is found
         # Added after DSC resource AdfsFarm, because it is the last operation that triggers a reboot
         DnsRecordA AddADFSHostDNS {
@@ -459,7 +516,7 @@
             ZoneName    = $DomainFQDN
             IPv4Address = $PrivateIP
             Ensure      = "Present"
-            DependsOn   = "[AdfsFarm]CreateADFSFarm"
+            DependsOn   = "[AdfsFarm]CreateADFSFarm", "[Script]GrantAdfsSvcAuditPrivilege"
         }
 
         # Create other service accounts
@@ -530,7 +587,11 @@
             Name                       = "$AdfsOidcAGName - Native application"
             ApplicationGroupIdentifier = $AdfsOidcAGName
             Identifier                 = $AdfsOidcIdentifier
-            RedirectUri                = "https://*.$DomainFQDN/"
+            RedirectUri                = @(
+                "https://$SharePointSitesAuthority.$DomainFQDN"
+                "https://OhMy.$DomainFQDN"
+                "https://HNSC1.$DomainFQDN"
+            )
             DependsOn                  = "[AdfsApplicationGroup]OidcGroup"
         }
 

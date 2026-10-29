@@ -1,13 +1,15 @@
 targetScope = 'resourceGroup'
-metadata description = 'Create a DC, a SQL Server 2025, and from 1 to 5 server(s) hosting a SharePoint Subscription / 2019 / 2016 farm with an extensive configuration, including trusted authentication, user profiles with personal sites, an OAuth trust (using a certificate), a dedicated IIS site for hosting high-trust add-ins, etc... The latest version of key softwares (including Fiddler, vscode, np++, 7zip, ULS Viewer) is installed. SharePoint machines have additional fine-tuning to make them immediately usable (remote administration tools, custom policies for Edge and Chrome, shortcuts, etc...).'
+metadata description = 'Create a DC, a SQL Server 2025, and from 1 to 5 server(s) hosting a SharePoint Subscription Edition farm with an extensive configuration, including trusted authentication, user profiles with personal sites, an OAuth trust (using a certificate), a dedicated IIS site for hosting high-trust add-ins, etc... The latest version of key softwares (including Fiddler, vscode, np++, 7zip, ULS Viewer) is installed. SharePoint machines have additional fine-tuning to make them immediately usable (remote administration tools, custom policies for Edge and Chrome, shortcuts, etc...).'
 metadata author = 'Yvand'
 
 @description('Location for all the resources.')
 param location string = resourceGroup().location
 
-@description('Version of the SharePoint farm to create.')
+@description('Version of the SharePoint Subscription Edition farm to create.')
 @allowed([
   'Subscription-Latest'
+  'Subscription-26H2'
+  'Subscription-26H1'
   'Subscription-25H2'
   'Subscription-25H1'
   'Subscription-24H2'
@@ -16,8 +18,6 @@ param location string = resourceGroup().location
   'Subscription-23H1'
   'Subscription-22H2'
   'Subscription-RTM'
-  '2019'
-  '2016'
 ])
 param sharePointVersion string = 'Subscription-Latest'
 
@@ -330,97 +330,105 @@ var resourceGroupNameFormatted = replace(
   '-'
 )
 
-var sharePointSettings = {
-  isSharePointSubscription: (startsWith(sharePointVersion, 'subscription') ? true : false)
-  sharePointImagesList: {
-    Subscription: 'MicrosoftWindowsServer:WindowsServer:2025-datacenter-azure-edition:latest'
-    sp2019: 'MicrosoftSharePoint:MicrosoftSharePointServer:sp2019gen2smalldisk:latest'
-    sp2016: 'MicrosoftSharePoint:MicrosoftSharePointServer:sp2016:latest'
+var sharePointSubscriptionBits = [
+  {
+    Label: 'SPRTM'
+    Packages: [
+      {
+        DownloadUrl: 'https://download.microsoft.com/download/3/f/5/3f5f8a7e-462b-41ff-a5b2-04bdf5821ceb/OfficeServer.iso'
+        ChecksumType: 'SHA256'
+        Checksum: 'C576B847C573234B68FC602A0318F5794D7A61D8149EB6AE537AF04470B7FC05'
+      }
+    ]
   }
-  sharePointSubscriptionBits: [
-    {
-      Label: 'SPRTM'
-      Packages: [
-        {
-          DownloadUrl: 'https://download.microsoft.com/download/3/f/5/3f5f8a7e-462b-41ff-a5b2-04bdf5821ceb/OfficeServer.iso'
-          ChecksumType: 'SHA256'
-          Checksum: 'C576B847C573234B68FC602A0318F5794D7A61D8149EB6AE537AF04470B7FC05'
-        }
-      ]
-    }
-    {
-      Label: 'SP22H2'
-      Packages: [
-        {
-          DownloadUrl: 'https://download.microsoft.com/download/8/d/f/8dfcb515-6e49-42e5-b20f-5ebdfd19d8e7/wssloc-subscription-kb5002270-fullfile-x64-glb.exe'
-          ChecksumType: 'SHA256'
-          Checksum: '7E496530EB873146650A9E0653DE835CB2CAD9AF8D154CBD7387BB0F2297C9FC'
-        }
-        {
-          DownloadUrl: 'https://download.microsoft.com/download/3/f/5/3f5b1ee0-3336-45d7-b2f4-1e6af977d574/sts-subscription-kb5002271-fullfile-x64-glb.exe'
-          ChecksumType: 'SHA256'
-          Checksum: '247011443AC573D4F03B1622065A7350B8B3DAE04D6A5A6DC64C8270A3BE7636'
-        }
-      ]
-    }
-    {
-      Label: 'SP23H1'
-      Packages: [
-        {
-          DownloadUrl: 'https://download.microsoft.com/download/c/6/a/c6a17105-3d86-42ad-888d-49b22383bfa1/uber-subscription-kb5002355-fullfile-x64-glb.exe'
-        }
-      ]
-    }
-    {
-      Label: 'SP23H2'
-      Packages: [
-        {
-          DownloadUrl: 'https://download.microsoft.com/download/f/5/5/f5559e3f-8b24-419f-b238-b09cf986e927/uber-subscription-kb5002474-fullfile-x64-glb.exe'
-        }
-      ]
-    }
-    {
-      Label: 'SP24H1'
-      Packages: [
-        {
-          DownloadUrl: 'https://download.microsoft.com/download/b/a/b/bab0c7cc-0454-474b-8538-7927f75e6486/uber-subscription-kb5002564-fullfile-x64-glb.exe'
-        }
-      ]
-    }
-    {
-      Label: 'SP24H2'
-      Packages: [
-        {
-          DownloadUrl: 'https://download.microsoft.com/download/6/6/a/66a0057f-79af-4307-8263-103ee75ef5c6/uber-subscription-kb5002640-fullfile-x64-glb.exe'
-        }
-      ]
-    }
-    {
-      Label: 'SP25H1'
-      Packages: [
-        {
-          DownloadUrl: 'https://download.microsoft.com/download/0b131072-7ee6-41ea-b33a-b3410865f3a0/uber-subscription-kb5002698-fullfile-x64-glb.exe'
-        }
-      ]
-    }
-    {
-      Label: 'SP25H2'
-      Packages: [
-        {
-          DownloadUrl: 'https://download.microsoft.com/download/0ae39b29-890d-428c-bcee-c93eeca2053b/uber-subscription-kb5002784-fullfile-x64-glb.exe'
-        }
-      ]
-    }
-    {
-      Label: 'SPLatest'
-      Packages: [
-        {
-          DownloadUrl: 'https://download.microsoft.com/download/28e5d95a-225d-4669-b3da-2fe1aec3399c/uber-subscription-kb5002908-fullfile-x64-glb.exe'
-        }
-      ]
-    }
-  ]
-}
+  {
+    Label: 'SP22H2'
+    Packages: [
+      {
+        DownloadUrl: 'https://download.microsoft.com/download/8/d/f/8dfcb515-6e49-42e5-b20f-5ebdfd19d8e7/wssloc-subscription-kb5002270-fullfile-x64-glb.exe'
+        ChecksumType: 'SHA256'
+        Checksum: '7E496530EB873146650A9E0653DE835CB2CAD9AF8D154CBD7387BB0F2297C9FC'
+      }
+      {
+        DownloadUrl: 'https://download.microsoft.com/download/3/f/5/3f5b1ee0-3336-45d7-b2f4-1e6af977d574/sts-subscription-kb5002271-fullfile-x64-glb.exe'
+        ChecksumType: 'SHA256'
+        Checksum: '247011443AC573D4F03B1622065A7350B8B3DAE04D6A5A6DC64C8270A3BE7636'
+      }
+    ]
+  }
+  {
+    Label: 'SP23H1'
+    Packages: [
+      {
+        DownloadUrl: 'https://download.microsoft.com/download/c/6/a/c6a17105-3d86-42ad-888d-49b22383bfa1/uber-subscription-kb5002355-fullfile-x64-glb.exe'
+      }
+    ]
+  }
+  {
+    Label: 'SP23H2'
+    Packages: [
+      {
+        DownloadUrl: 'https://download.microsoft.com/download/f/5/5/f5559e3f-8b24-419f-b238-b09cf986e927/uber-subscription-kb5002474-fullfile-x64-glb.exe'
+      }
+    ]
+  }
+  {
+    Label: 'SP24H1'
+    Packages: [
+      {
+        DownloadUrl: 'https://download.microsoft.com/download/b/a/b/bab0c7cc-0454-474b-8538-7927f75e6486/uber-subscription-kb5002564-fullfile-x64-glb.exe'
+      }
+    ]
+  }
+  {
+    Label: 'SP24H2'
+    Packages: [
+      {
+        DownloadUrl: 'https://download.microsoft.com/download/6/6/a/66a0057f-79af-4307-8263-103ee75ef5c6/uber-subscription-kb5002640-fullfile-x64-glb.exe'
+      }
+    ]
+  }
+  {
+    Label: 'SP25H1'
+    Packages: [
+      {
+        DownloadUrl: 'https://download.microsoft.com/download/0b131072-7ee6-41ea-b33a-b3410865f3a0/uber-subscription-kb5002698-fullfile-x64-glb.exe'
+      }
+    ]
+  }
+  {
+    Label: 'SP25H2'
+    Packages: [
+      {
+        DownloadUrl: 'https://download.microsoft.com/download/0ae39b29-890d-428c-bcee-c93eeca2053b/uber-subscription-kb5002784-fullfile-x64-glb.exe'
+      }
+    ]
+  }
+  {
+    Label: 'SP26H1'
+    Packages: [
+      {
+        DownloadUrl: 'https://download.microsoft.com/download/7b4c3ae5-ce9d-4f5d-8e30-cefd28c92c3e/uber-subscription-kb5002873-fullfile-x64-glb.exe'
+      }
+    ]
+  }
+  {
+    Label: 'SP26H2'
+    Packages: [
+      {
+        DownloadUrl: 'https://download.microsoft.com/download/23516bd3-8d7e-41c8-9cfd-1fa72bcf52f8/uber-subscription-kb5002927-fullfile-x64-glb.exe'
+      }
+    ]
+  }
+  {
+    Label: 'SPLatest'
+    Packages: [
+      {
+        DownloadUrl: 'https://download.microsoft.com/download/23516bd3-8d7e-41c8-9cfd-1fa72bcf52f8/uber-subscription-kb5002927-fullfile-x64-glb.exe'
+      }
+    ]
+  }
+]
 
 var templateSettings = {
   vNetPrivatePrefix: '10.1.0.0/16'
@@ -432,23 +440,14 @@ var templateSettings = {
   vmFEName: 'FE'
   vmDCImage: 'MicrosoftWindowsServer:WindowsServer:2025-datacenter-azure-edition-smalldisk:latest'
   vmSQLImage: 'MicrosoftSQLServer:sql2025-ws2025:stddev-gen2:latest'
-  vmSharePointImage: sharePointSettings.isSharePointSubscription
-    ? sharePointSettings.sharePointImagesList.Subscription
-    : sharePointVersion == '2019'
-        ? sharePointSettings.sharePointImagesList.sp2019
-        : sharePointSettings.sharePointImagesList.sp2016
+  vmSharePointImage: 'MicrosoftWindowsServer:WindowsServer:2025-datacenter-azure-edition:latest'
 }
 
 var environmentSettings = {
   dcPrivateIPAddress: '10.1.1.100'
   sharePointSitesAuthority: 'spsites'
   sharePointCentralAdminPort: 5000
-  sharePointBitsDsc: (sharePointSettings.isSharePointSubscription
-    ? sharePointSettings.sharePointSubscriptionBits
-    : '')
-  sharePointVersion: (sharePointSettings.isSharePointSubscription
-    ? 'SP${split(sharePointVersion, '-')[1]}'
-    : sharePointVersion)
+  sharePointVersion: 'SP${split(sharePointVersion, '-')[1]}'
   localAdminUserName: 'l-${uniqueString(subscription().subscriptionId)}'
   enableAnalysis: false
   sqlAlias: 'SQLAlias'
@@ -638,7 +637,7 @@ var baseVirtualMachines = [
       virtualMachineSize: vmSharePointSize
       virtualMachineStorage: vmSharePointStorage
       virtualMachineDiskSizeGB: 128
-      virtualMachineSecurityType: sharePointVersion == '2016' ? null : 'TrustedLaunch'
+      virtualMachineSecurityType: 'TrustedLaunch'
       imageReference: {
         publisher: split(templateSettings.vmSharePointImage, ':')[0]
         offer: split(templateSettings.vmSharePointImage, ':')[1]
@@ -664,11 +663,8 @@ var baseVirtualMachines = [
     dscSettings: {
       wmfVersion: 'latest'
       configuration: {
-        url: uri(
-          _artifactsLocation,
-          '${sharePointSettings.isSharePointSubscription ? 'dsc-spse-main.zip' : 'dsc-splegacy-main.zip'}${_artifactsLocationSasToken}'
-        )
-        script: (sharePointSettings.isSharePointSubscription ? 'dsc-spse-main.ps1' : 'dsc-splegacy-main.ps1')
+        url: uri(_artifactsLocation, 'dsc-spse-main.zip${_artifactsLocationSasToken}')
+        script: 'dsc-spse-main.ps1'
         function: 'ConfigSpMain'
       }
       configurationArguments: {
@@ -681,7 +677,7 @@ var baseVirtualMachines = [
         SharePointSitesAuthority: environmentSettings.sharePointSitesAuthority
         SharePointCentralAdminPort: environmentSettings.sharePointCentralAdminPort
         EnableAnalysis: environmentSettings.enableAnalysis
-        SharePointBits: environmentSettings.sharePointBitsDsc
+        SharePointBits: sharePointSubscriptionBits
         DefaultZoneMustBeHttps: defaultZoneMustBeHttps
         SharePointConfigurationLevel: sharePointConfigurationLevel
         CustomSharePointConfiguration: filter(customSharePointConfiguration, item => item != 'null')
@@ -740,7 +736,7 @@ var frontendVirtualMachinesSettings = {
     virtualMachineSize: vmSharePointSize
     virtualMachineStorage: vmSharePointStorage
     virtualMachineDiskSizeGB: 128
-    virtualMachineSecurityType: sharePointVersion == '2016' ? null : 'TrustedLaunch'
+    virtualMachineSecurityType: 'TrustedLaunch'
     imageReference: {
       publisher: split(templateSettings.vmSharePointImage, ':')[0]
       offer: split(templateSettings.vmSharePointImage, ':')[1]
@@ -752,11 +748,8 @@ var frontendVirtualMachinesSettings = {
   dscSettings: {
     wmfVersion: 'latest'
     configuration: {
-      url: uri(
-        _artifactsLocation,
-        '${(sharePointSettings.isSharePointSubscription ? 'dsc-spse-frontend.zip' : 'dsc-splegacy-frontend.zip')}${_artifactsLocationSasToken}'
-      )
-      script: (sharePointSettings.isSharePointSubscription ? 'dsc-spse-frontend.ps1' : 'dsc-splegacy-frontend.ps1')
+      url: uri(_artifactsLocation, 'dsc-spse-frontend.zip${_artifactsLocationSasToken}')
+      script: 'dsc-spse-frontend.ps1'
       function: 'ConfigSpFrontend'
     }
     configurationArguments: {
@@ -767,7 +760,7 @@ var frontendVirtualMachinesSettings = {
       SQLAlias: environmentSettings.sqlAlias
       SharePointVersion: environmentSettings.sharePointVersion
       EnableAnalysis: environmentSettings.enableAnalysis
-      SharePointBits: environmentSettings.sharePointBitsDsc
+      SharePointBits: sharePointSubscriptionBits
     }
     privacy: {
       dataCollection: 'enable'
@@ -872,7 +865,7 @@ module frontends 'virtualMachine.bicep' = [
       virtualMachineImageReference: frontendVirtualMachinesSettings.virtualMachineSettings.imageReference
       virtualMachineSize: frontendVirtualMachinesSettings.virtualMachineSettings.virtualMachineSize
       virtualMachineStorageAccountType: frontendVirtualMachinesSettings.virtualMachineSettings.virtualMachineStorage
-      virtualMachineSecurityType: frontendVirtualMachinesSettings.virtualMachineSettings.?virtualMachineSecurityType
+      virtualMachineSecurityType: frontendVirtualMachinesSettings.virtualMachineSettings.virtualMachineSecurityType
       pipConfiguration: outboundAccessMethod == 'PublicIPAddress'
         ? {
             publicIpNameSuffix: '-pip-01'

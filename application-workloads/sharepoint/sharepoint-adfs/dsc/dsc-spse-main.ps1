@@ -1114,6 +1114,7 @@ configuration ConfigSpMain
                 Name                    = $TrustedAuthenticationProviderName
                 Description             = "Federation with $DomainFQDN"
                 DefaultClientIdentifier = $AdfsOidcIdentifier
+                UseStateToRedirect      = $true
                 MetadataEndPoint        = "https://adfs.$DomainFQDN/adfs/.well-known/openid-configuration"
                 IdentifierClaim         = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/upn"
                 ClaimsMappings          = @(
@@ -2165,6 +2166,8 @@ enum SharePointBuild {
     SP24H2
     SP25H1
     SP25H2
+    SP26H1
+    SP26H2
     SPLatest
 }
 
