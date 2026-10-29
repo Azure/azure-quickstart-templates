@@ -1,0 +1,1264 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2021-09-09/uiFormDefinition.schema.json",
+    "view": {
+        "kind": "Form",
+        "properties": {
+            "title": "Storage Account",
+            "steps": [
+                {
+                    "name": "basics",
+                    "label": "Basics",
+                    "elements": [
+                        {
+                            "name": "subscriptionApi",
+                            "type": "Microsoft.Solutions.ArmApiControl",
+                            "request": {
+                                "method": "GET",
+                                "path": "/subscriptions?api-version=2020-01-01"
+                            }
+                        },
+                        {
+                            "name": "mgEntities",
+                            "type": "Microsoft.Solutions.ArmApiControl",
+                            "request": {
+                                "method": "POST",
+                                "path": "/providers/Microsoft.Management/getEntities?api-version=2020-05-01"
+                            }
+                        },
+                        {
+                            "name": "subscriptionSelector",
+                            "type": "Microsoft.Common.DropDown",
+                            "label": "Subscription",
+                            "filter": true,
+                            "toolTip": "Select the Azure subscription where resources will be deployed.",
+                            "constraints": {
+                                "allowedValues": "[map(steps('basics').subscriptionApi.value, (item) => parse(concat('{\"label\":\"', item.displayName, ' (', item.subscriptionId, ')\",\"value\":\"', item.subscriptionId, '\"}')))]",
+                                "required": true
+                            },
+                            "visible": true
+                        },
+                        { "name": "isPlxTenantControl", "type": "Microsoft.Solutions.ArmApiControl", "condition": "[not(empty(steps('basics').subscriptionSelector))]", "request": { "method": "POST", "path": "/providers/Microsoft.ResourceGraph/resources?api-version=2021-03-01", "body": { "subscriptions": ["[steps('basics').subscriptionSelector]"], "query": "ResourceContainers | where type == 'microsoft.resources/subscriptions' | mv-expand mgChain = properties.managementGroupAncestorsChain | extend mgName = tostring(mgChain.name), mgDisplayName = tostring(mgChain.displayName) | summarize msisrCount = countif(mgName matches regex '^[a-z][a-z0-9]{2,3}lz[0-9]{0,2}$'), plxCount = countif(tolower(mgName) == 'policyroot' or tolower(mgDisplayName) == 'policyroot' or tolower(mgDisplayName) == 'policy root') by subscriptionId | project subscriptionId, PLX = todynamic(iff(msisrCount == 0 and plxCount > 0, 'true', 'false'))", "options": { "resultFormat": "objectArray" } } } },
+                        {
+                            "name": "msisrLookup",
+                            "type": "Microsoft.Solutions.ArmApiControl",
+                            "condition": "[not(empty(steps('basics').subscriptionSelector))]",
+                            "request": {
+                                "method": "POST",
+                                "path": "/providers/Microsoft.ResourceGraph/resources?api-version=2021-03-01",
+                                "body": {
+                                    "subscriptions": [
+                                        "[steps('basics').subscriptionSelector]"
+                                    ],
+                                    "query": "ResourceContainers | where type == 'microsoft.resources/subscriptions' | mv-expand mgChain = properties.managementGroupAncestorsChain | extend mgName = tostring(mgChain.name) | summarize matchingManagementGroups = countif(mgName matches regex '^[a-z][a-z0-9]{2,3}lz[0-9]{0,2}$') by subscriptionId | project subscriptionId, MSISR = todynamic(iff(matchingManagementGroups > 0, 'true', 'false'))",
+                                    "options": {
+                                        "resultFormat": "objectArray"
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            "name": "enclaveExistsQuery",
+                            "type": "Microsoft.Solutions.ArmApiControl",
+                            "condition": "[not(empty(steps('basics').subscriptionSelector))]",
+                            "request": {
+                                "method": "POST",
+                                "path": "/providers/Microsoft.ResourceGraph/resources?api-version=2021-03-01",
+                                "body": {
+                                    "subscriptions": [
+                                        "[steps('basics').subscriptionSelector]"
+                                    ],
+                                    "query": "Resources | where type =~ 'microsoft.mission/virtualenclaves'",
+                                    "options": {
+                                        "resultFormat": "objectArray"
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            "name": "enclaveSelector",
+                            "type": "Microsoft.Common.DropDown",
+                            "label": "AE Enclave",
+                            "filter": true,
+                            "toolTip": "Select the Azure Virtual Enclave to deploy the Storage Account into.",
+                            "constraints": {
+                                "allowedValues": "[map(steps('basics').enclaveExistsQuery.data, (item) => parse(concat('{\"label\":\"', item.name, '\",\"value\":\"', item.id, '\"}')))]",
+                                "required": true
+                            },
+                            "visible": "[and(not(empty(steps('basics').subscriptionSelector)), not(empty(steps('basics').enclaveExistsQuery.data)))]"
+                        },
+                        {
+                            "name": "noEnclaveLocationsApi",
+                            "type": "Microsoft.Solutions.ArmApiControl",
+                            "condition": "[and(not(empty(steps('basics').subscriptionSelector)), empty(steps('basics').enclaveExistsQuery.data))]",
+                            "request": {
+                                "method": "GET",
+                                "path": "[concat('/subscriptions/', steps('basics').subscriptionSelector, '/locations?api-version=2022-12-01')]"
+                            }
+                        },
+                        {
+                            "name": "noEnclaveLocation",
+                            "type": "Microsoft.Common.DropDown",
+                            "label": "Region",
+                            "filter": true,
+                            "toolTip": "Select the Azure region. Choose a region that meets data residency and compliance requirements.",
+                            "constraints": {
+                                "allowedValues": "[map(filter(steps('basics').noEnclaveLocationsApi.value, (item) => equals(item.metadata.regionType, 'Physical')), (item) => parse(concat('{\"label\":\"', item.displayName, '\",\"value\":\"', item.name, '\"}')))]",
+                                "required": "[and(not(empty(steps('basics').subscriptionSelector)), empty(steps('basics').enclaveExistsQuery.data))]"
+                            },
+                            "visible": "[and(not(empty(steps('basics').subscriptionSelector)), empty(steps('basics').enclaveExistsQuery.data))]"
+                        },
+                        {
+                            "name": "noEnclaveRgToggle",
+                            "type": "Microsoft.Common.OptionsGroup",
+                            "label": "Resource Group",
+                            "defaultValue": "Use Existing",
+                            "toolTip": "Choose to deploy into an existing resource group or create a new one.",
+                            "constraints": {
+                                "allowedValues": [
+                                    {
+                                        "label": "Use Existing",
+                                        "value": "useExisting"
+                                    },
+                                    {
+                                        "label": "Create New",
+                                        "value": "createNew"
+                                    }
+                                ],
+                                "required": true
+                            },
+                            "visible": "[and(not(empty(steps('basics').subscriptionSelector)), empty(steps('basics').enclaveExistsQuery.data))]"
+                        },
+                        {
+                            "name": "noEnclaveExistingRgApi",
+                            "type": "Microsoft.Solutions.ArmApiControl",
+                            "condition": "[and(not(empty(steps('basics').subscriptionSelector)), empty(steps('basics').enclaveExistsQuery.data), equals(steps('basics').noEnclaveRgToggle, 'useExisting'))]",
+                            "request": {
+                                "method": "GET",
+                                "path": "[concat('/subscriptions/', steps('basics').subscriptionSelector, '/resourceGroups?api-version=2021-04-01')]"
+                            }
+                        },
+                        {
+                            "name": "noEnclaveExistingRg",
+                            "type": "Microsoft.Common.DropDown",
+                            "label": "Existing Resource Group",
+                            "filter": true,
+                            "toolTip": "Select an existing resource group in the chosen subscription.",
+                            "constraints": {
+                                "allowedValues": "[map(steps('basics').noEnclaveExistingRgApi.value, (item) => parse(concat('{\"label\":\"', item.name, '\",\"value\":\"', item.name, '\"}')))]",
+                                "required": "[and(not(empty(steps('basics').subscriptionSelector)), empty(steps('basics').enclaveExistsQuery.data), equals(steps('basics').noEnclaveRgToggle, 'useExisting'))]"
+                            },
+                            "visible": "[and(not(empty(steps('basics').subscriptionSelector)), empty(steps('basics').enclaveExistsQuery.data), equals(steps('basics').noEnclaveRgToggle, 'useExisting'))]"
+                        },
+                        {
+                            "name": "noEnclaveNewRgName",
+                            "type": "Microsoft.Common.TextBox",
+                            "label": "New Resource Group Name",
+                            "toolTip": "Enter a name for the new resource group.",
+                            "constraints": {
+                                "required": true,
+                                "validations": [
+                                    {
+                                        "regex": "^[a-zA-Z0-9._()\\-]{1,90}$",
+                                        "message": "1-90 chars. Only alphanumerics, periods, underscores, hyphens, and parentheses are allowed."
+                                    }
+                                ]
+                            },
+                            "visible": "[and(not(empty(steps('basics').subscriptionSelector)), empty(steps('basics').enclaveExistsQuery.data), equals(steps('basics').noEnclaveRgToggle, 'createNew'))]"
+                        },
+                        {
+                            "name": "newRgExistsCheckApi",
+                            "type": "Microsoft.Solutions.ArmApiControl",
+                            "condition": "[and(not(empty(steps('basics').noEnclaveNewRgName)), equals(steps('basics').noEnclaveRgToggle, 'createNew'))]",
+                            "request": {
+                                "method": "GET",
+                                "path": "[concat('/subscriptions/', steps('basics').subscriptionSelector, '/resourceGroups/', steps('basics').noEnclaveNewRgName, '?api-version=2021-04-01')]"
+                            }
+                        },
+                        {
+                            "name": "rgLocationConflictWarning",
+                            "type": "Microsoft.Common.InfoBox",
+                            "visible": "[and(equals(steps('basics').noEnclaveRgToggle, 'createNew'), not(empty(steps('basics').newRgExistsCheckApi.location)), not(equals(steps('basics').newRgExistsCheckApi.location, steps('basics').noEnclaveLocation)))]",
+                            "options": {
+                                "icon": "Error",
+                                "text": "[concat('Resource group \"', steps('basics').noEnclaveNewRgName, '\" already exists in ', steps('basics').newRgExistsCheckApi.location, ' but you selected ', steps('basics').noEnclaveLocation, '. Choose a different resource group name or select the matching region.')]"
+                            }
+                        },
+                        {
+                            "name": "enclaveApi",
+                            "type": "Microsoft.Solutions.ArmApiControl",
+                            "condition": "[not(empty(steps('basics').enclaveSelector))]",
+                            "request": {
+                                "method": "GET",
+                                "path": "[concat(steps('basics').enclaveSelector, '?api-version=2026-03-01-preview')]"
+                            }
+                        },
+                        {
+                            "name": "enclaveMaintenanceModeLoading",
+                            "type": "Microsoft.Common.InfoBox",
+                            "visible": "[and(not(empty(steps('basics').enclaveSelector)), or(empty(steps('basics').enclaveApi), not(equals(toLower(coalesce(steps('basics').enclaveApi.id, '')), toLower(steps('basics').enclaveSelector)))))]",
+                            "options": {
+                                "icon": "Info",
+                                "text": "Loading maintenance mode for the selected enclave."
+                            }
+                        },
+                        {
+                            "name": "enclaveGeneralMaintenanceModeWarning",
+                            "type": "Microsoft.Common.InfoBox",
+                            "visible": "[and(not(empty(steps('basics').enclaveSelector)), not(empty(steps('basics').enclaveApi)), equals(toLower(coalesce(steps('basics').enclaveApi.id, '')), toLower(steps('basics').enclaveSelector)), equals(toLower(coalesce(steps('basics').enclaveApi.properties.maintenanceModeConfiguration.mode, '')), 'general'))]",
+                            "options": {
+                                "icon": "Warning",
+                                "text": "The selected enclave is in General maintenance mode. Ensure the identity executing this deployment is listed directly, or through an excluded group or service principal, in the enclave maintenance mode principals and has the required RBAC permissions. Otherwise, virtual network or subnet join operations will fail."
+                            }
+                        },
+                        {
+                            "name": "enclaveMaintenanceModeError",
+                            "type": "Microsoft.Common.InfoBox",
+                            "visible": "[and(not(empty(steps('basics').enclaveSelector)), not(empty(steps('basics').enclaveApi)), equals(toLower(coalesce(steps('basics').enclaveApi.id, '')), toLower(steps('basics').enclaveSelector)), not(or(equals(toLower(coalesce(steps('basics').enclaveApi.properties.maintenanceModeConfiguration.mode, '')), 'general'), equals(toLower(coalesce(steps('basics').enclaveApi.properties.maintenanceModeConfiguration.mode, '')), 'advanced'))))]",
+                            "options": {
+                                "icon": "Error",
+                                "text": "The selected enclave has maintenance mode Off or its mode could not be verified. This deployment attaches resources to the enclave virtual network. Enable General maintenance mode and list the deploying identity in maintenance mode principals, or enable Advanced maintenance mode, before continuing."
+                            }
+                        },
+                        {
+                            "name": "enclaveMaintenanceModeValidator",
+                            "type": "Microsoft.Common.TextBox",
+                            "label": "Maintenance mode validation",
+                            "defaultValue": "Maintenance mode must be General or Advanced.",
+                            "readOnly": true,
+                            "constraints": {
+                                "required": true,
+                                "validations": [
+                                    {
+                                        "isValid": "[or(empty(steps('basics').enclaveSelector), empty(steps('basics').enclaveApi), not(equals(toLower(coalesce(steps('basics').enclaveApi.id, '')), toLower(steps('basics').enclaveSelector))), equals(toLower(coalesce(steps('basics').enclaveApi.properties.maintenanceModeConfiguration.mode, '')), 'general'), equals(toLower(coalesce(steps('basics').enclaveApi.properties.maintenanceModeConfiguration.mode, '')), 'advanced'))]",
+                                        "message": "Enable General maintenance mode with the deploying identity listed in maintenance mode principals, or enable Advanced maintenance mode."
+                                    }
+                                ]
+                            },
+                            "visible": "[and(not(empty(steps('basics').enclaveSelector)), not(empty(steps('basics').enclaveApi)), equals(toLower(coalesce(steps('basics').enclaveApi.id, '')), toLower(steps('basics').enclaveSelector)), not(or(equals(toLower(coalesce(steps('basics').enclaveApi.properties.maintenanceModeConfiguration.mode, '')), 'general'), equals(toLower(coalesce(steps('basics').enclaveApi.properties.maintenanceModeConfiguration.mode, '')), 'advanced'))))]"
+                        },
+                        {
+                            "name": "workloadUseExisting",
+                            "type": "Microsoft.Common.OptionsGroup",
+                            "label": "AE Workload",
+                            "toolTip": "Choose to use an existing AE Workload or create a new one.",
+                            "defaultValue": "Use Existing",
+                            "constraints": {
+                                "allowedValues": [
+                                    {
+                                        "label": "Use Existing",
+                                        "value": true
+                                    },
+                                    {
+                                        "label": "Create New",
+                                        "value": false
+                                    }
+                                ],
+                                "required": true
+                            },
+                            "visible": "[not(empty(steps('basics').enclaveExistsQuery.data))]"
+                        },
+                        {
+                            "name": "workloadApi",
+                            "type": "Microsoft.Solutions.ArmApiControl",
+                            "condition": "[and(steps('basics').workloadUseExisting, not(empty(steps('basics').enclaveSelector)))]",
+                            "request": {
+                                "method": "GET",
+                                "path": "[concat(steps('basics').enclaveSelector, '/workloads?api-version=2026-03-01-preview')]"
+                            }
+                        },
+                        {
+                            "name": "workload",
+                            "type": "Microsoft.Common.DropDown",
+                            "label": "Existing AE Workload",
+                            "filter": true,
+                            "toolTip": "Choose the existing AE Workload to deploy the Storage Account into.",
+                            "defaultValue": "[first(map(steps('basics').workloadApi.value, (item) => item.name))]",
+                            "constraints": {
+                                "allowedValues": "[map(steps('basics').workloadApi.value, (item) => parse(concat('{\"label\":\"', item.name, '\",\"value\":\"', item.id, '\"}')))]",
+                                "required": true
+                            },
+                            "visible": "[and(steps('basics').workloadUseExisting, not(empty(steps('basics').enclaveExistsQuery.data)))]"
+                        },
+                        {
+                            "name": "newWorkloadName",
+                            "type": "Microsoft.Common.TextBox",
+                            "label": "New AE Workload Name",
+                            "defaultValue": "",
+                            "toolTip": "Enter the name for the new AE Workload.",
+                            "constraints": {
+                                "required": true,
+                                "validations": [
+                                    {
+                                        "regex": "^[a-zA-Z][a-zA-Z0-9-]{1,22}[a-zA-Z0-9]$",
+                                        "message": "Must start with a letter, end with a letter or number, and contain only alphanumeric characters or hyphens. Length must be 3-24 characters."
+                                    }
+                                ]
+                            },
+                            "visible": "[and(not(steps('basics').workloadUseExisting), not(empty(steps('basics').enclaveExistsQuery.data)))]"
+                        },
+                        {
+                            "name": "workloadResourceGroupUseExisting",
+                            "type": "Microsoft.Common.OptionsGroup",
+                            "label": "AE Workload RG",
+                            "toolTip": "Select whether to use an existing workload resource group for the AE Workload or create a new one.",
+                            "defaultValue": "Use Existing",
+                            "constraints": {
+                                "allowedValues": [
+                                    {
+                                        "label": "Use Existing",
+                                        "value": true
+                                    },
+                                    {
+                                        "label": "Create New",
+                                        "value": false
+                                    }
+                                ],
+                                "required": "[steps('basics').workloadUseExisting]"
+                            },
+                            "visible": "[and(steps('basics').workloadUseExisting, not(empty(steps('basics').enclaveExistsQuery.data)))]"
+                        },
+                        {
+                            "name": "workloadResourceGroupApi",
+                            "type": "Microsoft.Solutions.ArmApiControl",
+                            "condition": "[not(empty(steps('basics').workloadApi))]",
+                            "request": {
+                                "method": "GET",
+                                "path": "[concat(steps('basics').workload, '?api-version=2026-03-01-preview')]"
+                            }
+                        },
+                        {
+                            "name": "workloadResourceGroup",
+                            "type": "Microsoft.Common.DropDown",
+                            "label": "Existing AE Workload RG",
+                            "filter": true,
+                            "toolTip": "Select the existing workload resource group for the AE Workload.",
+                            "defaultValue": "[first(map(steps('basics').workloadResourceGroupApi.properties.resourceGroupCollection, (item) => parse(concat('{\"label\":\"', last(split(item, '/')), '\",\"value\":\"', last(split(item, '/')),'\"}'))))]",
+                            "constraints": {
+                                "allowedValues": "[map(steps('basics').workloadResourceGroupApi.properties.resourceGroupCollection, (item) => parse(concat('{\"label\":\"', last(split(item, '/')), '\",\"value\":\"', last(split(item, '/')),'\"}')))]",
+                                "required": "[if(steps('basics').workloadUseExisting, steps('basics').workloadResourceGroupUseExisting, false)]"
+                            },
+                            "visible": "[and(if(steps('basics').workloadUseExisting, steps('basics').workloadResourceGroupUseExisting, false), not(empty(steps('basics').enclaveExistsQuery.data)))]"
+                        },
+                        {
+                            "name": "newWorkloadResourceGroupName",
+                            "type": "Microsoft.Common.TextBox",
+                            "label": "New AE Workload RG Name",
+                            "defaultValue": "",
+                            "toolTip": "Enter the name for the new AE Workload Resource Group.",
+                            "constraints": {
+                                "required": true,
+                                "validations": [
+                                    {
+                                        "regex": "^[a-zA-Z][a-zA-Z0-9-]{1,22}[a-zA-Z0-9]$",
+                                        "message": "Must start with a letter, end with a letter or number, and contain only alphanumeric characters or hyphens. Length must be 3-24 characters."
+                                    }
+                                ]
+                            },
+                            "visible": "[and(if(steps('basics').workloadUseExisting, not(steps('basics').workloadResourceGroupUseExisting), true), not(empty(steps('basics').enclaveExistsQuery.data)))]"
+                        },
+                        {
+                            "name": "noEnclaveVnetListApi",
+                            "type": "Microsoft.Solutions.ArmApiControl",
+                            "condition": "[and(not(empty(steps('basics').subscriptionSelector)), empty(steps('basics').enclaveExistsQuery.data))]",
+                            "request": {
+                                "method": "GET",
+                                "path": "[concat('/subscriptions/', steps('basics').subscriptionSelector, '/providers/Microsoft.Network/virtualNetworks?api-version=2023-09-01')]"
+                            }
+                        },
+                        {
+                            "name": "noEnclaveVnetSelector",
+                            "type": "Microsoft.Common.DropDown",
+                            "label": "Virtual Network",
+                            "toolTip": "Select the Virtual Network for private endpoint connectivity.",
+                            "filter": true,
+                            "constraints": {
+                                "allowedValues": "[map(steps('basics').noEnclaveVnetListApi.value, (item) => parse(concat('{\"label\":\"', item.name, ' (', first(skip(split(item.id, '/'), 4)), ')\",\"value\":\"', item.id, '\"}')))]",
+                                "required": "[and(not(empty(steps('basics').subscriptionSelector)), empty(steps('basics').enclaveExistsQuery.data))]"
+                            },
+                            "visible": "[and(not(empty(steps('basics').subscriptionSelector)), empty(steps('basics').enclaveExistsQuery.data))]"
+                        },
+                        {
+                            "name": "noEnclaveVnetApi",
+                            "type": "Microsoft.Solutions.ArmApiControl",
+                            "condition": "[not(empty(steps('basics').noEnclaveVnetSelector))]",
+                            "request": {
+                                "method": "GET",
+                                "path": "[concat(steps('basics').noEnclaveVnetSelector, '?api-version=2023-09-01')]"
+                            }
+                        },
+                        {
+                            "name": "crossRegionWarning",
+                            "type": "Microsoft.Common.InfoBox",
+                            "visible": "[and(empty(steps('basics').enclaveExistsQuery.data), not(empty(steps('basics').noEnclaveVnetApi.location)), not(equals(steps('basics').noEnclaveVnetApi.location, steps('basics').noEnclaveLocation)))]",
+                            "options": {
+                                "icon": "Info",
+                                "text": "[concat('The selected Virtual Network is in ', steps('basics').noEnclaveVnetApi.location, ' but the deployment region is ', steps('basics').noEnclaveLocation, '. The resource will be created in ', steps('basics').noEnclaveLocation, ' and the private endpoint will be created in ', steps('basics').noEnclaveVnetApi.location, '. This is supported but please confirm this is the intended configuration.')]"
+                            }
+                        },
+                        {
+                            "name": "virtualNetworkApi",
+                            "type": "Microsoft.Solutions.ArmApiControl",
+                            "condition": "[not(empty(steps('basics').enclaveApi))]",
+                            "request": {
+                                "method": "GET",
+                                "path": "[concat(first(filter(steps('basics').enclaveApi.properties.resourceCollection, (item) => contains(item, 'microsoft.network/virtualnetworks'))), '?api-version=2023-05-01')]"
+                            }
+                        },
+                        {
+                            "name": "virtualNetwork",
+                            "type": "Microsoft.Common.DropDown",
+                            "label": "Virtual Network",
+                            "toolTip": "Virtual Network associated with the selected Enclave for private endpoint connectivity.",
+                            "defaultValue": "[steps('basics').virtualNetworkApi.name]",
+                            "constraints": {
+                                "allowedValues": "[if(empty(steps('basics').virtualNetworkApi.name), parse('[]'), parse(concat('[{\"label\":\"', steps('basics').virtualNetworkApi.name, '\",\"value\":\"', steps('basics').virtualNetworkApi.id, '\"}]')))]",
+                                "required": true
+                            },
+                            "visible": "[not(empty(steps('basics').enclaveExistsQuery.data))]"
+                        },
+                        {
+                            "name": "subnetIpAvailabilityQuery",
+                            "type": "Microsoft.Solutions.ArmApiControl",
+                            "condition": "[not(empty(if(empty(steps('basics').enclaveExistsQuery.data), steps('basics').noEnclaveVnetSelector, steps('basics').virtualNetworkApi.id)))]",
+                            "request": {
+                                "method": "POST",
+                                "path": "/providers/Microsoft.ResourceGraph/resources?api-version=2021-03-01",
+                                "body": {
+                                    "subscriptions": [
+                                        "[steps('basics').subscriptionSelector]"
+                                    ],
+                                    "query": "[concat('Resources | where type =~ \"microsoft.network/virtualnetworks\" | where id =~ \"', if(empty(steps('basics').enclaveExistsQuery.data), steps('basics').noEnclaveVnetSelector, steps('basics').virtualNetworkApi.id), '\" | project subnetId = \"\", subnetName = \"\", usableAddresses = tolong(0), usedAddresses = tolong(0), remainingAddresses = tolong(-1) | union (Resources | where type =~ \"microsoft.network/virtualnetworks\" | where id =~ \"', if(empty(steps('basics').enclaveExistsQuery.data), steps('basics').noEnclaveVnetSelector, steps('basics').virtualNetworkApi.id), '\" | mv-expand subnet = properties.subnets | where tolong(coalesce(array_length(subnet.properties.delegations), 0)) == 0 | extend subnetId = tostring(subnet.id), subnetName = tostring(subnet.name), usedAddresses = tolong(coalesce(array_length(subnet.properties.ipConfigurations), 0)), addressPrefixes = iif(array_length(subnet.properties.addressPrefixes) > 0, subnet.properties.addressPrefixes, pack_array(subnet.properties.addressPrefix)) | mv-expand addressPrefix = addressPrefixes | extend addressPrefix = tostring(addressPrefix) | where addressPrefix contains \".\" | extend usableForPrefix = tolong(pow(2, 32 - toint(split(addressPrefix, \"/\")[1]))) - 5 | summarize usableAddresses = sum(usableForPrefix), usedAddresses = max(usedAddresses) by subnetId, subnetName | extend remainingAddresses = usableAddresses - usedAddresses | project subnetId, subnetName, usableAddresses, usedAddresses, remainingAddresses) | order by subnetName asc')]",
+                                    "options": {
+                                        "resultFormat": "objectArray"
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            "name": "noEnclaveSubnet",
+                            "type": "Microsoft.Common.DropDown",
+                            "label": "Subnet",
+                            "toolTip": "Only non-delegated subnets with at least one remaining IP address are shown.",
+                            "filter": true,
+                            "constraints": {
+                                "allowedValues": "[map(filter(steps('basics').subnetIpAvailabilityQuery.data, (item) => greater(item.remainingAddresses, 0)), (item) => parse(concat('{\"label\":\"', item.subnetName, ' (', string(item.remainingAddresses), ' available IPs)\",\"value\":\"', item.subnetId, '\"}')))]",
+                                "required": "[and(not(empty(steps('basics').subscriptionSelector)), empty(steps('basics').enclaveExistsQuery.data))]"
+                            },
+                            "visible": "[and(not(empty(steps('basics').subscriptionSelector)), empty(steps('basics').enclaveExistsQuery.data), not(empty(steps('basics').noEnclaveVnetSelector)))]"
+                        },
+                        {
+                            "name": "subnet",
+                            "type": "Microsoft.Common.DropDown",
+                            "label": "Subnet",
+                            "defaultValue": "[first(map(filter(steps('basics').subnetIpAvailabilityQuery.data, (item) => greater(item.remainingAddresses, 0)), (item) => parse(concat('{\"label\":\"', item.subnetName, ' (', string(item.remainingAddresses), ' available IPs)\",\"value\":\"', item.subnetId, '\"}'))))]",
+                            "toolTip": "Only non-delegated subnets with at least one remaining IP address are shown.",
+                            "constraints": {
+                                "allowedValues": "[map(filter(steps('basics').subnetIpAvailabilityQuery.data, (item) => greater(item.remainingAddresses, 0)), (item) => parse(concat('{\"label\":\"', item.subnetName, ' (', string(item.remainingAddresses), ' available IPs)\",\"value\":\"', item.subnetId, '\"}')))]",
+                                "required": true
+                            },
+                            "visible": "[not(empty(steps('basics').enclaveExistsQuery.data))]"
+                        },
+                        {
+                            "name": "subnetIpUnavailable",
+                            "type": "Microsoft.Common.InfoBox",
+                            "visible": "[and(not(empty(steps('basics').subnetIpAvailabilityQuery.data)), empty(filter(steps('basics').subnetIpAvailabilityQuery.data, (item) => greater(item.remainingAddresses, 0))))]",
+                            "options": {
+                                "icon": "Error",
+                                "text": "[if(empty(steps('basics').enclaveExistsQuery.data), 'The selected Virtual Network has no non-delegated subnet with a remaining IP address. Select another Virtual Network.', 'The Enclave Virtual Network has no non-delegated subnet with a remaining IP address. Add subnet capacity before continuing.')]"
+                            }
+                        },
+                        {
+                            "name": "blobDnsZoneQueryControl",
+                            "type": "Microsoft.Solutions.ArmApiControl",
+                            "condition": "[not(empty(if(empty(steps('basics').enclaveExistsQuery.data), steps('basics').noEnclaveVnetApi.name, steps('basics').virtualNetworkApi.name)))]",
+                            "request": {
+                                "method": "POST",
+                                "path": "/providers/Microsoft.ResourceGraph/resources?api-version=2021-03-01",
+                                "body": {
+                                    "query": "[concat('Resources | where type =~ \"microsoft.network/privatednszones/virtualnetworklinks\" | where properties.virtualNetwork.id =~ \"', if(empty(steps('basics').enclaveExistsQuery.data), steps('basics').noEnclaveVnetSelector, steps('basics').virtualNetwork), '\" | extend zoneName = tostring(split(id, \"/\")[8]) | extend zoneId = extract(\"(?i)(.*)/virtualNetworkLinks\", 1, id) | extend rgName = tostring(split(zoneId, \"/\")[4]) | where startswith(tolower(zoneName), \"privatelink.blob.\") | join kind=leftouter (ResourceContainers | where type == \"microsoft.resources/subscriptions\" | project subscriptionId, subName = name) on subscriptionId | project name = zoneName, id = zoneId, rgName, subName, subscriptionId')]",
+                                    "options": {
+                                        "resultFormat": "objectArray"
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            "name": "fileDnsZoneQueryControl",
+                            "type": "Microsoft.Solutions.ArmApiControl",
+                            "condition": "[not(empty(if(empty(steps('basics').enclaveExistsQuery.data), steps('basics').noEnclaveVnetApi.name, steps('basics').virtualNetworkApi.name)))]",
+                            "request": {
+                                "method": "POST",
+                                "path": "/providers/Microsoft.ResourceGraph/resources?api-version=2021-03-01",
+                                "body": {
+                                    "query": "[concat('Resources | where type =~ \"microsoft.network/privatednszones/virtualnetworklinks\" | where properties.virtualNetwork.id =~ \"', if(empty(steps('basics').enclaveExistsQuery.data), steps('basics').noEnclaveVnetSelector, steps('basics').virtualNetwork), '\" | extend zoneName = tostring(split(id, \"/\")[8]) | extend zoneId = extract(\"(?i)(.*)/virtualNetworkLinks\", 1, id) | extend rgName = tostring(split(zoneId, \"/\")[4]) | where startswith(tolower(zoneName), \"privatelink.file.\") | join kind=leftouter (ResourceContainers | where type == \"microsoft.resources/subscriptions\" | project subscriptionId, subName = name) on subscriptionId | project name = zoneName, id = zoneId, rgName, subName, subscriptionId')]",
+                                    "options": {
+                                        "resultFormat": "objectArray"
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            "name": "queueDnsZoneQueryControl",
+                            "type": "Microsoft.Solutions.ArmApiControl",
+                            "condition": "[not(empty(if(empty(steps('basics').enclaveExistsQuery.data), steps('basics').noEnclaveVnetApi.name, steps('basics').virtualNetworkApi.name)))]",
+                            "request": {
+                                "method": "POST",
+                                "path": "/providers/Microsoft.ResourceGraph/resources?api-version=2021-03-01",
+                                "body": {
+                                    "query": "[concat('Resources | where type =~ \"microsoft.network/privatednszones/virtualnetworklinks\" | where properties.virtualNetwork.id =~ \"', if(empty(steps('basics').enclaveExistsQuery.data), steps('basics').noEnclaveVnetSelector, steps('basics').virtualNetwork), '\" | extend zoneName = tostring(split(id, \"/\")[8]) | extend zoneId = extract(\"(?i)(.*)/virtualNetworkLinks\", 1, id) | extend rgName = tostring(split(zoneId, \"/\")[4]) | where startswith(tolower(zoneName), \"privatelink.queue.\") | join kind=leftouter (ResourceContainers | where type == \"microsoft.resources/subscriptions\" | project subscriptionId, subName = name) on subscriptionId | project name = zoneName, id = zoneId, rgName, subName, subscriptionId')]",
+                                    "options": {
+                                        "resultFormat": "objectArray"
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            "name": "tableDnsZoneQueryControl",
+                            "type": "Microsoft.Solutions.ArmApiControl",
+                            "condition": "[not(empty(if(empty(steps('basics').enclaveExistsQuery.data), steps('basics').noEnclaveVnetApi.name, steps('basics').virtualNetworkApi.name)))]",
+                            "request": {
+                                "method": "POST",
+                                "path": "/providers/Microsoft.ResourceGraph/resources?api-version=2021-03-01",
+                                "body": {
+                                    "query": "[concat('Resources | where type =~ \"microsoft.network/privatednszones/virtualnetworklinks\" | where properties.virtualNetwork.id =~ \"', if(empty(steps('basics').enclaveExistsQuery.data), steps('basics').noEnclaveVnetSelector, steps('basics').virtualNetwork), '\" | extend zoneName = tostring(split(id, \"/\")[8]) | extend zoneId = extract(\"(?i)(.*)/virtualNetworkLinks\", 1, id) | extend rgName = tostring(split(zoneId, \"/\")[4]) | where startswith(tolower(zoneName), \"privatelink.table.\") | join kind=leftouter (ResourceContainers | where type == \"microsoft.resources/subscriptions\" | project subscriptionId, subName = name) on subscriptionId | project name = zoneName, id = zoneId, rgName, subName, subscriptionId')]",
+                                    "options": {
+                                        "resultFormat": "objectArray"
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            "name": "dfsDnsZoneQueryControl",
+                            "type": "Microsoft.Solutions.ArmApiControl",
+                            "condition": "[and(not(empty(if(empty(steps('basics').enclaveExistsQuery.data), steps('basics').noEnclaveVnetApi.name, steps('basics').virtualNetworkApi.name))), steps('basics').isHnsEnabled)]",
+                            "request": {
+                                "method": "POST",
+                                "path": "/providers/Microsoft.ResourceGraph/resources?api-version=2021-03-01",
+                                "body": {
+                                    "query": "[concat('Resources | where type =~ \"microsoft.network/privatednszones/virtualnetworklinks\" | where properties.virtualNetwork.id =~ \"', if(empty(steps('basics').enclaveExistsQuery.data), steps('basics').noEnclaveVnetSelector, steps('basics').virtualNetwork), '\" | extend zoneName = tostring(split(id, \"/\")[8]) | extend zoneId = extract(\"(?i)(.*)/virtualNetworkLinks\", 1, id) | extend rgName = tostring(split(zoneId, \"/\")[4]) | where startswith(tolower(zoneName), \"privatelink.dfs.\") | join kind=leftouter (ResourceContainers | where type == \"microsoft.resources/subscriptions\" | project subscriptionId, subName = name) on subscriptionId | project name = zoneName, id = zoneId, rgName, subName, subscriptionId')]",
+                                    "options": {
+                                        "resultFormat": "objectArray"
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            "name": "privateDnsRegistrationTypeAve",
+                            "type": "Microsoft.Common.OptionsGroup",
+                            "label": "Private DNS Registration",
+                            "defaultValue": "Register with DNS zone linked to Enclave Virtual Network (recommended)",
+                            "toolTip": "Choose how the private endpoint DNS record is registered for name resolution within your network.",
+                            "constraints": {
+                                "allowedValues": [
+                                    {
+                                        "label": "Register with DNS zone linked to Enclave Virtual Network (recommended)",
+                                        "value": "defaultManagedResourceGroupZone"
+                                    },
+                                    {
+                                        "label": "Register with manually-selected DNS zone",
+                                        "value": "manuallySelectZone"
+                                    },
+                                    {
+                                        "label": "Do not register",
+                                        "value": "doNotRegister"
+                                    }
+                                ],
+                                "required": true
+                            },
+                            "visible": "[and(not(empty(steps('basics').enclaveExistsQuery.data)), not(greater(length(filter(coalesce(steps('basics').mgEntities.value, parse('[]')), (mg) => and(equals(mg.type, 'Microsoft.Management/managementGroups'), or(endsWith(toLower(mg.name), 'lz-lzs'), endsWith(toLower(mg.name), 'lz7-lzs')), or(endsWith(toLower(if(empty(coalesce(mg.properties.parentNameChain, parse('[]'))), '', last(mg.properties.parentNameChain))), 'lz'), endsWith(toLower(if(empty(coalesce(mg.properties.parentNameChain, parse('[]'))), '', last(mg.properties.parentNameChain))), 'lz7'))))), 0)))]"
+                        },
+                        {
+                            "name": "privateDnsRegistrationTypeNoAve",
+                            "type": "Microsoft.Common.OptionsGroup",
+                            "label": "Private DNS Registration",
+                            "defaultValue": "Register with DNS zone linked to Virtual Network (recommended)",
+                            "toolTip": "Choose how the private endpoint DNS record is registered for name resolution within your network.",
+                            "constraints": {
+                                "allowedValues": [
+                                    {
+                                        "label": "Register with DNS zone linked to Virtual Network (recommended)",
+                                        "value": "defaultManagedResourceGroupZone"
+                                    },
+                                    {
+                                        "label": "Register with manually-selected DNS zone",
+                                        "value": "manuallySelectZone"
+                                    },
+                                    {
+                                        "label": "Do not register",
+                                        "value": "doNotRegister"
+                                    }
+                                ],
+                                "required": true
+                            },
+                            "visible": "[and(empty(steps('basics').enclaveExistsQuery.data), not(greater(length(filter(coalesce(steps('basics').mgEntities.value, parse('[]')), (mg) => and(equals(mg.type, 'Microsoft.Management/managementGroups'), or(endsWith(toLower(mg.name), 'lz-lzs'), endsWith(toLower(mg.name), 'lz7-lzs')), or(endsWith(toLower(if(empty(coalesce(mg.properties.parentNameChain, parse('[]'))), '', last(mg.properties.parentNameChain))), 'lz'), endsWith(toLower(if(empty(coalesce(mg.properties.parentNameChain, parse('[]'))), '', last(mg.properties.parentNameChain))), 'lz7'))))), 0)))]"
+                        },
+                        {
+                            "name": "linkedDnsZonesFoundTextBlock",
+                            "type": "Microsoft.Common.InfoBox",
+                            "visible": "[and(not(empty(if(empty(steps('basics').enclaveExistsQuery.data), steps('basics').noEnclaveVnetApi.name, steps('basics').virtualNetworkApi.name))), equals(if(empty(steps('basics').enclaveExistsQuery.data), steps('basics').privateDnsRegistrationTypeNoAve, steps('basics').privateDnsRegistrationTypeAve), 'defaultManagedResourceGroupZone'), or(or(or(not(empty(steps('basics').blobDnsZoneQueryControl.data)), not(empty(steps('basics').fileDnsZoneQueryControl.data))), or(not(empty(steps('basics').queueDnsZoneQueryControl.data)), not(empty(steps('basics').tableDnsZoneQueryControl.data)))), and(steps('basics').isHnsEnabled, not(empty(steps('basics').dfsDnsZoneQueryControl.data)))))]",
+                            "options": {
+                                "icon": "Info",
+                                "text": "[concat('Virtual network ', if(empty(steps('basics').enclaveExistsQuery.data), steps('basics').noEnclaveVnetApi.name, steps('basics').virtualNetworkApi.name), ' is linked to the existing private DNS zone types:  ', if(empty(steps('basics').blobDnsZoneQueryControl.data), '', 'Blob '), if(empty(steps('basics').fileDnsZoneQueryControl.data), '', 'File '), if(empty(steps('basics').queueDnsZoneQueryControl.data), '', 'Queue '), if(empty(steps('basics').tableDnsZoneQueryControl.data), '', 'Table '), if(and(steps('basics').isHnsEnabled, not(empty(steps('basics').dfsDnsZoneQueryControl.data))), 'DFS ', ''))]"
+                            }
+                        },
+                        {
+                            "name": "linkedDnsZonesNotFoundTextBlock",
+                            "type": "Microsoft.Common.InfoBox",
+                            "visible": "[and(not(empty(if(empty(steps('basics').enclaveExistsQuery.data), steps('basics').noEnclaveVnetApi.name, steps('basics').virtualNetworkApi.name))), equals(if(empty(steps('basics').enclaveExistsQuery.data), steps('basics').privateDnsRegistrationTypeNoAve, steps('basics').privateDnsRegistrationTypeAve), 'defaultManagedResourceGroupZone'), or(or(or(empty(steps('basics').blobDnsZoneQueryControl.data), empty(steps('basics').fileDnsZoneQueryControl.data)), or(empty(steps('basics').queueDnsZoneQueryControl.data), empty(steps('basics').tableDnsZoneQueryControl.data))), and(steps('basics').isHnsEnabled, empty(steps('basics').dfsDnsZoneQueryControl.data))))]",
+                            "options": {
+                                "icon": "Warning",
+                                "text": "[if(and(equals(first(coalesce(steps('basics').isPlxTenantControl.data, parse('[{\"PLX\":false}]'))).PLX, true), not(empty(steps('basics').enclaveSelector))), concat('The following missing Private DNS zones will be created automatically in the Enclave hosted resources resource group \"', if(not(empty(if(empty(steps('basics').enclaveApi), '', coalesce(steps('basics').enclaveApi.properties.managedResourceGroupName, '')))), steps('basics').enclaveApi.properties.managedResourceGroupName, if(not(empty(if(empty(steps('basics').virtualNetworkApi), '', coalesce(steps('basics').virtualNetworkApi.id, '')))), first(skip(split(steps('basics').virtualNetworkApi.id, '/'), 4)), '')), '\": ', if(empty(steps('basics').blobDnsZoneQueryControl.data), '\"privatelink.blob.*\" ', ''), if(empty(steps('basics').fileDnsZoneQueryControl.data), '\"privatelink.file.*\" ', ''), if(empty(steps('basics').queueDnsZoneQueryControl.data), '\"privatelink.queue.*\" ', ''), if(empty(steps('basics').tableDnsZoneQueryControl.data), '\"privatelink.table.*\" ', ''), if(and(steps('basics').isHnsEnabled, empty(steps('basics').dfsDnsZoneQueryControl.data)), '\"privatelink.dfs.*\"', '')), concat('No linked Private DNS Zones found for the following services (new ones will be created):  ', if(empty(steps('basics').blobDnsZoneQueryControl.data), 'Blob ', ''), if(empty(steps('basics').fileDnsZoneQueryControl.data), 'File ', ''), if(empty(steps('basics').queueDnsZoneQueryControl.data), 'Queue ', ''), if(empty(steps('basics').tableDnsZoneQueryControl.data), 'Table ', ''), if(and(steps('basics').isHnsEnabled, empty(steps('basics').dfsDnsZoneQueryControl.data)), 'DFS ', '')))]"
+                            }
+                        },
+                        {
+                            "name": "dnsZoneResourceGroupApi",
+                            "type": "Microsoft.Solutions.ArmApiControl",
+                            "condition": "[and(not(empty(if(empty(steps('basics').enclaveExistsQuery.data), steps('basics').noEnclaveVnetApi.name, steps('basics').virtualNetworkApi.name))), or(or(or(empty(steps('basics').blobDnsZoneQueryControl.data), empty(steps('basics').fileDnsZoneQueryControl.data)), or(empty(steps('basics').queueDnsZoneQueryControl.data), empty(steps('basics').tableDnsZoneQueryControl.data))), and(steps('basics').isHnsEnabled, empty(steps('basics').dfsDnsZoneQueryControl.data))), equals(if(empty(steps('basics').enclaveExistsQuery.data), steps('basics').privateDnsRegistrationTypeNoAve, steps('basics').privateDnsRegistrationTypeAve), 'defaultManagedResourceGroupZone'))]",
+                            "request": {
+                                "method": "GET",
+                                "path": "[concat('/subscriptions/', steps('basics').subscriptionSelector, '/resourceGroups?api-version=2021-04-01')]"
+                            }
+                        },
+                        {
+                            "name": "dnsZoneResourceGroupDropdown",
+                            "type": "Microsoft.Common.DropDown",
+                            "label": "Private DNS Zone RG",
+                            "filter": true,
+                            "toolTip": "Select the Resource Group to deploy the new Private DNS Zones into.",
+                            "constraints": {
+                                "allowedValues": "[map(steps('basics').dnsZoneResourceGroupApi.value, (item) => parse(concat('{\"label\":\"', item.name, '\",\"value\":\"', item.id, '\"}')))]",
+                                "required": "[and(not(and(equals(first(coalesce(steps('basics').isPlxTenantControl.data, parse('[{\"PLX\":false}]'))).PLX, true), not(empty(steps('basics').enclaveSelector)))), and(not(empty(if(empty(steps('basics').enclaveExistsQuery.data), steps('basics').noEnclaveVnetApi.name, steps('basics').virtualNetworkApi.name))), or(or(or(empty(steps('basics').blobDnsZoneQueryControl.data), empty(steps('basics').fileDnsZoneQueryControl.data)), or(empty(steps('basics').queueDnsZoneQueryControl.data), empty(steps('basics').tableDnsZoneQueryControl.data))), and(steps('basics').isHnsEnabled, empty(steps('basics').dfsDnsZoneQueryControl.data))), equals(if(empty(steps('basics').enclaveExistsQuery.data), steps('basics').privateDnsRegistrationTypeNoAve, steps('basics').privateDnsRegistrationTypeAve), 'defaultManagedResourceGroupZone')))]"
+                            },
+                            "visible": "[and(not(and(equals(first(coalesce(steps('basics').isPlxTenantControl.data, parse('[{\"PLX\":false}]'))).PLX, true), not(empty(steps('basics').enclaveSelector)))), and(not(empty(if(empty(steps('basics').enclaveExistsQuery.data), steps('basics').noEnclaveVnetApi.name, steps('basics').virtualNetworkApi.name))), or(or(or(empty(steps('basics').blobDnsZoneQueryControl.data), empty(steps('basics').fileDnsZoneQueryControl.data)), or(empty(steps('basics').queueDnsZoneQueryControl.data), empty(steps('basics').tableDnsZoneQueryControl.data))), and(steps('basics').isHnsEnabled, empty(steps('basics').dfsDnsZoneQueryControl.data))), equals(if(empty(steps('basics').enclaveExistsQuery.data), steps('basics').privateDnsRegistrationTypeNoAve, steps('basics').privateDnsRegistrationTypeAve), 'defaultManagedResourceGroupZone')))]"
+                        },
+                        {
+                            "name": "blobPrivateDnsZoneSelector",
+                            "type": "Microsoft.Solutions.ResourceSelector",
+                            "label": "Blob Private DNS zone",
+                            "visible": "[equals(if(empty(steps('basics').enclaveExistsQuery.data), steps('basics').privateDnsRegistrationTypeNoAve, steps('basics').privateDnsRegistrationTypeAve), 'manuallySelectZone')]",
+                            "toolTip": "Select the Private DNS Zone to use for the Storage Account Blob Service.",
+                            "resourceType": "Microsoft.Network/privateDnsZones",
+                            "constraints": {
+                                "required": "[equals(if(empty(steps('basics').enclaveExistsQuery.data), steps('basics').privateDnsRegistrationTypeNoAve, steps('basics').privateDnsRegistrationTypeAve), 'manuallySelectZone')]"
+                            },
+                            "options": {
+                                "filter": {}
+                            }
+                        },
+                        {
+                            "name": "filePrivateDnsZoneSelector",
+                            "type": "Microsoft.Solutions.ResourceSelector",
+                            "label": "File Private DNS zone",
+                            "visible": "[equals(if(empty(steps('basics').enclaveExistsQuery.data), steps('basics').privateDnsRegistrationTypeNoAve, steps('basics').privateDnsRegistrationTypeAve), 'manuallySelectZone')]",
+                            "toolTip": "Select the Private DNS Zone to use for the Storage Account File Service.",
+                            "resourceType": "Microsoft.Network/privateDnsZones",
+                            "constraints": {
+                                "required": "[equals(if(empty(steps('basics').enclaveExistsQuery.data), steps('basics').privateDnsRegistrationTypeNoAve, steps('basics').privateDnsRegistrationTypeAve), 'manuallySelectZone')]"
+                            },
+                            "options": {
+                                "filter": {}
+                            }
+                        },
+                        {
+                            "name": "queuePrivateDnsZoneSelector",
+                            "type": "Microsoft.Solutions.ResourceSelector",
+                            "label": "Queue Private DNS zone",
+                            "visible": "[equals(if(empty(steps('basics').enclaveExistsQuery.data), steps('basics').privateDnsRegistrationTypeNoAve, steps('basics').privateDnsRegistrationTypeAve), 'manuallySelectZone')]",
+                            "toolTip": "Select the Private DNS Zone to use for the Storage Account Queue Service.",
+                            "resourceType": "Microsoft.Network/privateDnsZones",
+                            "constraints": {
+                                "required": "[equals(if(empty(steps('basics').enclaveExistsQuery.data), steps('basics').privateDnsRegistrationTypeNoAve, steps('basics').privateDnsRegistrationTypeAve), 'manuallySelectZone')]"
+                            },
+                            "options": {
+                                "filter": {}
+                            }
+                        },
+                        {
+                            "name": "tablePrivateDnsZoneSelector",
+                            "type": "Microsoft.Solutions.ResourceSelector",
+                            "label": "Table Private DNS zone",
+                            "visible": "[equals(if(empty(steps('basics').enclaveExistsQuery.data), steps('basics').privateDnsRegistrationTypeNoAve, steps('basics').privateDnsRegistrationTypeAve), 'manuallySelectZone')]",
+                            "toolTip": "Select the Private DNS Zone to use for the Storage Account Table Service.",
+                            "resourceType": "Microsoft.Network/privateDnsZones",
+                            "constraints": {
+                                "required": "[equals(if(empty(steps('basics').enclaveExistsQuery.data), steps('basics').privateDnsRegistrationTypeNoAve, steps('basics').privateDnsRegistrationTypeAve), 'manuallySelectZone')]"
+                            },
+                            "options": {
+                                "filter": {}
+                            }
+                        },
+                        {
+                            "name": "dfsPrivateDnsZoneSelector",
+                            "type": "Microsoft.Solutions.ResourceSelector",
+                            "label": "DFS Private DNS zone",
+                            "visible": "[and(steps('basics').isHnsEnabled, equals(if(empty(steps('basics').enclaveExistsQuery.data), steps('basics').privateDnsRegistrationTypeNoAve, steps('basics').privateDnsRegistrationTypeAve), 'manuallySelectZone'))]",
+                            "toolTip": "Select the Private DNS Zone to use for the Storage Account DFS Service.",
+                            "resourceType": "Microsoft.Network/privateDnsZones",
+                            "constraints": {
+                                "required": "[and(steps('basics').isHnsEnabled, equals(if(empty(steps('basics').enclaveExistsQuery.data), steps('basics').privateDnsRegistrationTypeNoAve, steps('basics').privateDnsRegistrationTypeAve), 'manuallySelectZone'))]"
+                            },
+                            "options": {
+                                "filter": {}
+                            }
+                        },
+                        {
+                            "name": "linkedDnsZonesText",
+                            "type": "Microsoft.Common.InfoBox",
+                            "visible": false,
+                            "options": {
+                                "icon": "Info",
+                                "text": "[concat('Private DNS Zones linked to ', if(empty(steps('basics').enclaveExistsQuery.data), steps('basics').noEnclaveVnetApi.name, steps('basics').virtualNetworkApi.name), ':  ', if(and(empty(steps('basics').blobDnsZoneQueryControl.data), empty(steps('basics').fileDnsZoneQueryControl.data), empty(steps('basics').queueDnsZoneQueryControl.data), empty(steps('basics').tableDnsZoneQueryControl.data)), 'No linked zones found.', concat(if(empty(steps('basics').blobDnsZoneQueryControl.data), '', concat(first(steps('basics').blobDnsZoneQueryControl.data).name, ' ')), if(empty(steps('basics').fileDnsZoneQueryControl.data), '', concat(first(steps('basics').fileDnsZoneQueryControl.data).name, ' ')), if(empty(steps('basics').queueDnsZoneQueryControl.data), '', concat(first(steps('basics').queueDnsZoneQueryControl.data).name, ' ')), if(empty(steps('basics').tableDnsZoneQueryControl.data), '', first(steps('basics').tableDnsZoneQueryControl.data).name))))]"
+                            }
+                        },
+                        {
+                            "name": "saName",
+                            "type": "Microsoft.Common.TextBox",
+                            "label": "Storage Account Name",
+                            "defaultValue": "",
+                            "toolTip": "Enter a unique name for the Storage Account.",
+                            "constraints": {
+                                "required": true,
+                                "validations": [
+                                    {
+                                        "regex": "^[a-zA-Z][a-z0-9A-Z]{5,23}$",
+                                        "message": "Only alphanumeric characters are allowed, must start with letter and the value must be 6-24 characters long."
+                                    }
+                                ]
+                            },
+                            "visible": true
+                        },
+                        {
+                            "name": "primaryService",
+                            "type": "Microsoft.Common.DropDown",
+                            "label": "Primary Service",
+                            "defaultValue": "Azure Blob Storage or Azure Data Lake Storage Gen2",
+                            "toolTip": "Select the primary service for the Storage Account.",
+                            "constraints": {
+                                "allowedValues": [
+                                    {
+                                        "label": "Azure Blob Storage or Azure Data Lake Storage Gen2",
+                                        "value": "GeneralPurpose"
+                                    },
+                                    {
+                                        "label": "Azure Files",
+                                        "value": "File"
+                                    },
+                                    {
+                                        "label": "Other (tables and queues)",
+                                        "value": "Other"
+                                    }
+                                ],
+                                "required": true
+                            },
+                            "visible": true
+                        },
+                        {
+                            "name": "performance",
+                            "type": "Microsoft.Common.OptionsGroup",
+                            "label": "Performance",
+                            "defaultValue": "Standard: Recommended for most scenarios (general-purpose v2 account)",
+                            "toolTip": "Select the performance tier for the Storage Account.",
+                            "constraints": {
+                                "allowedValues": [
+                                    {
+                                        "label": "Standard: Recommended for most scenarios (general-purpose v2 account)",
+                                        "value": "Standard"
+                                    },
+                                    {
+                                        "label": "Premium: Recommended for scenarios that require low latency.",
+                                        "value": "Premium"
+                                    }
+                                ],
+                                "required": "[if(equals(steps('basics').primaryService,'Other'),false,true)]"
+                            },
+                            "visible": "[if(equals(steps('basics').primaryService,'Other'),false,true)]"
+                        },
+                        {
+                            "name": "redundancy",
+                            "type": "Microsoft.Common.DropDown",
+                            "label": "Redundancy",
+                            "defaultValue": "Locally-Redundant storage (LRS)",
+                            "toolTip": "Select the redundancy option for the Storage Account.",
+                            "constraints": {
+                                "allowedValues": [
+                                    {
+                                        "label": "Locally-Redundant storage (LRS)",
+                                        "value": "Standard_LRS"
+                                    },
+                                    {
+                                        "label": "Geo-redundant storage (GRS)",
+                                        "value": "Standard_GRS"
+                                    }
+                                ],
+                                "required": "[if(not(equals(steps('basics').performance,'Premium')),true,false)]"
+                            },
+                            "visible": "[if(not(equals(steps('basics').performance,'Premium')),true,false)]"
+                        },
+                        {
+                            "name": "premiumAccountType",
+                            "type": "Microsoft.Common.DropDown",
+                            "label": "Premium Account Type",
+                            "defaultValue": "Block blobs: Best for high transaction rates or low storage latency",
+                            "toolTip": "Select the premium account type.",
+                            "constraints": {
+                                "allowedValues": [
+                                    {
+                                        "label": "Block blobs: Best for high transaction rates or low storage latency",
+                                        "value": "BlockBlobStorage"
+                                    },
+                                    {
+                                        "label": "File shares: Best for enterprise or high-performance applications that need to scale",
+                                        "value": "FileStorage"
+                                    },
+                                    {
+                                        "label": "Page blobs: Best for enterprise or high-performance applications that need to scale",
+                                        "value": "StorageV2"
+                                    }
+                                ],
+                                "required": "[if(and(or(equals(steps('basics').primaryService,'GeneralPurpose'),equals(steps('basics').primaryService,'Other')),equals(steps('basics').performance,'Premium')),true,false)]"
+                            },
+                            "visible": "[if(and(or(equals(steps('basics').primaryService,'GeneralPurpose'),equals(steps('basics').primaryService,'Other')),equals(steps('basics').performance,'Premium')),true,false)]"
+                        },
+                        {
+                            "name": "isHnsEnabled",
+                            "type": "Microsoft.Common.CheckBox",
+                            "label": "Enable Hierarchical Namespace",
+                            "defaultValue": false,
+                            "toolTip": "Select Enable Hierarchical Namespace option below to enable Data Lake Storage Gen2 for the storage account.  Hierarchical namespace, complemented by Data Lake Storage Gen2 endpoint, enables file and directory semantics, accelerates big data analytics workloads, and enables access control lists (ACLs). A DFS endpoint will also be created in addition to the regular Blob endpoint.  The DFS endpoint is used for Data Lake Storage Gen2 workloads and is not compatible with Azure Files workloads.",
+                            "visible": "[if(and(or(equals(steps('basics').primaryService,'GeneralPurpose'),equals(steps('basics').primaryService,'Other')),not(equals(steps('basics').performance,'Premium'))),true,false)]"
+                        },
+                        {
+                            "name": "hnsWarning",
+                            "type": "Microsoft.Common.InfoBox",
+                            "options": {
+                                "icon": "Warning",
+                                "text": "Enabling Hierarchical Namespace is not reversible. Please confirm you want to proceed."
+                            },
+                            "visible": "[and(steps('basics').isHnsEnabled, and(or(equals(steps('basics').primaryService,'GeneralPurpose'),equals(steps('basics').primaryService,'Other')),not(equals(steps('basics').performance,'Premium'))))]"
+                        },
+                        {
+                            "name": "enableLargeFileShares",
+                            "type": "Microsoft.Common.CheckBox",
+                            "label": "Enable Large File Shares",
+                            "defaultValue": false,
+                            "toolTip": "Use large file shares for storing up to 100 TiB of data.",
+                            "visible": true
+                        },
+                        {
+                            "name": "largeFileSharesWarning",
+                            "type": "Microsoft.Common.InfoBox",
+                            "options": {
+                                "icon": "Warning",
+                                "text": "Enabling Large File Shares is not reversible. Please confirm you want to proceed."
+                            },
+                            "visible": "[steps('basics').enableLargeFileShares]"
+                        },
+                        {
+                            "name": "umiOption",
+                            "type": "Microsoft.Common.OptionsGroup",
+                            "label": "Managed Identity",
+                            "toolTip": "Choose whether to use an existing Managed Identity or create a new one.",
+                            "defaultValue": "Use Existing",
+                            "constraints": {
+                                "allowedValues": [
+                                    {
+                                        "label": "Use Existing",
+                                        "value": "Use Existing"
+                                    },
+                                    {
+                                        "label": "Create New",
+                                        "value": "Create New"
+                                    }
+                                ],
+                                "required": true
+                            },
+                            "visible": true
+                        },
+                        {
+                            "name": "newUmiName",
+                            "type": "Microsoft.Common.TextBox",
+                            "label": "New Managed Identity Name",
+                            "defaultValue": "",
+                            "toolTip": "Enter the name for the new Managed Identity.",
+                            "constraints": {
+                                "required": "[equals(steps('basics').umiOption, 'Create New')]",
+                                "validations": [
+                                    {
+                                        "regex": "^[a-zA-Z0-9-]{3,128}$",
+                                        "message": "Must be 3-128 characters long and contain only alphanumeric characters and hyphens."
+                                    }
+                                ]
+                            },
+                            "visible": "[equals(steps('basics').umiOption, 'Create New')]"
+                        },
+                        {
+                            "name": "newUmiPermissionWarning",
+                            "type": "Microsoft.Common.InfoBox",
+                            "visible": "[equals(steps('basics').umiOption, 'Create New')]",
+                            "options": {
+                                "icon": "Warning",
+                                "text": "You must have permission to assign RBAC roles to the new Managed Identity, or the deployment will fail."
+                            }
+                        },
+                        {
+                            "name": "umi",
+                            "type": "Microsoft.Solutions.ResourceSelector",
+                            "label": "Select Managed Identity",
+                            "resourceType": "Microsoft.ManagedIdentity/userAssignedIdentities",
+                            "options": {
+                                "filter": {
+                                    "subscription": "onBasics",
+                                    "location": "onBasics"
+                                }
+                            },
+                            "visible": "[equals(steps('basics').umiOption, 'Use Existing')]",
+                            "constraints": {
+                                "required": "[equals(steps('basics').umiOption, 'Use Existing')]"
+                            }
+                        },
+                        {
+                            "name": "keyVaultDnsZoneQueryControl",
+                            "type": "Microsoft.Solutions.ArmApiControl",
+                            "condition": "[not(empty(if(empty(steps('basics').enclaveExistsQuery.data), steps('basics').noEnclaveVnetApi.name, steps('basics').virtualNetworkApi.name)))]",
+                            "request": {
+                                "method": "POST",
+                                "path": "/providers/Microsoft.ResourceGraph/resources?api-version=2021-03-01",
+                                "body": {
+                                    "query": "[concat('Resources | where type =~ \"microsoft.network/privatednszones/virtualnetworklinks\" | where properties.virtualNetwork.id =~ \"', if(empty(steps('basics').enclaveExistsQuery.data), steps('basics').noEnclaveVnetSelector, steps('basics').virtualNetwork), '\" | extend zoneName = tostring(split(id, \"/\")[8]) | extend zoneId = extract(\"(?i)(.*)/virtualNetworkLinks\", 1, id) | extend rgName = tostring(split(zoneId, \"/\")[4]) | where startswith(tolower(zoneName), \"privatelink.vaultcore.\") | join kind=leftouter (ResourceContainers | where type == \"microsoft.resources/subscriptions\" | project subscriptionId, subName = name) on subscriptionId | project name = zoneName, id = zoneId, rgName, subName, subscriptionId')]",
+                                    "options": {
+                                        "resultFormat": "objectArray"
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            "name": "keyVaultOption",
+                            "type": "Microsoft.Common.OptionsGroup",
+                            "label": "Key Vault",
+                            "toolTip": "Choose whether to use an existing Key Vault or create a new one.",
+                            "defaultValue": "Use Existing",
+                            "constraints": {
+                                "allowedValues": [
+                                    {
+                                        "label": "Use Existing",
+                                        "value": "Use Existing"
+                                    },
+                                    {
+                                        "label": "Create New",
+                                        "value": "Create New"
+                                    }
+                                ],
+                                "required": true
+                            },
+                            "visible": true
+                        },
+                        {
+                            "name": "newKeyVaultName",
+                            "type": "Microsoft.Common.TextBox",
+                            "label": "New Key Vault Name",
+                            "defaultValue": "",
+                            "toolTip": "Enter the name for the new Key Vault.",
+                            "constraints": {
+                                "required": "[equals(steps('basics').keyVaultOption, 'Create New')]",
+                                "validations": [
+                                    {
+                                        "regex": "^[a-zA-Z0-9-]{3,24}$",
+                                        "message": "Must be 3-24 characters long, start with a letter, end with a letter or digit, and contain only alphanumeric characters and hyphens."
+                                    }
+                                ]
+                            },
+                            "visible": "[equals(steps('basics').keyVaultOption, 'Create New')]"
+                        },
+                        {
+                            "name": "newKeyVaultPermissionWarning",
+                            "type": "Microsoft.Common.InfoBox",
+                            "visible": "[equals(steps('basics').keyVaultOption, 'Create New')]",
+                            "options": {
+                                "icon": "Warning",
+                                "text": "You must have permission to assign RBAC roles for the new Key Vault, or the deployment will fail."
+                            }
+                        },
+                        {
+                            "name": "linkedKeyVaultDnsZoneFoundTextBlock",
+                            "type": "Microsoft.Common.InfoBox",
+                            "visible": "[and(equals(steps('basics').keyVaultOption, 'Create New'), not(empty(steps('basics').keyVaultDnsZoneQueryControl.data)))]",
+                            "options": {
+                                "icon": "Info",
+                                "text": "[if(empty(steps('basics').keyVaultDnsZoneQueryControl.data), '', concat('Virtual network ', if(empty(steps('basics').enclaveExistsQuery.data), steps('basics').noEnclaveVnetApi.name, steps('basics').virtualNetworkApi.name), ' is linked to existing Private DNS Zone: ', first(map(take(steps('basics').keyVaultDnsZoneQueryControl.data, 1), (item) => item.name))))]"
+                            }
+                        },
+                        {
+                            "name": "linkedKeyVaultDnsZoneNotFoundTextBlock",
+                            "type": "Microsoft.Common.InfoBox",
+                            "visible": "[and(equals(steps('basics').keyVaultOption, 'Create New'), empty(steps('basics').keyVaultDnsZoneQueryControl.data))]",
+                            "options": {
+                                "icon": "Warning",
+                                "text": "[if(and(equals(first(coalesce(steps('basics').isPlxTenantControl.data, parse('[{\"PLX\":false}]'))).PLX, true), not(empty(steps('basics').enclaveSelector))), concat('The missing Private DNS zone \"privatelink.vaultcore.*\" will be created automatically in the Enclave hosted resources resource group \"', if(not(empty(if(empty(steps('basics').enclaveApi), '', coalesce(steps('basics').enclaveApi.properties.managedResourceGroupName, '')))), steps('basics').enclaveApi.properties.managedResourceGroupName, if(not(empty(if(empty(steps('basics').virtualNetworkApi), '', coalesce(steps('basics').virtualNetworkApi.id, '')))), first(skip(split(steps('basics').virtualNetworkApi.id, '/'), 4)), '')), '\".'), 'No linked Private DNS Zone found for Key Vault (privatelink.vaultcore). A new one will be created.')]"
+                            }
+                        },
+                        {
+                            "name": "keyVaultDnsZoneResourceGroupApi",
+                            "type": "Microsoft.Solutions.ArmApiControl",
+                            "condition": "[and(equals(steps('basics').keyVaultOption, 'Create New'), empty(steps('basics').keyVaultDnsZoneQueryControl.data))]",
+                            "request": {
+                                "method": "GET",
+                                "path": "[concat('/subscriptions/', steps('basics').subscriptionSelector, '/resourceGroups?api-version=2021-04-01')]"
+                            }
+                        },
+                        {
+                            "name": "keyVaultDnsZoneResourceGroupDropdown",
+                            "type": "Microsoft.Common.DropDown",
+                            "label": "Private DNS Zone RG",
+                            "filter": true,
+                            "toolTip": "Select the Resource Group to deploy the new Key Vault Private DNS Zone into.",
+                            "constraints": {
+                                "allowedValues": "[map(steps('basics').keyVaultDnsZoneResourceGroupApi.value, (item) => parse(concat('{\"label\":\"', item.name, '\",\"value\":\"', item.id, '\"}')))]",
+                                "required": "[and(not(and(equals(first(coalesce(steps('basics').isPlxTenantControl.data, parse('[{\"PLX\":false}]'))).PLX, true), not(empty(steps('basics').enclaveSelector)))), and(equals(steps('basics').keyVaultOption, 'Create New'), empty(steps('basics').keyVaultDnsZoneQueryControl.data)))]"
+                            },
+                            "visible": "[and(not(and(equals(first(coalesce(steps('basics').isPlxTenantControl.data, parse('[{\"PLX\":false}]'))).PLX, true), not(empty(steps('basics').enclaveSelector)))), and(equals(steps('basics').keyVaultOption, 'Create New'), empty(steps('basics').keyVaultDnsZoneQueryControl.data)))]"
+                        },
+                        {
+                            "name": "keyVault",
+                            "type": "Microsoft.Solutions.ResourceSelector",
+                            "label": "Select Key Vault",
+                            "resourceType": "Microsoft.KeyVault/vaults",
+                            "options": {
+                                "filter": {
+                                    "subscription": "onBasics",
+                                    "location": "onBasics"
+                                }
+                            },
+                            "visible": "[equals(steps('basics').keyVaultOption, 'Use Existing')]",
+                            "constraints": {
+                                "required": "[equals(steps('basics').keyVaultOption, 'Use Existing')]"
+                            }
+                        },
+                        {
+                            "name": "keyName",
+                            "type": "Microsoft.Common.TextBox",
+                            "label": "Encryption Key Name",
+                            "defaultValue": "saenckey",
+                            "toolTip": "Enter the name of the key in the selected Key Vault to use for Storage Account encryption.",
+                            "constraints": {
+                                "required": true,
+                                "validations": []
+                            },
+                            "visible": true
+                        },
+                        {
+                            "name": "effectiveCmkUmiQuery",
+                            "type": "Microsoft.Solutions.ArmApiControl",
+                            "condition": "[and(not(empty(steps('basics').subscriptionSelector)), not(empty(if(equals(steps('basics').umiOption, 'Use Existing'), steps('basics').umi.id, steps('basics').newUmiName))))]",
+                            "request": {
+                                "method": "POST",
+                                "path": "/providers/Microsoft.ResourceGraph/resources?api-version=2021-03-01",
+                                "body": {
+                                    "subscriptions": ["[steps('basics').subscriptionSelector]"],
+                                    "query": "[concat('Resources | where type =~ \"microsoft.managedidentity/userassignedidentities\" | where id =~ \"', if(equals(steps('basics').umiOption, 'Use Existing'), steps('basics').umi.id, concat('/subscriptions/', steps('basics').subscriptionSelector, '/resourceGroups/', if(empty(steps('basics').enclaveExistsQuery.data), if(equals(steps('basics').noEnclaveRgToggle, 'useExisting'), steps('basics').noEnclaveExistingRg, steps('basics').noEnclaveNewRgName), if(steps('basics').workloadUseExisting, if(steps('basics').workloadResourceGroupUseExisting, steps('basics').workloadResourceGroup, steps('basics').newWorkloadResourceGroupName), steps('basics').newWorkloadResourceGroupName)), '/providers/Microsoft.ManagedIdentity/userAssignedIdentities/', steps('basics').newUmiName)), '\" | project id=tostring(id), principalId=tostring(properties.principalId)')]",
+                                    "options": { "resultFormat": "objectArray" }
+                                }
+                            }
+                        },
+                        {
+                            "name": "effectiveCmkKeyVaultQuery",
+                            "type": "Microsoft.Solutions.ArmApiControl",
+                            "condition": "[and(not(empty(steps('basics').subscriptionSelector)), not(empty(if(equals(steps('basics').keyVaultOption, 'Use Existing'), steps('basics').keyVault.id, steps('basics').newKeyVaultName))))]",
+                            "request": {
+                                "method": "POST",
+                                "path": "/providers/Microsoft.ResourceGraph/resources?api-version=2021-03-01",
+                                "body": {
+                                    "subscriptions": ["[steps('basics').subscriptionSelector]"],
+                                    "query": "[concat('Resources | where type =~ \"microsoft.keyvault/vaults\" | where id =~ \"', if(equals(steps('basics').keyVaultOption, 'Use Existing'), steps('basics').keyVault.id, concat('/subscriptions/', steps('basics').subscriptionSelector, '/resourceGroups/', if(empty(steps('basics').enclaveExistsQuery.data), if(equals(steps('basics').noEnclaveRgToggle, 'useExisting'), steps('basics').noEnclaveExistingRg, steps('basics').noEnclaveNewRgName), if(steps('basics').workloadUseExisting, if(steps('basics').workloadResourceGroupUseExisting, steps('basics').workloadResourceGroup, steps('basics').newWorkloadResourceGroupName), steps('basics').newWorkloadResourceGroupName)), '/providers/Microsoft.KeyVault/vaults/', steps('basics').newKeyVaultName)), '\" | project id=tostring(id)')]",
+                                    "options": { "resultFormat": "objectArray" }
+                                }
+                            }
+                        },
+                        {
+                            "name": "existingKeyVaultRoleAssignmentQuery",
+                            "type": "Microsoft.Solutions.ArmApiControl",
+                            "condition": "[and(equals(length(coalesce(steps('basics').effectiveCmkUmiQuery.data, parse('[]'))), 1), equals(length(coalesce(steps('basics').effectiveCmkKeyVaultQuery.data, parse('[]'))), 1), not(empty(coalesce(first(map(coalesce(steps('basics').effectiveCmkUmiQuery.data, parse('[]')), (item) => item.principalId)), ''))))]",
+                            "request": {
+                                "method": "POST",
+                                "path": "/providers/Microsoft.ResourceGraph/resources?api-version=2021-03-01",
+                                "body": {
+                                    "subscriptions": ["[coalesce(first(map(coalesce(steps('basics').effectiveCmkKeyVaultQuery.data, parse('[]')), (item) => first(skip(split(item.id, '/'), 2)))), steps('basics').subscriptionSelector)]"],
+                                    "query": "[concat('AuthorizationResources | where type =~ \"microsoft.authorization/roleassignments\" | where tolower(id) startswith \"', toLower(coalesce(first(map(coalesce(steps('basics').effectiveCmkKeyVaultQuery.data, parse('[]')), (item) => item.id)), '')), '/providers/microsoft.authorization/roleassignments/\" | where tolower(tostring(properties.principalId)) == \"', toLower(coalesce(first(map(coalesce(steps('basics').effectiveCmkUmiQuery.data, parse('[]')), (item) => item.principalId)), '')), '\" | where tolower(tostring(properties.roleDefinitionId)) endswith \"/e147488a-f6f5-4113-8e2d-b22465e65bf6\" | project roleAssignmentName=tostring(name) | take 1')]",
+                                    "options": { "resultFormat": "objectArray" }
+                                }
+                            }
+                        },
+                        {
+                            "name": "enableDiagnostics",
+                            "type": "Microsoft.Common.CheckBox",
+                            "label": "Enable Diagnostic Settings",
+                            "defaultValue": true,
+                            "toolTip": "Enable diagnostic settings to send logs and metrics to a Log Analytics Workspace.",
+                            "visible": true
+                        },
+                        {
+                            "name": "enclaveLogAnalyticsWorkspace",
+                            "type": "Microsoft.Common.DropDown",
+                            "label": "Enclave Log Analytics Workspace",
+                            "defaultValue": "[if(equals(length(filter(if(empty(steps('basics').enclaveApi), parse('[]'), coalesce(steps('basics').enclaveApi.properties.resourceCollection, parse('[]'))), (item) => contains(toLower(item), '/providers/microsoft.operationalinsights/workspaces/'))), 1), first(map(filter(if(empty(steps('basics').enclaveApi), parse('[]'), coalesce(steps('basics').enclaveApi.properties.resourceCollection, parse('[]'))), (item) => contains(toLower(item), '/providers/microsoft.operationalinsights/workspaces/')), (item) => parse(concat('{\"label\":\"', last(split(item, '/')), '\",\"value\":\"', item, '\"}')))), '')]",
+                            "toolTip": "The Log Analytics workspace in the selected Enclave resource collection is selected automatically; the collection must contain exactly one workspace.",
+                            "constraints": {
+                                "allowedValues": "[if(equals(length(filter(if(empty(steps('basics').enclaveApi), parse('[]'), coalesce(steps('basics').enclaveApi.properties.resourceCollection, parse('[]'))), (item) => contains(toLower(item), '/providers/microsoft.operationalinsights/workspaces/'))), 1), map(filter(if(empty(steps('basics').enclaveApi), parse('[]'), coalesce(steps('basics').enclaveApi.properties.resourceCollection, parse('[]'))), (item) => contains(toLower(item), '/providers/microsoft.operationalinsights/workspaces/')), (item) => parse(concat('{\"label\":\"', last(split(item, '/')), '\",\"value\":\"', item, '\"}'))), parse('[]'))]",
+                                "required": "[and(steps('basics').enableDiagnostics, not(empty(steps('basics').enclaveExistsQuery.data)))]"
+                            },
+                            "visible": "[and(steps('basics').enableDiagnostics, not(empty(steps('basics').enclaveExistsQuery.data)))]"
+                        },
+                        {
+                            "name": "workspace",
+                            "type": "Microsoft.Solutions.ResourceSelector",
+                            "label": "Log Analytics Workspace",
+                            "resourceType": "Microsoft.OperationalInsights/workspaces",
+                            "scope": {
+                                "subscriptionId": "[steps('basics').subscriptionSelector]",
+                                "location": "[steps('basics').noEnclaveLocation]"
+                            },
+                            "visible": "[and(steps('basics').enableDiagnostics, empty(steps('basics').enclaveExistsQuery.data))]",
+                            "constraints": {
+                                "required": "[and(steps('basics').enableDiagnostics, empty(steps('basics').enclaveExistsQuery.data))]"
+                            }
+                        },
+                        {
+                            "name": "diagnosticSpacer",
+                            "type": "Microsoft.Common.TextBlock",
+                            "options": {
+                                "text": "     "
+                            },
+                            "visible": "[steps('basics').enableDiagnostics]"
+                        },
+                        {
+                            "name": "diagnosticSpacer2",
+                            "type": "Microsoft.Common.TextBlock",
+                            "options": {
+                                "text": "     "
+                            },
+                            "visible": "[steps('basics').enableDiagnostics]"
+                        },
+                        {
+                            "name": "diagnosticSpacer3",
+                            "type": "Microsoft.Common.TextBlock",
+                            "options": {
+                                "text": "     "
+                            },
+                            "visible": "[steps('basics').enableDiagnostics]"
+                        },
+                        {
+                            "name": "enableTelemetry",
+                            "type": "Microsoft.Common.OptionsGroup",
+                            "label": "Enable Usage Telemetry",
+                            "defaultValue": "Enabled",
+                            "toolTip": "Anonymous usage telemetry helps Microsoft improve the Service Catalog. No customer data is collected.",
+                            "constraints": {
+                                "allowedValues": [
+                                    {
+                                        "label": "Enabled",
+                                        "value": true
+                                    },
+                                    {
+                                        "label": "Disabled",
+                                        "value": false
+                                    }
+                                ],
+                                "required": true
+                            },
+                            "visible": "[and(not(empty(steps('basics').subscriptionSelector)), equals(length(filter(coalesce(steps('basics').msisrLookup.data, parse('[]')), (item) => and(equals(toLower(coalesce(item.subscriptionId, '')), toLower(coalesce(steps('basics').subscriptionSelector, ''))), equals(item.MSISR, false)))), 1), equals(length(filter(coalesce(steps('basics').isPlxTenantControl.data, parse('[]')), (item) => and(equals(toLower(coalesce(item.subscriptionId, '')), toLower(coalesce(steps('basics').subscriptionSelector, ''))), equals(item.PLX, false)))), 1))]"
+                        },
+                        {
+                            "name": "enableTelemetryPlx",
+                            "type": "Microsoft.Common.OptionsGroup",
+                            "label": "Enable Usage Telemetry",
+                            "defaultValue": "Enabled",
+                            "toolTip": "Anonymous usage telemetry helps Microsoft improve the Service Catalog. No customer data is collected.",
+                            "constraints": {
+                                "allowedValues": [
+                                    {
+                                        "label": "Enabled",
+                                        "value": true
+                                    },
+                                    {
+                                        "label": "Disabled",
+                                        "value": false
+                                    }
+                                ],
+                                "required": true
+                            },
+                            "visible": "[and(not(empty(steps('basics').subscriptionSelector)), equals(length(filter(coalesce(steps('basics').msisrLookup.data, parse('[]')), (item) => and(equals(toLower(coalesce(item.subscriptionId, '')), toLower(coalesce(steps('basics').subscriptionSelector, ''))), equals(item.MSISR, false)))), 1), equals(length(filter(coalesce(steps('basics').isPlxTenantControl.data, parse('[]')), (item) => and(equals(toLower(coalesce(item.subscriptionId, '')), toLower(coalesce(steps('basics').subscriptionSelector, ''))), equals(item.PLX, true)))), 1))]"
+                        }
+                    ]
+                },
+                {
+                    "name": "tags",
+                    "label": "Tags",
+                    "elements": [
+                        {
+                            "name": "tagsByResource",
+                            "type": "Microsoft.Common.TagsByResource",
+                            "resources": [
+                                "Microsoft.Resources/resourceGroups",
+                                "Microsoft.Storage/storageAccounts",
+                                "Microsoft.Network/privateEndpoints"
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        "outputs": {
+            "parameters": {
+                "dnsZoneResourceGroupId": "[if(and(equals(first(coalesce(steps('basics').isPlxTenantControl.data, parse('[{\"PLX\":false}]'))).PLX, true), not(empty(steps('basics').enclaveSelector))), if(empty(if(empty(steps('basics').virtualNetworkApi), '', coalesce(steps('basics').virtualNetworkApi.id, ''))), '', concat('/subscriptions/', first(skip(split(steps('basics').virtualNetworkApi.id, '/'), 2)), '/resourceGroups/', if(not(empty(if(empty(steps('basics').enclaveApi), '', coalesce(steps('basics').enclaveApi.properties.managedResourceGroupName, '')))), steps('basics').enclaveApi.properties.managedResourceGroupName, first(skip(split(steps('basics').virtualNetworkApi.id, '/'), 4))))), if(empty(steps('basics').dnsZoneResourceGroupDropdown), '', steps('basics').dnsZoneResourceGroupDropdown))]",
+                "existingBlobManagedResourceGroupPrivateDnsZone": "[if(empty(steps('basics').blobDnsZoneQueryControl.data), '', first(map(take(steps('basics').blobDnsZoneQueryControl.data, 1), (item) => item.id)))]",
+                "existingFileManagedResourceGroupPrivateDnsZone": "[if(empty(steps('basics').fileDnsZoneQueryControl.data), '', first(map(take(steps('basics').fileDnsZoneQueryControl.data, 1), (item) => item.id)))]",
+                "existingQueueManagedResourceGroupPrivateDnsZone": "[if(empty(steps('basics').queueDnsZoneQueryControl.data), '', first(map(take(steps('basics').queueDnsZoneQueryControl.data, 1), (item) => item.id)))]",
+                "existingTableManagedResourceGroupPrivateDnsZone": "[if(empty(steps('basics').tableDnsZoneQueryControl.data), '', first(map(take(steps('basics').tableDnsZoneQueryControl.data, 1), (item) => item.id)))]",
+                "existingDfsManagedResourceGroupPrivateDnsZone": "[if(and(steps('basics').isHnsEnabled, not(empty(steps('basics').dfsDnsZoneQueryControl.data))), first(map(take(steps('basics').dfsDnsZoneQueryControl.data, 1), (item) => item.id)), '')]",
+                "existingKeyVaultManagedResourceGroupPrivateDnsZone": "[if(empty(steps('basics').keyVaultDnsZoneQueryControl.data), '', first(map(take(steps('basics').keyVaultDnsZoneQueryControl.data, 1), (item) => item.id)))]",
+                "newKeyVaultDnsZoneResourceGroupToCreateIn": "[if(and(equals(first(coalesce(steps('basics').isPlxTenantControl.data, parse('[{\"PLX\":false}]'))).PLX, true), not(empty(steps('basics').enclaveSelector))), if(not(empty(if(empty(steps('basics').enclaveApi), '', coalesce(steps('basics').enclaveApi.properties.managedResourceGroupName, '')))), steps('basics').enclaveApi.properties.managedResourceGroupName, if(not(empty(if(empty(steps('basics').virtualNetworkApi), '', coalesce(steps('basics').virtualNetworkApi.id, '')))), first(skip(split(steps('basics').virtualNetworkApi.id, '/'), 4)), '')), if(and(equals(steps('basics').keyVaultOption, 'Create New'), empty(steps('basics').keyVaultDnsZoneQueryControl.data), not(empty(steps('basics').keyVaultDnsZoneResourceGroupDropdown))), first(skip(split(steps('basics').keyVaultDnsZoneResourceGroupDropdown, '/'), 4)), ''))]",
+                "location": "[if(empty(steps('basics').enclaveExistsQuery.data), steps('basics').noEnclaveLocation, steps('basics').enclaveApi.location)]",
+                "manuallySelectedBlobDnsZone": "[if(equals(if(empty(steps('basics').enclaveExistsQuery.data), steps('basics').privateDnsRegistrationTypeNoAve, steps('basics').privateDnsRegistrationTypeAve), 'manuallySelectZone'), steps('basics').blobPrivateDnsZoneSelector.id, '')]",
+                "manuallySelectedFileDnsZone": "[if(equals(if(empty(steps('basics').enclaveExistsQuery.data), steps('basics').privateDnsRegistrationTypeNoAve, steps('basics').privateDnsRegistrationTypeAve), 'manuallySelectZone'), steps('basics').filePrivateDnsZoneSelector.id, '')]",
+                "manuallySelectedQueueDnsZone": "[if(equals(if(empty(steps('basics').enclaveExistsQuery.data), steps('basics').privateDnsRegistrationTypeNoAve, steps('basics').privateDnsRegistrationTypeAve), 'manuallySelectZone'), steps('basics').queuePrivateDnsZoneSelector.id, '')]",
+                "manuallySelectedTableDnsZone": "[if(equals(if(empty(steps('basics').enclaveExistsQuery.data), steps('basics').privateDnsRegistrationTypeNoAve, steps('basics').privateDnsRegistrationTypeAve), 'manuallySelectZone'), steps('basics').tablePrivateDnsZoneSelector.id, '')]",
+                "manuallySelectedDfsDnsZone": "[if(and(steps('basics').isHnsEnabled, equals(if(empty(steps('basics').enclaveExistsQuery.data), steps('basics').privateDnsRegistrationTypeNoAve, steps('basics').privateDnsRegistrationTypeAve), 'manuallySelectZone')), steps('basics').dfsPrivateDnsZoneSelector.id, '')]",
+                "newDnsZoneResourceGroupToCreateIn": "[if(and(equals(first(coalesce(steps('basics').isPlxTenantControl.data, parse('[{\"PLX\":false}]'))).PLX, true), not(empty(steps('basics').enclaveSelector))), if(not(empty(if(empty(steps('basics').enclaveApi), '', coalesce(steps('basics').enclaveApi.properties.managedResourceGroupName, '')))), steps('basics').enclaveApi.properties.managedResourceGroupName, if(not(empty(if(empty(steps('basics').virtualNetworkApi), '', coalesce(steps('basics').virtualNetworkApi.id, '')))), first(skip(split(steps('basics').virtualNetworkApi.id, '/'), 4)), '')), if(empty(steps('basics').dnsZoneResourceGroupDropdown), '', first(skip(split(steps('basics').dnsZoneResourceGroupDropdown, '/'), 4))))]",
+                "newWorkloadName": "[steps('basics').newWorkloadName]",
+                "privateDnsRegistrationType": "[if(greater(length(filter(coalesce(steps('basics').mgEntities.value, parse('[]')), (mg) => and(equals(mg.type, 'Microsoft.Management/managementGroups'), or(endsWith(toLower(mg.name), 'lz-lzs'), endsWith(toLower(mg.name), 'lz7-lzs')), or(endsWith(toLower(if(empty(coalesce(mg.properties.parentNameChain, parse('[]'))), '', last(mg.properties.parentNameChain))), 'lz'), endsWith(toLower(if(empty(coalesce(mg.properties.parentNameChain, parse('[]'))), '', last(mg.properties.parentNameChain))), 'lz7'))))), 0), 'doNotRegister', if(empty(steps('basics').enclaveExistsQuery.data), steps('basics').privateDnsRegistrationTypeNoAve, steps('basics').privateDnsRegistrationTypeAve))]",
+                "storageAccountName": "[steps('basics').saName]",
+                "subnetName": "[if(empty(steps('basics').enclaveExistsQuery.data), first(skip(split(steps('basics').noEnclaveSubnet, '/'), 10)), first(skip(split(steps('basics').subnet, '/'), 10)))]",
+                "tagsByResource": "[steps('tags').tagsByResource]",
+                "virtualEnclaveResourceId": "[steps('basics').enclaveSelector]",
+                "vnetName": "[if(empty(steps('basics').enclaveExistsQuery.data), steps('basics').noEnclaveVnetApi.name, first(skip(split(steps('basics').subnet, '/'), 8)))]",
+                "vnetRG": "[if(empty(steps('basics').enclaveExistsQuery.data), first(skip(split(steps('basics').noEnclaveVnetSelector, '/'), 4)), first(skip(split(steps('basics').subnet, '/'), 4)))]",
+                "workloadId": "[if(empty(steps('basics').workloadResourceGroupApi), '', steps('basics').workloadResourceGroupApi.id)]",
+                "existingWorkloadTags": "[if(and(not(empty(steps('basics').enclaveExistsQuery.data)), steps('basics').workloadUseExisting, not(empty(steps('basics').workloadResourceGroupApi)), equals(toLower(coalesce(steps('basics').workloadResourceGroupApi.id, '')), toLower(coalesce(steps('basics').workload, '')))), coalesce(steps('basics').workloadResourceGroupApi.tags, parse('{}')), parse('{}'))]",
+                "workloadResourceGroup": "[if(empty(steps('basics').enclaveExistsQuery.data), if(equals(steps('basics').noEnclaveRgToggle, 'useExisting'), steps('basics').noEnclaveExistingRg, steps('basics').noEnclaveNewRgName), if(steps('basics').workloadUseExisting, if(steps('basics').workloadResourceGroupUseExisting, steps('basics').workloadResourceGroup, steps('basics').newWorkloadResourceGroupName), steps('basics').newWorkloadResourceGroupName))]",
+                "workloadResourceGroupUseExisting": "[if(empty(steps('basics').enclaveExistsQuery.data), equals(steps('basics').noEnclaveRgToggle, 'useExisting'), if(steps('basics').workloadUseExisting, steps('basics').workloadResourceGroupUseExisting, false))]",
+                "workloadUseExisting": "[if(empty(steps('basics').enclaveExistsQuery.data), false, steps('basics').workloadUseExisting)]",
+                "accountType": "[if(equals(steps('basics').performance,'Premium'),'Premium_LRS', steps('basics').redundancy)]",
+                "bypass": "AzureServices",
+                "isHnsEnabled": "[steps('basics').isHnsEnabled]",
+                "largeFileSharesState": "[if(steps('basics').enableLargeFileShares, 'Enabled', 'Disabled')]",
+                "keyName": "[steps('basics').keyName]",
+                "keyVaultId": "[if(equals(steps('basics').keyVaultOption, 'Use Existing'), steps('basics').keyVault.id, '')]",
+                "keyVaultUseExisting": "[equals(steps('basics').keyVaultOption, 'Use Existing')]",
+                "newKeyVaultName": "[if(equals(steps('basics').keyVaultOption, 'Create New'), steps('basics').newKeyVaultName, '')]",
+                "existingKeyVaultRoleAssignmentName": "[if(equals(length(coalesce(steps('basics').existingKeyVaultRoleAssignmentQuery.data, parse('[]'))), 1), first(map(coalesce(steps('basics').existingKeyVaultRoleAssignmentQuery.data, parse('[]')), (item) => item.roleAssignmentName)), '')]",
+                "kind": "[if(equals(steps('basics').performance,'Premium'),if(equals(steps('basics').primaryService,'File'),'FileStorage',steps('basics').premiumAccountType),'StorageV2')]",
+                "primaryService": "[steps('basics').primaryService]",
+                "saName": "[steps('basics').saName]",
+                "umiId": "[if(equals(steps('basics').umiOption, 'Use Existing'), steps('basics').umi.id, '')]",
+                "umiUseExisting": "[equals(steps('basics').umiOption, 'Use Existing')]",
+                "newUmiName": "[if(equals(steps('basics').umiOption, 'Create New'), steps('basics').newUmiName, '')]",
+                "logAnalyticsWorkspaceId": "[if(steps('basics').enableDiagnostics, if(empty(steps('basics').enclaveExistsQuery.data), steps('basics').workspace.id, steps('basics').enclaveLogAnalyticsWorkspace), '')]",
+                "enableTelemetry": "[if(and(not(empty(steps('basics').subscriptionSelector)), equals(length(filter(coalesce(steps('basics').msisrLookup.data, parse('[]')), (item) => and(equals(toLower(coalesce(item.subscriptionId, '')), toLower(coalesce(steps('basics').subscriptionSelector, ''))), equals(item.MSISR, false)))), 1)), if(equals(length(filter(coalesce(steps('basics').isPlxTenantControl.data, parse('[]')), (item) => and(equals(toLower(coalesce(item.subscriptionId, '')), toLower(coalesce(steps('basics').subscriptionSelector, ''))), equals(item.PLX, true)))), 1), coalesce(steps('basics').enableTelemetryPlx, true), if(equals(length(filter(coalesce(steps('basics').isPlxTenantControl.data, parse('[]')), (item) => and(equals(toLower(coalesce(item.subscriptionId, '')), toLower(coalesce(steps('basics').subscriptionSelector, ''))), equals(item.PLX, false)))), 1), coalesce(steps('basics').enableTelemetry, true), true)), false)]",
+                "isMsisrTenant": "[greater(length(filter(coalesce(steps('basics').mgEntities.value, parse('[]')), (mg) => and(equals(mg.type, 'Microsoft.Management/managementGroups'), or(endsWith(toLower(mg.name), 'lz-lzs'), endsWith(toLower(mg.name), 'lz7-lzs')), or(endsWith(toLower(if(empty(coalesce(mg.properties.parentNameChain, parse('[]'))), '', last(mg.properties.parentNameChain))), 'lz'), endsWith(toLower(if(empty(coalesce(mg.properties.parentNameChain, parse('[]'))), '', last(mg.properties.parentNameChain))), 'lz7'))))), 0)]",
+                "isPlxTenant": "[equals(first(coalesce(steps('basics').isPlxTenantControl.data, parse('[{\"PLX\":false}]'))).PLX, true)]"
+            },
+            "kind": "Subscription",
+            "location": "[if(empty(steps('basics').enclaveExistsQuery.data), steps('basics').noEnclaveLocation, steps('basics').enclaveApi.location)]",
+            "subscriptionId": "[concat('/subscriptions/', steps('basics').subscriptionSelector)]"
+        }
+    }
+}
