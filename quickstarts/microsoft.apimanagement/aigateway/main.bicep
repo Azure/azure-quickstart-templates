@@ -3,6 +3,9 @@ targetScope = 'resourceGroup'
 @description('How Microsoft Foundry models are configured: create a new Foundry account and model deployments, attach an existing Foundry account in this resource group, or skip model configuration for a later CLI/portal step.')
 type foundryModeType = 'create' | 'existing' | 'none'
 
+@description('Whether to skip MCP tool servers (none) or register the public Microsoft Learn MCP tool server with no authentication (create).')
+type mcpModeType = 'none' | 'create'
+
 @sealed()
 type foundryModelConfiguration = {
   @minLength(1)
@@ -95,6 +98,9 @@ param aliases aliasConfiguration[] = [
 @description('Deploy Application Insights and Log Analytics, and export gateway telemetry without request or response payloads.')
 param enableMonitoring bool = false
 
+@description('Skip MCP tool configuration by default (none), or create the no-auth Microsoft Learn MCP tool server (create).')
+param mcpMode mcpModeType = 'none'
+
 @description('Tags to apply to the gateway, Foundry account, and monitoring resources.')
 param tags object = {}
 
@@ -102,6 +108,7 @@ var providerName = 'foundry'
 var createFoundry = foundryMode == 'create'
 var useExistingFoundry = foundryMode == 'existing'
 var configureFoundryProvider = foundryMode != 'none'
+var createLearnMcp = mcpMode == 'create'
 var openAiUserRoleId = subscriptionResourceId(
   'Microsoft.Authorization/roleDefinitions',
   '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd'
@@ -290,6 +297,33 @@ resource modelAliases 'Microsoft.ApiManagement/aigateways/workspaces/aliases@202
   }
 ]
 
+resource learnMcpToolServer 'Microsoft.ApiManagement/aigateways/workspaces/toolServers@2025-09-01-preview' = if (createLearnMcp) {
+  parent: workspace
+  name: 'learn'
+  properties: {
+    displayName: 'Microsoft Learn MCP'
+    description: 'Public Microsoft Learn documentation MCP server (no authentication).'
+    type: 'mcp'
+    accessState: 'active'
+    subscriptionRequired: true
+    endpoints: [
+      {
+        id: 'learn'
+        namespace: 'learn'
+        kind: 'mcp'
+        required: false
+        credentials: {
+          type: 'none'
+        }
+        mcp: {
+          transport: 'streamableHttp'
+          url: 'https://learn.microsoft.com/api/mcp'
+        }
+      }
+    ]
+  }
+}
+
 resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2023-09-01' = if (enableMonitoring) {
   name: '${gatewayName}-logs'
   location: location
@@ -334,4 +368,5 @@ output foundryAccountId string = createFoundry
   ? aiServices.id
   : (useExistingFoundry ? existingAiServices.id : '')
 output modelAliasNames array = [for alias in (configureFoundryProvider ? aliases : []): alias.name]
+output learnMcpToolServerId string = createLearnMcp ? learnMcpToolServer.id : ''
 output applicationInsightsId string = enableMonitoring ? appInsights.id : ''

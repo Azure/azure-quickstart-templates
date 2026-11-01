@@ -48,6 +48,8 @@ The default aliases are:
 
 When `enableMonitoring` is `true`, the template creates Log Analytics and Application Insights and a telemetry exporter named exactly `applicationInsights`, with `kind: 'ApplicationInsights'` and `payloadCapture: false`.
 
+When `mcpMode` is `create` (default `none`), the template also registers the public Microsoft Learn MCP tool server (`workspaces/default/toolServers/learn`) pointing to `https://learn.microsoft.com/api/mcp` over `streamableHttp` with `credentials: { type: 'none' }`.
+
 This sample supports three model-configuration modes via `foundryMode`:
 - **`create` (default):** Creates a new Foundry `AIServices` account, deploys `gpt-6.1-sol` and `gpt-5-mini`, grants **Cognitive Services OpenAI User** RBAC, registers the `foundry` model provider and models with policies, and creates the `gpt-latest` and `gpt-mini-latest` aliases.
 - **`existing` (BYO Foundry):** Attaches an existing Foundry account in the resource group (`foundryAccountName`), grants RBAC to the gateway's managed identity, and registers the configured `foundryModels` and `aliases` without creating a new Foundry account or model deployments.
@@ -104,6 +106,13 @@ az deployment group create \
   --resource-group "$resourceGroup" \
   --template-file main.bicep \
   --parameters foundryMode=none
+
+# Optionally register the no-auth Microsoft Learn MCP tool server
+az deployment group create \
+  --name aigateway \
+  --resource-group "$resourceGroup" \
+  --template-file main.bicep \
+  --parameters mcpMode=create
 ```
 
 Clients select `gpt-latest` or `gpt-mini-latest` in the request's model field. Role assignments can take time to propagate before model requests succeed. Deployment outputs include the gateway and Foundry account IDs, model deployment IDs, alias names, workspace ID, gateway principal ID, and runtime API key resource ID. Retrieve runtime credentials through authorized gateway key management; do not copy them into source control or deployment outputs.
@@ -163,6 +172,7 @@ Renaming or removing an alias during incremental deployment does not delete its 
 | `modelCapacity` | GlobalStandard capacity for each model deployment when `foundryMode` is `create`. | `10`. |
 | `foundryModels` | Models to deploy (`create`) and register in the gateway catalog (`create` or `existing`). | `gpt-6.1-sol` (`2026-09-29`) and `gpt-5-mini` (`2025-08-07`). |
 | `aliases` | Client-facing alias and route configuration when `foundryMode` is `create` or `existing`. | `gpt-latest` and `gpt-mini-latest`. |
+| `mcpMode` | `none` (no MCP tools by default) or `create` (register the no-auth Microsoft Learn MCP server at `https://learn.microsoft.com/api/mcp`). | `none`. |
 | `enableMonitoring` | Create monitoring and a payload-free telemetry exporter. | `false`. |
 | `tags` | Resource tags. | `{}`. |
 
