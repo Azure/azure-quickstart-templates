@@ -2,7 +2,7 @@ targetScope = 'resourceGroup'
 
 @sealed()
 type aliasRoute = {
-  modelName: 'gpt-5.4' | 'gpt-5.3-codex' | 'gpt-5.4-mini'
+  modelName: 'gpt-6.1-sol' | 'gpt-5-mini'
   @minValue(0)
   @maxValue(100)
   priority: int
@@ -25,7 +25,7 @@ type aliasConfiguration = {
 @maxLength(24)
 param gatewayName string = 'aigateway-${uniqueString(resourceGroup().id)}'
 
-@description('Location for the Foundry account, model deployments, and monitoring resources. Select a region with capacity for all three models.')
+@description('Location for the Foundry account, model deployments, and monitoring resources. Select a region with capacity for both models.')
 param location string = resourceGroup().location
 
 @description('An Azure region where your subscription has access to the Azure AI Gateway preview.')
@@ -36,7 +36,7 @@ param gatewayLocation string = location
 @maxLength(64)
 param foundryAccountName string = 'aigateway-foundry-${uniqueString(resourceGroup().id)}'
 
-@description('GlobalStandard capacity for each of the three Foundry model deployments. Ensure the subscription has quota for each model.')
+@description('GlobalStandard capacity for each of the Foundry model deployments. Ensure the subscription has quota for each model.')
 @minValue(1)
 param modelCapacity int = 10
 
@@ -45,23 +45,16 @@ param modelCapacity int = 10
 @maxLength(30)
 param aliases aliasConfiguration[] = [
   {
-    name: 'model-router'
+    name: 'gpt-latest'
     routes: [
-      { modelName: 'gpt-5.4', priority: 0, weight: 100 }
-      { modelName: 'gpt-5.3-codex', priority: 1, weight: 100 }
-      { modelName: 'gpt-5.4-mini', priority: 2, weight: 100 }
+      { modelName: 'gpt-6.1-sol', priority: 0, weight: 100 }
+      { modelName: 'gpt-5-mini', priority: 1, weight: 100 }
     ]
   }
   {
-    name: 'fast'
+    name: 'gpt-mini-latest'
     routes: [
-      { modelName: 'gpt-5.4-mini', priority: 0, weight: 100 }
-    ]
-  }
-  {
-    name: 'primary'
-    routes: [
-      { modelName: 'gpt-5.4', priority: 0, weight: 100 }
+      { modelName: 'gpt-5-mini', priority: 0, weight: 100 }
     ]
   }
 ]
@@ -79,20 +72,14 @@ var openAiUserRoleId = subscriptionResourceId(
 )
 var foundryModels = [
   {
-    name: 'gpt-5.4'
-    version: '2026-03-05'
+    name: 'gpt-6.1-sol'
+    version: '2026-09-29'
     tokenLimitPerMinute: 200000
     monthlyCostLimitUsd: 5
   }
   {
-    name: 'gpt-5.3-codex'
-    version: '2026-02-24'
-    tokenLimitPerMinute: 200000
-    monthlyCostLimitUsd: 5
-  }
-  {
-    name: 'gpt-5.4-mini'
-    version: '2026-03-17'
+    name: 'gpt-5-mini'
+    version: '2025-08-07'
     tokenLimitPerMinute: 400000
     monthlyCostLimitUsd: 5
   }

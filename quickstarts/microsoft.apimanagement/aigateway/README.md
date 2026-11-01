@@ -1,5 +1,5 @@
 ---
-description: Deploy Azure AI Gateway and Microsoft Foundry with three current models, managed identity, failover aliases, token and cost limits, and content safety.
+description: Deploy Azure AI Gateway and Microsoft Foundry with gpt-6.1-sol and gpt-5-mini, managed identity, failover aliases, token and cost limits, and content safety.
 page_type: sample
 products:
 - azure
@@ -11,7 +11,7 @@ languages:
 ---
 # Azure AI Gateway with Microsoft Foundry models
 
-Applications need a shared entry point for AI models with consistent authentication, routing, and usage controls. This template provisions Azure AI Gateway and Microsoft Foundry together, deploys three models, and exposes the `model-router`, `fast`, and `primary` aliases. The gateway authenticates to Foundry using its managed identity, without backend API keys.
+Applications need a shared entry point for AI models with consistent authentication, routing, and usage controls. This template provisions Azure AI Gateway and Microsoft Foundry together, deploys `gpt-6.1-sol` and `gpt-5-mini`, and exposes the `gpt-latest` and `gpt-mini-latest` aliases. The gateway authenticates to Foundry using its managed identity, without backend API keys.
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.apimanagement/aigateway/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.apimanagement/aigateway/PublicDeployment.svg)
@@ -30,13 +30,12 @@ It also creates a `Microsoft.CognitiveServices/accounts@2025-06-01` account with
 
 | Model and deployment name | Version | Tokens per identity per minute | Monthly cost limit per identity |
 | --- | --- | --- | --- |
-| `gpt-5.4` | `2026-03-05` | `200000` | USD `5` |
-| `gpt-5.3-codex` | `2026-02-24` | `200000` | USD `5` |
-| `gpt-5.4-mini` | `2026-03-17` | `400000` | USD `5` |
+| `gpt-6.1-sol` | `2026-09-29` | `200000` | USD `5` |
+| `gpt-5-mini` | `2025-08-07` | `400000` | USD `5` |
 
 The `foundry` model provider uses the account's OpenAI endpoint and managed-identity credentials with audience `https://cognitiveservices.azure.com`. The gateway receives the **Cognitive Services OpenAI User** role at the Foundry account scope only.
 
-All three models are registered under `workspaces/default/modelProviders/foundry/models` with `/v1/chat/completions` and `/v1/responses` as supported endpoints. Registration does not make an unsupported operation available on an underlying model; choose the endpoint supported by the model you invoke.
+Both models are registered under `workspaces/default/modelProviders/foundry/models` with `/v1/chat/completions` and `/v1/responses` as supported endpoints. Registration does not make an unsupported operation available on an underlying model; choose the endpoint supported by the model you invoke.
 
 Each model registration has a per-identity token limit, a `monthly-caller-budget` cost limit with period `month`, and content safety thresholds of `Medium` for hate, self-harm, sexual, and violence content. These are per-model caller controls, not a single shared subscription or account budget. Adjust the model policy values in `main.bicep` to suit your workload.
 
@@ -44,9 +43,8 @@ The default aliases are:
 
 | Alias | Routing |
 | --- | --- |
-| `model-router` | `gpt-5.4` at priority `0`, then `gpt-5.3-codex` at priority `1`, then `gpt-5.4-mini` at priority `2`; all weights `100`. |
-| `fast` | `gpt-5.4-mini` at priority `0`, weight `100`. |
-| `primary` | `gpt-5.4` at priority `0`, weight `100`. |
+| `gpt-latest` | `gpt-6.1-sol` at priority `0`, with failover to `gpt-5-mini` at priority `1`; both weights `100`. |
+| `gpt-mini-latest` | `gpt-5-mini` at priority `0`, weight `100`. |
 
 When `enableMonitoring` is `true`, the template creates Log Analytics and Application Insights and a telemetry exporter named exactly `applicationInsights`, with `kind: 'ApplicationInsights'` and `payloadCapture: false`.
 
@@ -54,11 +52,11 @@ This sample provisions a new Foundry account and its model deployments; it is no
 
 ## Prerequisites and costs
 
-Use an Azure public-cloud subscription with AI Gateway preview access. Select a gateway region available to your preview subscription and a Foundry region with access and sufficient quota for **all three exact model versions** and their `GlobalStandard` deployments. Model availability and capacity vary by subscription and region; deploying this sample does not grant access or quota.
+Use an Azure public-cloud subscription with AI Gateway preview access. Select a gateway region available to your preview subscription and a Foundry region with access and sufficient quota for **both exact model versions** and their `GlobalStandard` deployments. Model availability and capacity vary by subscription and region; deploying this sample does not grant access or quota.
 
 Install the [Azure CLI](https://learn.microsoft.com/cli/azure/install-azure-cli) with [Bicep support](https://learn.microsoft.com/azure/azure-resource-manager/bicep/install#azure-cli). Your deployment identity needs permission to create the selected resources and role assignments on the new Foundry account, for example through Owner or an appropriate combination of Contributor and Role Based Access Control Administrator.
 
-**Costs:** Deployment provisions a Premium gateway and three model deployments. Consumption is not supported by this gateway preview contract. Model calls and optional monitoring incur additional charges. The model cost-limit policies are caller controls and do not cap all Azure resource charges.
+**Costs:** Deployment provisions a Premium gateway and two model deployments. Consumption is not supported by this gateway preview contract. Model calls and optional monitoring incur additional charges. The model cost-limit policies are caller controls and do not cap all Azure resource charges.
 
 The Foundry account disables local key authentication and enables public network access so the gateway can reach it. Managed identity controls authorization; this template does not deploy private networking.
 
@@ -85,11 +83,11 @@ az deployment group create \
   --parameters location="$foundryLocation" gatewayLocation="$gatewayLocation"
 ```
 
-Clients select `model-router`, `fast`, or `primary` in the request's model field. Role assignments can take time to propagate before model requests succeed. Deployment outputs include the gateway and Foundry account IDs, model deployment IDs, alias names, workspace ID, gateway principal ID, and runtime API key resource ID. Retrieve runtime credentials through authorized gateway key management; do not copy them into source control or deployment outputs.
+Clients select `gpt-latest` or `gpt-mini-latest` in the request's model field. Role assignments can take time to propagate before model requests succeed. Deployment outputs include the gateway and Foundry account IDs, model deployment IDs, alias names, workspace ID, gateway principal ID, and runtime API key resource ID. Retrieve runtime credentials through authorized gateway key management; do not copy them into source control or deployment outputs.
 
 ## Weighted load balancing
 
-Lower priority values are preferred. Routes at different priorities provide failover; weights select among routes at the same priority. To balance traffic between `gpt-5.4` and `gpt-5.4-mini` with an 80:20 preference, save this as `azuredeploy.parameters.local.json`:
+Lower priority values are preferred. Routes at different priorities provide failover; weights select among routes at the same priority. To balance traffic between `gpt-6.1-sol` and `gpt-5-mini` with an 80:20 preference, save this as `azuredeploy.parameters.local.json`:
 
 ```json
 {
@@ -99,22 +97,16 @@ Lower priority values are preferred. Routes at different priorities provide fail
     "aliases": {
       "value": [
         {
-          "name": "model-router",
+          "name": "gpt-latest",
           "routes": [
-            { "modelName": "gpt-5.4", "priority": 0, "weight": 80 },
-            { "modelName": "gpt-5.4-mini", "priority": 0, "weight": 20 }
+            { "modelName": "gpt-6.1-sol", "priority": 0, "weight": 80 },
+            { "modelName": "gpt-5-mini", "priority": 0, "weight": 20 }
           ]
         },
         {
-          "name": "fast",
+          "name": "gpt-mini-latest",
           "routes": [
-            { "modelName": "gpt-5.4-mini", "priority": 0, "weight": 100 }
-          ]
-        },
-        {
-          "name": "primary",
-          "routes": [
-            { "modelName": "gpt-5.4", "priority": 0, "weight": 100 }
+            { "modelName": "gpt-5-mini", "priority": 0, "weight": 100 }
           ]
         }
       ]
@@ -132,7 +124,7 @@ az deployment group create \
   --parameters location="$foundryLocation" gatewayLocation="$gatewayLocation"
 ```
 
-The override supplies the entire alias array and keeps `fast` and `primary` unchanged. The two `model-router` routes now share priority `0`; observed distribution varies with traffic and backend availability. Route names are restricted to the three registered models, priorities to `0`-`100`, and weights to `1`-`100`. Alias names must be unique.
+The override supplies the entire alias array and keeps `gpt-mini-latest` unchanged. The two `gpt-latest` routes now share priority `0`; observed distribution varies with traffic and backend availability. Route names are restricted to the two registered models, priorities to `0`-`100`, and weights to `1`-`100`. Alias names must be unique.
 
 Renaming or removing an alias during incremental deployment does not delete its old resource. Disabling monitoring does not delete previously deployed monitoring resources. Remove retired resources explicitly.
 
@@ -145,7 +137,7 @@ Renaming or removing an alias during incremental deployment does not delete its 
 | `gatewayLocation` | Region with AI Gateway preview access. | `location`. |
 | `foundryAccountName` | New Foundry account name and custom subdomain. | `aigateway-foundry-` plus a resource-group-derived suffix. |
 | `modelCapacity` | GlobalStandard capacity for each model deployment. | `10`. |
-| `aliases` | Complete client-facing alias and route configuration. | `model-router`, `fast`, and `primary`. |
+| `aliases` | Complete client-facing alias and route configuration. | `gpt-latest` and `gpt-mini-latest`. |
 | `enableMonitoring` | Create monitoring and a payload-free telemetry exporter. | `false`. |
 | `tags` | Resource tags. | `{}`. |
 
