@@ -13,6 +13,8 @@ languages:
 
 Applications need a shared entry point for AI models with consistent authentication, routing, and usage controls. This template provisions Azure AI Gateway and Microsoft Foundry together, deploys `gpt-6.1-sol` and `gpt-5-mini`, and exposes the `gpt-latest` and `gpt-mini-latest` aliases. The gateway authenticates to Foundry using its managed identity, without backend API keys.
 
+> **Looking for a reusable Bicep module?** If you are embedding AI Gateway inside a larger Bicep architecture (or bringing existing Foundry resources across resource groups), see the companion Azure Verified Module [`avm/res/api-management/aigateway`](https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/api-management/aigateway) ([review draft](https://github.com/paulyuk/bicep-registry-modules/tree/feat/aigateway-avm-review/avm/res/api-management/aigateway)).
+
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.apimanagement/aigateway/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.apimanagement/aigateway/PublicDeployment.svg)
 ![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.apimanagement/aigateway/BestPracticeResult.svg)
