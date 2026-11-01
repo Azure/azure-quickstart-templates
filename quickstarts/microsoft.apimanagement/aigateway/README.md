@@ -48,7 +48,12 @@ The default aliases are:
 
 When `enableMonitoring` is `true`, the template creates Log Analytics and Application Insights and a telemetry exporter named exactly `applicationInsights`, with `kind: 'ApplicationInsights'` and `payloadCapture: false`.
 
-This sample provisions a new Foundry account and its model deployments; it is not an existing-account attachment template. It does not create a Foundry project, hosted agent, classic API Management service, or connector gateway.
+This sample supports three model-configuration modes via `foundryMode`:
+- **`create` (default):** Creates a new Foundry `AIServices` account, deploys `gpt-6.1-sol` and `gpt-5-mini`, grants **Cognitive Services OpenAI User** RBAC, registers the `foundry` model provider and models with policies, and creates the `gpt-latest` and `gpt-mini-latest` aliases.
+- **`existing` (BYO Foundry):** Attaches an existing Foundry account in the resource group (`foundryAccountName`), grants RBAC to the gateway's managed identity, and registers the configured `foundryModels` and `aliases` without creating a new Foundry account or model deployments.
+- **`none` (configure models later):** Deploys only the gateway, `default` workspace reference, runtime API key, and optional monitoring so you can attach providers, models, and aliases in a future step via `az aigateway` or the Azure portal.
+
+It does not create a Foundry project, hosted agent, classic API Management service, or connector gateway.
 
 ## Prerequisites and costs
 
@@ -81,6 +86,24 @@ az deployment group create \
   --template-file main.bicep \
   --parameters azuredeploy.parameters.json \
   --parameters location="$foundryLocation" gatewayLocation="$gatewayLocation"
+```
+
+### Attach an existing Foundry account (BYO) or defer model setup
+
+```bash
+# Attach an existing Foundry account and deployments in the same resource group
+az deployment group create \
+  --name aigateway \
+  --resource-group "$resourceGroup" \
+  --template-file main.bicep \
+  --parameters foundryMode=existing foundryAccountName="<existing-foundry-account>"
+
+# Deploy only the gateway now and configure providers/models/aliases in a later step
+az deployment group create \
+  --name aigateway \
+  --resource-group "$resourceGroup" \
+  --template-file main.bicep \
+  --parameters foundryMode=none
 ```
 
 Clients select `gpt-latest` or `gpt-mini-latest` in the request's model field. Role assignments can take time to propagate before model requests succeed. Deployment outputs include the gateway and Foundry account IDs, model deployment IDs, alias names, workspace ID, gateway principal ID, and runtime API key resource ID. Retrieve runtime credentials through authorized gateway key management; do not copy them into source control or deployment outputs.
@@ -135,9 +158,11 @@ Renaming or removing an alias during incremental deployment does not delete its 
 | `gatewayName` | Gateway name, 3-24 characters. | `aigateway-` plus a resource-group-derived suffix. |
 | `location` | Foundry, model deployment, and monitoring region. | Resource group location. |
 | `gatewayLocation` | Region with AI Gateway preview access. | `location`. |
-| `foundryAccountName` | New Foundry account name and custom subdomain. | `aigateway-foundry-` plus a resource-group-derived suffix. |
-| `modelCapacity` | GlobalStandard capacity for each model deployment. | `10`. |
-| `aliases` | Complete client-facing alias and route configuration. | `gpt-latest` and `gpt-mini-latest`. |
+| `foundryMode` | `create` (new Foundry account + models), `existing` (attach BYO Foundry account), or `none` (gateway only; configure models later). | `create`. |
+| `foundryAccountName` | Name of the new or existing Foundry account. | `aigateway-foundry-` plus a resource-group-derived suffix. |
+| `modelCapacity` | GlobalStandard capacity for each model deployment when `foundryMode` is `create`. | `10`. |
+| `foundryModels` | Models to deploy (`create`) and register in the gateway catalog (`create` or `existing`). | `gpt-6.1-sol` (`2026-09-29`) and `gpt-5-mini` (`2025-08-07`). |
+| `aliases` | Client-facing alias and route configuration when `foundryMode` is `create` or `existing`. | `gpt-latest` and `gpt-mini-latest`. |
 | `enableMonitoring` | Create monitoring and a payload-free telemetry exporter. | `false`. |
 | `tags` | Resource tags. | `{}`. |
 

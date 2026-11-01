@@ -1,8 +1,24 @@
 targetScope = 'resourceGroup'
 
+@description('How Microsoft Foundry models are configured: create a new Foundry account and model deployments, attach an existing Foundry account in this resource group, or skip model configuration for a later CLI/portal step.')
+type foundryModeType = 'create' | 'existing' | 'none'
+
+@sealed()
+type foundryModelConfiguration = {
+  @minLength(1)
+  name: string
+  @minLength(1)
+  version: string
+  @minValue(1)
+  tokenLimitPerMinute: int
+  @minValue(1)
+  monthlyCostLimitUsd: int
+}
+
 @sealed()
 type aliasRoute = {
-  modelName: 'gpt-6.1-sol' | 'gpt-5-mini'
+  @minLength(1)
+  modelName: string
   @minValue(0)
   @maxValue(100)
   priority: int
@@ -25,24 +41,41 @@ type aliasConfiguration = {
 @maxLength(24)
 param gatewayName string = 'aigateway-${uniqueString(resourceGroup().id)}'
 
-@description('Location for the Foundry account, model deployments, and monitoring resources. Select a region with capacity for both models.')
+@description('Location for the Foundry account, model deployments, and monitoring resources. Select a region with capacity for the configured models.')
 param location string = resourceGroup().location
 
 @description('An Azure region where your subscription has access to the Azure AI Gateway preview.')
 param gatewayLocation string = location
 
-@description('Name of the new Microsoft Foundry account and its custom subdomain.')
+@description('Whether to create a new Foundry account and model deployments (create), attach an existing Foundry account in this resource group (existing), or deploy only the gateway and configure models later (none).')
+param foundryMode foundryModeType = 'create'
+
+@description('Name of the new or existing Microsoft Foundry account.')
 @minLength(2)
 @maxLength(64)
 param foundryAccountName string = 'aigateway-foundry-${uniqueString(resourceGroup().id)}'
 
-@description('GlobalStandard capacity for each of the Foundry model deployments. Ensure the subscription has quota for each model.')
+@description('GlobalStandard capacity for each Foundry model deployment when foundryMode is create.')
 @minValue(1)
 param modelCapacity int = 10
 
-@description('Client-facing aliases and routes. Lower priority values are preferred; weights select routes at the same priority.')
-@minLength(1)
-@maxLength(30)
+@description('Foundry models to deploy (when foundryMode is create) and register in the gateway catalog (when foundryMode is create or existing).')
+param foundryModels foundryModelConfiguration[] = [
+  {
+    name: 'gpt-6.1-sol'
+    version: '2026-09-29'
+    tokenLimitPerMinute: 200000
+    monthlyCostLimitUsd: 5
+  }
+  {
+    name: 'gpt-5-mini'
+    version: '2025-08-07'
+    tokenLimitPerMinute: 400000
+    monthlyCostLimitUsd: 5
+  }
+]
+
+@description('Client-facing aliases and routes registered when foundryMode is create or existing. Lower priority values are preferred; weights select routes at the same priority.')
 param aliases aliasConfiguration[] = [
   {
     name: 'gpt-latest'
@@ -66,26 +99,15 @@ param enableMonitoring bool = false
 param tags object = {}
 
 var providerName = 'foundry'
+var createFoundry = foundryMode == 'create'
+var useExistingFoundry = foundryMode == 'existing'
+var configureFoundryProvider = foundryMode != 'none'
 var openAiUserRoleId = subscriptionResourceId(
   'Microsoft.Authorization/roleDefinitions',
   '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd'
 )
-var foundryModels = [
-  {
-    name: 'gpt-6.1-sol'
-    version: '2026-09-29'
-    tokenLimitPerMinute: 200000
-    monthlyCostLimitUsd: 5
-  }
-  {
-    name: 'gpt-5-mini'
-    version: '2025-08-07'
-    tokenLimitPerMinute: 400000
-    monthlyCostLimitUsd: 5
-  }
-]
 
-resource aiServices 'Microsoft.CognitiveServices/accounts@2025-06-01' = {
+resource aiServices 'Microsoft.CognitiveServices/accounts@2025-06-01' = if (createFoundry) {
   name: foundryAccountName
   location: location
   sku: {
@@ -107,9 +129,13 @@ resource aiServices 'Microsoft.CognitiveServices/accounts@2025-06-01' = {
   }
 }
 
+resource existingAiServices 'Microsoft.CognitiveServices/accounts@2025-06-01' existing = if (useExistingFoundry) {
+  name: foundryAccountName
+}
+
 @batchSize(1)
 resource foundryDeployments 'Microsoft.CognitiveServices/accounts/deployments@2025-06-01' = [
-  for model in foundryModels: {
+  for model in (createFoundry ? foundryModels : []): {
     parent: aiServices
     name: model.name
     sku: {
@@ -154,9 +180,9 @@ resource runtimeApiKey 'Microsoft.ApiManagement/aigateways/apiKeys@2025-09-01-pr
   }
 }
 
-resource aiGatewayOpenAiUserRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+resource newFoundryOpenAiUserRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (createFoundry) {
   scope: aiServices
-  name: guid(aiServices.id, gateway.id, openAiUserRoleId)
+  name: guid(resourceGroup().id, foundryAccountName, gateway.id, openAiUserRoleId, 'create')
   properties: {
     roleDefinitionId: openAiUserRoleId
     principalId: gateway.identity.principalId
@@ -164,16 +190,27 @@ resource aiGatewayOpenAiUserRole 'Microsoft.Authorization/roleAssignments@2022-0
   }
 }
 
-resource foundryModelProvider 'Microsoft.ApiManagement/aigateways/workspaces/modelProviders@2025-09-01-preview' = {
+resource existingFoundryOpenAiUserRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (useExistingFoundry) {
+  scope: existingAiServices
+  name: guid(resourceGroup().id, foundryAccountName, gateway.id, openAiUserRoleId, 'existing')
+  properties: {
+    roleDefinitionId: openAiUserRoleId
+    principalId: gateway.identity.principalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
+resource foundryModelProvider 'Microsoft.ApiManagement/aigateways/workspaces/modelProviders@2025-09-01-preview' = if (configureFoundryProvider) {
   parent: workspace
   name: providerName
   dependsOn: [
-    aiGatewayOpenAiUserRole
+    newFoundryOpenAiUserRole
+    existingFoundryOpenAiUserRole
   ]
   properties: {
     displayName: 'Microsoft Foundry'
     type: 'azureOpenAi'
-    endpointUri: 'https://${aiServices.name}.openai.azure.com/'
+    endpointUri: 'https://${foundryAccountName}.openai.azure.com/'
     credentials: {
       type: 'managedIdentity'
       managedIdentity: {
@@ -184,11 +221,11 @@ resource foundryModelProvider 'Microsoft.ApiManagement/aigateways/workspaces/mod
 }
 
 resource models 'Microsoft.ApiManagement/aigateways/workspaces/modelProviders/models@2025-09-01-preview' = [
-  for (model, i) in foundryModels: {
+  for model in (configureFoundryProvider ? foundryModels : []): {
     parent: foundryModelProvider
     name: model.name
     dependsOn: [
-      foundryDeployments[i]
+      foundryDeployments
     ]
     properties: {
       displayName: model.name
@@ -234,7 +271,7 @@ resource models 'Microsoft.ApiManagement/aigateways/workspaces/modelProviders/mo
 ]
 
 resource modelAliases 'Microsoft.ApiManagement/aigateways/workspaces/aliases@2025-09-01-preview' = [
-  for alias in aliases: {
+  for alias in (configureFoundryProvider ? aliases : []): {
     parent: workspace
     name: alias.name
     dependsOn: [
@@ -293,7 +330,8 @@ output gatewayId string = gateway.id
 output gatewayPrincipalId string = gateway.identity.principalId
 output workspaceId string = workspace.id
 output runtimeApiKeyId string = runtimeApiKey.id
-output foundryAccountId string = aiServices.id
-output foundryModelDeploymentIds array = [for (model, i) in foundryModels: foundryDeployments[i].id]
-output modelAliasNames array = [for alias in aliases: alias.name]
+output foundryAccountId string = createFoundry
+  ? aiServices.id
+  : (useExistingFoundry ? existingAiServices.id : '')
+output modelAliasNames array = [for alias in (configureFoundryProvider ? aliases : []): alias.name]
 output applicationInsightsId string = enableMonitoring ? appInsights.id : ''
