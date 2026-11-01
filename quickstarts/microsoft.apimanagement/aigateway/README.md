@@ -1,5 +1,5 @@
 ---
-description: Deploy Azure AI Gateway with optional managed-identity Azure OpenAI routing, a weighted model alias, token limits, and Application Insights.
+description: Deploy Azure AI Gateway and Microsoft Foundry with three current models, managed identity, failover aliases, token and cost limits, and content safety.
 page_type: sample
 products:
 - azure
@@ -9,9 +9,9 @@ urlFragment: aigateway
 languages:
 - bicep
 ---
-# Azure AI Gateway with optional Azure OpenAI routing
+# Azure AI Gateway with Microsoft Foundry models
 
-Applications that call multiple AI model deployments need a common entry point for routing, authentication, and usage limits. This template deploys Azure AI Gateway and can connect existing Azure OpenAI deployments through a client-facing model alias. The gateway uses its managed identity to authenticate to Azure OpenAI, so backend API keys are not needed.
+Applications need a shared entry point for AI models with consistent authentication, routing, and usage controls. This template provisions Azure AI Gateway and Microsoft Foundry together, deploys three models, and exposes the `model-router`, `fast`, and `primary` aliases. The gateway authenticates to Foundry using its managed identity, without backend API keys.
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.apimanagement/aigateway/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.apimanagement/aigateway/PublicDeployment.svg)
@@ -24,124 +24,135 @@ Applications that call multiple AI model deployments need a common entry point f
 
 ## What is deployed
 
-The default deployment creates a `Microsoft.ApiManagement/aigateways` resource using API version `2025-09-01-preview`, the **Premium** SKU, a system-assigned managed identity, and an active runtime API key named `default`. The service supplies the `default` workspace. The template does not return secret key values.
+The template creates a Premium `Microsoft.ApiManagement/aigateways@2025-09-01-preview` gateway with a system-assigned managed identity and an active runtime API key named `default`. It references the service-created `default` workspace and keeps secret key values out of deployment outputs.
 
-When `backend` is supplied, the template also creates an Azure OpenAI model provider, a model registration for each existing deployment, and a weighted alias with a per-identity token limit. It assigns the gateway the **Cognitive Services OpenAI User** role on that Azure OpenAI account only. It does not create or change the backend account or its model deployments.
+It also creates a `Microsoft.CognitiveServices/accounts@2025-06-01` account with `kind: 'AIServices'`, an S0 account SKU, and these `GlobalStandard` model deployments. Each deployment uses format `OpenAI` and capacity `10` by default.
 
-When `enableMonitoring` is `true`, the template creates Log Analytics and Application Insights and configures an Application Insights telemetry exporter with `payloadCapture: false`.
+| Model and deployment name | Version | Tokens per identity per minute | Monthly cost limit per identity |
+| --- | --- | --- | --- |
+| `gpt-5.4` | `2026-03-05` | `200000` | USD `5` |
+| `gpt-5.3-codex` | `2026-02-24` | `200000` | USD `5` |
+| `gpt-5.4-mini` | `2026-03-17` | `400000` | USD `5` |
 
-This sample does not deploy a classic API Management service or a connector gateway.
+The `foundry` model provider uses the account's OpenAI endpoint and managed-identity credentials with audience `https://cognitiveservices.azure.com`. The gateway receives the **Cognitive Services OpenAI User** role at the Foundry account scope only.
 
-## Prerequisites
+All three models are registered under `workspaces/default/modelProviders/foundry/models` with `/v1/chat/completions` and `/v1/responses` as supported endpoints. Registration does not make an unsupported operation available on an underlying model; choose the endpoint supported by the model you invoke.
 
-Use an Azure subscription and region with access to the Azure AI Gateway preview, and register the `Microsoft.ApiManagement` resource provider. Preview availability is not guaranteed in every region or subscription. This sample targets Azure public cloud only.
+Each model registration has a per-identity token limit, a `monthly-caller-budget` cost limit with period `month`, and content safety thresholds of `Medium` for hate, self-harm, sexual, and violence content. These are per-model caller controls, not a single shared subscription or account budget. Adjust the model policy values in `main.bicep` to suit your workload.
 
-Install the [Azure CLI](https://learn.microsoft.com/cli/azure/install-azure-cli) with [Bicep support](https://learn.microsoft.com/azure/azure-resource-manager/bicep/install#azure-cli). Your deployment identity needs permission to create the selected resources. Connecting a backend additionally requires permission to create role assignments on the existing Azure OpenAI account, for example through the Role Based Access Control Administrator role at that scope.
+The default aliases are:
 
-For backend routing, use an existing Azure OpenAI account **in the same resource group as the gateway** with reachable network access and existing chat-completion deployments. Deployment names, model names, and model versions must match that account. Managed identity grants authorization but does not bypass the account's firewall or private network configuration.
+| Alias | Routing |
+| --- | --- |
+| `model-router` | `gpt-5.4` at priority `0`, then `gpt-5.3-codex` at priority `1`, then `gpt-5.4-mini` at priority `2`; all weights `100`. |
+| `fast` | `gpt-5.4-mini` at priority `0`, weight `100`. |
+| `primary` | `gpt-5.4` at priority `0`, weight `100`. |
 
-**Costs:** The gateway uses Premium; Consumption is not supported by this preview contract. Review pricing and preview terms before deploying. Optional monitoring incurs Log Analytics and Application Insights charges, and routed model calls incur backend model charges.
+When `enableMonitoring` is `true`, the template creates Log Analytics and Application Insights and a telemetry exporter named exactly `applicationInsights`, with `kind: 'ApplicationInsights'` and `payloadCapture: false`.
 
-## Deploy the gateway
+This sample provisions a new Foundry account and its model deployments; it is not an existing-account attachment template. It does not create a Foundry project, hosted agent, classic API Management service, or connector gateway.
 
-Run these commands from this sample directory. Choose a region available to your preview subscription.
+## Prerequisites and costs
+
+Use an Azure public-cloud subscription with AI Gateway preview access. Select a gateway region available to your preview subscription and a Foundry region with access and sufficient quota for **all three exact model versions** and their `GlobalStandard` deployments. Model availability and capacity vary by subscription and region; deploying this sample does not grant access or quota.
+
+Install the [Azure CLI](https://learn.microsoft.com/cli/azure/install-azure-cli) with [Bicep support](https://learn.microsoft.com/azure/azure-resource-manager/bicep/install#azure-cli). Your deployment identity needs permission to create the selected resources and role assignments on the new Foundry account, for example through Owner or an appropriate combination of Contributor and Role Based Access Control Administrator.
+
+**Costs:** Deployment provisions a Premium gateway and three model deployments. Consumption is not supported by this gateway preview contract. Model calls and optional monitoring incur additional charges. The model cost-limit policies are caller controls and do not cap all Azure resource charges.
+
+The Foundry account disables local key authentication and enables public network access so the gateway can reach it. Managed identity controls authorization; this template does not deploy private networking.
+
+## Deploy
+
+Run from this sample directory after choosing your subscription and regions:
 
 ```bash
 az login
 az account set --subscription "<subscription-id>"
 az provider register --namespace Microsoft.ApiManagement --wait
+az provider register --namespace Microsoft.CognitiveServices --wait
 
 resourceGroup="aigateway-rg"
+foundryLocation="<foundry-model-region>"
 gatewayLocation="<aigateway-preview-region>"
 
-az group create --name "$resourceGroup" --location "$gatewayLocation"
+az group create --name "$resourceGroup" --location "$foundryLocation"
 az deployment group create \
   --name aigateway \
   --resource-group "$resourceGroup" \
   --template-file main.bicep \
   --parameters azuredeploy.parameters.json \
-  --parameters gatewayLocation="$gatewayLocation"
+  --parameters location="$foundryLocation" gatewayLocation="$gatewayLocation"
 ```
 
-This deploys a gateway without a backend. Add model routing before sending model requests. Deployment outputs include the gateway, workspace, and runtime API key resource IDs and the gateway managed identity's principal ID.
+Clients select `model-router`, `fast`, or `primary` in the request's model field. Role assignments can take time to propagate before model requests succeed. Deployment outputs include the gateway and Foundry account IDs, model deployment IDs, alias names, workspace ID, gateway principal ID, and runtime API key resource ID. Retrieve runtime credentials through authorized gateway key management; do not copy them into source control or deployment outputs.
 
-## Route two existing model deployments through an alias
+## Weighted load balancing
 
-Save the following as `azuredeploy.parameters.local.json`, replacing the account and deployment details with your existing resources. Run the deployment in the resource group that contains that account.
+Lower priority values are preferred. Routes at different priorities provide failover; weights select among routes at the same priority. To balance traffic between `gpt-5.4` and `gpt-5.4-mini` with an 80:20 preference, save this as `azuredeploy.parameters.local.json`:
 
 ```json
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "backend": {
-      "value": {
-        "accountName": "your-existing-azure-openai-account",
-        "aliasName": "chat",
-        "models": [
-          {
-            "name": "chat-primary",
-            "deploymentName": "your-first-deployment",
-            "modelName": "gpt-4o",
-            "modelVersion": "2024-08-06",
-            "priority": 0,
-            "weight": 70
-          },
-          {
-            "name": "chat-secondary",
-            "deploymentName": "your-second-deployment",
-            "modelName": "gpt-4o-mini",
-            "modelVersion": "2024-07-18",
-            "priority": 0,
-            "weight": 30
-          }
-        ]
-      }
-    },
-    "aliasTokenLimit": {
-      "value": 10000
-    },
-    "enableMonitoring": {
-      "value": true
+    "aliases": {
+      "value": [
+        {
+          "name": "model-router",
+          "routes": [
+            { "modelName": "gpt-5.4", "priority": 0, "weight": 80 },
+            { "modelName": "gpt-5.4-mini", "priority": 0, "weight": 20 }
+          ]
+        },
+        {
+          "name": "fast",
+          "routes": [
+            { "modelName": "gpt-5.4-mini", "priority": 0, "weight": 100 }
+          ]
+        },
+        {
+          "name": "primary",
+          "routes": [
+            { "modelName": "gpt-5.4", "priority": 0, "weight": 100 }
+          ]
+        }
+      ]
     }
   }
 }
 ```
 
 ```bash
-resourceGroup="<existing-azure-openai-resource-group>"
-gatewayLocation="<aigateway-preview-region>"
-
 az deployment group create \
   --name aigateway \
   --resource-group "$resourceGroup" \
   --template-file main.bicep \
-  --parameters azuredeploy.parameters.local.json \
-  --parameters gatewayLocation="$gatewayLocation"
+  --parameters azuredeploy.parameters.json azuredeploy.parameters.local.json \
+  --parameters location="$foundryLocation" gatewayLocation="$gatewayLocation"
 ```
 
-Clients use `chat` as the model name. Both routes have priority `0`, so their relative weights express a 70:30 routing preference; observed distribution varies with traffic and backend availability. For primary/fallback routing instead, set the second route's priority to `1`. Lower priority values are preferred, and weights select among routes at the same priority. Model registration names must be unique within the provider.
+The override supplies the entire alias array and keeps `fast` and `primary` unchanged. The two `model-router` routes now share priority `0`; observed distribution varies with traffic and backend availability. Route names are restricted to the three registered models, priorities to `0`-`100`, and weights to `1`-`100`. Alias names must be unique.
 
-The alias limits each identity to 10,000 tokens per minute by default. Role assignments can take time to propagate before the first model request succeeds. Retrieve runtime credentials through an authorized key-management operation or the gateway's management experience; do not copy them into templates, source control, or deployment outputs.
-
-Changing a model registration or alias name does not remove the old resource during an incremental deployment. Likewise, disabling monitoring or removing `backend` does not delete previously deployed resources or revoke previous role assignments; remove them explicitly when retiring a configuration.
+Renaming or removing an alias during incremental deployment does not delete its old resource. Disabling monitoring does not delete previously deployed monitoring resources. Remove retired resources explicitly.
 
 ## Parameters
 
 | Parameter | Purpose | Default |
 | --- | --- | --- |
-| `gatewayName` | Gateway name, 3-24 characters. | A deterministic name based on the resource group. |
-| `location` | Monitoring resource region. | Resource group location. |
+| `gatewayName` | Gateway name, 3-24 characters. | `aigateway-` plus a resource-group-derived suffix. |
+| `location` | Foundry, model deployment, and monitoring region. | Resource group location. |
 | `gatewayLocation` | Region with AI Gateway preview access. | `location`. |
-| `backend` | Existing account, alias name, and model deployment configurations. | `null` (no backend). |
-| `aliasTokenLimit` | Tokens per identity per minute on the alias. | `10000`. |
-| `enableMonitoring` | Create monitoring resources and a payload-free exporter. | `false`. |
+| `foundryAccountName` | New Foundry account name and custom subdomain. | `aigateway-foundry-` plus a resource-group-derived suffix. |
+| `modelCapacity` | GlobalStandard capacity for each model deployment. | `10`. |
+| `aliases` | Complete client-facing alias and route configuration. | `model-router`, `fast`, and `primary`. |
+| `enableMonitoring` | Create monitoring and a payload-free telemetry exporter. | `false`. |
 | `tags` | Resource tags. | `{}`. |
 
 ## References
 
-- [Azure API Management documentation](https://learn.microsoft.com/azure/api-management/)
+- [Microsoft Foundry documentation](https://learn.microsoft.com/azure/ai-foundry/)
 - [Azure OpenAI role-based access control](https://learn.microsoft.com/azure/ai-foundry/openai/how-to/role-based-access-control)
 - [Deploy Bicep with the Azure CLI](https://learn.microsoft.com/azure/azure-resource-manager/bicep/deploy-cli)
 
-`Tags: Microsoft.ApiManagement/aigateways, Microsoft.ApiManagement/aigateways/workspaces/modelProviders, Microsoft.ApiManagement/aigateways/workspaces/modelProviders/models, Microsoft.ApiManagement/aigateways/workspaces/aliases, Microsoft.ApiManagement/aigateways/apiKeys, Microsoft.ApiManagement/aigateways/workspaces/telemetryExporters, Microsoft.Authorization/roleAssignments, Microsoft.OperationalInsights/workspaces, Microsoft.Insights/components, SystemAssigned`
+`Tags: Microsoft.ApiManagement/aigateways, Microsoft.ApiManagement/aigateways/workspaces/modelProviders, Microsoft.ApiManagement/aigateways/workspaces/modelProviders/models, Microsoft.ApiManagement/aigateways/workspaces/aliases, Microsoft.ApiManagement/aigateways/apiKeys, Microsoft.ApiManagement/aigateways/workspaces/telemetryExporters, Microsoft.CognitiveServices/accounts, Microsoft.CognitiveServices/accounts/deployments, Microsoft.Authorization/roleAssignments, Microsoft.OperationalInsights/workspaces, Microsoft.Insights/components, SystemAssigned`

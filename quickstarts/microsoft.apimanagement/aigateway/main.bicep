@@ -1,15 +1,8 @@
 targetScope = 'resourceGroup'
 
 @sealed()
-type modelConfiguration = {
-  @minLength(1)
-  name: string
-  @minLength(1)
-  deploymentName: string
-  @minLength(1)
-  modelName: string
-  @minLength(1)
-  modelVersion: string
+type aliasRoute = {
+  modelName: 'gpt-5.4' | 'gpt-5.3-codex' | 'gpt-5.4-mini'
   @minValue(0)
   @maxValue(100)
   priority: int
@@ -19,15 +12,12 @@ type modelConfiguration = {
 }
 
 @sealed()
-type backendConfiguration = {
-  @minLength(2)
-  @maxLength(64)
-  accountName: string
+type aliasConfiguration = {
   @minLength(1)
-  aliasName: string
+  name: string
   @minLength(1)
   @maxLength(30)
-  models: modelConfiguration[]
+  routes: aliasRoute[]
 }
 
 @description('Name of the Azure AI Gateway. Use lowercase letters, numbers, and hyphens, starting and ending with a letter or number.')
@@ -35,31 +25,119 @@ type backendConfiguration = {
 @maxLength(24)
 param gatewayName string = 'aigateway-${uniqueString(resourceGroup().id)}'
 
-@description('Location for the monitoring resources.')
+@description('Location for the Foundry account, model deployments, and monitoring resources. Select a region with capacity for all three models.')
 param location string = resourceGroup().location
 
 @description('An Azure region where your subscription has access to the Azure AI Gateway preview.')
 param gatewayLocation string = location
 
-@description('Optional existing Azure OpenAI account in this resource group, its deployed chat models, and a client-facing alias. Leave null to deploy the gateway without a backend.')
-param backend backendConfiguration?
+@description('Name of the new Microsoft Foundry account and its custom subdomain.')
+@minLength(2)
+@maxLength(64)
+param foundryAccountName string = 'aigateway-foundry-${uniqueString(resourceGroup().id)}'
 
-@description('Maximum tokens per identity per minute for requests using the model alias.')
+@description('GlobalStandard capacity for each of the three Foundry model deployments. Ensure the subscription has quota for each model.')
 @minValue(1)
-param aliasTokenLimit int = 10000
+param modelCapacity int = 10
+
+@description('Client-facing aliases and routes. Lower priority values are preferred; weights select routes at the same priority.')
+@minLength(1)
+@maxLength(30)
+param aliases aliasConfiguration[] = [
+  {
+    name: 'model-router'
+    routes: [
+      { modelName: 'gpt-5.4', priority: 0, weight: 100 }
+      { modelName: 'gpt-5.3-codex', priority: 1, weight: 100 }
+      { modelName: 'gpt-5.4-mini', priority: 2, weight: 100 }
+    ]
+  }
+  {
+    name: 'fast'
+    routes: [
+      { modelName: 'gpt-5.4-mini', priority: 0, weight: 100 }
+    ]
+  }
+  {
+    name: 'primary'
+    routes: [
+      { modelName: 'gpt-5.4', priority: 0, weight: 100 }
+    ]
+  }
+]
 
 @description('Deploy Application Insights and Log Analytics, and export gateway telemetry without request or response payloads.')
 param enableMonitoring bool = false
 
-@description('Tags to apply to the gateway and monitoring resources.')
+@description('Tags to apply to the gateway, Foundry account, and monitoring resources.')
 param tags object = {}
 
-var providerName = 'azure-openai'
-var openAiUserRoleId = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd')
+var providerName = 'foundry'
+var openAiUserRoleId = subscriptionResourceId(
+  'Microsoft.Authorization/roleDefinitions',
+  '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd'
+)
+var foundryModels = [
+  {
+    name: 'gpt-5.4'
+    version: '2026-03-05'
+    tokenLimitPerMinute: 200000
+    monthlyCostLimitUsd: 5
+  }
+  {
+    name: 'gpt-5.3-codex'
+    version: '2026-02-24'
+    tokenLimitPerMinute: 200000
+    monthlyCostLimitUsd: 5
+  }
+  {
+    name: 'gpt-5.4-mini'
+    version: '2026-03-17'
+    tokenLimitPerMinute: 400000
+    monthlyCostLimitUsd: 5
+  }
+]
 
-resource azureOpenAi 'Microsoft.CognitiveServices/accounts@2024-10-01' existing = if (backend != null) {
-  name: backend!.accountName
+resource aiServices 'Microsoft.CognitiveServices/accounts@2025-06-01' = {
+  name: foundryAccountName
+  location: location
+  sku: {
+    name: 'S0'
+  }
+  kind: 'AIServices'
+  identity: {
+    type: 'SystemAssigned'
+  }
+  tags: tags
+  properties: {
+    allowProjectManagement: false
+    customSubDomainName: toLower(foundryAccountName)
+    disableLocalAuth: true
+    publicNetworkAccess: 'Enabled'
+    networkAcls: {
+      defaultAction: 'Allow'
+    }
+  }
 }
+
+@batchSize(1)
+resource foundryDeployments 'Microsoft.CognitiveServices/accounts/deployments@2025-06-01' = [
+  for model in foundryModels: {
+    parent: aiServices
+    name: model.name
+    sku: {
+      name: 'GlobalStandard'
+      capacity: modelCapacity
+    }
+    properties: {
+      model: {
+        name: model.name
+        version: model.version
+        format: 'OpenAI'
+      }
+    }
+  }
+]
 
 resource gateway 'Microsoft.ApiManagement/aigateways@2025-09-01-preview' = {
   name: gatewayName
@@ -89,9 +167,9 @@ resource runtimeApiKey 'Microsoft.ApiManagement/aigateways/apiKeys@2025-09-01-pr
   }
 }
 
-resource openAiUserRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (backend != null) {
-  scope: azureOpenAi
-  name: guid(azureOpenAi!.id, gateway.id, openAiUserRoleId)
+resource aiGatewayOpenAiUserRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  scope: aiServices
+  name: guid(aiServices.id, gateway.id, openAiUserRoleId)
   properties: {
     roleDefinitionId: openAiUserRoleId
     principalId: gateway.identity.principalId
@@ -99,63 +177,94 @@ resource openAiUserRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = i
   }
 }
 
-resource modelProvider 'Microsoft.ApiManagement/aigateways/workspaces/modelProviders@2025-09-01-preview' = if (backend != null) {
+resource foundryModelProvider 'Microsoft.ApiManagement/aigateways/workspaces/modelProviders@2025-09-01-preview' = {
   parent: workspace
   name: providerName
   dependsOn: [
-    openAiUserRole
+    aiGatewayOpenAiUserRole
   ]
   properties: {
+    displayName: 'Microsoft Foundry'
     type: 'azureOpenAi'
-    endpointUri: azureOpenAi!.properties.endpoint
+    endpointUri: 'https://${aiServices.name}.openai.azure.com/'
     credentials: {
       type: 'managedIdentity'
-    }
-  }
-}
-
-resource models 'Microsoft.ApiManagement/aigateways/workspaces/modelProviders/models@2025-09-01-preview' = [for model in (backend.?models ?? []): {
-  parent: modelProvider
-  name: model.name
-  properties: {
-    apiFormat: 'OpenAIChatCompletions'
-    supportedEndpoints: [
-      '/v1/chat/completions'
-    ]
-    deployment: {
-      modelName: model.modelName
-      name: model.deploymentName
-      version: model.modelVersion
-      format: 'OpenAI'
-    }
-  }
-}]
-
-resource modelAlias 'Microsoft.ApiManagement/aigateways/workspaces/aliases@2025-09-01-preview' = if (backend != null) {
-  parent: workspace
-  name: backend!.aliasName
-  dependsOn: [
-    models
-  ]
-  properties: {
-    routes: [for model in backend!.models: {
-      providerName: providerName
-      modelName: model.name
-      priority: model.priority
-      weight: model.weight
-    }]
-    policies: [
-      {
-        type: 'tokenLimit'
-        period: 'minute'
-        count: aliasTokenLimit
-        counterKey: [
-          'identity'
-        ]
+      managedIdentity: {
+        resource: 'https://cognitiveservices.azure.com'
       }
-    ]
+    }
   }
 }
+
+resource models 'Microsoft.ApiManagement/aigateways/workspaces/modelProviders/models@2025-09-01-preview' = [
+  for (model, i) in foundryModels: {
+    parent: foundryModelProvider
+    name: model.name
+    dependsOn: [
+      foundryDeployments[i]
+    ]
+    properties: {
+      displayName: model.name
+      apiFormat: 'OpenAIChatCompletions'
+      supportedEndpoints: [
+        '/v1/chat/completions'
+        '/v1/responses'
+      ]
+      deployment: {
+        modelName: model.name
+        name: model.name
+        version: model.version
+        format: 'OpenAI'
+      }
+      policies: [
+        {
+          type: 'tokenLimit'
+          period: 'minute'
+          count: model.tokenLimitPerMinute
+          counterKey: [
+            'identity'
+          ]
+        }
+        {
+          type: 'costLimit'
+          id: 'monthly-caller-budget'
+          period: 'month'
+          amount: model.monthlyCostLimitUsd
+          counterKey: [
+            'identity'
+          ]
+        }
+        {
+          type: 'contentSafety'
+          hateSeverity: 'Medium'
+          selfHarmSeverity: 'Medium'
+          sexualSeverity: 'Medium'
+          violenceSeverity: 'Medium'
+        }
+      ]
+    }
+  }
+]
+
+resource modelAliases 'Microsoft.ApiManagement/aigateways/workspaces/aliases@2025-09-01-preview' = [
+  for alias in aliases: {
+    parent: workspace
+    name: alias.name
+    dependsOn: [
+      models
+    ]
+    properties: {
+      routes: [
+        for route in alias.routes: {
+          providerName: providerName
+          modelName: route.modelName
+          priority: route.priority
+          weight: route.weight
+        }
+      ]
+    }
+  }
+]
 
 resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2023-09-01' = if (enableMonitoring) {
   name: '${gatewayName}-logs'
@@ -182,7 +291,7 @@ resource appInsights 'Microsoft.Insights/components@2020-02-02' = if (enableMoni
 
 resource telemetryExporter 'Microsoft.ApiManagement/aigateways/workspaces/telemetryExporters@2025-09-01-preview' = if (enableMonitoring) {
   parent: workspace
-  name: 'appinsights'
+  name: 'applicationInsights'
   properties: {
     kind: 'ApplicationInsights'
     payloadCapture: false
@@ -197,5 +306,7 @@ output gatewayId string = gateway.id
 output gatewayPrincipalId string = gateway.identity.principalId
 output workspaceId string = workspace.id
 output runtimeApiKeyId string = runtimeApiKey.id
-output modelAliasName string = backend != null ? backend!.aliasName : ''
+output foundryAccountId string = aiServices.id
+output foundryModelDeploymentIds array = [for (model, i) in foundryModels: foundryDeployments[i].id]
+output modelAliasNames array = [for alias in aliases: alias.name]
 output applicationInsightsId string = enableMonitoring ? appInsights.id : ''
