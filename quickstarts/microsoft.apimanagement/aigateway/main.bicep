@@ -127,9 +127,9 @@ var optionalIpFilterPolicies = empty(allowedCallerCidrRanges)
         cidrRanges: allowedCallerCidrRanges
       }
     ]
-var openAiUserRoleId = subscriptionResourceId(
+var aiUserRoleId = subscriptionResourceId(
   'Microsoft.Authorization/roleDefinitions',
-  '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd'
+  '53ca6127-db72-4b80-b1b0-d745d6d5456d'
 )
 
 resource aiServices 'Microsoft.CognitiveServices/accounts@2025-06-01' = if (createFoundry) {
@@ -212,21 +212,21 @@ resource runtimeApiKey 'Microsoft.ApiManagement/aigateways/apiKeys@2025-09-01-pr
   }
 }
 
-resource newFoundryOpenAiUserRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (createFoundry) {
+resource newFoundryAiUserRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (createFoundry) {
   scope: aiServices
-  name: guid(resourceGroup().id, foundryAccountName, gateway.id, openAiUserRoleId, 'create')
+  name: guid(resourceGroup().id, foundryAccountName, gateway.id, aiUserRoleId, 'create')
   properties: {
-    roleDefinitionId: openAiUserRoleId
+    roleDefinitionId: aiUserRoleId
     principalId: gateway.identity.principalId
     principalType: 'ServicePrincipal'
   }
 }
 
-resource existingFoundryOpenAiUserRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (useExistingFoundry) {
+resource existingFoundryAiUserRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (useExistingFoundry) {
   scope: existingAiServices
-  name: guid(resourceGroup().id, foundryAccountName, gateway.id, openAiUserRoleId, 'existing')
+  name: guid(resourceGroup().id, foundryAccountName, gateway.id, aiUserRoleId, 'existing')
   properties: {
-    roleDefinitionId: openAiUserRoleId
+    roleDefinitionId: aiUserRoleId
     principalId: gateway.identity.principalId
     principalType: 'ServicePrincipal'
   }
@@ -236,14 +236,14 @@ resource foundryModelProvider 'Microsoft.ApiManagement/aigateways/workspaces/mod
   parent: workspace
   name: providerName
   dependsOn: [
-    newFoundryOpenAiUserRole
-    existingFoundryOpenAiUserRole
+    newFoundryAiUserRole
+    existingFoundryAiUserRole
   ]
   properties: {
     kind: 'Foundry'
     displayName: 'Microsoft Foundry'
     foundry: {
-      endpoint: 'https://${foundryAccountName}.openai.azure.com/'
+      endpoint: 'https://${toLower(foundryAccountName)}.services.ai.azure.com/'
       resourceIds: [
         effectiveFoundryResourceId
       ]
@@ -342,6 +342,7 @@ resource learnMcpToolServer 'Microsoft.ApiManagement/aigateways/workspaces/toolS
     displayName: 'Microsoft Learn MCP'
     description: 'Public Microsoft Learn documentation MCP server (no authentication).'
     type: 'mcp'
+    failureMode: 'failClosed'
     accessState: 'active'
     subscriptionRequired: true
     policies: optionalIpFilterPolicies
@@ -352,7 +353,7 @@ resource learnMcpToolServer 'Microsoft.ApiManagement/aigateways/workspaces/toolS
         kind: 'mcp'
         required: false
         credentials: {
-          type: 'none'
+          type: 'noAuth'
         }
         mcp: {
           transport: 'streamableHttp'
