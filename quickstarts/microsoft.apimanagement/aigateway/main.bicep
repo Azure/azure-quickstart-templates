@@ -101,6 +101,12 @@ param enableMonitoring bool = false
 @description('Skip MCP tool configuration by default (none), or create the no-auth Microsoft Learn MCP tool server (create).')
 param mcpMode mcpModeType = 'none'
 
+@description('Optional resource ID of an existing subnet in the same subscription and region, delegated to Microsoft.App/environments, for outbound VNet integration.')
+param backendSubnetResourceId string = ''
+
+@description('Optional CIDR ranges allowed to call registered models and MCP tool servers via an inline ipFilter policy. Leave empty to allow all caller IPs.')
+param allowedCallerCidrRanges string[] = []
+
 @description('Tags to apply to the gateway, Foundry account, and monitoring resources.')
 param tags object = {}
 
@@ -109,6 +115,18 @@ var createFoundry = foundryMode == 'create'
 var useExistingFoundry = foundryMode == 'existing'
 var configureFoundryProvider = foundryMode != 'none'
 var createLearnMcp = mcpMode == 'create'
+var effectiveFoundryResourceId = createFoundry
+  ? aiServices.id
+  : (useExistingFoundry ? existingAiServices.id : '')
+var optionalIpFilterPolicies = empty(allowedCallerCidrRanges)
+  ? []
+  : [
+      {
+        type: 'ipFilter'
+        action: 'Allow'
+        cidrRanges: allowedCallerCidrRanges
+      }
+    ]
 var openAiUserRoleId = subscriptionResourceId(
   'Microsoft.Authorization/roleDefinitions',
   '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd'
@@ -169,7 +187,15 @@ resource gateway 'Microsoft.ApiManagement/aigateways@2025-09-01-preview' = {
     type: 'SystemAssigned'
   }
   tags: tags
-  properties: {}
+  properties: empty(backendSubnetResourceId)
+    ? {}
+    : {
+        backend: {
+          subnet: {
+            id: backendSubnetResourceId
+          }
+        }
+      }
 }
 
 // The gateway creates its default workspace.
@@ -183,7 +209,6 @@ resource runtimeApiKey 'Microsoft.ApiManagement/aigateways/apiKeys@2025-09-01-pr
   name: 'default'
   properties: {
     displayName: 'Default runtime key'
-    state: 'active'
   }
 }
 
@@ -215,13 +240,18 @@ resource foundryModelProvider 'Microsoft.ApiManagement/aigateways/workspaces/mod
     existingFoundryOpenAiUserRole
   ]
   properties: {
+    kind: 'Foundry'
     displayName: 'Microsoft Foundry'
-    type: 'azureOpenAi'
-    endpointUri: 'https://${foundryAccountName}.openai.azure.com/'
-    credentials: {
-      type: 'managedIdentity'
-      managedIdentity: {
-        resource: 'https://cognitiveservices.azure.com'
+    foundry: {
+      endpoint: 'https://${foundryAccountName}.openai.azure.com/'
+      resourceIds: [
+        effectiveFoundryResourceId
+      ]
+      authentication: {
+        kind: 'ManagedIdentity'
+        managedIdentity: {
+          resource: 'https://cognitiveservices.azure.com/'
+        }
       }
     }
   }
@@ -238,41 +268,43 @@ resource models 'Microsoft.ApiManagement/aigateways/workspaces/modelProviders/mo
       displayName: model.name
       apiFormat: 'OpenAIChatCompletions'
       supportedEndpoints: [
-        '/v1/chat/completions'
-        '/v1/responses'
+        '/openai/v1/chat/completions'
+        '/openai/v1/responses'
       ]
       deployment: {
+        resourceId: '${effectiveFoundryResourceId}/deployments/${model.name}'
         modelName: model.name
-        name: model.name
-        version: model.version
-        format: 'OpenAI'
+        modelVersion: model.version
       }
-      policies: [
-        {
-          type: 'tokenLimit'
-          period: 'minute'
-          count: model.tokenLimitPerMinute
-          counterKey: [
-            'identity'
-          ]
-        }
-        {
-          type: 'costLimit'
-          id: 'monthly-caller-budget'
-          period: 'month'
-          amount: model.monthlyCostLimitUsd
-          counterKey: [
-            'identity'
-          ]
-        }
-        {
-          type: 'contentSafety'
-          hateSeverity: 'Medium'
-          selfHarmSeverity: 'Medium'
-          sexualSeverity: 'Medium'
-          violenceSeverity: 'Medium'
-        }
-      ]
+      policies: concat(
+        [
+          {
+            type: 'tokenLimit'
+            period: 'minute'
+            count: model.tokenLimitPerMinute
+            counterKey: [
+              'identity'
+            ]
+          }
+          {
+            type: 'costLimit'
+            id: 'monthly-caller-budget'
+            period: 'month'
+            amount: model.monthlyCostLimitUsd
+            counterKey: [
+              'identity'
+            ]
+          }
+          {
+            type: 'contentSafety'
+            hateSeverity: 'Medium'
+            selfHarmSeverity: 'Medium'
+            sexualSeverity: 'Medium'
+            violenceSeverity: 'Medium'
+          }
+        ],
+        optionalIpFilterPolicies
+      )
     }
   }
 ]
@@ -285,10 +317,16 @@ resource modelAliases 'Microsoft.ApiManagement/aigateways/workspaces/aliases@202
       models
     ]
     properties: {
-      routes: [
+      aliasName: alias.name
+      backendModels: [
         for route in alias.routes: {
-          providerName: providerName
-          modelName: route.modelName
+          resourceId: resourceId(
+            'Microsoft.ApiManagement/aigateways/workspaces/modelProviders/models',
+            gatewayName,
+            'default',
+            providerName,
+            route.modelName
+          )
           priority: route.priority
           weight: route.weight
         }
@@ -306,6 +344,7 @@ resource learnMcpToolServer 'Microsoft.ApiManagement/aigateways/workspaces/toolS
     type: 'mcp'
     accessState: 'active'
     subscriptionRequired: true
+    policies: optionalIpFilterPolicies
     endpoints: [
       {
         id: 'learn'

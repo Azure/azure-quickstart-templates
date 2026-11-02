@@ -69,7 +69,7 @@ Install the [Azure CLI](https://learn.microsoft.com/cli/azure/install-azure-cli)
 
 **Costs:** Deployment provisions a Premium gateway and two model deployments. Consumption is not supported by this gateway preview contract. Model calls and optional monitoring incur additional charges. The model cost-limit policies are caller controls and do not cap all Azure resource charges.
 
-The Foundry account disables local key authentication and enables public network access so the gateway can reach it. Managed identity controls authorization; this template does not deploy private networking.
+The Foundry account disables local key authentication and enables public network access by default. For outbound VNet integration (`properties.backend.subnet.id`), pass `backendSubnetResourceId` pointing to a subnet in the same subscription and region delegated to `Microsoft.App/environments`. For inbound caller IP restriction, pass `allowedCallerCidrRanges` (for example `['10.0.0.0/8']`) to attach an `ipFilter` policy to registered models and MCP tool servers.
 
 ## Deploy
 
@@ -177,6 +177,8 @@ Renaming or removing an alias during incremental deployment does not delete its 
 | `foundryModels` | Models to deploy (`create`) and register in the gateway catalog (`create` or `existing`). | `gpt-6.1-sol` (`2026-09-29`) and `gpt-5-mini` (`2025-08-07`). |
 | `aliases` | Client-facing alias and route configuration when `foundryMode` is `create` or `existing`. | `gpt-latest` and `gpt-mini-latest`. |
 | `mcpMode` | `none` (no MCP tools by default) or `create` (register the no-auth Microsoft Learn MCP server at `https://learn.microsoft.com/api/mcp`). | `none`. |
+| `backendSubnetResourceId` | Optional subnet resource ID in the same subscription and region (delegated to `Microsoft.App/environments`) for outbound VNet integration (`properties.backend.subnet.id`). | `''`. |
+| `allowedCallerCidrRanges` | Optional CIDR ranges allowed to call registered models and MCP tool servers via an inline `ipFilter` policy. | `[]`. |
 | `enableMonitoring` | Create monitoring and a payload-free telemetry exporter. | `false`. |
 | `tags` | Resource tags. | `{}`. |
 
