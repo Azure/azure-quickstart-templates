@@ -107,6 +107,9 @@ param backendSubnetResourceId string = ''
 @description('Optional CIDR ranges allowed to call registered models and MCP tool servers via an inline ipFilter policy. Leave empty to allow all caller IPs.')
 param allowedCallerCidrRanges string[] = []
 
+@description('Optional principal ID (for example, a Microsoft Foundry project managed identity or caller service principal) to grant the AI Gateway User role on the gateway.')
+param gatewayUserPrincipalId string = ''
+
 @description('Tags to apply to the gateway, Foundry account, and monitoring resources.')
 param tags object = {}
 
@@ -130,6 +133,14 @@ var optionalIpFilterPolicies = empty(allowedCallerCidrRanges)
 var aiUserRoleId = subscriptionResourceId(
   'Microsoft.Authorization/roleDefinitions',
   '53ca6127-db72-4b80-b1b0-d745d6d5456d'
+)
+var aiGatewayUserRoleId = subscriptionResourceId(
+  'Microsoft.Authorization/roleDefinitions',
+  'caad7a21-134e-43f4-a550-c5ffc17e051c'
+)
+var monitoringMetricsPublisherRoleId = subscriptionResourceId(
+  'Microsoft.Authorization/roleDefinitions',
+  '3913510d-42f4-4e42-8a64-420c390055eb'
 )
 
 resource aiServices 'Microsoft.CognitiveServices/accounts@2025-06-01' = if (createFoundry) {
@@ -209,6 +220,16 @@ resource runtimeApiKey 'Microsoft.ApiManagement/aigateways/apiKeys@2025-09-01-pr
   name: 'default'
   properties: {
     displayName: 'Default runtime key'
+  }
+}
+
+resource gatewayCallerUserRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (!empty(gatewayUserPrincipalId)) {
+  scope: gateway
+  name: guid(gateway.id, gatewayUserPrincipalId, aiGatewayUserRoleId)
+  properties: {
+    roleDefinitionId: aiGatewayUserRoleId
+    principalId: gatewayUserPrincipalId
+    principalType: 'ServicePrincipal'
   }
 }
 
@@ -384,18 +405,45 @@ resource appInsights 'Microsoft.Insights/components@2020-02-02' = if (enableMoni
   properties: {
     Application_Type: 'web'
     WorkspaceResourceId: logAnalytics.id
+    #disable-next-line BCP037
+    AzureMonitorWorkspaceIngestionMode: 'Enabled'
+  }
+}
+
+resource appInsightsMetricsPublisherRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (enableMonitoring) {
+  scope: appInsights
+  name: guid(resourceGroup().id, gateway.id, monitoringMetricsPublisherRoleId, 'insights')
+  properties: {
+    roleDefinitionId: monitoringMetricsPublisherRoleId
+    principalId: gateway.identity.principalId
+    principalType: 'ServicePrincipal'
   }
 }
 
 resource telemetryExporter 'Microsoft.ApiManagement/aigateways/workspaces/telemetryExporters@2025-09-01-preview' = if (enableMonitoring) {
   parent: workspace
   name: 'applicationInsights'
+  dependsOn: [
+    appInsightsMetricsPublisherRole
+  ]
   properties: {
-    kind: 'ApplicationInsights'
+    kind: 'OpenTelemetry'
     payloadCapture: false
     applicationInsights: {
-      connectionString: appInsights!.properties.ConnectionString
       resourceId: appInsights!.id
+    }
+    openTelemetry: {
+      #disable-next-line BCP053
+      metricsEndpoint: appInsights!.properties.?OTLPMetricsEndpoint ?? appInsights!.properties.?MetricsIngestionEndpoint
+      #disable-next-line BCP053
+      logsEndpoint: appInsights!.properties.?OTLPLogsEndpoint ?? appInsights!.properties.?LogsIngestionEndpoint
+      #disable-next-line BCP053
+      tracesEndpoint: appInsights!.properties.?OTLPTracesEndpoint ?? appInsights!.properties.?TracesIngestionEndpoint
+      credentials: {
+        managedIdentity: {
+          resource: 'https://monitor.azure.com'
+        }
+      }
     }
   }
 }
@@ -410,3 +458,5 @@ output foundryAccountId string = createFoundry
 output modelAliasNames array = [for alias in (configureFoundryProvider ? aliases : []): alias.name]
 output learnMcpToolServerId string = createLearnMcp ? learnMcpToolServer.id : ''
 output applicationInsightsId string = enableMonitoring ? appInsights.id : ''
+#disable-next-line BCP053
+output applicationInsightsDcrId string = enableMonitoring ? (appInsights!.properties.?DataCollectionRuleResourceId ?? appInsights!.properties.?DefaultDataCollectionRuleResourceId ?? '') : ''

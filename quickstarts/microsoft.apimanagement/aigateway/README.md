@@ -37,7 +37,7 @@ It also creates a `Microsoft.CognitiveServices/accounts@2025-06-01` account with
 | `gpt-6.1-sol` | `2026-09-29` | `200000` | USD `5` |
 | `gpt-5-mini` | `2025-08-07` | `400000` | USD `5` |
 
-The `foundry` model provider uses the account's OpenAI endpoint and managed-identity credentials with audience `https://cognitiveservices.azure.com`. The gateway receives the **Cognitive Services OpenAI User** role at the Foundry account scope only.
+The `foundry` model provider uses the account's AI Services endpoint (`https://<account>.services.ai.azure.com/`) and managed-identity credentials with audience `https://cognitiveservices.azure.com`. The gateway receives the **Azure AI User** role (`53ca6127-db72-4b80-b1b0-d745d6d5456d`) at the Foundry account scope.
 
 Both models are registered under `workspaces/default/modelProviders/foundry/models` with `/v1/chat/completions` and `/v1/responses` as supported endpoints. Registration does not make an unsupported operation available on an underlying model; choose the endpoint supported by the model you invoke.
 
@@ -50,9 +50,9 @@ The default aliases are:
 | `gpt-latest` | `gpt-6.1-sol` at priority `0`, with failover to `gpt-5-mini` at priority `1`; both weights `100`. |
 | `gpt-mini-latest` | `gpt-5-mini` at priority `0`, weight `100`. |
 
-When `enableMonitoring` is `true`, the template creates Log Analytics and Application Insights and a telemetry exporter named exactly `applicationInsights`, with `kind: 'ApplicationInsights'` and `payloadCapture: false`.
+When `enableMonitoring` is `true`, the template creates Log Analytics and Application Insights (`AzureMonitorWorkspaceIngestionMode: 'Enabled'`), assigns **Monitoring Metrics Publisher** on the Application Insights component, and creates a telemetry exporter named `applicationInsights` with `kind: 'OpenTelemetry'`, `payloadCapture: false`, and managed-identity authentication (`https://monitor.azure.com`).
 
-When `mcpMode` is `create` (default `none`), the template also registers the public Microsoft Learn MCP tool server (`workspaces/default/toolServers/learn`) pointing to `https://learn.microsoft.com/api/mcp` over `streamableHttp` with `credentials: { type: 'none' }`.
+When `mcpMode` is `create` (default `none`), the template also registers the public Microsoft Learn MCP tool server (`workspaces/default/toolServers/learn`) pointing to `https://learn.microsoft.com/api/mcp` over `streamableHttp` with `credentials: { type: 'noAuth' }`.
 
 This sample supports three model-configuration modes via `foundryMode`:
 - **`create` (default):** Creates a new Foundry `AIServices` account, deploys `gpt-6.1-sol` and `gpt-5-mini`, grants **Cognitive Services OpenAI User** RBAC, registers the `foundry` model provider and models with policies, and creates the `gpt-latest` and `gpt-mini-latest` aliases.
@@ -179,8 +179,19 @@ Renaming or removing an alias during incremental deployment does not delete its 
 | `mcpMode` | `none` (no MCP tools by default) or `create` (register the no-auth Microsoft Learn MCP server at `https://learn.microsoft.com/api/mcp`). | `none`. |
 | `backendSubnetResourceId` | Optional subnet resource ID in the same subscription and region (delegated to `Microsoft.App/environments`) for outbound VNet integration (`properties.backend.subnet.id`). | `''`. |
 | `allowedCallerCidrRanges` | Optional CIDR ranges allowed to call registered models and MCP tool servers via an inline `ipFilter` policy. | `[]`. |
-| `enableMonitoring` | Create monitoring and a payload-free telemetry exporter. | `false`. |
+| `gatewayUserPrincipalId` | Optional caller or Foundry project principal ID to grant the **AI Gateway User** role (`caad7a21-134e-43f4-a550-c5ffc17e051c`) on the gateway. | `''`. |
+| `enableMonitoring` | Create monitoring and a payload-free OpenTelemetry exporter. | `false`. |
 | `tags` | Resource tags. | `{}`. |
+
+## Operational notes
+
+Pure Bicep handles all core gateway, Foundry, RBAC, policy, MCP, VNet, and OpenTelemetry exporter resources. A few operational behaviors are outside the scope of declarative ARM deployments:
+
+- **RBAC propagation readiness:** Entra role assignments (`Azure AI User`, `AI Gateway User`, `Monitoring Metrics Publisher`) can take 1–3 minutes to propagate on the data plane after ARM completes.
+- **Managed DCR role scope:** When `AzureMonitorWorkspaceIngestionMode: 'Enabled'` creates a default Data Collection Rule in Azure Monitor's managed `ai_*_managed` resource group, Azure's deny assignment on that managed resource group blocks nested `Microsoft.Resources/deployments/write`. If your gateway identity does not inherit `Monitoring Metrics Publisher` at subscription scope, grant it directly on the `applicationInsightsDcrId` output via CLI or REST.
+- **Failed-gateway recovery and Foundry project/agent wiring:** Automatically deleting and recreating a gateway stuck in `Failed` state, wiring Foundry Project connections (`ApiManagement`), or injecting local developer CLI tokens (`gh auth token`) require imperative steps.
+
+For zero-dependency Bash and PowerShell post-provision scripts that automate these optional checks and Foundry Hosted Agent wiring, see [`infra/scripts/` in `Azure-Samples/simple-foundry-hosted-agent-python-aigateway`](https://github.com/Azure-Samples/simple-foundry-hosted-agent-python-aigateway/tree/main/infra/scripts) and [`infra/scripts/` in `Azure-Samples/simple-foundry-hosted-agent-dotnet-aigateway`](https://github.com/Azure-Samples/simple-foundry-hosted-agent-dotnet-aigateway/tree/main/infra/scripts).
 
 ## References
 
