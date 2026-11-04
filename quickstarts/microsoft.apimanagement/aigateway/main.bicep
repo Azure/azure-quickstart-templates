@@ -191,9 +191,6 @@ resource foundryDeployments 'Microsoft.CognitiveServices/accounts/deployments@20
 resource gateway 'Microsoft.ApiManagement/aigateways@2025-09-01-preview' = {
   name: gatewayName
   location: gatewayLocation
-  sku: {
-    name: 'Premium'
-  }
   identity: {
     type: 'SystemAssigned'
   }

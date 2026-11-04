@@ -28,7 +28,7 @@ Applications need a shared entry point for AI models with consistent authenticat
 
 ## What is deployed
 
-The template creates a Premium `Microsoft.ApiManagement/aigateways@2025-09-01-preview` gateway with a system-assigned managed identity and an active runtime API key named `default`. It references the service-created `default` workspace and keeps secret key values out of deployment outputs.
+The template creates a `Microsoft.ApiManagement/aigateways@2025-09-01-preview` gateway (`sku` omitted so the resource provider defaults to `Standard`) with a system-assigned managed identity and an active runtime API key named `default`. It references the service-created `default` workspace and keeps secret key values out of deployment outputs.
 
 It also creates a `Microsoft.CognitiveServices/accounts@2025-06-01` account with `kind: 'AIServices'`, an S0 account SKU, and these `GlobalStandard` model deployments. Each deployment uses format `OpenAI` and capacity `10` by default.
 
@@ -67,7 +67,7 @@ Use an Azure public-cloud subscription with AI Gateway preview access. Select a 
 
 Install the [Azure CLI](https://learn.microsoft.com/cli/azure/install-azure-cli) with [Bicep support](https://learn.microsoft.com/azure/azure-resource-manager/bicep/install#azure-cli). Your deployment identity needs permission to create the selected resources and role assignments on the new Foundry account, for example through Owner or an appropriate combination of Contributor and Role Based Access Control Administrator.
 
-**Costs:** Deployment provisions a Premium gateway and two model deployments. Consumption is not supported by this gateway preview contract. Model calls and optional monitoring incur additional charges. The model cost-limit policies are caller controls and do not cap all Azure resource charges.
+**Costs:** Deployment provisions a standalone AI Gateway (`Standard` SKU by default) and two model deployments. Model calls and optional monitoring incur additional charges. The model cost-limit policies are caller controls and do not cap all Azure resource charges.
 
 The Foundry account disables local key authentication and enables public network access by default. For outbound VNet integration (`properties.backend.subnet.id`), pass `backendSubnetResourceId` pointing to a subnet in the same subscription and region delegated to `Microsoft.App/environments`. For inbound caller IP restriction, pass `allowedCallerCidrRanges` (for example `['10.0.0.0/8']`) to attach an `ipFilter` policy to registered models and MCP tool servers.
 
