@@ -119,7 +119,34 @@ Denied HTTPS requests fail with a TLS connection error (curl exit code 35).
 
 ## Optional: one-click install
 
-Set `deployControllerAndSample` to `true` to have a deployment script install the controller, apply the sample policy and attachment, and create the test pods. The deployment script needs a storage account with shared key access, so it fails in subscriptions where Azure Policy denies shared key access on storage accounts.
+Set `deployControllerAndSample` to `true` to have a deployment script install the controller, apply the sample policy and attachment, and create the test pods:
+
+- **Azure portal:** on the **Custom deployment** page, set **Deploy Controller And Sample** to `true`.
+- **Azure CLI:** add `--parameters deployControllerAndSample=true` to `az deployment group create`.
+
+> [!IMPORTANT]
+> The deployment script creates a temporary storage account that requires shared key access. If the built-in Azure Policy **Storage accounts should prevent shared key access** (definition ID `8c6a50c6-9ffd-4ae7-986f-5fa6111f9a54`) is assigned with the **Deny** effect at the subscription, resource group, or management group, the deployment fails on the deployment script with `DeploymentScriptOperationFailed` and the message `Resource '<name>scripts' was disallowed by policy`. All other resources still deploy.
+
+To check whether the policy applies to your subscription:
+
+```bash
+az policy assignment list --disable-scope-strict-match \
+  --query "[?policyDefinitionId=='/providers/Microsoft.Authorization/policyDefinitions/8c6a50c6-9ffd-4ae7-986f-5fa6111f9a54'].{name:name, scope:scope, enforcement:enforcementMode}" -o table
+```
+
+If the policy applies, do one of the following:
+
+- **Recommended:** keep `deployControllerAndSample` set to `false` and run the commands in [Install the controller and attach a policy](#install-the-controller-and-attach-a-policy).
+- Create a policy exemption for the deployment's resource group, then redeploy. This requires the Owner or Resource Policy Contributor role at the policy assignment's scope, and your organization's approval:
+
+  ```bash
+  az policy exemption create --name allow-afc-deployment-script \
+    --resource-group <resource-group> \
+    --policy-assignment <policy-assignment-id> \
+    --exemption-category Waiver
+  ```
+
+If the deployment script fails for this reason, the deployment shows as failed, but the cluster, firewall, identity, and routing are deployed. Continue with [Install the controller and attach a policy](#install-the-controller-and-attach-a-policy).
 
 ## Clean up
 
