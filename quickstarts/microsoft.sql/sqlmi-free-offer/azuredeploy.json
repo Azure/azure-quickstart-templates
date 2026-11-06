@@ -1,0 +1,305 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.48.1.52935",
+      "templateHash": "1587766494592968223"
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Azure region for the managed instance and its network resources."
+      }
+    },
+    "managedInstanceName": {
+      "type": "string",
+      "defaultValue": "[format('sqlmi-free-{0}', uniqueString(resourceGroup().id))]",
+      "minLength": 1,
+      "maxLength": 63,
+      "metadata": {
+        "description": "Name of the free Azure SQL Managed Instance."
+      }
+    },
+    "virtualNetworkName": {
+      "type": "string",
+      "defaultValue": "[format('vnet-sqlmi-free-{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Name of the virtual network dedicated to this managed instance."
+      }
+    },
+    "virtualNetworkAddressPrefix": {
+      "type": "string",
+      "defaultValue": "10.0.0.0/16",
+      "metadata": {
+        "description": "Address space for the dedicated virtual network."
+      }
+    },
+    "managedInstanceSubnetPrefix": {
+      "type": "string",
+      "defaultValue": "10.0.0.0/27",
+      "metadata": {
+        "description": "Subnet range for the managed instance. SQL Managed Instance requires at least a /27 subnet."
+      }
+    },
+    "deployNetwork": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Create the dedicated virtual network, NSG, route table, and delegated subnet. Set to false only when reusing the matching network created by an earlier deployment in this resource group."
+      }
+    },
+    "clientIPv4Address": {
+      "type": "string",
+      "minLength": 7,
+      "maxLength": 15,
+      "metadata": {
+        "description": "Public IPv4 address of the client that may connect to the public endpoint. The NSG rule restricts it to a /32."
+      }
+    },
+    "sqlAdministratorLogin": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "metadata": {
+        "description": "SQL administrator login required by the managed instance create API. SQL authentication is disabled after provisioning."
+      }
+    },
+    "sqlAdministratorPassword": {
+      "type": "securestring",
+      "minLength": 8,
+      "maxLength": 128,
+      "metadata": {
+        "description": "Strong SQL administrator password required by the managed instance create API. It is not usable after Entra-only authentication is enabled."
+      }
+    },
+    "entraAdministratorLogin": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "metadata": {
+        "description": "Login name (typically the user principal name) of the Microsoft Entra administrator."
+      }
+    },
+    "entraAdministratorObjectId": {
+      "type": "string",
+      "minLength": 36,
+      "maxLength": 36,
+      "metadata": {
+        "description": "Object ID (GUID) of the Microsoft Entra user who will administer the instance."
+      }
+    }
+  },
+  "variables": {
+    "managedInstanceSubnetName": "ManagedInstance",
+    "networkSecurityGroupName": "[format('{0}-nsg', parameters('managedInstanceName'))]",
+    "routeTableName": "[format('{0}-rt', parameters('managedInstanceName'))]",
+    "weekdays": [
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday"
+    ]
+  },
+  "resources": [
+    {
+      "condition": "[parameters('deployNetwork')]",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2024-07-01",
+      "name": "[variables('networkSecurityGroupName')]",
+      "location": "[parameters('location')]",
+      "properties": {}
+    },
+    {
+      "condition": "[parameters('deployNetwork')]",
+      "type": "Microsoft.Network/networkSecurityGroups/securityRules",
+      "apiVersion": "2024-07-01",
+      "name": "[format('{0}/{1}', variables('networkSecurityGroupName'), 'AllowClientToPublicEndpoint')]",
+      "properties": {
+        "description": "Allow only the supplied client IPv4 /32 to the SQL Managed Instance public endpoint.",
+        "protocol": "Tcp",
+        "sourcePortRange": "*",
+        "destinationPortRange": "3342",
+        "sourceAddressPrefix": "[format('{0}/32', parameters('clientIPv4Address'))]",
+        "destinationAddressPrefix": "*",
+        "access": "Allow",
+        "priority": 100,
+        "direction": "Inbound"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+      ]
+    },
+    {
+      "condition": "[parameters('deployNetwork')]",
+      "type": "Microsoft.Network/networkSecurityGroups/securityRules",
+      "apiVersion": "2024-07-01",
+      "name": "[format('{0}/{1}', variables('networkSecurityGroupName'), 'AllowVirtualNetworkSql')]",
+      "properties": {
+        "description": "Allow SQL traffic from the virtual network to the VNet-local endpoint.",
+        "protocol": "Tcp",
+        "sourcePortRange": "*",
+        "destinationPortRange": "1433",
+        "sourceAddressPrefix": "VirtualNetwork",
+        "destinationAddressPrefix": "*",
+        "access": "Allow",
+        "priority": 110,
+        "direction": "Inbound"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+      ]
+    },
+    {
+      "condition": "[parameters('deployNetwork')]",
+      "type": "Microsoft.Network/networkSecurityGroups/securityRules",
+      "apiVersion": "2024-07-01",
+      "name": "[format('{0}/{1}', variables('networkSecurityGroupName'), 'AllowVirtualNetworkRedirect')]",
+      "properties": {
+        "description": "Allow redirect traffic between clients and the instance inside the virtual network.",
+        "protocol": "Tcp",
+        "sourcePortRange": "*",
+        "destinationPortRange": "11000-11999",
+        "sourceAddressPrefix": "VirtualNetwork",
+        "destinationAddressPrefix": "*",
+        "access": "Allow",
+        "priority": 120,
+        "direction": "Inbound"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+      ]
+    },
+    {
+      "condition": "[parameters('deployNetwork')]",
+      "type": "Microsoft.Network/routeTables",
+      "apiVersion": "2024-07-01",
+      "name": "[variables('routeTableName')]",
+      "location": "[parameters('location')]",
+      "properties": {}
+    },
+    {
+      "condition": "[parameters('deployNetwork')]",
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2024-07-01",
+      "name": "[parameters('virtualNetworkName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('virtualNetworkAddressPrefix')]"
+          ]
+        }
+      }
+    },
+    {
+      "condition": "[parameters('deployNetwork')]",
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "apiVersion": "2024-07-01",
+      "name": "[format('{0}/{1}', parameters('virtualNetworkName'), variables('managedInstanceSubnetName'))]",
+      "properties": {
+        "addressPrefix": "[parameters('managedInstanceSubnetPrefix')]",
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+        },
+        "routeTable": {
+          "id": "[resourceId('Microsoft.Network/routeTables', variables('routeTableName'))]"
+        },
+        "delegations": [
+          {
+            "name": "ManagedInstanceDelegation",
+            "properties": {
+              "serviceName": "Microsoft.Sql/managedInstances"
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups/securityRules', variables('networkSecurityGroupName'), 'AllowClientToPublicEndpoint')]",
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups/securityRules', variables('networkSecurityGroupName'), 'AllowVirtualNetworkRedirect')]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups/securityRules', variables('networkSecurityGroupName'), 'AllowVirtualNetworkSql')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Sql/managedInstances",
+      "apiVersion": "2025-01-01",
+      "name": "[parameters('managedInstanceName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "GP_Gen5"
+      },
+      "properties": {
+        "administratorLogin": "[parameters('sqlAdministratorLogin')]",
+        "administratorLoginPassword": "[parameters('sqlAdministratorPassword')]",
+        "administrators": {
+          "administratorType": "ActiveDirectory",
+          "login": "[parameters('entraAdministratorLogin')]",
+          "principalType": "User",
+          "sid": "[parameters('entraAdministratorObjectId')]",
+          "tenantId": "[tenant().tenantId]"
+        },
+        "isGeneralPurposeV2": true,
+        "licenseType": "LicenseIncluded",
+        "pricingModel": "Freemium",
+        "publicDataEndpointEnabled": true,
+        "storageSizeInGB": 64,
+        "subnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), variables('managedInstanceSubnetName'))]",
+        "vCores": 4
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), variables('managedInstanceSubnetName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Sql/managedInstances/azureADOnlyAuthentications",
+      "apiVersion": "2025-01-01",
+      "name": "[format('{0}/{1}', parameters('managedInstanceName'), 'Default')]",
+      "properties": {
+        "azureADOnlyAuthentication": true
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Sql/managedInstances', parameters('managedInstanceName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Sql/managedInstances/startStopSchedules",
+      "apiVersion": "2023-08-01",
+      "name": "[format('{0}/{1}', parameters('managedInstanceName'), 'default')]",
+      "properties": {
+        "copy": [
+          {
+            "name": "scheduleList",
+            "count": "[length(variables('weekdays'))]",
+            "input": {
+              "startDay": "[variables('weekdays')[copyIndex('scheduleList')]]",
+              "startTime": "09:00",
+              "stopDay": "[variables('weekdays')[copyIndex('scheduleList')]]",
+              "stopTime": "17:00"
+            }
+          }
+        ],
+        "description": "Free-offer workday schedule: start at 09:00 and stop at 17:00 UTC, Monday through Friday.",
+        "timeZoneId": "UTC"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Sql/managedInstances', parameters('managedInstanceName'))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "managedInstanceId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Sql/managedInstances', parameters('managedInstanceName'))]"
+    },
+    "managedInstanceSubnetId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), variables('managedInstanceSubnetName'))]"
+    }
+  }
+}
