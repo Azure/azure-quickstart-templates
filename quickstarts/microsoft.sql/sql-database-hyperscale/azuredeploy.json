@@ -1,0 +1,158 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.48.1.52935",
+      "templateHash": "16882471557340053431"
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Azure region for the SQL logical server and database."
+      }
+    },
+    "serverName": {
+      "type": "string",
+      "defaultValue": "[format('sql-{0}', uniqueString(resourceGroup().id))]",
+      "minLength": 1,
+      "maxLength": 63,
+      "metadata": {
+        "description": "Globally unique name of the new SQL logical server."
+      }
+    },
+    "databaseName": {
+      "type": "string",
+      "defaultValue": "hyperscaledb",
+      "minLength": 1,
+      "maxLength": 128,
+      "metadata": {
+        "description": "Name of the new Hyperscale database."
+      }
+    },
+    "administratorLogin": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "Display name of the existing Microsoft Entra administrator user or group. This is not a SQL authentication login."
+      }
+    },
+    "administratorObjectId": {
+      "type": "string",
+      "minLength": 36,
+      "maxLength": 36,
+      "metadata": {
+        "description": "Object ID of the existing Microsoft Entra administrator in the deployment subscription tenant."
+      }
+    },
+    "administratorPrincipalType": {
+      "type": "string",
+      "defaultValue": "User",
+      "allowedValues": [
+        "User",
+        "Group"
+      ],
+      "metadata": {
+        "description": "Microsoft Entra administrator principal type."
+      }
+    },
+    "clientIpAddress": {
+      "type": "string",
+      "minLength": 7,
+      "maxLength": 15,
+      "metadata": {
+        "description": "Actual public IPv4 egress address of the SQL client. Allows exactly this address; do not use 0.0.0.0."
+      }
+    },
+    "databaseCapacity": {
+      "type": "int",
+      "defaultValue": 2,
+      "minValue": 2,
+      "maxValue": 80,
+      "metadata": {
+        "description": "Paid provisioned standard-series (Gen5) vCores. Choose a supported regional capacity; 2 is the smallest size. Compute is billed even when idle."
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Sql/servers",
+      "apiVersion": "2023-08-01",
+      "name": "[parameters('serverName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "version": "12.0",
+        "minimalTlsVersion": "1.2",
+        "publicNetworkAccess": "Enabled",
+        "administrators": {
+          "administratorType": "ActiveDirectory",
+          "azureADOnlyAuthentication": true,
+          "login": "[parameters('administratorLogin')]",
+          "sid": "[parameters('administratorObjectId')]",
+          "tenantId": "[subscription().tenantId]",
+          "principalType": "[parameters('administratorPrincipalType')]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Sql/servers/firewallRules",
+      "apiVersion": "2023-08-01",
+      "name": "[format('{0}/{1}', parameters('serverName'), 'AllowSqlClient')]",
+      "properties": {
+        "startIpAddress": "[parameters('clientIpAddress')]",
+        "endIpAddress": "[parameters('clientIpAddress')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Sql/servers', parameters('serverName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Sql/servers/databases",
+      "apiVersion": "2023-08-01",
+      "name": "[format('{0}/{1}', parameters('serverName'), parameters('databaseName'))]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "HS_Gen5",
+        "tier": "Hyperscale",
+        "family": "Gen5",
+        "capacity": "[parameters('databaseCapacity')]"
+      },
+      "properties": {
+        "licenseType": "LicenseIncluded",
+        "highAvailabilityReplicaCount": 0,
+        "zoneRedundant": false,
+        "requestedBackupStorageRedundancy": "Local"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Sql/servers', parameters('serverName'))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "serverFullyQualifiedDomainName": {
+      "type": "string",
+      "metadata": {
+        "description": "Fully qualified domain name of the SQL logical server."
+      },
+      "value": "[reference(resourceId('Microsoft.Sql/servers', parameters('serverName')), '2023-08-01').fullyQualifiedDomainName]"
+    },
+    "databaseName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the Hyperscale database."
+      },
+      "value": "[parameters('databaseName')]"
+    },
+    "databaseResourceId": {
+      "type": "string",
+      "metadata": {
+        "description": "Resource ID of the Hyperscale database."
+      },
+      "value": "[resourceId('Microsoft.Sql/servers/databases', parameters('serverName'), parameters('databaseName'))]"
+    }
+  }
+}
