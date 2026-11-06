@@ -4,12 +4,21 @@
 set -euo pipefail
 
 echo "Getting cluster credentials for ${CLUSTER_NAME}"
-az aks get-credentials --resource-group "$RESOURCE_GROUP" --name "$CLUSTER_NAME" --admin --file ./kubeconfig --overwrite-existing
+az aks get-credentials --resource-group "$RESOURCE_GROUP" --name "$CLUSTER_NAME" --admin --file ./kubeconfig --overwrite-existing --only-show-errors
+chmod 600 ./kubeconfig
 export KUBECONFIG="$PWD/kubeconfig"
 
+download() { # url dest; the Azure CLI container image may not include curl
+  if command -v curl >/dev/null 2>&1; then curl -fsSL "$1" -o "$2"
+  elif command -v wget >/dev/null 2>&1; then wget -qO "$2" "$1"
+  else python3 -c "import sys, urllib.request; urllib.request.urlretrieve(sys.argv[1], sys.argv[2])" "$1" "$2"
+  fi
+}
+
 echo "Installing kubectl and helm"
-az aks install-cli --install-location /usr/local/bin/kubectl --kubelogin-install-location /usr/local/bin/kubelogin >/dev/null
-curl -fsSL https://get.helm.sh/helm-v3.16.2-linux-amd64.tar.gz | tar -xz -C /tmp
+az aks install-cli --install-location /usr/local/bin/kubectl --kubelogin-install-location /usr/local/bin/kubelogin --only-show-errors >/dev/null
+download https://get.helm.sh/helm-v3.16.2-linux-amd64.tar.gz /tmp/helm.tar.gz
+tar -xzf /tmp/helm.tar.gz -C /tmp
 install /tmp/linux-amd64/helm /usr/local/bin/helm
 
 echo "Installing controller ${CONTROLLER_VERSION}"
