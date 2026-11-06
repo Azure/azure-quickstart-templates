@@ -1,5 +1,5 @@
 ---
-description: This template is used to demonstrate how ARM Templates can be used to configure the Backend Pool of a Load Balancer by IP Address as outlined in the [Backend Pool management](https&#58;//docs.microsoft.com/azure/load-balancer/backend-pool-management) document.
+description: This template is used to demonstrate how ARM Templates can be used to configure the Backend Pool of a Load Balancer by IP Address as outlined in the [Backend Pool management](https://learn.microsoft.com/azure/load-balancer/backend-pool-management) document.
 page_type: sample
 products:
 - azure
