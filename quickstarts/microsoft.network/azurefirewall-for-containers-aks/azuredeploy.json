@@ -1,0 +1,567 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.48.1.52935",
+      "templateHash": "16236338146850503249"
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources. Must be an Azure Firewall for Containers preview region (centraluseuap, eastus2euap, westcentralus, eastasia, uksouth, centralus)."
+      }
+    },
+    "namePrefix": {
+      "type": "string",
+      "defaultValue": "afc",
+      "maxLength": 12,
+      "metadata": {
+        "description": "Prefix used to name the resources."
+      }
+    },
+    "nodeVmSize": {
+      "type": "string",
+      "defaultValue": "Standard_DS3_v2",
+      "metadata": {
+        "description": "VM size for the AKS nodes. Must be available in the selected region."
+      }
+    },
+    "nodeCount": {
+      "type": "int",
+      "defaultValue": 2,
+      "minValue": 1,
+      "maxValue": 10,
+      "metadata": {
+        "description": "Number of AKS nodes."
+      }
+    },
+    "controllerVersion": {
+      "type": "string",
+      "defaultValue": "20261103.2",
+      "metadata": {
+        "description": "Azure Firewall for Containers controller Helm chart version."
+      }
+    },
+    "controllerNamespace": {
+      "type": "string",
+      "defaultValue": "firewall-namespace",
+      "metadata": {
+        "description": "Kubernetes namespace for the controller. Used in the workload identity federated credential subject."
+      }
+    },
+    "deployControllerAndSample": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "false (default): deploy Azure resources only; the outputs contain the remaining commands. true: also run a deployment script that installs the controller and applies a sample security policy, attachment, and test pods. The script needs a storage account with shared key access, so it fails where Azure Policy denies shared key access."
+      }
+    },
+    "azCliVersion": {
+      "type": "string",
+      "defaultValue": "2.61.0",
+      "metadata": {
+        "description": "Azure CLI version used by the deployment script."
+      }
+    },
+    "utcValue": {
+      "type": "string",
+      "defaultValue": "[utcNow()]",
+      "metadata": {
+        "description": "Unique suffix that forces the deployment script to rerun on each deployment. Leave the default."
+      }
+    }
+  },
+  "variables": {
+    "$fxv#0": "#!/bin/bash\n# Runs inside Microsoft.Resources/deploymentScripts (Azure CLI container, signed in with the script identity).\n# Installs the Azure Firewall for Containers controller and applies a sample policy, attachment, and test pods.\nset -euo pipefail\n\necho \"Getting cluster credentials for ${CLUSTER_NAME}\"\naz aks get-credentials --resource-group \"$RESOURCE_GROUP\" --name \"$CLUSTER_NAME\" --admin --file ./kubeconfig --overwrite-existing --only-show-errors\nchmod 600 ./kubeconfig\nexport KUBECONFIG=\"$PWD/kubeconfig\"\n\ndownload() { # url dest; the Azure CLI container image may not include curl\n  if command -v curl >/dev/null 2>&1; then curl -fsSL \"$1\" -o \"$2\"\n  elif command -v wget >/dev/null 2>&1; then wget -qO \"$2\" \"$1\"\n  else python3 -c \"import sys, urllib.request; urllib.request.urlretrieve(sys.argv[1], sys.argv[2])\" \"$1\" \"$2\"\n  fi\n}\n\necho \"Installing kubectl and helm\"\naz aks install-cli --install-location /usr/local/bin/kubectl --kubelogin-install-location /usr/local/bin/kubelogin --only-show-errors >/dev/null\ndownload https://get.helm.sh/helm-v3.16.2-linux-amd64.tar.gz /tmp/helm.tar.gz\ntar -xzf /tmp/helm.tar.gz -C /tmp\ninstall /tmp/linux-amd64/helm /usr/local/bin/helm\n\necho \"Installing controller ${CONTROLLER_VERSION}\"\nhelm upgrade --install azfw-controller \\\n  oci://mcr.microsoft.com/firewall/charts/azurefirewall-controller \\\n  --namespace \"$CONTROLLER_NAMESPACE\" \\\n  --create-namespace \\\n  --version \"$CONTROLLER_VERSION\" \\\n  --set \"azfwController.podIdentity.clientID=${CONTROLLER_CLIENT_ID}\" \\\n  --wait --timeout 10m\nkubectl wait --for=condition=Available deploy --all --namespace \"$CONTROLLER_NAMESPACE\" --timeout=10m\nkubectl wait --for=condition=Established crd/securitypolicyattachments.firewall.networking.azure.io --timeout=5m\n\necho \"Applying sample security policy and attachment\"\nkubectl apply -f - <<EOF\napiVersion: firewall.networking.azure.io/v1alpha1\nkind: SecurityPolicy\nmetadata:\n  name: example-securitypolicy-rules\n  namespace: default\nspec:\n  applicationRuleCollections:\n    - name: test-application-rules\n      refs:\n        - podSelector:\n            matchLabels:\n              role: developer\n      action: Allow\n      egress:\n        - name: allow-test-destinations\n          toPortProtocol:\n            - protocolType: HTTPS\n              port: 443\n          to:\n            - fqdn:\n                - \"*.microsoft.com\"\n                - \"*.google.com\"\n---\napiVersion: firewall.networking.azure.io/v1alpha1\nkind: SecurityPolicyAttachment\nmetadata:\n  name: example-attachment\n  namespace: default\nspec:\n  securityPolicyRefs:\n    - name: example-securitypolicy-rules\n      namespace: default\n  firewallRef:\n    id: ${FIREWALL_ID}\n  aksWorkloadSubnets:\n    - ${AKS_SUBNET_ID}\nEOF\n\necho \"Waiting for the attachment to deploy\"\nkubectl wait --for=jsonpath='{.status.conditions[?(@.type==\"Deployment\")].reason}'=Ready \\\n  securitypolicyattachment/example-attachment --namespace default --timeout=40m\nkubectl get securitypolicyattachment example-attachment --namespace default \\\n  -o jsonpath='{range .status.conditions[*]}{.type}={.status} {.reason}{\"\\n\"}{end}'\n\necho \"Creating test pods\"\nkubectl apply -f - <<'EOF'\napiVersion: v1\nkind: Pod\nmetadata:\n  name: developer-pod\n  namespace: default\n  labels:\n    role: developer\nspec:\n  containers:\n    - name: developer\n      image: mcr.microsoft.com/azure-cli:latest\n      command: [\"sleep\", \"infinity\"]\n---\napiVersion: v1\nkind: Pod\nmetadata:\n  name: other-pod\n  namespace: default\n  labels:\n    role: other\nspec:\n  containers:\n    - name: other\n      image: mcr.microsoft.com/azure-cli:latest\n      command: [\"sleep\", \"infinity\"]\nEOF\nkubectl wait --for=condition=Ready pod/developer-pod pod/other-pod --namespace default --timeout=10m\n\nATTACH_STATUS=$(kubectl get securitypolicyattachment example-attachment --namespace default \\\n  -o jsonpath='{.status.conditions[?(@.type==\"Deployment\")].reason}')\ncat > \"$AZ_SCRIPTS_OUTPUT_PATH\" <<EOF\n{\"controllerVersion\": \"${CONTROLLER_VERSION}\", \"attachmentDeployment\": \"${ATTACH_STATUS}\"}\nEOF\necho \"Done\"\n",
+    "vnetName": "[format('{0}-vnet', parameters('namePrefix'))]",
+    "aksSubnetName": "aks-subnet",
+    "vnetAddressPrefix": "10.224.0.0/12",
+    "aksSubnetPrefix": "10.224.0.0/16",
+    "firewallSubnetPrefix": "10.225.0.0/26",
+    "firewallMgmtSubnetPrefix": "10.225.1.0/26",
+    "clusterName": "[format('{0}-aks', parameters('namePrefix'))]",
+    "firewallName": "[format('{0}-firewall', parameters('namePrefix'))]",
+    "firewallPolicyName": "[format('{0}-firewall-policy', parameters('namePrefix'))]",
+    "routeTableName": "[format('{0}-aks-rt', parameters('namePrefix'))]",
+    "controllerServiceAccount": "azurefirewall-controller-sa",
+    "networkContributorRoleId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '4d97b98b-1d4f-4787-a291-c67834d212e7')]",
+    "aksClusterAdminRoleId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '0ab0b1a8-8aac-4efd-b8c2-3ee1fb270be8')]",
+    "aksSubnetId": "[format('{0}/subnets/{1}', resourceId('Microsoft.Network/virtualNetworks', variables('vnetName')), variables('aksSubnetName'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+      "apiVersion": "2024-11-30",
+      "name": "[format('{0}-aks-identity', parameters('namePrefix'))]",
+      "location": "[parameters('location')]"
+    },
+    {
+      "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+      "apiVersion": "2024-11-30",
+      "name": "[format('{0}-controller-identity', parameters('namePrefix'))]",
+      "location": "[parameters('location')]"
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2025-05-01",
+      "name": "[variables('vnetName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('vnetAddressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('aksSubnetName')]",
+            "properties": {
+              "addressPrefix": "[variables('aksSubnetPrefix')]",
+              "defaultOutboundAccess": false
+            }
+          },
+          {
+            "name": "AzureFirewallSubnet",
+            "properties": {
+              "addressPrefix": "[variables('firewallSubnetPrefix')]",
+              "defaultOutboundAccess": false
+            }
+          },
+          {
+            "name": "AzureFirewallManagementSubnet",
+            "properties": {
+              "addressPrefix": "[variables('firewallMgmtSubnetPrefix')]",
+              "defaultOutboundAccess": false
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "scope": "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
+      "name": "[guid(resourceId('Microsoft.Network/virtualNetworks', variables('vnetName')), resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}-aks-identity', parameters('namePrefix'))), variables('networkContributorRoleId'))]",
+      "properties": {
+        "roleDefinitionId": "[variables('networkContributorRoleId')]",
+        "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}-aks-identity', parameters('namePrefix'))), '2024-11-30').principalId]",
+        "principalType": "ServicePrincipal"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}-aks-identity', parameters('namePrefix')))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2025-05-01",
+      "name": "[format('{0}-fw-ip', parameters('namePrefix'))]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Static",
+        "publicIPAddressVersion": "IPv4"
+      }
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2025-05-01",
+      "name": "[format('{0}-fw-mgmt-ip', parameters('namePrefix'))]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Static",
+        "publicIPAddressVersion": "IPv4"
+      }
+    },
+    {
+      "type": "Microsoft.Network/firewallPolicies",
+      "apiVersion": "2025-05-01",
+      "name": "[variables('firewallPolicyName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "sku": {
+          "tier": "Premium"
+        },
+        "threatIntelMode": "Alert"
+      }
+    },
+    {
+      "type": "Microsoft.Network/firewallPolicies/ruleCollectionGroups",
+      "apiVersion": "2025-05-01",
+      "name": "[format('{0}/{1}', variables('firewallPolicyName'), 'default-allow-aks-controlplane')]",
+      "properties": {
+        "priority": 100,
+        "ruleCollections": [
+          {
+            "ruleCollectionType": "FirewallPolicyFilterRuleCollection",
+            "name": "AllowAksControlPlaneNetwork",
+            "priority": 100,
+            "action": {
+              "type": "Allow"
+            },
+            "rules": [
+              {
+                "ruleType": "NetworkRule",
+                "name": "Allow_AKS_ControlPlane_Network",
+                "ipProtocols": [
+                  "TCP"
+                ],
+                "sourceAddresses": [
+                  "*"
+                ],
+                "destinationAddresses": [
+                  "AzureKubernetesService"
+                ],
+                "destinationPorts": [
+                  "443"
+                ]
+              }
+            ]
+          },
+          {
+            "ruleCollectionType": "FirewallPolicyFilterRuleCollection",
+            "name": "AllowAksControlPlaneApp",
+            "priority": 101,
+            "action": {
+              "type": "Allow"
+            },
+            "rules": [
+              {
+                "ruleType": "ApplicationRule",
+                "name": "Allow_AKS_ControlPlane_App",
+                "sourceAddresses": [
+                  "*"
+                ],
+                "fqdnTags": [
+                  "AzureKubernetesService"
+                ],
+                "protocols": [
+                  {
+                    "protocolType": "Https",
+                    "port": 443
+                  }
+                ]
+              },
+              {
+                "ruleType": "ApplicationRule",
+                "name": "Allow_AFC_Service",
+                "sourceAddresses": [
+                  "*"
+                ],
+                "targetFqdns": [
+                  "*.afc.azure.com"
+                ],
+                "protocols": [
+                  {
+                    "protocolType": "Https",
+                    "port": 443
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/firewallPolicies', variables('firewallPolicyName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/azureFirewalls",
+      "apiVersion": "2025-05-01",
+      "name": "[variables('firewallName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "sku": {
+          "name": "AZFW_VNet",
+          "tier": "Premium"
+        },
+        "firewallPolicy": {
+          "id": "[resourceId('Microsoft.Network/firewallPolicies', variables('firewallPolicyName'))]"
+        },
+        "ipConfigurations": [
+          {
+            "name": "data-ipconfig",
+            "properties": {
+              "subnet": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), 'AzureFirewallSubnet')]"
+              },
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', format('{0}-fw-ip', parameters('namePrefix')))]"
+              }
+            }
+          }
+        ],
+        "managementIpConfiguration": {
+          "name": "mgmt-ipconfig",
+          "properties": {
+            "subnet": {
+              "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), 'AzureFirewallManagementSubnet')]"
+            },
+            "publicIPAddress": {
+              "id": "[resourceId('Microsoft.Network/publicIPAddresses', format('{0}-fw-mgmt-ip', parameters('namePrefix')))]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/firewallPolicies/ruleCollectionGroups', variables('firewallPolicyName'), 'default-allow-aks-controlplane')]",
+        "[resourceId('Microsoft.Network/publicIPAddresses', format('{0}-fw-mgmt-ip', parameters('namePrefix')))]",
+        "[resourceId('Microsoft.Network/firewallPolicies', variables('firewallPolicyName'))]",
+        "[resourceId('Microsoft.Network/publicIPAddresses', format('{0}-fw-ip', parameters('namePrefix')))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.ContainerService/managedClusters",
+      "apiVersion": "2025-07-01",
+      "name": "[variables('clusterName')]",
+      "location": "[parameters('location')]",
+      "identity": {
+        "type": "UserAssigned",
+        "userAssignedIdentities": {
+          "[format('{0}', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}-aks-identity', parameters('namePrefix'))))]": {}
+        }
+      },
+      "properties": {
+        "dnsPrefix": "[variables('clusterName')]",
+        "agentPoolProfiles": [
+          {
+            "name": "nodepool1",
+            "mode": "System",
+            "count": "[parameters('nodeCount')]",
+            "vmSize": "[parameters('nodeVmSize')]",
+            "osType": "Linux",
+            "type": "VirtualMachineScaleSets",
+            "vnetSubnetID": "[variables('aksSubnetId')]"
+          }
+        ],
+        "networkProfile": {
+          "networkPlugin": "azure",
+          "outboundType": "loadBalancer",
+          "loadBalancerSku": "standard",
+          "serviceCidr": "10.240.0.0/16",
+          "dnsServiceIP": "10.240.0.10"
+        },
+        "oidcIssuerProfile": {
+          "enabled": true
+        },
+        "securityProfile": {
+          "workloadIdentity": {
+            "enabled": true
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}-aks-identity', parameters('namePrefix')))]",
+        "[extensionResourceId(resourceId('Microsoft.Network/virtualNetworks', variables('vnetName')), 'Microsoft.Authorization/roleAssignments', guid(resourceId('Microsoft.Network/virtualNetworks', variables('vnetName')), resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}-aks-identity', parameters('namePrefix'))), variables('networkContributorRoleId')))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "name": "[guid(resourceGroup().id, resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}-controller-identity', parameters('namePrefix'))), variables('networkContributorRoleId'))]",
+      "properties": {
+        "roleDefinitionId": "[variables('networkContributorRoleId')]",
+        "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}-controller-identity', parameters('namePrefix'))), '2024-11-30').principalId]",
+        "principalType": "ServicePrincipal"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}-controller-identity', parameters('namePrefix')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.ManagedIdentity/userAssignedIdentities/federatedIdentityCredentials",
+      "apiVersion": "2024-11-30",
+      "name": "[format('{0}/{1}', format('{0}-controller-identity', parameters('namePrefix')), 'azurefirewall-controller')]",
+      "properties": {
+        "issuer": "[reference(resourceId('Microsoft.ContainerService/managedClusters', variables('clusterName')), '2025-07-01').oidcIssuerProfile.issuerURL]",
+        "subject": "[format('system:serviceaccount:{0}:{1}', parameters('controllerNamespace'), variables('controllerServiceAccount'))]",
+        "audiences": [
+          "api://AzureADTokenExchange"
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ContainerService/managedClusters', variables('clusterName'))]",
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}-controller-identity', parameters('namePrefix')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/routeTables",
+      "apiVersion": "2025-05-01",
+      "name": "[variables('routeTableName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "routes": [
+          {
+            "name": "to-firewall",
+            "properties": {
+              "addressPrefix": "0.0.0.0/0",
+              "nextHopType": "VirtualAppliance",
+              "nextHopIpAddress": "[reference(resourceId('Microsoft.Network/azureFirewalls', variables('firewallName')), '2025-05-01').ipConfigurations[0].properties.privateIPAddress]"
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/azureFirewalls', variables('firewallName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "apiVersion": "2025-05-01",
+      "name": "[format('{0}/{1}', variables('vnetName'), variables('aksSubnetName'))]",
+      "properties": {
+        "addressPrefix": "[variables('aksSubnetPrefix')]",
+        "defaultOutboundAccess": false,
+        "routeTable": {
+          "id": "[resourceId('Microsoft.Network/routeTables', variables('routeTableName'))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ContainerService/managedClusters', variables('clusterName'))]",
+        "[resourceId('Microsoft.Network/routeTables', variables('routeTableName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]"
+      ]
+    },
+    {
+      "condition": "[parameters('deployControllerAndSample')]",
+      "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+      "apiVersion": "2024-11-30",
+      "name": "[format('{0}-script-identity', parameters('namePrefix'))]",
+      "location": "[parameters('location')]"
+    },
+    {
+      "condition": "[parameters('deployControllerAndSample')]",
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "scope": "[resourceId('Microsoft.ContainerService/managedClusters', variables('clusterName'))]",
+      "name": "[guid(resourceId('Microsoft.ContainerService/managedClusters', variables('clusterName')), format('{0}-script-identity', parameters('namePrefix')), variables('aksClusterAdminRoleId'))]",
+      "properties": {
+        "roleDefinitionId": "[variables('aksClusterAdminRoleId')]",
+        "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}-script-identity', parameters('namePrefix'))), '2024-11-30').principalId]",
+        "principalType": "ServicePrincipal"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ContainerService/managedClusters', variables('clusterName'))]",
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}-script-identity', parameters('namePrefix')))]"
+      ]
+    },
+    {
+      "condition": "[parameters('deployControllerAndSample')]",
+      "type": "Microsoft.Resources/deploymentScripts",
+      "apiVersion": "2023-08-01",
+      "name": "[format('{0}-install-controller', parameters('namePrefix'))]",
+      "location": "[parameters('location')]",
+      "kind": "AzureCLI",
+      "identity": {
+        "type": "UserAssigned",
+        "userAssignedIdentities": {
+          "[format('{0}', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}-script-identity', parameters('namePrefix'))))]": {}
+        }
+      },
+      "properties": {
+        "azCliVersion": "[parameters('azCliVersion')]",
+        "timeout": "PT1H",
+        "retentionInterval": "P1D",
+        "cleanupPreference": "OnSuccess",
+        "forceUpdateTag": "[parameters('utcValue')]",
+        "environmentVariables": [
+          {
+            "name": "RESOURCE_GROUP",
+            "value": "[resourceGroup().name]"
+          },
+          {
+            "name": "CLUSTER_NAME",
+            "value": "[variables('clusterName')]"
+          },
+          {
+            "name": "CONTROLLER_VERSION",
+            "value": "[parameters('controllerVersion')]"
+          },
+          {
+            "name": "CONTROLLER_NAMESPACE",
+            "value": "[parameters('controllerNamespace')]"
+          },
+          {
+            "name": "CONTROLLER_CLIENT_ID",
+            "value": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}-controller-identity', parameters('namePrefix'))), '2024-11-30').clientId]"
+          },
+          {
+            "name": "FIREWALL_ID",
+            "value": "[resourceId('Microsoft.Network/azureFirewalls', variables('firewallName'))]"
+          },
+          {
+            "name": "AKS_SUBNET_ID",
+            "value": "[variables('aksSubnetId')]"
+          }
+        ],
+        "scriptContent": "[variables('$fxv#0')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ContainerService/managedClusters', variables('clusterName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('aksSubnetName'))]",
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities/federatedIdentityCredentials', format('{0}-controller-identity', parameters('namePrefix')), 'azurefirewall-controller')]",
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}-controller-identity', parameters('namePrefix')))]",
+        "[resourceId('Microsoft.Authorization/roleAssignments', guid(resourceGroup().id, resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}-controller-identity', parameters('namePrefix'))), variables('networkContributorRoleId')))]",
+        "[resourceId('Microsoft.Network/azureFirewalls', variables('firewallName'))]",
+        "[extensionResourceId(resourceId('Microsoft.ContainerService/managedClusters', variables('clusterName')), 'Microsoft.Authorization/roleAssignments', guid(resourceId('Microsoft.ContainerService/managedClusters', variables('clusterName')), format('{0}-script-identity', parameters('namePrefix')), variables('aksClusterAdminRoleId')))]",
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}-script-identity', parameters('namePrefix')))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "clusterName": {
+      "type": "string",
+      "value": "[variables('clusterName')]"
+    },
+    "firewallId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Network/azureFirewalls', variables('firewallName'))]"
+    },
+    "firewallPrivateIp": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Network/azureFirewalls', variables('firewallName')), '2025-05-01').ipConfigurations[0].properties.privateIPAddress]"
+    },
+    "firewallPolicyId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Network/firewallPolicies', variables('firewallPolicyName'))]"
+    },
+    "aksSubnetId": {
+      "type": "string",
+      "value": "[variables('aksSubnetId')]"
+    },
+    "controllerIdentityClientId": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}-controller-identity', parameters('namePrefix'))), '2024-11-30').clientId]"
+    },
+    "getCredentialsCommand": {
+      "type": "string",
+      "value": "[format('az aks get-credentials --resource-group {0} --name {1}', resourceGroup().name, variables('clusterName'))]"
+    },
+    "helmInstallCommand": {
+      "type": "string",
+      "value": "[format('helm install azfw-controller oci://mcr.microsoft.com/firewall/charts/azurefirewall-controller --namespace {0} --create-namespace --version {1} --set azfwController.podIdentity.clientID={2}', parameters('controllerNamespace'), parameters('controllerVersion'), reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}-controller-identity', parameters('namePrefix'))), '2024-11-30').clientId)]"
+    },
+    "attachmentFirewallRef": {
+      "type": "string",
+      "value": "[format('firewallRef: {{ id: {0} }}', resourceId('Microsoft.Network/azureFirewalls', variables('firewallName')))]"
+    },
+    "controllerAndSampleInstalled": {
+      "type": "bool",
+      "value": "[parameters('deployControllerAndSample')]"
+    }
+  }
+}
