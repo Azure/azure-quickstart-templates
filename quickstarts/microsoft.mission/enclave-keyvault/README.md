@@ -4,27 +4,27 @@ page_type: sample
 products:
 - azure
 - azure-resource-manager
-urlFragment: azure-enclave-keyvault
+urlFragment: enclave-keyvault
 languages:
 - bicep
 - json
 ---
 # Deploy a private Key Vault for an Azure Enclave workload
 
-![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.mission/azure-enclave-keyvault/PublicLastTestDate.svg)
-![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.mission/azure-enclave-keyvault/PublicDeployment.svg)
+![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.mission/enclave-keyvault/PublicLastTestDate.svg)
+![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.mission/enclave-keyvault/PublicDeployment.svg)
 
-![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.mission/azure-enclave-keyvault/FairfaxLastTestDate.svg)
-![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.mission/azure-enclave-keyvault/FairfaxDeployment.svg)
+![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.mission/enclave-keyvault/FairfaxLastTestDate.svg)
+![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.mission/enclave-keyvault/FairfaxDeployment.svg)
 
-![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.mission/azure-enclave-keyvault/BestPracticeResult.svg)
-![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.mission/azure-enclave-keyvault/CredScanResult.svg)
+![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.mission/enclave-keyvault/BestPracticeResult.svg)
+![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.mission/enclave-keyvault/CredScanResult.svg)
 
-![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.mission/azure-enclave-keyvault/BicepVersion.svg)
+![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/quickstarts/microsoft.mission/enclave-keyvault/BicepVersion.svg)
 
-[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.mission%2Fazure-enclave-keyvault%2Fazuredeploy.json/createUIDefinitionUri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.mission%2Fazure-enclave-keyvault%2FcreateUiDefinition.json)
-[![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.mission%2Fazure-enclave-keyvault%2Fazuredeploy.json/createUIDefinitionUri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.mission%2Fazure-enclave-keyvault%2FcreateUiDefinition.json)
-[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.mission%2Fazure-enclave-keyvault%2Fazuredeploy.json)
+[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.mission%2Fenclave-keyvault%2Fazuredeploy.json)
+[![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.mission%2Fenclave-keyvault%2Fazuredeploy.json)
+[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.mission%2Fenclave-keyvault%2Fazuredeploy.json)
 
 This subscription-scope template deploys a private Azure Key Vault into an existing or new resource group. The portal experience can associate the deployment with an Azure Enclave workload, but the template also supports deployment without an enclave. This sample supports Azure Public and Azure US Government.
 
@@ -64,7 +64,7 @@ From this sample directory, sign in, select the target subscription, replace the
 
 ```azurecli
 az deployment sub create \
-  --name azure-enclave-keyvault \
+  --name enclave-keyvault \
   --location eastus \
   --template-file main.bicep \
   --parameters @azuredeploy.parameters.json
@@ -78,7 +78,7 @@ From this sample directory, connect to Azure, select the target subscription, re
 
 ```powershell
 New-AzSubscriptionDeployment `
-  -Name 'azure-enclave-keyvault' `
+  -Name 'enclave-keyvault' `
   -Location 'eastus' `
   -TemplateFile '.\main.bicep' `
   -TemplateParameterFile '.\azuredeploy.parameters.json'
@@ -90,7 +90,7 @@ The repository's `Deploy-AzTemplate.ps1` script compiles `main.bicep` to `main.j
 
 ```powershell
 .\Deploy-AzTemplate.ps1 `
-  -ArtifactStagingDirectory '.\quickstarts\microsoft.mission\azure-enclave-keyvault' `
+  -ArtifactStagingDirectory '.\quickstarts\microsoft.mission\enclave-keyvault' `
   -Location 'eastus' `
   -bicep
 ```
