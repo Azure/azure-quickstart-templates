@@ -37,20 +37,20 @@ name: Validate PR (Summarize + ADX)
 on:
   issue_comment:
     types: [created]
-  # `pull_request_target` (not `pull_request`) for the post-merge
-  # commit-generated-on-merge job: GitHub forces GITHUB_TOKEN to read-only
-  # on `pull_request` events from forks regardless of the `permissions:`
-  # block, which 403s the auto-PR branch push. `pull_request_target` runs
-  # in the base-repo context with full token permissions even for fork
-  # PRs. This is safe here because the job only checks out the default
-  # branch (never the fork's PR head) and only downloads a pre-validated
-  # artifact — no fork code is executed.
-  pull_request_target:
-    types: [closed]
+  # `push` to the default branch drives the post-merge
+  # commit-generated-on-merge job. A merge lands as a push to master, which
+  # runs in the trusted base-repo context with a write-capable GITHUB_TOKEN
+  # (even when the merged PR came from a fork) without relying on
+  # `pull_request_target`. The job resolves the merged PR from the pushed
+  # commit via the API and never checks out PR-head code.
+  push:
+    branches: [master]
+    paths:
+      - '**/*.bicep'
 
-# Workflow-level concurrency: one run per PR
+# Workflow-level concurrency: one run per PR (or per pushed commit)
 concurrency:
-  group: validate-pr-${{ github.event.issue.number || github.event.pull_request.number }}
+  group: validate-pr-${{ github.event.issue.number || github.sha }}
   cancel-in-progress: true
 
 jobs:
@@ -2101,7 +2101,8 @@ jobs:
   # ============================================================================
   # JOB 5 – commit-generated-on-merge
   #
-  # Triggered by `pull_request: closed` (the second `on:` trigger). When a PR
+  # Triggered by `push` to the default branch (the second `on:` trigger).
+  # The merged PR is resolved from the pushed commit SHA. When a PR
   # is merged into the default branch AND the ADX validation succeeded for
   # that PR head SHA, this job downloads the `generated-azuredeploy-*`
   # artifact uploaded by the `selected-pipeline` job during /validate.
@@ -2137,10 +2138,8 @@ jobs:
     name: Commit generated azuredeploy.json on merge
     runs-on: ubuntu-latest
     if: >-
-      github.event_name == 'pull_request_target' &&
-      github.event.action == 'closed' &&
-      github.event.pull_request.merged == true &&
-      github.event.pull_request.base.ref == github.event.repository.default_branch
+      github.event_name == 'push' &&
+      github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
 
     permissions:
       contents: write
@@ -2148,14 +2147,47 @@ jobs:
       pull-requests: write
 
     steps:
+      # ── 0. Resolve the merged PR from the pushed commit ────────────────────
+      # Works for merge, squash and rebase merges: GitHub associates the
+      # resulting default-branch commit with the PR whose merge_commit_sha
+      # matches it. Direct pushes (no associated merged PR) are a no-op.
+      - name: Resolve merged PR
+        id: pr
+        shell: bash
+        env:
+          GH_TOKEN:       ${{ github.token }}
+          REPO:           ${{ github.repository }}
+          SHA:            ${{ github.sha }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          set -euo pipefail
+          PR=$(gh api "/repos/${REPO}/commits/${SHA}/pulls" --jq \
+            "[.[] | select(.merged_at != null and .base.ref == \"${DEFAULT_BRANCH}\" and .merge_commit_sha == \"${SHA}\")] | first // empty")
+          if [[ -z "${PR}" ]]; then
+            echo "::notice::No merged PR associated with ${SHA}; nothing to do."
+            echo "found=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          PR_NUM=$(echo "${PR}" | jq -r '.number')
+          HEAD_SHA=$(echo "${PR}" | jq -r '.head.sha')
+          if ! [[ "${PR_NUM}" =~ ^[0-9]+$ && "${HEAD_SHA}" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::Unexpected PR metadata (number='${PR_NUM}', head='${HEAD_SHA}')." >&2
+            exit 1
+          fi
+          echo "Merged PR #${PR_NUM} (head ${HEAD_SHA})"
+          echo "number=${PR_NUM}" >> "$GITHUB_OUTPUT"
+          echo "head_sha=${HEAD_SHA}" >> "$GITHUB_OUTPUT"
+          echo "found=true" >> "$GITHUB_OUTPUT"
+
       # ── 1. Verify ADX validation succeeded for the merged PR head SHA ──────
       - name: Verify adx-deployment-validation succeeded
         id: verify
+        if: steps.pr.outputs.found == 'true'
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
           REPO:     ${{ github.repository }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          HEAD_SHA: ${{ steps.pr.outputs.head_sha }}
         run: |
           set -euo pipefail
           echo "Looking up adx-deployment-validation for ${HEAD_SHA}"
@@ -2193,8 +2225,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           REPO:     ${{ github.repository }}
-          PR_NUM:   ${{ github.event.pull_request.number }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_NUM:   ${{ steps.pr.outputs.number }}
+          HEAD_SHA: ${{ steps.pr.outputs.head_sha }}
         run: |
           set -euo pipefail
           EXPECTED="generated-azuredeploy-${PR_NUM}-${HEAD_SHA}"
@@ -2255,7 +2287,8 @@ jobs:
         if: steps.locate-artifact.outputs.found == 'true'
         shell: bash
         env:
-          PR_NUM:         ${{ github.event.pull_request.number }}
+          PR_NUM:         ${{ steps.pr.outputs.number }}
+          HEAD_SHA:       ${{ steps.pr.outputs.head_sha }}
           DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
           GH_TOKEN:       ${{ github.token }}
           REPO:           ${{ github.repository }}
@@ -2316,6 +2349,6 @@ jobs:
             --head "${BRANCH}" \
             --title "Auto-add generated azuredeploy.json from PR #${PR_NUM}" \
             --body "$(printf 'This PR was generated automatically by the **commit-generated-on-merge** job in `ValidateSampleDeployments.yml` after PR #%s was merged.\n\nIt contains the compiled `azuredeploy.json` (and any `prereq.azuredeploy.json`) produced from the Bicep sources in the merged PR. A maintainer should review and merge this PR to land the generated ARM template on `%s`.\n\nNo human edits were made; the contents come directly from the `generated-azuredeploy-%s-%s` artifact uploaded during ADX validation.' \
-              "${PR_NUM}" "${DEFAULT_BRANCH}" "${PR_NUM}" "${{ github.event.pull_request.head.sha }}")"
+              "${PR_NUM}" "${DEFAULT_BRANCH}" "${PR_NUM}" "${HEAD_SHA}")"
 
           echo "✅ Opened auto-PR for branch ${BRANCH}"
