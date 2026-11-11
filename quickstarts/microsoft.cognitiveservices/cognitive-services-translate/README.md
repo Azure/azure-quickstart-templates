@@ -25,6 +25,9 @@ languages:
 [![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.cognitiveservices%2Fcognitive-services-translate%2Fazuredeploy.json)
 [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fquickstarts%2Fmicrosoft.cognitiveservices%2Fcognitive-services-translate%2Fazuredeploy.json)
 
+> [!IMPORTANT]
+> **Microsoft Foundry is the successor to Azure AI services** and composes capabilities from Azure OpenAI, Azure Speech, and Azure Language, in a single account. For new workloads, provisioning a Microsoft Foundry account is strongly recommended over standalone Azure AI service resource types so you benefit from the latest model releases, capabilities, and developer scenarios that span across all services. See the [Deploy a Microsoft Foundry account (basic)](../foundry-getting-started/README.md) sample to get started.
+
 This template deploys an Azure AI Translator resource. see  https://azure.microsoft.com/services/cognitive-services/translator-text-api/
 
 | SKU  | Feature                                                      | Price                                                        |
