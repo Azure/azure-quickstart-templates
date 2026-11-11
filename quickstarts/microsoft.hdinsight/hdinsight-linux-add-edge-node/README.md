@@ -1,5 +1,5 @@
 ---
-description: This template allows you to create an empty edge node and add it to an existing HDInsight cluster. For more information, see https&#58;//docs.microsoft.com/azure/hdinsight/hdinsight-apps-use-edge-node
+description: This template allows you to create an empty edge node and add it to an existing HDInsight cluster. For more information, see [Use empty edge nodes in HDInsight](https://learn.microsoft.com/azure/hdinsight/hdinsight-apps-use-edge-node).
 page_type: sample
 products:
 - azure
