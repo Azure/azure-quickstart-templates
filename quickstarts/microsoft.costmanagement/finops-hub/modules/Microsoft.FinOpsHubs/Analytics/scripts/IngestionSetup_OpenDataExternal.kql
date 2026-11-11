@@ -1,0 +1,17 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
+//======================================================================================================================
+// Ingestion database / Open data load (local emulator)
+// Populates the open data tables (PricingUnits, Regions, ResourceTypes, Services) from CSV files staged on disk.
+// A deployed hub loads these tables via Data Factory; this script is the local/emulator stand-in for that step and is
+// published as a standalone release artifact (finops-hub-local-opendata.kql) for the "Run hubs locally" guide.
+// The $$openDataPath$$ placeholder is replaced with the directory that holds the open data CSVs before the script runs.
+//======================================================================================================================
+
+// For allowed commands, see https://learn.microsoft.com/azure/data-explorer/database-script
+
+.set-or-replace PricingUnits <| externaldata(x_PricingUnitDescription: string, AccountTypes: string, x_PricingBlockSize: real, PricingUnit: string)[@'$$openDataPath$$/PricingUnits.csv'] with (format='csv', ignoreFirstRecord=true) | project-away AccountTypes
+.set-or-replace Regions <| externaldata(ResourceLocation: string, RegionId: string, RegionName: string)[@'$$openDataPath$$/Regions.csv'] with (format='csv', ignoreFirstRecord=true)
+.set-or-replace ResourceTypes <| externaldata(x_ResourceType: string, SingularDisplayName: string, PluralDisplayName: string, LowerSingularDisplayName: string, LowerPluralDisplayName: string, IsPreview: bool, Description: string, IconUri: string, Links: string)[@'$$openDataPath$$/ResourceTypes.csv'] with (format='csv', ignoreFirstRecord=true) | project-away Links
+.set-or-replace Services <| externaldata(x_ConsumedService: string, x_ResourceType: string, ServiceName: string, ServiceCategory: string, ServiceSubcategory: string, PublisherName: string, x_PublisherCategory: string, x_Environment: string, x_ServiceModel: string)[@'$$openDataPath$$/Services.csv'] with (format='csv', ignoreFirstRecord=true)

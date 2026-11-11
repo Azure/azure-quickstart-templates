@@ -1,0 +1,11 @@
+{
+    "dataset": "Recommendations",
+    "provider": "Microsoft",
+    "query": "resources | where type == 'microsoft.containerservice/managedclusters' | mvexpand AgentPoolProfiles = properties.agentPoolProfiles| project id, type, ProfileName = tostring(AgentPoolProfiles.name), Sku = tostring(sku.name), Tier = tostring(sku.tier), mode = AgentPoolProfiles.mode, AutoScaleEnabled = AgentPoolProfiles.enableAutoScaling, SpotVM = AgentPoolProfiles.scaleSetPriority, VMSize = tostring(AgentPoolProfiles.vmSize), NodeCount = tostring(AgentPoolProfiles.['count']), minCount = tostring(AgentPoolProfiles.minCount), maxCount = tostring(AgentPoolProfiles.maxCount), Location=location, resourceGroup, subscriptionId, AKSname = name| where AutoScaleEnabled == 'true' and isnull(SpotVM)| project     x_RecommendationId=strcat(tolower(id),'-notSpot'),     x_ResourceGroupName=tolower(resourceGroup),     SubAccountId=subscriptionId,     x_RecommendationCategory='Cost',     x_RecommendationDescription='The AKS cluster agent pool scale set is not utilizing Spot VMs',     ResourceId = tolower(id),     ResourceName=tolower(AKSname),     x_RecommendationDetails= tostring(bag_pack('AutoScaleEnabled', AutoScaleEnabled, 'SpotVM', SpotVM, 'VMSize', VMSize, 'Location', Location, 'NodeCount', NodeCount, 'minCount', minCount, 'maxCount', maxCount, 'x_RecommendationProvider', 'FinOps hubs', 'x_RecommendationSolution', 'Consider enabling Spot VMs for this AKS cluster to optimize costs, as Spot VMs offer significantly lower pricing compared to regular VMs', 'x_RecommendationTypeId', 'c26abcc2-d5e6-4654-be4a-7d338e5c1e5f', 'x_ResourceType', type)),     x_RecommendationDate = now() | join kind=leftouter ( resourcecontainers | where type == 'microsoft.resources/subscriptions' | project SubAccountName=name, SubAccountId=subscriptionId ) on SubAccountId | project-away SubAccountId1",
+    "queryEngine": "ResourceGraph",
+    "scope": "Tenant",
+    "source": "FinOps hubs",
+    "group": "spot",
+    "type": "Microsoft-NonSpotAKSClusters",
+    "version": "1.0"
+}

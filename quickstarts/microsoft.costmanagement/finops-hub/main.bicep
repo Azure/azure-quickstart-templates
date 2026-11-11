@@ -26,12 +26,27 @@ param storageSku string = 'Premium_LRS'
 @description('Optional. Enable infrastructure encryption on the storage account. Default = false.')
 param enableInfrastructureEncryption bool = false
 
+@description('Optional. Enable purge protection for the Key Vault. Default: false.')
+param enablePurgeProtection bool = false
+
 @description('Optional. Storage account to push data to for ingestion into a remote hub.')
 param remoteHubStorageUri string = ''
 
 @description('Optional. Storage account key to use when pushing data to a remote hub.')
 @secure()
 param remoteHubStorageKey string = ''
+ 
+@description('Optional. Enable managed exports where your FinOps hub instance will create and run Cost Management exports on your behalf. Not supported for Microsoft Customer Agreement (MCA) billing profiles. Requires the ability to grant the Role Based Access Control Administrator role to FinOps hubs, which is required to create Cost Management exports. Default: true.')
+param enableManagedExports bool = true
+
+@description('Optional. Enable recommendations ingested from Azure Resource Graph based on configurable queries. The Data Factory managed identity requires Reader role on management groups or subscriptions to execute Resource Graph queries. Default: false.')
+param enableRecommendations bool = false
+
+@description('Optional. Enable Azure Hybrid Benefit recommendations that flag VMs and SQL VMs without Azure Hybrid Benefit enabled. May generate noise if your organization does not have on-premises licenses. Requires enableRecommendations. Default: false.')
+param enableAHBRecommendations bool = false
+
+@description('Optional. Enable non-Spot AKS cluster recommendations that flag AKS clusters with autoscaling but not using Spot VMs. May generate noise since Spot VMs are only appropriate for interruptible workloads. Requires enableRecommendations. Default: false.')
+param enableSpotRecommendations bool = false
 
 @description('Optional. Name of the Azure Data Explorer cluster to use for advanced analytics. If empty, Azure Data Explorer will not be deployed. Required to use with Power BI if you have more than $2-5M/mo in costs being monitored. Default: "" (do not use).')
 param dataExplorerName string = ''
@@ -129,22 +144,25 @@ param tagsByResource object = {}
 @description('Optional. List of scope IDs to monitor and ingest cost for.')
 param scopesToMonitor array = []
 
-@description('Optional. Number of days of data to retain in the msexports container. Default: 0.')
-param exportRetentionInDays int = 0
+@description('Optional. Number of days of data to retain in the msexports container. If not specified, keeps the current value from settings.json (0 for new hubs).')
+param exportRetentionInDays int?
 
-@description('Optional. Number of months of data to retain in the ingestion container. Default: 13.')
-param ingestionRetentionInMonths int = 13
+@description('Optional. Number of months of data to retain in the ingestion container. If not specified, keeps the current value from settings.json (13 for new hubs).')
+param ingestionRetentionInMonths int?
 
-@description('Optional. Number of days of data to retain in the Data Explorer *_raw tables. Default: 0.')
-param dataExplorerRawRetentionInDays int = 0
+@description('Optional. Number of days of data to retain in the Data Explorer *_raw tables. If not specified, keeps the current value from settings.json (0 for new hubs).')
+param dataExplorerRawRetentionInDays int?
 
-@description('Optional. Number of months of data to retain in the Data Explorer *_final_v* tables. Default: 13.')
-param dataExplorerFinalRetentionInMonths int = 13
+@description('Optional. Number of months of data to retain in the Data Explorer *_final_v* tables. If not specified, keeps the current value from settings.json (13 for new hubs).')
+param dataExplorerFinalRetentionInMonths int?
 
 @description('Optional. Enable public access to FinOps hubs resources.  Default: true.')
 param enablePublicAccess bool = true
 
-@description('Optional. Address space for the workload. A /26 is required for the workload. Default: "10.20.30.0/26".')
+@description('Optional. Deploy a NAT Gateway for controlled outbound access when private routing is enabled. When true, the script and Data Explorer subnets route outbound traffic through the NAT Gateway. Ignored when enablePublicAccess is true. Default: false.')
+param enableNatGateway bool = false
+
+@description('Optional. Address space for the workload. Minimum /26 subnet size is required for the workload. Default: "10.20.30.0/26".')
 param virtualNetworkAddressPrefix string = '10.20.30.0/26'
 
 
@@ -160,6 +178,11 @@ module hub 'modules/hub.bicep' = {
     // eventGridLocation: eventGridLocation
     storageSku: storageSku
     enableInfrastructureEncryption: enableInfrastructureEncryption
+    enablePurgeProtection: enablePurgeProtection
+    enableManagedExports: enableManagedExports
+    enableRecommendations: enableRecommendations
+    enableAHBRecommendations: enableAHBRecommendations
+    enableSpotRecommendations: enableSpotRecommendations
     dataExplorerName: dataExplorerName
     dataExplorerSku: dataExplorerSku
     dataExplorerCapacity: dataExplorerCapacity
@@ -175,6 +198,7 @@ module hub 'modules/hub.bicep' = {
     remoteHubStorageUri: remoteHubStorageUri
     remoteHubStorageKey: remoteHubStorageKey
     enablePublicAccess: enablePublicAccess
+    enableNatGateway: enableNatGateway
     virtualNetworkAddressPrefix: virtualNetworkAddressPrefix
   }
 }
