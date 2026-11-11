@@ -1,0 +1,191 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.48.1.52935",
+      "templateHash": "1268370890427706595"
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Azure region supporting provisioned Hyperscale standard-series (Gen5) databases."
+      }
+    },
+    "sqlServerName": {
+      "type": "string",
+      "defaultValue": "[format('sql-{0}', uniqueString(resourceGroup().id))]",
+      "minLength": 1,
+      "maxLength": 63,
+      "metadata": {
+        "description": "Globally unique logical server name. Use lowercase letters, digits, and hyphens; start and end with a letter or digit."
+      }
+    },
+    "administratorLogin": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "Display name or user principal name of an existing Microsoft Entra administrator in the subscription tenant."
+      }
+    },
+    "administratorObjectId": {
+      "type": "string",
+      "minLength": 36,
+      "maxLength": 36,
+      "metadata": {
+        "description": "Object ID (not application/client ID) of the existing Microsoft Entra administrator in the subscription tenant."
+      }
+    },
+    "administratorPrincipalType": {
+      "type": "string",
+      "defaultValue": "User",
+      "allowedValues": [
+        "User",
+        "Group",
+        "Application"
+      ],
+      "metadata": {
+        "description": "Type of the Microsoft Entra administrator principal."
+      }
+    },
+    "clientIpAddress": {
+      "type": "string",
+      "minLength": 7,
+      "maxLength": 15,
+      "metadata": {
+        "description": "One trusted client public IPv4 address. Do not use 0.0.0.0, which enables access from Azure services."
+      }
+    },
+    "databaseName": {
+      "type": "string",
+      "defaultValue": "hyperscale",
+      "minLength": 1,
+      "maxLength": 118,
+      "metadata": {
+        "description": "Name of the writable primary Hyperscale database. The named replica receives this name plus -reporting."
+      }
+    },
+    "primaryVcores": {
+      "type": "int",
+      "defaultValue": 2,
+      "minValue": 2,
+      "metadata": {
+        "description": "Provisioned Gen5 vCores for the primary database. Minimum 2; choose a supported Hyperscale Gen5 size in the selected region."
+      }
+    },
+    "namedReplicaVcores": {
+      "type": "int",
+      "defaultValue": 2,
+      "minValue": 2,
+      "metadata": {
+        "description": "Independently provisioned Gen5 vCores for the named replica. Minimum 2; choose a supported Hyperscale Gen5 size in the selected region."
+      }
+    }
+  },
+  "variables": {
+    "namedReplicaName": "[format('{0}-reporting', parameters('databaseName'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Sql/servers",
+      "apiVersion": "2023-08-01",
+      "name": "[parameters('sqlServerName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "version": "12.0",
+        "minimalTlsVersion": "1.2",
+        "publicNetworkAccess": "Enabled",
+        "administrators": {
+          "administratorType": "ActiveDirectory",
+          "azureADOnlyAuthentication": true,
+          "login": "[parameters('administratorLogin')]",
+          "principalType": "[parameters('administratorPrincipalType')]",
+          "sid": "[parameters('administratorObjectId')]",
+          "tenantId": "[subscription().tenantId]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Sql/servers/firewallRules",
+      "apiVersion": "2023-08-01",
+      "name": "[format('{0}/{1}', parameters('sqlServerName'), 'AllowSingleClient')]",
+      "properties": {
+        "startIpAddress": "[parameters('clientIpAddress')]",
+        "endIpAddress": "[parameters('clientIpAddress')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Sql/servers', parameters('sqlServerName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Sql/servers/databases",
+      "apiVersion": "2023-08-01",
+      "name": "[format('{0}/{1}', parameters('sqlServerName'), parameters('databaseName'))]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[format('HS_Gen5_{0}', parameters('primaryVcores'))]",
+        "tier": "Hyperscale",
+        "family": "Gen5",
+        "capacity": "[parameters('primaryVcores')]"
+      },
+      "properties": {
+        "highAvailabilityReplicaCount": 0
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Sql/servers', parameters('sqlServerName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Sql/servers/databases",
+      "apiVersion": "2023-08-01",
+      "name": "[format('{0}/{1}', parameters('sqlServerName'), variables('namedReplicaName'))]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[format('HS_Gen5_{0}', parameters('namedReplicaVcores'))]",
+        "tier": "Hyperscale",
+        "family": "Gen5",
+        "capacity": "[parameters('namedReplicaVcores')]"
+      },
+      "properties": {
+        "createMode": "Secondary",
+        "secondaryType": "Named",
+        "sourceDatabaseId": "[resourceId('Microsoft.Sql/servers/databases', parameters('sqlServerName'), parameters('databaseName'))]",
+        "highAvailabilityReplicaCount": 0
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Sql/servers/databases', parameters('sqlServerName'), parameters('databaseName'))]",
+        "[resourceId('Microsoft.Sql/servers', parameters('sqlServerName'))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "sqlServerName": {
+      "type": "string",
+      "value": "[parameters('sqlServerName')]"
+    },
+    "sqlServerFullyQualifiedDomainName": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Sql/servers', parameters('sqlServerName')), '2023-08-01').fullyQualifiedDomainName]"
+    },
+    "primaryDatabaseName": {
+      "type": "string",
+      "value": "[parameters('databaseName')]"
+    },
+    "primaryDatabaseResourceId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Sql/servers/databases', parameters('sqlServerName'), parameters('databaseName'))]"
+    },
+    "namedReplicaDatabaseName": {
+      "type": "string",
+      "value": "[variables('namedReplicaName')]"
+    },
+    "namedReplicaResourceId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Sql/servers/databases', parameters('sqlServerName'), variables('namedReplicaName'))]"
+    }
+  }
+}
