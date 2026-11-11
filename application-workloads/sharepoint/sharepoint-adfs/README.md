@@ -1,5 +1,5 @@
 ---
-description: Create a DC, a SQL Server 2025, and from 1 to 5 server(s) hosting a SharePoint Subscription / 2019 / 2016 farm with an extensive configuration, including trusted authentication, user profiles with personal sites, an OAuth trust (using a certificate), a dedicated IIS site for hosting high-trust add-ins, etc... The latest version of key software (including Fiddler, vscode, np++, 7zip, ULS Viewer) is installed. SharePoint machines have additional fine-tuning to make them immediately usable (remote administration tools, custom policies for Edge and Chrome, shortcuts, etc...).
+description: Create a DC, a SQL Server 2025, and from 1 to 5 server(s) hosting a SharePoint Subscription Edition farm with an extensive configuration, including trusted authentication, user profiles with personal sites, an OAuth trust (using a certificate), a dedicated IIS site for hosting high-trust add-ins, etc... The latest version of key software (including Fiddler, vscode, np++, 7zip, ULS Viewer) is installed. SharePoint machines have additional fine-tuning to make them immediately usable (remote administration tools, custom policies for Edge and Chrome, shortcuts, etc...).
 page_type: sample
 products:
 - azure
@@ -9,7 +9,7 @@ languages:
 - bicep
 - json
 ---
-# A template to deploy SharePoint Subscription / 2019 / 2016
+# A template to deploy SharePoint Subscription Edition
 
 ![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sharepoint/sharepoint-adfs/PublicLastTestDate.svg)
 ![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sharepoint/sharepoint-adfs/PublicDeployment.svg)
@@ -22,7 +22,7 @@ languages:
 
 ![Bicep Version](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/sharepoint/sharepoint-adfs/BicepVersion.svg)
 
-This template creates a secure, highly customizable SharePoint Subscription / 2019 / 2016 farm, using [Azure Verified Modules](https://azure.github.io/Azure-Verified-Modules/), and the [project SharePointInfraDsc](https://github.com/Yvand/SharePointInfraDsc) to apply the DSC (desired state configuration) to the virtual machines.
+This template creates a secure, highly customizable SharePoint Subscription Edition farm, using [Azure Verified Modules](https://azure.github.io/Azure-Verified-Modules/), and the [project SharePointInfraDsc](https://github.com/Yvand/SharePointInfraDsc) to apply the DSC (desired state configuration) to the virtual machines.
 
 ## Main objectives
 
@@ -36,10 +36,10 @@ This template creates a secure, highly customizable SharePoint Subscription / 20
 
 ## Virtual machines
 
-- The DC and SharePoint Subscription machines use the latest image of [Windows Server 2025 Datacenter: Azure Edition](https://marketplace.microsoft.com/en-us/product/microsoftwindowsserver.windowsserver?tab=PlansAndPrice).
+- The DC and SharePoint machines use the latest image of [Windows Server 2025 Datacenter: Azure Edition](https://marketplace.microsoft.com/en-us/product/microsoftwindowsserver.windowsserver?tab=PlansAndPrice).
 - SQL machine uses the latest image of [SQL Server 2025 Standard Developer on Windows Server 2025](https://marketplace.microsoft.com/en-us/product/microsoftsqlserver.sql2025-ws2025?tab=PlansAndPrice).
 
-About SharePoint legacy: SharePoint 2016 / 2019 use outdated images ([2016](https://marketplace.microsoft.com/en-us/product/sharepointserver.2016?tab=Overview) and [2019](https://marketplace.microsoft.com/en-us/product/sharepointserver.2019?tab=Overview)) published by SharePoint Engineering.
+## Usage
 
 ## Usage
 
@@ -57,8 +57,10 @@ az deployment group create --name "sharepoint-quickstart" --resource-group "shar
 
 ## SharePoint configuration
 
-- Parameter `sharePointVersion` sets which version of SharePoint will be installed:
-  - `Subscription-Latest` (default): SharePoint Subscription with the latest public update available at the time of publishing this version: September 2026 ([kb5002908](https://support.microsoft.com/help/5002908)).
+- Parameter `sharePointVersion` sets which version of SharePoint Subscription Edition will be installed:
+  - `Subscription-Latest` (default): SharePoint Subscription with the latest public update available at the time of publishing this version: October 2026 ([kb5002927](https://support.microsoft.com/help/5002927)).
+  - `Subscription-26H2`: SharePoint Subscription with the [Feature Update 26H2](https://learn.microsoft.com/en-us/sharepoint/what-s-new/new-improved-features-sharepoint-server-subscription-edition-2026-h2-release) (October 2026 PU / [kb5002927](https://support.microsoft.com/help/5002927)).
+  - `Subscription-26H1`: SharePoint Subscription with the [Feature Update 26H1](https://learn.microsoft.com/en-us/sharepoint/what-s-new/new-improved-features-sharepoint-server-subscription-edition-2026-h1-release) (June 2026 PU / [KB5002873](https://support.microsoft.com/help/5002873)).
   - `Subscription-25H2`: SharePoint Subscription with the [Feature Update 25H2](https://learn.microsoft.com/sharepoint/what-s-new/new-improved-features-sharepoint-server-subscription-edition-2025-h2-release) (September 2025 PU / [KB5002784](https://support.microsoft.com/help/5002784)).
   - `Subscription-25H1`: SharePoint Subscription with the [Feature Update 25H1](https://learn.microsoft.com/sharepoint/what-s-new/new-and-improved-features-in-sharepoint-server-subscription-edition-25h1-release) (March 2025 PU / [KB5002698](https://support.microsoft.com/help/5002698)).
   - `Subscription-24H2`: SharePoint Subscription with the [Feature Update 24H2](https://learn.microsoft.com/sharepoint/what-s-new/new-and-improved-features-in-sharepoint-server-subscription-edition-24h2-release) (September 2024 PU / [kb5002640](https://support.microsoft.com/help/5002640)).
@@ -67,8 +69,6 @@ az deployment group create --name "sharepoint-quickstart" --resource-group "shar
   - `Subscription-23H1`: SharePoint Subscription with the [Feature Update 23H1](https://learn.microsoft.com/sharepoint/what-s-new/new-and-improved-features-in-sharepoint-server-subscription-edition-23h1-release) (March 2023 PU / [KB5002355](https://support.microsoft.com/help/5002355)).
   - `Subscription-22H2`: SharePoint Subscription with the [Feature Update 22H2](https://learn.microsoft.com/sharepoint/what-s-new/new-and-improved-features-in-sharepoint-server-subscription-edition-22h2-release) (September 2022 PU / [KB5002270](https://support.microsoft.com/help/5002270) and [KB5002271](https://support.microsoft.com/help/5002271)).
   - `Subscription-RTM`: SharePoint Subscription RTM [published here](https://www.microsoft.com/en-us/download/details.aspx?id=103599).
-  - `2019` (deprecated): Uses the [image](https://marketplace.microsoft.com/en-us/product/sharepointserver.2019?tab=Overview) built and maintained by SharePoint Engineering.
-  - `2016` (deprecated): Uses the [image](https://marketplace.microsoft.com/en-us/product/sharepointserver.2016?tab=Overview) built and maintained by SharePoint Engineering.
 - Parameter `sharePointConfigurationLevel` sets how much configuration is done:
   - `Custom`: You specify what SharePoint features are installed by setting the parameter `customSharePointConfiguration`.
   - `Minimum`: Creates a web application with its default zone only.
@@ -126,17 +126,16 @@ Below is the default size and storage used per virtual machine role:
 
 - DC: Size [Standard_B2als_v2](https://learn.microsoft.com/azure/virtual-machines/sizes/general-purpose/basv2-series) (2 vCPU / 4 GiB RAM) and OS disk is a 32 GiB [standard SSD E4](https://learn.microsoft.com/azure/virtual-machines/disks-types#standard-ssds).
 - SQL Server: Size [Standard_B2as_v2](https://learn.microsoft.com/azure/virtual-machines/sizes/general-purpose/basv2-series) (2 vCPU / 8 GiB RAM) and OS disk is a 128 GiB [standard SSD E10](https://learn.microsoft.com/azure/virtual-machines/disks-types#standard-ssds).
-- SharePoint: Size [Standard_B4as_v2](https://learn.microsoft.com/azure/virtual-machines/sizes/general-purpose/basv2-series) (4 vCPU / 16 GiB RAM) and OS disk is a 128 GiB [standard SSD E10](https://learn.microsoft.com/azure/virtual-machines/disks-types#standard-ssds) (for SharePoint Subscription and SharePoint 2016), or a 32 GiB [standard SSD E4](https://learn.microsoft.com/azure/virtual-machines/disks-types#standard-ssds) (for SharePoint 2019).
+- SharePoint: Size [Standard_B4as_v2](https://learn.microsoft.com/azure/virtual-machines/sizes/general-purpose/basv2-series) (4 vCPU / 16 GiB RAM) and OS disk is a 128 GiB [standard SSD E10](https://learn.microsoft.com/azure/virtual-machines/disks-types#standard-ssds).
 
 You can use <https://azure.com/e/26eea69e35b04cb884b83ce06feadb5c> to estimate the monthly cost of deploying the resources in this module, in the region/currency of your choice, assuming it is created using the default settings and runs 24*7.
 
 ## Known issues
 
-- The password for the User Profile directory synchronization connection (variable `other_accounts_password`) needs to be re-entered in the "Edit synchronization connection" page, otherwise the profile import fails (password decryption error in the logs).
+- The password for the User Profile directory synchronization connection (parameter `otherAccountsPassword`) needs to be re-entered in the "Edit synchronization connection" page, otherwise the profile import fails (password decryption error in the logs).
 - When setting `outbound_access_method` to `AzureFirewallProxy`, most of the software installed through Chocolatey fail to download and are not installed.
 - When setting `sharepoint_configuration_level` to `Full` and `front_end_servers_count` > 0: the configuration wizard hangs on the additional web front ends when they join the farm.
 - The deployment of Azure Bastion fails pretty frequently. This has little impact, since it is very easy to redeploy through the portal.
-- SharePoint 2016 and 2019 are outdated and deprecated. Their corresponding DSC configurations receive little maintenance to ensure they continue to deploy, but receive no improvement. As such, variables `sharepoint_configuration_level` and `default_zone_must_be_https` have no effect on them.
 
 ## Additional information
 

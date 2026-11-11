@@ -1,0 +1,10 @@
+{
+    "dataset": "Recommendations",
+    "provider": "Microsoft",
+    "query": "resources | where type == 'microsoft.sql/servers/elasticpools'| extend elasticPoolId = tolower(tostring(id)), elasticPoolName = name, elasticPoolRG = resourceGroup,skuName=tostring(sku.name),skuTier=tostring(sku.tier),skuCapacity=tostring(sku.capacity), Location=location, type| join kind=leftouter ( resources | where type == 'microsoft.sql/servers/databases'| extend elasticPoolId = tolower(tostring(properties.elasticPoolId)) ) on elasticPoolId| summarize databaseCount = countif(isnotempty(elasticPoolId1)) by elasticPoolId, elasticPoolName,serverResourceGroup=resourceGroup,name,skuName,skuTier,skuCapacity,elasticPoolRG,Location, type, subscriptionId| where databaseCount == 0 | project elasticPoolId, elasticPoolName, databaseCount, elasticPoolRG ,skuName,skuTier ,skuCapacity, Location, type, subscriptionId| project     x_RecommendationId=strcat(tolower(elasticPoolId),'-idle'),     x_ResourceGroupName=tolower(elasticPoolRG),     SubAccountId=subscriptionId,     x_RecommendationCategory='Cost',     x_RecommendationDescription='SQL Database elastic pool has no associated databases',     ResourceId = tolower(elasticPoolId),     ResourceName=tolower(elasticPoolName),     x_RecommendationDetails= tostring(bag_pack('skuName', skuName, 'skuTier', skuTier, 'skuCapacity', skuCapacity, 'Location', Location, 'x_RecommendationProvider', 'FinOps hubs', 'x_RecommendationSolution', 'Review and remove this resource if not needed', 'x_RecommendationTypeId', '50987aae-a46d-49ae-bd41-a670a4dd18bd', 'x_ResourceType', type)),     x_RecommendationDate = now() | join kind=leftouter ( resourcecontainers | where type == 'microsoft.resources/subscriptions' | project SubAccountName=name, SubAccountId=subscriptionId ) on SubAccountId | project-away SubAccountId1",
+    "queryEngine": "ResourceGraph",
+    "scope": "Tenant",
+    "source": "FinOps hubs",
+    "type": "Microsoft-EmptySQLElasticPools",
+    "version": "1.0"
+}
