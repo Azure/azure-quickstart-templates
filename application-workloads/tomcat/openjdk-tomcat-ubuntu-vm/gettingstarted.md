@@ -4,9 +4,9 @@ The purpose of this ARM Template is **simple Ubuntu Server Virtual Machine** ins
 
 ## The Template
 
-Don't let the size of the template scares you. The structure is very intuitive and once that you get the gist of it, you will see how easier your life will be regarding deploying resources to Azure.
+Don't let the size of the template scare you. The structure is very intuitive and once that you get the gist of it, you will see how easier your life will be regarding deploying resources to Azure.
 
-Those are the parameters on the template, most of them are already with the values, the ones that you need to inform are: **adminUsername**, **adminPassword** and **resourceGroup**. All the other parameters will be already informed.
+Those are the parameters on the template, most of them are already filled with values, the ones that you need to inform are: **adminUsername**, **adminPassword** and **resourceGroup**. All the other parameters will be already informed.
 
 Don't worry about changing anything on the file, either on the portal or using Azure CLI, you need to inform just the following parameters.
 
@@ -25,7 +25,7 @@ You can use [PowerShell](https://docs.microsoft.com/azure/azure-resource-manager
 
 For this task, we going to deploy using Visual Code and the portal and a little surprise for you at the end. :D
 
-For Azure CLI I choose to use the Visual Code with Azure CLI extensions, if you like, you can find more information [here](https://code.visualstudio.com/docs/azure/extensions). But bare in mind that you don't need to use the Visual Code, you can stick with the old good always present **Command Line** on Windows or any **bash terminal**.
+For Azure CLI I choose to use the Visual Code with Azure CLI extensions, if you like, you can find more information [here](https://code.visualstudio.com/docs/azure/extensions). But bear in mind that you don't need to use the Visual Code, you can stick with the old good always present **Command Line** on Windows or any **bash terminal**.
 
 ### Using Azure CLI with Visual Code
 
@@ -35,9 +35,9 @@ type on the terminal window: **az login**
 
 You will be redirected to the Azure Portal where you can insert your credentials and log in.
 
-After logged in, you will see your credentials on the terminal.
+After logging in, you will see your credentials on the terminal.
 
-To set the right subscription, type following command:
+To set the right subscription, type the following command:
 
 #### az account set --subscription "your subscription id"
 
@@ -45,7 +45,7 @@ To set the right subscription, type following command:
 
 ### Resource Group
 
-Now you need a Resource Group for our deployment. If you haven't yet created a Resource Group, you can do it now. If you are new on Azure and wonder what is a Resource Group? Bare with me! A Resource Group is a container that holds related resources for an Azure solution. The resource group includes those resources that you want to manage as a group. Simply saying, it's like a folder that contains files. Simple as that.
+Now you need a Resource Group for our deployment. If you haven't yet created a Resource Group, you can do it now. If you are new on Azure and wonder what is a Resource Group? Bear with me! A Resource Group is a container that holds related resources for an Azure solution. The resource group includes those resources that you want to manage as a group. Simply saying, it's like a folder that contains files. Simple as that.
 
 To create a Resource Group, you need a name and a location for your Resource Group.
 

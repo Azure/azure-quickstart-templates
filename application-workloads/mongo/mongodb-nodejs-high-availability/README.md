@@ -35,7 +35,7 @@ A Node.js (Express) service is installed on it, exposes a REST GET endpoint that
 SSH into the Ubuntu VM (using Putty www.putty.org), navigate to /opt/app.js and modify the workload as needed.
 
 Credentials -
-The adminUsername and adminPassword are administrators of all the VM's, the MongoDB database and the Tasks database.
+The adminUsername and adminPassword are administrators of all the VMs, the MongoDB database and the Tasks database.
 These credentials are hard coded in the connection string in the Node js server, in /opt/app.js. Modify according to adminUsername:adminPassword you entered in the parameters.
 Please do not use a question mark in the adminUsername and/or the adminPassword.
 
