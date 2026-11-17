@@ -213,7 +213,7 @@ resource privateDnsZoneARecord 'Microsoft.Network/privateDnsZones/A@2020-06-01' 
     ttl: 3600
     aRecords: [
       {
-        ipv4Address: first(first(privateEndpoint.properties.customDnsConfigs).ipAddresses)
+        ipv4Address: first(first(privateEndpoint.properties.customDnsConfigs)!.ipAddresses)
       }
     ]
   }
