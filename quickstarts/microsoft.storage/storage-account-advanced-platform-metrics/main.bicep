@@ -1,4 +1,4 @@
-metadata description = 'Deploy a StorageV2 account with advanced platform metrics enabled for all blob containers.'
+metadata description = 'Deploy a geo-redundant StorageV2 account by default with default-deny network access and advanced platform metrics enabled for all blob containers.'
 
 @description('Globally unique storage account name containing only lowercase letters and numbers.')
 @minLength(3)
@@ -8,7 +8,7 @@ param storageAccountName string = 'stapm${uniqueString(resourceGroup().id)}'
 @description('Azure region for the storage account. Advanced platform metrics and the selected SKU must be available in this region.')
 param location string = resourceGroup().location
 
-@description('Storage redundancy SKU for a standard StorageV2 account. Availability depends on the selected region.')
+@description('Storage redundancy SKU for a standard StorageV2 account. Defaults to geo-redundant storage. LRS and ZRS do not provide cross-region replication. Availability depends on the selected region.')
 @allowed([
   'Standard_LRS'
   'Standard_GRS'
@@ -17,7 +17,7 @@ param location string = resourceGroup().location
   'Standard_GZRS'
   'Standard_RAGZRS'
 ])
-param storageAccountSku string = 'Standard_LRS'
+param storageAccountSku string = 'Standard_GRS'
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2026-09-01' = {
   name: storageAccountName
@@ -31,6 +31,10 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2026-09-01' = {
     supportsHttpsTrafficOnly: true
     minimumTlsVersion: 'TLS1_2'
     allowBlobPublicAccess: false
+    networkAcls: {
+      defaultAction: 'Deny'
+      bypass: 'AzureServices'
+    }
   }
 }
 

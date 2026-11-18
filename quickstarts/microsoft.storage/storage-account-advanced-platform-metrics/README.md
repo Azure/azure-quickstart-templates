@@ -1,5 +1,5 @@
 ---
-description: Deploy a standard StorageV2 account with advanced platform metrics enabled for all blob containers.
+description: Deploy a StorageV2 account with geo-redundancy by default, default-deny network access, and advanced platform metrics for all blob containers.
 page_type: sample
 products:
 - azure
@@ -29,7 +29,7 @@ This template deploys a **standard StorageV2 account** with **advanced platform 
 
 ## Sample overview and deployed resources
 
-- **Microsoft.Storage/storageAccounts**: A general-purpose v2 storage account with the Hot access tier, HTTPS-only access, a minimum TLS version of 1.2, and anonymous blob access disabled.
+- **Microsoft.Storage/storageAccounts**: A general-purpose v2 storage account with geo-redundancy by default, the Hot access tier, HTTPS-only access, a minimum TLS version of 1.2, anonymous blob access disabled, and default-deny network access with a trusted Azure services exception.
 - **Microsoft.Storage/storageAccounts/advancedPlatformMetrics**: The `ContainerLevelCapacityMetrics` child resource, enabled with an all-container filter.
 
 The template does not create containers or upload data. The all-container rule also applies to containers created after deployment. An empty `filterValues` array represents the all-container selection, as specified in the [resource reference](https://learn.microsoft.com/azure/templates/microsoft.storage/2026-09-01/storageaccounts/advancedplatformmetrics).
@@ -51,9 +51,9 @@ az group create --name rg-storage-advanced-metrics --location westeurope
 az deployment group create --resource-group rg-storage-advanced-metrics --name storage-advanced-metrics --template-file main.bicep --parameters @azuredeploy.parameters.json
 ```
 
-The template defaults to the resource group's location, `Standard_LRS`, and a storage account name derived from the resource group ID. Optional parameters are `storageAccountName`, `location`, and `storageAccountSku`. Custom account names must contain 3-24 lowercase letters and numbers and be globally unique.
+The template defaults to the resource group's location, `Standard_GRS`, and a storage account name derived from the resource group ID. Optional parameters are `storageAccountName`, `location`, and `storageAccountSku`. Custom account names must contain 3-24 lowercase letters and numbers and be globally unique.
 
-The SKU choices intentionally cover only standard StorageV2 redundancy options; premium account scenarios are outside this sample's scope.
+The SKU choices intentionally cover only standard StorageV2 redundancy options; premium account scenarios are outside this sample's scope. The default `Standard_GRS` replicates data to a secondary region and generally costs more than `Standard_LRS`. Confirm the secondary region meets your data residency requirements. `Standard_LRS` and `Standard_ZRS` remain available for scenarios that do not require cross-region replication, but do not satisfy the geo-redundancy requirement checked by `CKV_AZURE_206`.
 
 Both [main.bicep](main.bicep) and its generated ARM template, [azuredeploy.json](azuredeploy.json), are included. To deploy the JSON template instead, replace `--template-file main.bicep` with `--template-file azuredeploy.json` in the command above.
 
@@ -67,6 +67,16 @@ az bicep build --file main.bicep --outfile azuredeploy.json
 
 The deployment returns `storageAccountName`, `storageAccountId`, and `storageAccountBlobEndpoint`. The blob endpoint is read from the deployed account rather than constructed with a cloud-specific DNS suffix.
 
+### Network access
+
+The storage firewall explicitly denies data-plane access by default (`networkAcls.defaultAction: Deny`) and permits the trusted Azure services exception (`networkAcls.bypass: AzureServices`). This exception applies only to [supported trusted services](https://learn.microsoft.com/azure/storage/common/storage-network-security-trusted-azure-services), not all applications hosted in Azure, and does not replace authentication or data-plane authorization.
+
+No client IP rules, virtual network rules, or private endpoints are created. Before creating containers, uploading blobs, or listing data from a client, configure an appropriate [network access rule or private endpoint](https://learn.microsoft.com/azure/storage/common/storage-network-security) and grant the necessary data permissions. Requests from clients without an allowed network path are denied, typically with HTTP 403, even when their credentials are valid.
+
+ARM management-plane operations, including deployment and reading the metrics rule below, are separate from blob data-plane access and are not restricted by this storage firewall. The trusted-service exception is a deliberate access policy for this sample, not a documented prerequisite for advanced platform metrics.
+
+### Verify the metrics rule
+
 To confirm the metrics configuration, retrieve the deployed account ID and read the child resource:
 
 ```powershell
@@ -74,7 +84,7 @@ $storageAccountId = az deployment group show --resource-group rg-storage-advance
 az rest --method get --url "https://management.azure.com${storageAccountId}/advancedPlatformMetrics/ContainerLevelCapacityMetrics?api-version=2026-09-01" --query properties
 ```
 
-The response should contain `enabled: true`, `ruleConfig.filterType: AllContainersFilter`, and an empty `ruleConfig.filterValues` array. Enabling the rule does not imply that metric data is immediately available; create containers and upload data separately to evaluate container-level capacity metrics.
+The response should contain `enabled: true`, `ruleConfig.filterType: AllContainersFilter`, and an empty `ruleConfig.filterValues` array. This confirms rule configuration, not metric emission. Enabling the rule does not imply that metric data is immediately available; after configuring client network access and data permissions, create containers and upload data separately to evaluate container-level capacity metrics.
 
 ## Notes
 
