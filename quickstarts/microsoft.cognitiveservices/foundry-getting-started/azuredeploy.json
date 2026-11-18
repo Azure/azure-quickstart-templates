@@ -1,0 +1,151 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.36.177.2456",
+      "templateHash": "7807057157206189759"
+    }
+  },
+  "parameters": {
+    "foundryName": {
+      "type": "string",
+      "defaultValue": "[format('foundry-{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "Name of the Microsoft Foundry account. Also used as the developer API subdomain."
+      }
+    },
+    "projectName": {
+      "type": "string",
+      "defaultValue": "[format('{0}-proj', parameters('foundryName'))]",
+      "metadata": {
+        "description": "Name of the default project created in the Microsoft Foundry account."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "modelDeploymentName": {
+      "type": "string",
+      "defaultValue": "gpt-4.1-mini",
+      "metadata": {
+        "description": "Name of the model deployment created in the Microsoft Foundry account."
+      }
+    },
+    "modelName": {
+      "type": "string",
+      "defaultValue": "gpt-4.1-mini",
+      "metadata": {
+        "description": "Model to deploy. See the Microsoft Foundry model catalog for available models, publishers and versions."
+      }
+    },
+    "modelFormat": {
+      "type": "string",
+      "defaultValue": "OpenAI",
+      "metadata": {
+        "description": "Publisher/format of the model to deploy."
+      }
+    },
+    "modelVersion": {
+      "type": "string",
+      "defaultValue": "2025-04-14",
+      "metadata": {
+        "description": "Version of the model to deploy."
+      }
+    },
+    "modelCapacity": {
+      "type": "int",
+      "defaultValue": 1,
+      "metadata": {
+        "description": "Capacity (in thousands of tokens per minute) for the model deployment."
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.CognitiveServices/accounts",
+      "apiVersion": "2025-06-01",
+      "name": "[parameters('foundryName')]",
+      "location": "[parameters('location')]",
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "sku": {
+        "name": "S0"
+      },
+      "kind": "AIServices",
+      "properties": {
+        "allowProjectManagement": true,
+        "customSubDomainName": "[parameters('foundryName')]",
+        "disableLocalAuth": false
+      }
+    },
+    {
+      "type": "Microsoft.CognitiveServices/accounts/projects",
+      "apiVersion": "2025-06-01",
+      "name": "[format('{0}/{1}', parameters('foundryName'), parameters('projectName'))]",
+      "location": "[parameters('location')]",
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "properties": {},
+      "dependsOn": [
+        "[resourceId('Microsoft.CognitiveServices/accounts', parameters('foundryName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.CognitiveServices/accounts/deployments",
+      "apiVersion": "2025-06-01",
+      "name": "[format('{0}/{1}', parameters('foundryName'), parameters('modelDeploymentName'))]",
+      "sku": {
+        "capacity": "[parameters('modelCapacity')]",
+        "name": "GlobalStandard"
+      },
+      "properties": {
+        "model": {
+          "name": "[parameters('modelName')]",
+          "format": "[parameters('modelFormat')]",
+          "version": "[parameters('modelVersion')]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.CognitiveServices/accounts', parameters('foundryName'))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "foundryId": {
+      "type": "string",
+      "metadata": {
+        "description": "Resource ID of the Microsoft Foundry account."
+      },
+      "value": "[resourceId('Microsoft.CognitiveServices/accounts', parameters('foundryName'))]"
+    },
+    "foundryEndpoint": {
+      "type": "string",
+      "metadata": {
+        "description": "Developer API endpoint for the Microsoft Foundry account."
+      },
+      "value": "[reference(resourceId('Microsoft.CognitiveServices/accounts', parameters('foundryName')), '2025-06-01').endpoint]"
+    },
+    "projectId": {
+      "type": "string",
+      "metadata": {
+        "description": "Resource ID of the default project."
+      },
+      "value": "[resourceId('Microsoft.CognitiveServices/accounts/projects', parameters('foundryName'), parameters('projectName'))]"
+    },
+    "modelDeploymentName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the deployed model."
+      },
+      "value": "[parameters('modelDeploymentName')]"
+    }
+  }
+}
