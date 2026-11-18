@@ -39,7 +39,6 @@ param tagName object = {
 @description('Location for all resources.')
 param location string = resourceGroup().location
 
-var networkProfileName = 'aci-networkProfile-${location}'
 var contributorRoleDefinitionId = resourceId(
   'Microsoft.Authorization/roleDefinitions',
   'b24988ac-6180-42a0-ab88-20f7382dd24c'
@@ -119,40 +118,6 @@ resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2023-05-0
         }
       }
     ]
-  }
-}
-
-resource networkProfile 'Microsoft.Network/networkProfiles@2023-05-01' = {
-  name: networkProfileName
-  tags: tagName
-  location: location
-  properties: {
-    containerNetworkInterfaceConfigurations: [
-      {
-        name: 'eth-${containerSubnetName}'
-        properties: {
-          ipConfigurations: [
-            {
-              name: 'ipconfig-${containerSubnetName}'
-              properties: {
-                subnet: {
-                  id: containerSubnet.id
-                }
-              }
-            }
-          ]
-        }
-      }
-    ]
-  }
-}
-
-resource networkProfile_roleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  scope: networkProfile
-  name: guid(networkRoleDefinitionId, azureContainerInstanceOID, networkProfile.name)
-  properties: {
-    roleDefinitionId: networkRoleDefinitionId
-    principalId: azureContainerInstanceOID
   }
 }
 
@@ -248,7 +213,7 @@ resource privateDnsZoneARecord 'Microsoft.Network/privateDnsZones/A@2020-06-01' 
     ttl: 3600
     aRecords: [
       {
-        ipv4Address: first(first(privateEndpoint.properties.customDnsConfigs).ipAddresses)
+        ipv4Address: first(first(privateEndpoint.properties.customDnsConfigs)!.ipAddresses)
       }
     ]
   }
