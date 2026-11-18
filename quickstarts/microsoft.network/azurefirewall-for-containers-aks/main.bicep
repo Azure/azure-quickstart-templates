@@ -14,7 +14,7 @@ param nodeVmSize string = 'Standard_DS3_v2'
 param nodeCount int = 2
 
 @description('Azure Firewall for Containers controller Helm chart version.')
-param controllerVersion string = '20261103.2'
+param controllerVersion string = '20261109.1'
 
 @description('Kubernetes namespace for the controller. Used in the workload identity federated credential subject.')
 param controllerNamespace string = 'firewall-namespace'
