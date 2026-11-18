@@ -54,7 +54,7 @@ CLIENT_ID=$(az identity show -g "$RESOURCE_GROUP" -n afc-controller-identity --q
 az aks get-credentials --resource-group "$RESOURCE_GROUP" --name afc-aks
 
 helm install azfw-controller oci://mcr.microsoft.com/firewall/charts/azurefirewall-controller \
-  --namespace firewall-namespace --create-namespace --version 20261103.2 \
+  --namespace firewall-namespace --create-namespace --version 20261109.1 \
   --set "azfwController.podIdentity.clientID=$CLIENT_ID" --wait
 
 kubectl apply -f - <<EOF
