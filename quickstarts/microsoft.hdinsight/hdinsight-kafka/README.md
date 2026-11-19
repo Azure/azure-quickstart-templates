@@ -1,5 +1,5 @@
 ---
-description: This template allows you to create an Azure Virtual Network and a Kafka on HDInsight cluster in the virtual network. The SSH authentication method for the cluster is username and password. For a template using SSH public key authentication, see https&#58;//learn.microsoft.com/samples/azure/azure-quickstart-templates/hdinsight-linux-ssh-publickey/
+description: This template allows you to create an Azure Virtual Network and a Kafka on HDInsight cluster in the virtual network. The SSH authentication method for the cluster is username and password. For a template using SSH public key authentication, see [Deploy HDInsight on Linux](https://learn.microsoft.com/samples/azure/azure-quickstart-templates/hdinsight-linux-ssh-publickey).
 page_type: sample
 products:
 - azure

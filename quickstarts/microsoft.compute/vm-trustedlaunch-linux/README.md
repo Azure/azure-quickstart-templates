@@ -1,5 +1,5 @@
 ---
-description: This template allows you to deploy a trusted launch capable Linux virtual machine using a few different options for the Linux version, using the latest patched version. If you enable Secureboot and vTPM, the Guest Attestation extension will be installed on your VM. This extension will perform remote [attestation](https&#58;//docs.microsoft.com/en-us/windows/security/information-protection/tpm/tpm-fundamentals#measured-boot-with-support-for-attestation) by the cloud. By default, this will deploy an Standard_D2_v3 size virtual machine in the resource group location and return the FQDN of the virtual machine.
+description: This template allows you to deploy a trusted launch capable Linux virtual machine using a few different options for the Linux version, using the latest patched version. If you enable Secureboot and vTPM, the Guest Attestation extension will be installed on your VM. This extension will perform remote [attestation](https://learn.microsoft.com/windows/security/hardware-security/tpm/tpm-fundamentals#measured-boot-with-support-for-attestation) by the cloud. By default, this will deploy an Standard_D2_v3 size virtual machine in the resource group location and return the FQDN of the virtual machine.
 page_type: sample
 products:
 - azure

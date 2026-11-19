@@ -1,5 +1,5 @@
 ---
-description: This template is to be used with http&#58;//docs.microsoft.com/azure/app-service/quickstart-arm-template
+description: This template is to be used with [Create an App Service app using an ARM template](https://learn.microsoft.com/azure/app-service/quickstart-arm-template?pivots=platform-windows-container).
 page_type: sample
 products:
 - azure

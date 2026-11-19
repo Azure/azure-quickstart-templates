@@ -1,5 +1,5 @@
 ---
-description: This template deploys a virtual machine and installs the required applications to use this virtual machine for SAP LaMa. The template also creates the required disk layout. For more information about managing Azure virtual machines with SAP LaMa, see https&#58;//docs.microsoft.com/azure/virtual-machines/workloads/sap/lama-installation.
+description: This template deploys a virtual machine and installs the required applications to use this virtual machine for SAP LaMa. The template also creates the required disk layout. For more information about managing Azure virtual machines with SAP LaMa, see [Set up the SAP LaMa connector for Azure](https://learn.microsoft.com/azure/sap/workloads/lama-installation).
 page_type: sample
 products:
 - azure
