@@ -1,0 +1,189 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.48.1.52935",
+      "templateHash": "13593199919799387198"
+    }
+  },
+  "parameters": {
+    "serverName": {
+      "type": "string",
+      "defaultValue": "[format('sql-{0}', uniqueString(resourceGroup().id))]",
+      "minLength": 1,
+      "maxLength": 63,
+      "metadata": {
+        "description": "The globally unique SQL logical server name."
+      }
+    },
+    "databaseName": {
+      "type": "string",
+      "defaultValue": "serverlessDatabase",
+      "metadata": {
+        "description": "The database name."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "administratorLogin": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "The display name of the existing Microsoft Entra administrator."
+      }
+    },
+    "administratorObjectId": {
+      "type": "string",
+      "minLength": 36,
+      "maxLength": 36,
+      "metadata": {
+        "description": "The object ID of the existing Microsoft Entra administrator in the subscription tenant."
+      }
+    },
+    "administratorPrincipalType": {
+      "type": "string",
+      "defaultValue": "User",
+      "allowedValues": [
+        "User",
+        "Group",
+        "Application"
+      ],
+      "metadata": {
+        "description": "The Microsoft Entra administrator principal type."
+      }
+    },
+    "clientIpAddress": {
+      "type": "string",
+      "minLength": 7,
+      "maxLength": 15,
+      "metadata": {
+        "description": "The public IPv4 address of the SQL client. Do not use 0.0.0.0, which allows Azure services."
+      }
+    },
+    "maxVcores": {
+      "type": "int",
+      "defaultValue": 2,
+      "minValue": 2,
+      "maxValue": 40,
+      "metadata": {
+        "description": "Maximum serverless vCores. Check regional availability before increasing this value."
+      }
+    },
+    "minVcores": {
+      "type": "string",
+      "defaultValue": "0.5",
+      "allowedValues": [
+        "0.5",
+        "1",
+        "2"
+      ],
+      "metadata": {
+        "description": "Minimum serverless vCores, expressed as a string because Bicep has no decimal literal type."
+      }
+    },
+    "autoPauseDelay": {
+      "type": "int",
+      "defaultValue": 60,
+      "minValue": 15,
+      "maxValue": 10080,
+      "metadata": {
+        "description": "Minutes of inactivity before auto-pause. This paid sample does not disable auto-pause."
+      }
+    },
+    "maxSizeGB": {
+      "type": "int",
+      "defaultValue": 32,
+      "minValue": 1,
+      "maxValue": 1024,
+      "metadata": {
+        "description": "Maximum database data size in GiB."
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Sql/servers",
+      "apiVersion": "2023-08-01",
+      "name": "[parameters('serverName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "version": "12.0",
+        "minimalTlsVersion": "1.2",
+        "publicNetworkAccess": "Enabled",
+        "administrators": {
+          "administratorType": "ActiveDirectory",
+          "azureADOnlyAuthentication": true,
+          "principalType": "[parameters('administratorPrincipalType')]",
+          "login": "[parameters('administratorLogin')]",
+          "sid": "[parameters('administratorObjectId')]",
+          "tenantId": "[subscription().tenantId]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Sql/servers/firewallRules",
+      "apiVersion": "2023-08-01",
+      "name": "[format('{0}/{1}', parameters('serverName'), 'AllowClientIp')]",
+      "properties": {
+        "startIpAddress": "[parameters('clientIpAddress')]",
+        "endIpAddress": "[parameters('clientIpAddress')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Sql/servers', parameters('serverName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Sql/servers/databases",
+      "apiVersion": "2023-08-01",
+      "name": "[format('{0}/{1}', parameters('serverName'), parameters('databaseName'))]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "GP_S_Gen5",
+        "tier": "GeneralPurpose",
+        "family": "Gen5",
+        "capacity": "[parameters('maxVcores')]"
+      },
+      "properties": {
+        "createMode": "Default",
+        "minCapacity": "[json(parameters('minVcores'))]",
+        "autoPauseDelay": "[parameters('autoPauseDelay')]",
+        "maxSizeBytes": "[mul(parameters('maxSizeGB'), 1073741824)]",
+        "requestedBackupStorageRedundancy": "Local",
+        "useFreeLimit": false
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Sql/servers', parameters('serverName'))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "serverFullyQualifiedDomainName": {
+      "type": "string",
+      "metadata": {
+        "description": "The SQL logical server fully qualified domain name."
+      },
+      "value": "[reference(resourceId('Microsoft.Sql/servers', parameters('serverName')), '2023-08-01').fullyQualifiedDomainName]"
+    },
+    "databaseName": {
+      "type": "string",
+      "metadata": {
+        "description": "The serverless database name."
+      },
+      "value": "[parameters('databaseName')]"
+    },
+    "databaseResourceId": {
+      "type": "string",
+      "metadata": {
+        "description": "The database resource ID."
+      },
+      "value": "[resourceId('Microsoft.Sql/servers/databases', parameters('serverName'), parameters('databaseName'))]"
+    }
+  }
+}
