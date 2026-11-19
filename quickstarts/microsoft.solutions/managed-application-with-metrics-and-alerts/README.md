@@ -27,7 +27,7 @@ If this is your first time learning about Azure managed applications, please vis
 
 + [**Deploying your first managed application**](https://github.com/Azure/azure-quickstart-templates/tree/master/101-managed-application).
 
-This sample shows how you can author a service catalog managed application definition that will allow to deploy a managed application with defined metrics and alerts.
+This sample shows how you can author a service catalog managed application definition that will allow you to deploy a managed application with defined metrics and alerts.
 This managed application will contain single storage account as a resource, expose application metrics for the storage account including availability, success E2E latency, transactions; as well as alerts based on storage account availability and activity log alerts based on regenerating storage account keys.
 
 This sample template combines two steps:
