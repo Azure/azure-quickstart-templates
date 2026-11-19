@@ -1,0 +1,89 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.48.1.52935",
+      "templateHash": "7009814588730408992"
+    }
+  },
+  "parameters": {
+    "managedInstanceName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 63,
+      "metadata": {
+        "description": "Name of an existing General Purpose SQL managed instance in the deployment resource group. The instance must support stop and start."
+      }
+    },
+    "timeZoneId": {
+      "type": "string",
+      "defaultValue": "UTC",
+      "minLength": 1,
+      "metadata": {
+        "description": "Windows time zone ID for the schedule, such as UTC or Pacific Standard Time. Local times follow daylight saving rules for the selected zone."
+      }
+    },
+    "startTime": {
+      "type": "string",
+      "defaultValue": "08:00",
+      "minLength": 5,
+      "maxLength": 5,
+      "metadata": {
+        "description": "Weekday start time in 24-hour HH:mm format in the schedule time zone. Use an earlier time than stopTime, with at least one hour between successive actions."
+      }
+    },
+    "stopTime": {
+      "type": "string",
+      "defaultValue": "18:00",
+      "minLength": 5,
+      "maxLength": 5,
+      "metadata": {
+        "description": "Weekday stop time in 24-hour HH:mm format in the schedule time zone. Leave at least one hour before the next start. Overnight intervals are not supported by this example."
+      }
+    }
+  },
+  "variables": {
+    "weekdays": [
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday"
+    ]
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Sql/managedInstances/startStopSchedules",
+      "apiVersion": "2023-08-01",
+      "name": "[format('{0}/{1}', parameters('managedInstanceName'), 'default')]",
+      "properties": {
+        "copy": [
+          {
+            "name": "scheduleList",
+            "count": "[length(variables('weekdays'))]",
+            "input": {
+              "startDay": "[variables('weekdays')[copyIndex('scheduleList')]]",
+              "startTime": "[parameters('startTime')]",
+              "stopDay": "[variables('weekdays')[copyIndex('scheduleList')]]",
+              "stopTime": "[parameters('stopTime')]"
+            }
+          }
+        ],
+        "description": "Start and stop the existing managed instance on weekdays.",
+        "timeZoneId": "[parameters('timeZoneId')]"
+      }
+    }
+  ],
+  "outputs": {
+    "managedInstanceId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Sql/managedInstances', parameters('managedInstanceName'))]"
+    },
+    "startStopScheduleId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Sql/managedInstances/startStopSchedules', parameters('managedInstanceName'), 'default')]"
+    }
+  }
+}
