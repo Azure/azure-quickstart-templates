@@ -1,5 +1,5 @@
 ---
-description: BrowserBox remote browser isolation on Azure. The existing deployment template needs updating before use.
+description: Deploy BrowserBox remote browser isolation on an Azure virtual machine.
 page_type: sample
 products:
 - azure
@@ -10,12 +10,25 @@ languages:
 ---
 # BrowserBox Azure Edition
 
-> **Deployment status:** The existing Azure template is outdated and should not be used for a new deployment. Its bootstrap references installer scripts that are no longer present in the public BrowserBox repository. An updated template requires deployment testing before it can be submitted.
+[BrowserBox](https://browserbox.io/?utm_source=azure_quickstart&utm_medium=listing&utm_campaign=browserbox) is self-hosted remote browser isolation. It runs a browser on infrastructure you control and streams an interactive view to a modern browser.
 
-[BrowserBox](https://browserbox.io/?utm_source=azure_quickstart&utm_medium=listing&utm_campaign=browserbox) is self-hosted remote browser isolation. It runs a Chromium browser on infrastructure you control and streams an interactive view to a modern browser.
+This template deploys an Ubuntu 22.04 VM, a public IP address and network security group, then installs and starts BrowserBox using the [public installer](https://docs.browserbox.io/installation/). Azure infrastructure charges and BrowserBox licensing are separate.
 
-BrowserBox requires a valid license key, including for evaluation. See the [evaluation options](https://browserbox.io/evaluate) and the [BrowserBox customer guide](https://docs.browserbox.io/installation/) for current installation and licensing instructions. Azure infrastructure charges and BrowserBox licensing are separate.
+## Before deploying
 
-The template files in this sample remain for reference while a replacement is prepared. Do not enter credentials into an unverified deployment. For product support, contact support@dosyago.com.
+- Obtain a valid BrowserBox license key, including for evaluation. See the [evaluation options](https://browserbox.io/evaluate).
+- Supply an email address, an administrator username and an SSH public key. The email is used by the installer for terms agreement and certificate setup; by deploying you accept the [BrowserBox terms](https://dosaygo.com/terms.txt) and the applicable Let's Encrypt terms.
+- Enter the license key in the secure `licenseKey` parameter. Treat any parameter file containing it as a secret. The key is not included in the template outputs.
+- The default VM size is Standard B2s. Review Azure pricing and restrict inbound access to trusted networks as appropriate. The template permits inbound SSH, HTTP and BrowserBox ports 8078–8082.
 
-`Tags: Microsoft.Authorization/roleAssignments, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, Microsoft.Insights/components, Microsoft.Insights/actionGroups, Microsoft.Insights/metricAlerts, Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Network/publicIPAddresses, Microsoft.Network/networkInterfaces, Microsoft.OperationalInsights/workspaces, CustomScriptExtension`
+## Connect
+
+After the deployment succeeds, use the `azureHostname` output and your SSH key to connect as the administrator. On the VM, obtain the login link with:
+
+```bash
+cat ~/.config/dosaygo/bbpro/login.link
+```
+
+Open that link in a browser. Treat the link as a secret: anyone who has it may be able to connect to the session. For configuration, certificate and troubleshooting guidance, see the [customer guide](https://docs.browserbox.io/installation/) and [setup documentation](https://docs.browserbox.io/setup/).
+
+`Tags: Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Network/publicIPAddresses, Microsoft.Network/networkInterfaces, CustomScriptExtension`
