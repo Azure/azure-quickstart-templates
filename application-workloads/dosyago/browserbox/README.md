@@ -1,5 +1,5 @@
 ---
-description: This template deploys BrowserBox on an Azure Ubuntu Server 22.04 LTS, Debian 11, or RHEL 8.7 LVM VM.
+description: Deploy BrowserBox remote browser isolation on an Azure virtual machine.
 page_type: sample
 products:
 - azure
@@ -10,44 +10,25 @@ languages:
 ---
 # BrowserBox Azure Edition
 
-![Azure Public Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/dosyago/browserbox/PublicLastTestDate.svg)
-![Azure Public Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/dosyago/browserbox/PublicDeployment.svg)
+[BrowserBox](https://browserbox.io/?utm_source=azure_quickstart&utm_medium=listing&utm_campaign=browserbox) is self-hosted remote browser isolation. It runs a browser on infrastructure you control and streams an interactive view to a modern browser.
 
-![Azure US Gov Last Test Date](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/dosyago/browserbox/FairfaxLastTestDate.svg)
-![Azure US Gov Last Test Result](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/dosyago/browserbox/FairfaxDeployment.svg)
+This template deploys an Ubuntu 22.04 VM, a public IP address and network security group, then installs and starts BrowserBox using the [public installer](https://docs.browserbox.io/installation/). Azure infrastructure charges and BrowserBox licensing are separate.
 
-![Best Practice Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/dosyago/browserbox/BestPracticeResult.svg)
-![Cred Scan Check](https://azurequickstartsservice.blob.core.windows.net/badges/application-workloads/dosyago/browserbox/CredScanResult.svg)
+## Before deploying
 
-[![Deploy To Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.svg?sanitize=true)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fdosyago%2Fbrowserbox%2Fazuredeploy.json/createUIDefinitionUri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fdosyago%2Fbrowserbox%2FcreateUiDefinition.json)
-[![Deploy To Azure US Gov](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.svg?sanitize=true)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fdosyago%2Fbrowserbox%2Fazuredeploy.json/createUIDefinitionUri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fdosyago%2Fbrowserbox%2FcreateUiDefinition.json)
-[![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.svg?sanitize=true)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fapplication-workloads%2Fdosyago%2Fbrowserbox%2Fazuredeploy.json)   
+- Obtain a valid BrowserBox license key, including for evaluation. See the [evaluation options](https://browserbox.io/evaluate).
+- Supply an email address, an administrator username and an SSH public key. The email is used by the installer for terms agreement and certificate setup; by deploying you accept the [BrowserBox terms](https://dosaygo.com/terms.txt) and the applicable Let's Encrypt terms.
+- Enter the license key in the secure `licenseKey` parameter. Treat any parameter file containing it as a secret. The key is not included in the template outputs.
+- The default VM size is Standard B2s. Review Azure pricing and restrict inbound access to trusted networks as appropriate. The template permits inbound SSH, HTTP and BrowserBox ports 8078–8082.
 
-This template deploys BrowserBox, a secure browsing environment, on an Ubuntu Server 22.04 LTS, Debian 11, or RHEL 8.7 LVM on Azure. 
+## Connect
 
-## Features
-- Seamless deployment of BrowserBox on Azure.
-- Compatible with multiple Linux distributions: Ubuntu 22.04 LTS, Debian 11, RHEL 8.7 LVM.
-- Customizable optional Advanced Settings to suit different requirements.
+After the deployment succeeds, use the `azureHostname` output and your SSH key to connect as the administrator. On the VM, obtain the login link with:
 
-## Prerequisites
-- A valid Azure subscription.
-- Familiarity with Azure Resource Manager templates.
+```bash
+cat ~/.config/dosaygo/bbpro/login.link
+```
 
-## Deployment Steps
-1. Click on the "Deploy to Azure" button.
-2. Fill in the required parameters (Resource group, Email).
-3. Review and agree to the terms and conditions.
-4. Click on "Create" to initiate the deployment.
+Open that link in a browser. Treat the link as a secret: anyone who has it may be able to connect to the session. For configuration, certificate and troubleshooting guidance, see the [customer guide](https://docs.browserbox.io/installation/) and [setup documentation](https://docs.browserbox.io/setup/).
 
-## Post-Deployment Steps
-- If you used a Custom Domain, rather than the default random `bb<random>.<region>.cloudapp.azure.com` domain that will by default be generated for you, ensure you configure a DNS A record pointing to the public IP of the deployed VM. You can configure Custom Domain settings under Advanced Settings. 
-
-Reach out with support questions any time: support@dosyago.com. 
-
-## License
-
-This template is provided under standard open-source [license terms](https://github.com/BrowserBox/BrowserBox/blob/boss/LICENSE.md)
-
-`Tags: Microsoft.Authorization/roleAssignments, Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, Microsoft.Insights/components, Microsoft.Insights/actionGroups, Microsoft.Insights/metricAlerts, Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Network/publicIPAddresses, Microsoft.Network/networkInterfaces, Microsoft.OperationalInsights/workspaces, CustomScriptExtension`
-
+`Tags: Microsoft.Compute/virtualMachines, Microsoft.Compute/virtualMachines/extensions, Microsoft.Network/networkSecurityGroups, Microsoft.Network/virtualNetworks, Microsoft.Network/publicIPAddresses, Microsoft.Network/networkInterfaces, CustomScriptExtension`
