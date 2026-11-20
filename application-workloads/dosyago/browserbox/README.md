@@ -14,7 +14,7 @@ languages:
 
 [BrowserBox](https://browserbox.io/?utm_source=azure_quickstart&utm_medium=listing&utm_campaign=browserbox) is self-hosted remote browser isolation. It runs a Chromium browser on infrastructure you control and streams an interactive view to a modern browser.
 
-For current installation and licensing instructions, see the [BrowserBox customer guide](https://docs.browserbox.io/installation/). Azure infrastructure charges and BrowserBox licensing are separate.
+BrowserBox requires a valid license key, including for evaluation. See the [evaluation options](https://browserbox.io/evaluate) and the [BrowserBox customer guide](https://docs.browserbox.io/installation/) for current installation and licensing instructions. Azure infrastructure charges and BrowserBox licensing are separate.
 
 The template files in this sample remain for reference while a replacement is prepared. Do not enter credentials into an unverified deployment. For product support, contact support@dosyago.com.
 
