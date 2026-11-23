@@ -1,6 +1,7 @@
 targetScope = 'resourceGroup'
 metadata description = 'Create a DC, a SQL Server 2025, and from 1 to 5 server(s) hosting a SharePoint Subscription Edition farm with an extensive configuration, including trusted authentication, user profiles with personal sites, an OAuth trust (using a certificate), a dedicated IIS site for hosting high-trust add-ins, etc... The latest version of key softwares (including Fiddler, vscode, np++, 7zip, ULS Viewer) is installed. SharePoint machines have additional fine-tuning to make them immediately usable (remote administration tools, custom policies for Edge and Chrome, shortcuts, etc...).'
 metadata author = 'Yvand'
+metadata version = '2.0.0'
 
 @description('Location for all the resources.')
 param location string = resourceGroup().location
@@ -424,7 +425,7 @@ var sharePointSubscriptionBits = [
     Label: 'SPLatest'
     Packages: [
       {
-        DownloadUrl: 'https://download.microsoft.com/download/23516bd3-8d7e-41c8-9cfd-1fa72bcf52f8/uber-subscription-kb5002927-fullfile-x64-glb.exe'
+        DownloadUrl: 'https://download.microsoft.com/download/7df63f79-d9e8-4523-9be2-f6cd35a09548/uber-subscription-kb5002945-fullfile-x64-glb.exe'
       }
     ]
   }
